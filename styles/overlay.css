@@ -15,6 +15,10 @@
   text-align: center;
   padding: 2rem;
   background: radial-gradient(ellipse at center, rgba(7,3,15,0.35), rgba(7,3,15,0.78));
+  /* Deliberately no backdrop-filter here: an element that has one becomes a
+     backdrop root, and the rack below would then be frosting this gradient
+     instead of the field behind it. The panels do the glass, the splash does
+     the shade. */
 }
 .overlay[hidden] { display: none; }
 .overlay h1 {
@@ -62,15 +66,25 @@
   display: inline-block;
   padding: 0.42rem 1rem;
   border: 1px solid rgba(160, 75, 255, 0.45);
+  /* two layers, and the hover keeps both — a background that changes layer
+     count mid-transition snaps instead of fading */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.015)),
+    rgba(160, 75, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
   color: var(--violet);
   text-decoration: none;
   text-shadow: 0 0 10px currentColor;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  transition: color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
 .overlay .book a:hover {
   color: var(--magenta);
   border-color: rgba(255, 62, 200, 0.7);
-  background: rgba(160, 75, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03)),
+    rgba(160, 75, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24),
+              0 0 18px rgba(255, 62, 200, 0.18);
 }
 .overlay .book span { display: block; margin-top: 0.45rem; color: var(--dim); letter-spacing: 0.1em; }
 /* The loudest thing on the screen, and the last — everything above it is
@@ -106,10 +120,46 @@
   padding: 1.1rem 1.3rem 1.2rem;
   background: rgba(12, 5, 24, 0.66);
   border: 1px solid var(--accent-soft);
+  /* the last two are the material rather than the colour: a lit top edge and a
+     shaded bottom one is what tells the eye this is a pane with thickness and
+     not a rectangle of paint */
   box-shadow: 0 0 26px rgba(160, 75, 255, 0.28),
-              inset 0 0 34px var(--accent-glow);
+              inset 0 0 34px var(--accent-glow),
+              inset 0 1px 0 rgba(255, 255, 255, 0.16),
+              inset 0 -1px 0 rgba(0, 0, 0, 0.35);
   text-align: left;
   animation: cycle 9s linear infinite;
+}
+/* The rack, as glass. Thinning the plate is only safe once we know the frost
+   is there to hold the text up, so the whole trade lives behind @supports and
+   a browser without it keeps the solid plate it always had.
+   `:not([hidden])` is the load-bearing part, not a tidiness: the splash is
+   display:none while a game is running, but a backdrop-filter that merely
+   sits on a hidden element still exists in the layer tree, and the compositor
+   can keep the canvas promoted for it long after the splash has gone. Scoped
+   this way the property is not applied at all during play, and the frame
+   belongs to the game. */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .overlay:not([hidden]) .brief,
+  .overlay:not([hidden]) .pilot,
+  .overlay:not([hidden]) .lobby {
+    background:
+      linear-gradient(148deg,
+        rgba(255, 255, 255, 0.15),
+        rgba(255, 255, 255, 0.035) 40%,
+        rgba(255, 255, 255, 0) 70%),
+      rgba(12, 5, 24, 0.34);
+    /* brightness is doing the same job the gradient is: the field behind is
+       nearly black, and glass that is not lifted off it is just a dark
+       rectangle with a lit edge */
+    -webkit-backdrop-filter: blur(18px) saturate(1.8) brightness(1.45);
+    backdrop-filter: blur(18px) saturate(1.8) brightness(1.45);
+  }
+  /* The door to the book gets the same treatment for the same reason. */
+  .overlay:not([hidden]) .book a {
+    -webkit-backdrop-filter: blur(11px) saturate(1.5);
+    backdrop-filter: blur(11px) saturate(1.5);
+  }
 }
 .brief { --accent: var(--magenta); --accent-soft: rgba(255, 62, 200, 0.38); --accent-glow: rgba(255, 62, 200, 0.05); }
 .pilot { --accent: var(--cyan);    --accent-soft: rgba(33, 243, 255, 0.38); --accent-glow: rgba(33, 243, 255, 0.06); }
@@ -210,14 +260,19 @@
   .brief, .pilot, .lobby, .overlay .controls { width: min(30rem, 92vw); }
   .brief ul { columns: 1; }
 }
-/* the guide grew past half a dozen entries — go compact well before clipping */
+/* The guide grew past half a dozen entries — go compact well before clipping.
+   PRESS ENTER is the thing that has to survive: on a laptop the whole splash
+   has to land above the fold, so the title gives up size and the descriptions
+   go, rather than the pilot scrolling to find the way in. */
 @media (max-height: 940px) {
+  .overlay { gap: 0.9rem; padding: 1.25rem 1.5rem; }
+  .overlay h1 { font-size: clamp(1.7rem, 5.2vw, 2.6rem); }
+  .overlay .controls { padding-top: 0.75rem; line-height: 1.7; }
+  .overlay .book span { margin-top: 0.3rem; }
   .brief, .pilot, .lobby { padding: 0.85rem 1rem; }
   .brief h2, .pilot h2, .lobby h2 { margin-bottom: 0.6rem; padding-bottom: 0.45rem; }
   .brief li { padding-bottom: 0.45rem; }
   .brief .desc { display: none; }
-  .overlay { gap: 1rem; }
-  .overlay .controls { padding-top: 0.8rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .overlay .prompt, .overlay h1, .brief li,

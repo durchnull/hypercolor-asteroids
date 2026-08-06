@@ -13,6 +13,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  /* the same pane the pilot cards are cut from — the seat colour arrives on
+     the border and the text, so the fill has to stay neutral or every seat
+     would wear a different glass */
+  background:
+    linear-gradient(158deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.012) 58%),
+    rgba(12, 5, 24, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13);
 }
 .lobby .who {
   font-size: 0.62rem;
@@ -47,7 +54,9 @@
   color: var(--dim);
   margin-top: 0.6rem;
 }
-@media (max-height: 940px) {
+/* the note repeats what the seat cards already say, so it goes at the same
+   height the pilot's note does */
+@media (max-height: 1340px) {
   .lobby .lobbynote { display: none; }
 }
 @media (max-width: 460px) {
