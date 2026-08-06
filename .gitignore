@@ -1,0 +1,8 @@
+# macOS
+.DS_Store
+
+# Playwright MCP scratch output (screenshots, console logs, snapshots)
+.playwright-mcp/
+
+# Local Claude Code settings
+.claude/settings.local.json

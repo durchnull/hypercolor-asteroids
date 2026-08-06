@@ -1,0 +1,3445 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASTEROIDS // HYPERCOLOR</title>
+</head>
+<body>
+<style>
+  :root {
+    --void: #07030f;
+    --ink: #f2e9ff;
+    --dim: #9a86bd;
+    --magenta: #ff3ec8;
+    --cyan: #21f3ff;
+    --violet: #a04bff;
+    --lime: #b6ff3d;
+    --amber: #ffb020;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--void);
+    color: var(--ink);
+    font-family: var(--mono);
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  #game {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  /* CRT dressing: vignette, scanlines, and a slow rolling refresh bar */
+  .crt {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+  .crt.vignette {
+    background: radial-gradient(ellipse at center, transparent 48%, rgba(7,3,15,0.72) 100%);
+  }
+  .crt.scanlines {
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0,0,0,0.22) 3px
+    );
+    opacity: 0.45;
+  }
+  .crt.roll {
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(255,255,255,0.045) 45%,
+      rgba(255,255,255,0.075) 50%,
+      rgba(255,255,255,0.045) 55%,
+      transparent 100%
+    );
+    height: 22vh;
+    inset: auto 0 auto 0;
+    animation: roll 7s linear infinite;
+  }
+  @keyframes roll {
+    from { transform: translateY(-25vh); }
+    to { transform: translateY(105vh); }
+  }
+
+  .hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.1rem 1.4rem;
+    pointer-events: none;
+    animation: cycle 9s linear infinite;
+  }
+  @keyframes cycle {
+    from { filter: hue-rotate(0deg); }
+    to { filter: hue-rotate(360deg); }
+  }
+  /* one panel per seat: P1 left, P2 right, wave in the middle */
+  .hud .player {
+    min-width: 8rem;
+    color: var(--cyan);
+  }
+  .hud #p2 { color: var(--amber); }
+  .hud .player.out { opacity: 0.6; }
+  .hud .player .tag {
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    opacity: 0.8;
+  }
+  .hud .player .pscore {
+    font-size: 1.5rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
+    line-height: 1.15;
+    text-shadow: 0 0 12px currentColor, 0 0 26px currentColor;
+  }
+  .hud .player .glyphs {
+    display: flex;
+    gap: 0.3rem;
+    height: 1rem;
+    margin-top: 0.25rem;
+    filter: drop-shadow(0 0 5px currentColor);
+  }
+  .hud .player .glyphs.bombs { color: var(--lime); }
+  .hud #p2 .glyphs.bombs { color: var(--lime); }
+  .hud .player .glyphs .empty {
+    font-size: 0.58rem;
+    letter-spacing: 0.2em;
+    color: var(--dim);
+    filter: none;
+  }
+  .hud .player .hint {
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    color: var(--dim);
+    margin-top: 0.3rem;
+    animation: blink 1.6s step-end infinite;
+  }
+  .hud .right { text-align: right; }
+  .hud .right .glyphs { justify-content: flex-end; }
+  .hud .level {
+    font-size: 0.7rem;
+    letter-spacing: 0.28em;
+    color: var(--violet);
+    text-shadow: 0 0 10px currentColor;
+    padding-top: 0.5rem;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* safe centering + scroll: on a short screen nothing ends up unreachable
+       above the fold, which plain `center` would do */
+    justify-content: safe center;
+    overflow-y: auto;
+    gap: 1.35rem;
+    text-align: center;
+    padding: 2rem;
+    background: radial-gradient(ellipse at center, rgba(7,3,15,0.35), rgba(7,3,15,0.78));
+  }
+  .overlay[hidden] { display: none; }
+  .overlay h1 {
+    font-size: clamp(2rem, 7.5vw, 4.2rem);
+    font-weight: 600;
+    letter-spacing: 0.4em;
+    margin-right: -0.4em; /* recenter after tracking */
+    text-wrap: balance;
+    background: linear-gradient(100deg,
+      #ff3ec8, #ffb020, #b6ff3d, #21f3ff, #a04bff, #ff3ec8);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 16px rgba(255,62,200,0.5));
+    animation: slide 6s linear infinite;
+  }
+  @keyframes slide {
+    from { background-position: 0% 50%; }
+    to { background-position: 300% 50%; }
+  }
+  .overlay .controls {
+    color: var(--dim);
+    font-size: 0.8rem;
+    line-height: 2;
+    letter-spacing: 0.12em;
+  }
+  .overlay .controls b {
+    color: var(--cyan);
+    font-weight: 500;
+    text-shadow: 0 0 8px currentColor;
+  }
+  .overlay .prompt {
+    font-size: 0.95rem;
+    letter-spacing: 0.3em;
+    margin-right: -0.3em;
+    color: var(--lime);
+    text-shadow: 0 0 12px currentColor;
+    animation: blink 1.2s step-end infinite;
+  }
+  .overlay .final {
+    font-size: 1.1rem;
+    letter-spacing: 0.15em;
+    line-height: 2.1;
+    font-variant-numeric: tabular-nums;
+    color: var(--amber);
+    text-shadow: 0 0 12px currentColor;
+  }
+  .overlay .final .best { color: var(--dim); text-shadow: none; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Field guide: an instrument panel bolted to the splash screen */
+  .brief {
+    position: relative;
+    width: min(30rem, 92vw);
+    padding: 1.1rem 1.3rem 1.2rem;
+    background: rgba(12, 5, 24, 0.66);
+    border: 1px solid rgba(33, 243, 255, 0.35);
+    box-shadow: 0 0 26px rgba(160, 75, 255, 0.28),
+                inset 0 0 34px rgba(33, 243, 255, 0.06);
+    text-align: left;
+    animation: cycle 9s linear infinite;
+  }
+  .brief::before,
+  .brief::after {
+    content: "";
+    position: absolute;
+    width: 13px;
+    height: 13px;
+    border: 1px solid var(--magenta);
+  }
+  .brief::before {
+    top: -1px; left: -1px;
+    border-right: none;
+    border-bottom: none;
+  }
+  .brief::after {
+    bottom: -1px; right: -1px;
+    border-left: none;
+    border-top: none;
+  }
+  .brief h2 {
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.34em;
+    color: var(--magenta);
+    text-shadow: 0 0 10px currentColor;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px dashed rgba(160, 75, 255, 0.35);
+  }
+  .brief ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .brief li {
+    display: grid;
+    grid-template-columns: 2.1rem 1fr;
+    align-items: center;
+    column-gap: 0.85rem;
+    animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+    animation-delay: calc(var(--i) * 80ms + 150ms);
+  }
+  .brief svg {
+    display: block;
+    filter: drop-shadow(0 0 5px currentColor);
+  }
+  .brief .rock { color: var(--cyan); }
+  .brief .bomb { color: var(--amber); }
+  .brief .hook { color: var(--lime); }
+  .brief .kraken { color: var(--magenta); }
+  .brief .portal { color: var(--violet); }
+  .brief .planet { color: var(--lime); }
+  .brief .falcon { color: var(--ink); }
+  .brief .name {
+    font-size: 0.73rem;
+    letter-spacing: 0.18em;
+    color: var(--ink);
+  }
+  .brief .pts {
+    color: var(--amber);
+    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
+    margin-left: 0.5rem;
+    font-size: 0.68rem;
+  }
+  .brief .desc {
+    font-size: 0.69rem;
+    line-height: 1.5;
+    color: var(--dim);
+    margin-top: 0.15rem;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  /* the guide grew to seven entries — go compact well before things clip */
+  @media (max-height: 940px) {
+    .brief { padding: 0.85rem 1rem; }
+    .brief ul { gap: 0.45rem; }
+    .brief .desc { display: none; }
+    .overlay { gap: 1rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .overlay .prompt, .brief li, .crt.roll, .hud, .brief { animation: none; }
+    .overlay h1 { animation: none; }
+  }
+
+  /* Seat lobby on the splash */
+  .lobby {
+    width: min(30rem, 92vw);
+    text-align: left;
+  }
+  .lobby h2 {
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    color: var(--dim);
+    margin-bottom: 0.6rem;
+  }
+  .lobby .seats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.7rem;
+  }
+  .lobby .seat {
+    border: 1px solid rgba(154, 134, 189, 0.35);
+    padding: 0.6rem 0.7rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .lobby .seat.p1 { border-color: rgba(33, 243, 255, 0.5); }
+  .lobby .seat.p2 { border-color: rgba(255, 176, 32, 0.5); }
+  .lobby .who {
+    font-size: 0.62rem;
+    letter-spacing: 0.24em;
+  }
+  .lobby .p1 .who { color: var(--cyan); }
+  .lobby .p2 .who { color: var(--amber); }
+  .lobby .binds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.6rem;
+    font-size: 0.62rem;
+    color: var(--dim);
+    letter-spacing: 0.04em;
+  }
+  .lobby .binds b {
+    color: var(--ink);
+    font-weight: 500;
+    margin-right: 0.15rem;
+  }
+  .lobby .ready {
+    font-size: 0.58rem;
+    letter-spacing: 0.2em;
+    color: var(--lime);
+  }
+  .lobby .ready.open {
+    color: var(--amber);
+    animation: blink 1.6s step-end infinite;
+  }
+  .lobby .lobbynote {
+    font-size: 0.65rem;
+    line-height: 1.6;
+    color: var(--dim);
+    margin-top: 0.6rem;
+  }
+  @media (max-height: 940px) {
+    .lobby .lobbynote { display: none; }
+    .lobby h2 { margin-bottom: 0.4rem; }
+  }
+  @media (max-width: 460px) {
+    .lobby .seats { grid-template-columns: 1fr; }
+  }
+
+  /* Touch controls: hidden unless a touch is detected */
+  .touch {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: none;
+    justify-content: space-between;
+    padding: 0 1.2rem calc(1.2rem + env(safe-area-inset-bottom));
+    pointer-events: none;
+  }
+  body.has-touch .touch { display: flex; }
+  .touch .pad { display: flex; gap: 0.9rem; pointer-events: auto; }
+  .touch button {
+    width: 4.2rem;
+    height: 4.2rem;
+    border-radius: 50%;
+    border: 1px solid rgba(33,243,255,0.5);
+    background: rgba(160,75,255,0.12);
+    color: var(--cyan);
+    font-family: var(--mono);
+    font-size: 1.25rem;
+    touch-action: none;
+  }
+  .touch button:active { background: rgba(255,62,200,0.3); }
+  .touch button.bomb {
+    border-color: rgba(255,176,32,0.6);
+    color: var(--amber);
+  }
+  .touch button.hookbtn {
+    border-color: rgba(182,255,61,0.6);
+    color: var(--lime);
+  }
+  #mute {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    background: none;
+    border: none;
+    color: var(--dim);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    padding: 0.4rem;
+  }
+  #mute:focus-visible { outline: 1px solid var(--cyan); }
+  body.has-touch #mute { bottom: auto; top: 3.6rem; }
+</style>
+
+<canvas id="game"></canvas>
+<div class="crt vignette"></div>
+<div class="crt scanlines"></div>
+<div class="crt roll"></div>
+
+<div class="hud">
+  <div class="player" id="p1"></div>
+  <div class="level" id="level"></div>
+  <div class="player right" id="p2"></div>
+</div>
+
+<div class="overlay" id="start">
+  <h1>ASTEROIDS</h1>
+
+  <section class="brief" aria-label="Field guide">
+    <h2>FIELD GUIDE</h2>
+    <ul>
+      <li style="--i:0">
+        <svg class="rock" width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+          <path d="M17 4 L26 8 L30 17 L26 27 L16 30 L7 25 L4 15 L9 7 Z" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <span class="name">ASTEROID</span><span class="pts">20 / 50 / 100</span>
+          <p class="desc">Shoot one and it splits into smaller, quicker pieces.</p>
+        </div>
+      </li>
+      <li style="--i:1">
+        <svg class="bomb" width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+          <circle cx="16" cy="20" r="9"/>
+          <path d="M16 11 V6 M12 7.5 L20 4.5" stroke-linecap="round"/>
+          <circle cx="16" cy="20" r="14" stroke-dasharray="2.5 3.5" opacity="0.65"/>
+        </svg>
+        <div>
+          <span class="name">ATOM BOMB</span><span class="pts">B &middot; 2 to start</span>
+          <p class="desc">Your panic button. The blast front eats half the screen, vaporising every rock it touches and gutting any kraken. One more each wave.</p>
+        </div>
+      </li>
+      <li style="--i:2">
+        <svg class="hook" width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+          <path d="M3 28 Q11 22 18 14" stroke-linecap="round"/>
+          <path d="M18 14 L24 8 M24 8 L17 7 M24 8 L25 15" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="27" cy="6" r="5" stroke-dasharray="2.5 3" opacity="0.6"/>
+        </svg>
+        <div>
+          <span class="name">GRAPPLE</span><span class="pts">&darr; &middot; free</span>
+          <p class="desc">The line locks where it bites and never hauls you in &mdash; it swings you. Arc round a rock and cut loose to fly off on the tangent, faster than you came. <b>Hold</b> to winch tighter: a smaller circle is a quicker one. The rock swings too, and it wrecks whatever it meets. Whatever you have on the line cannot touch you.</p>
+        </div>
+      </li>
+      <li style="--i:3">
+        <svg class="kraken" width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+          <path d="M6 17 A11 11 0 0 1 28 17" stroke-linecap="round"/>
+          <path d="M6 17 h22" opacity="0.45"/>
+          <path d="M8 17 q-2 5 1 8 M13.5 17 q-2 6 1 9 M20.5 17 q2 6 -1 9 M26 17 q2 5 -1 8" stroke-linecap="round"/>
+          <circle cx="13" cy="12" r="1.6" fill="#ffb020" stroke="none"/>
+          <circle cx="21" cy="12" r="1.6" fill="#ffb020" stroke="none"/>
+          <path d="M10 8.5 L15.5 10.5 M24 8.5 L18.5 10.5" stroke="#ffb020" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <span class="name">KRAKEN</span><span class="pts">250 &middot; 3&ndash;5 hits</span>
+          <p class="desc">Hunts you, dives into the deep, then surfaces right beneath you. Angrier with every hit &mdash; and later waves send a whole pack.</p>
+        </div>
+      </li>
+      <li style="--i:4">
+        <svg class="portal" width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+          <circle cx="9" cy="17" r="6.5" stroke-dasharray="3.5 3"/>
+          <circle cx="25" cy="17" r="6.5" stroke-dasharray="3.5 3"/>
+          <path d="M15.5 17 h3 M20 17 h1" opacity="0.7" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <span class="name">PORTALS</span>
+          <p class="desc">A pair blinks open. Fly in one and out the other &mdash; so can your shots, and so can the kraken.</p>
+        </div>
+      </li>
+      <li style="--i:5">
+        <svg class="planet" width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+          <circle cx="26" cy="27" r="20"/>
+          <circle cx="16" cy="22" r="3.5" opacity="0.6"/>
+          <circle cx="26" cy="15" r="2.2" opacity="0.6"/>
+          <circle cx="12" cy="31" r="2" opacity="0.6"/>
+        </svg>
+        <div>
+          <span class="name">PLANET</span>
+          <p class="desc">Too big for the screen. Rocks bounce off it, shots burn up on it, and it will happily flatten you.</p>
+        </div>
+      </li>
+      <li style="--i:6">
+        <svg class="falcon" width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+          <circle cx="14" cy="19" r="8"/>
+          <circle cx="14" cy="19" r="3" opacity="0.55"/>
+          <path d="M20 14 h10 v3 h-8 M20 24 h10 v-3 h-8" stroke-linejoin="round"/>
+          <circle cx="18" cy="11" r="2.2"/>
+          <path d="M6 16 v6" stroke="#21f3ff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <span class="name">THE FALCON</span>
+          <p class="desc">Passing smuggler. Fires one enormous laser at the kraken, then keeps flying.</p>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <section class="lobby" aria-label="Seats">
+    <h2>SEATS &mdash; JOIN ANY TIME</h2>
+    <div class="seats">
+      <div class="seat p1">
+        <div class="who">PLAYER 1</div>
+        <div class="binds">
+          <span><b>&larr;</b><b>&rarr;</b> turn</span>
+          <span><b>&uarr;</b> thrust</span>
+          <span><b>space</b> fire</span>
+          <span><b>&darr;</b> grapple &middot; hold to winch</span>
+          <span><b>B</b> bomb</span>
+        </div>
+        <div class="ready">READY</div>
+      </div>
+      <div class="seat p2">
+        <div class="who">PLAYER 2</div>
+        <div class="binds">
+          <span><b>A</b><b>D</b> turn</span>
+          <span><b>W</b> thrust</span>
+          <span><b>Q</b> fire</span>
+          <span><b>S</b> grapple &middot; hold to winch</span>
+          <span><b>E</b> bomb</span>
+        </div>
+        <div class="ready open">PRESS Q TO DROP IN</div>
+      </div>
+    </div>
+    <p class="lobbynote">
+      Two pilots, one screen. Player two can drop in mid-wave, and anyone who
+      runs out of lives can buy back in &mdash; joining is never refused.
+    </p>
+  </section>
+
+  <div class="controls">
+    <b>P</b> pause &nbsp; <b>M</b> sound
+  </div>
+  <div class="prompt" id="startPrompt">PRESS ENTER TO START</div>
+</div>
+
+<div class="overlay" id="over" hidden>
+  <h1>GAME OVER</h1>
+  <div class="final">
+    SCORE <span id="finalScore">0</span><br>
+    <span class="best">BEST <span id="bestScore">0</span></span>
+  </div>
+  <div class="prompt" id="overPrompt">PRESS ENTER</div>
+</div>
+
+<div class="touch">
+  <div class="pad">
+    <button id="tLeft" aria-label="Rotate left">&#8634;</button>
+    <button id="tRight" aria-label="Rotate right">&#8635;</button>
+  </div>
+  <div class="pad">
+    <button id="tBomb" class="bomb" aria-label="Atom bomb">&#9763;</button>
+    <button id="tHook" class="hookbtn" aria-label="Grappling hook">&#8623;</button>
+    <button id="tThrust" aria-label="Thrust">&uarr;</button>
+    <button id="tFire" aria-label="Fire">&bull;</button>
+  </div>
+</div>
+
+<button id="mute" aria-label="Toggle sound">SOUND ON</button>
+
+<script>
+"use strict";
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+// entities are drawn to their own layer so it can be faded, not cleared,
+// leaving phosphor trails behind everything that moves
+const layer = document.createElement("canvas");
+const g = layer.getContext("2d");
+// two half-baked downscales of the layer, upscaled back for a cheap bloom
+const bloomA = document.createElement("canvas");
+const bloomB = document.createElement("canvas");
+const bA = bloomA.getContext("2d");
+const bB = bloomB.getContext("2d");
+
+let W = 0, H = 0, DPR = 1;
+let stars = [], clouds = [];
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  for (const c of [canvas, layer]) {
+    c.width = Math.round(W * DPR);
+    c.height = Math.round(H * DPR);
+  }
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  bloomA.width = Math.max(1, Math.round(W * 0.25));
+  bloomA.height = Math.max(1, Math.round(H * 0.25));
+  bloomB.width = Math.max(1, Math.round(W * 0.08));
+  bloomB.height = Math.max(1, Math.round(H * 0.08));
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  g.setTransform(DPR, 0, 0, DPR, 0, 0);
+  buildSky();
+}
+
+function buildSky() {
+  stars = [];
+  const n = Math.round((W * H) / 5200);
+  for (let i = 0; i < n; i++) {
+    stars.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      d: 0.25 + Math.random() * 0.75,
+      tw: Math.random() * TAU,
+      hue: Math.random() * 360,
+    });
+  }
+  clouds = [];
+  for (let i = 0; i < 7; i++) {
+    clouds.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.min(W, H) * (0.3 + Math.random() * 0.45),
+      hue: i * 51,
+      vx: (Math.random() - 0.5) * 11,
+      vy: (Math.random() - 0.5) * 11,
+    });
+  }
+}
+window.addEventListener("resize", resize);
+// ---------- audio ----------
+// One shared graph: a music bus that runs a looping 80s-action-metal track,
+// plus one-shot SFX. Everything is synthesised — no samples, no network.
+let audio = null, master = null, distCurve = null, NOISE = null;
+let muted = false;
+
+let musicBus, guitarBus, leadBus, bassBus, drumBus, vibrato;
+let musicTimer = null, musicStep = 0, nextStepTime = 0, duckUntil = 0;
+
+const BPM = 168;
+const STEP = 60 / BPM / 4;      // one sixteenth note
+const BAR = 16;                 // sixteenths per bar
+const LOOP = BAR * 4;           // four-bar loop
+
+const midi = (m) => 440 * Math.pow(2, (m - 69) / 12);
+
+function ensureAudio() {
+  if (!audio && (window.AudioContext || window.webkitAudioContext)) {
+    audio = new (window.AudioContext || window.webkitAudioContext)();
+    master = audio.createGain();
+    master.gain.value = 0.9;
+    // a limiter so the riff and a screenful of explosions can't clip
+    const comp = audio.createDynamicsCompressor();
+    comp.threshold.value = -14;
+    comp.knee.value = 14;
+    comp.ratio.value = 7;
+    comp.attack.value = 0.004;
+    comp.release.value = 0.16;
+    master.connect(comp).connect(audio.destination);
+    distCurve = makeDistortion(120);
+    NOISE = audio.createBuffer(1, Math.ceil(audio.sampleRate * 1.2), audio.sampleRate);
+    const d = NOISE.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    buildBuses();
+    startMusic();
+  }
+  if (audio && audio.state === "suspended") audio.resume();
+}
+
+function makeDistortion(amount) {
+  const n = 2048;
+  const curve = new Float32Array(n);
+  const deg = Math.PI / 180;
+  for (let i = 0; i < n; i++) {
+    const x = (i * 2) / n - 1;
+    curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
+  }
+  return curve;
+}
+
+function buildBuses() {
+  musicBus = audio.createGain();
+  musicBus.gain.value = 0;
+  musicBus.connect(master);
+
+  // rhythm guitar: hot distortion into a speaker-cab-ish band
+  const gShape = audio.createWaveShaper();
+  gShape.curve = distCurve;
+  gShape.oversample = "2x";
+  const gLo = audio.createBiquadFilter();
+  gLo.type = "lowpass";
+  gLo.frequency.value = 2600;
+  const gHi = audio.createBiquadFilter();
+  gHi.type = "highpass";
+  gHi.frequency.value = 110;
+  const gAmp = audio.createGain();
+  gAmp.gain.value = 0.5;
+  guitarBus = audio.createGain();
+  guitarBus.gain.value = 1;
+  guitarBus.connect(gShape);
+  gShape.connect(gLo).connect(gHi).connect(gAmp).connect(musicBus);
+
+  // lead: softer clip, brighter band, shared vibrato
+  const lShape = audio.createWaveShaper();
+  lShape.curve = makeDistortion(30);
+  const lLo = audio.createBiquadFilter();
+  lLo.type = "lowpass";
+  lLo.frequency.value = 3400;
+  const lAmp = audio.createGain();
+  lAmp.gain.value = 0.3;
+  leadBus = audio.createGain();
+  leadBus.gain.value = 1;
+  leadBus.connect(lShape);
+  lShape.connect(lLo).connect(lAmp).connect(musicBus);
+
+  vibrato = audio.createOscillator();
+  const vibAmt = audio.createGain();
+  vibrato.frequency.value = 5.5;
+  vibAmt.gain.value = 7;          // cents
+  vibrato.connect(vibAmt);
+  vibrato.start();
+  vibrato._amt = vibAmt;
+
+  const bLo = audio.createBiquadFilter();
+  bLo.type = "lowpass";
+  bLo.frequency.value = 900;
+  bassBus = audio.createGain();
+  bassBus.gain.value = 0.42;
+  bassBus.connect(bLo).connect(musicBus);
+
+  drumBus = audio.createGain();
+  drumBus.gain.value = 0.7;
+  drumBus.connect(musicBus);
+}
+
+function noiseSource() {
+  const s = audio.createBufferSource();
+  s.buffer = NOISE;
+  s.loop = true;
+  return s;
+}
+
+// ---------- one-shot sfx ----------
+function blip(freq, dur, type, vol) {
+  if (!audio || muted) return;
+  const o = audio.createOscillator();
+  const gn = audio.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, audio.currentTime);
+  o.frequency.exponentialRampToValueAtTime(freq * 0.4, audio.currentTime + dur);
+  gn.gain.setValueAtTime(vol, audio.currentTime);
+  gn.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + dur);
+  o.connect(gn).connect(master);
+  o.start();
+  o.stop(audio.currentTime + dur);
+}
+
+// The blaster: the classic sci-fi bolt is a fast downward pitch sweep through
+// a screaming resonant filter, fed into a short feedback delay so it rings off
+// into the distance like a shot down a metal cable.
+// Consecutive shots walk down a little four-note figure and alternate across
+// the stereo field, so held-down fire reads as a weapon rather than a loop.
+const SHOT_STEPS = [1, 0.94, 1.06, 0.88];
+let shotIndex = 0;
+
+function blaster(big) {
+  if (!audio || muted) return;
+  const t = audio.currentTime;
+  shotIndex = (shotIndex + 1) % SHOT_STEPS.length;
+  const k = big ? 0.42 : SHOT_STEPS[shotIndex];
+  const dur = big ? 0.45 : 0.22;
+
+  const out = audio.createGain();
+  out.gain.value = big ? 0.7 : 0.42;
+  const pan = audio.createStereoPanner
+    ? audio.createStereoPanner() : null;
+  if (pan) {
+    pan.pan.value = big ? 0 : (shotIndex % 2 ? 0.28 : -0.28);
+    out.connect(pan).connect(master);
+  } else {
+    out.connect(master);
+  }
+  const tailIn = pan || master;
+
+  // ricochet tail: a damped feedback delay, the bolt screaming off into space
+  const dly = audio.createDelay(0.6);
+  dly.delayTime.value = big ? 0.1 : 0.058;
+  const fb = audio.createGain();
+  fb.gain.value = big ? 0.64 : 0.55;
+  const damp = audio.createBiquadFilter();
+  damp.type = "lowpass";
+  damp.frequency.value = 2600;
+  const wet = audio.createGain();
+  wet.gain.value = 0.6;
+  out.connect(dly);
+  dly.connect(damp).connect(fb).connect(dly);   // decaying feedback loop
+  dly.connect(wet).connect(tailIn);
+
+  // core bolt: an FM'd saw diving four octaves. The modulator is what gives it
+  // the hard metallic edge instead of a plain video-game "pew".
+  const carrier = audio.createOscillator();
+  carrier.type = "sawtooth";
+  carrier.frequency.setValueAtTime(2600 * k, t);
+  carrier.frequency.exponentialRampToValueAtTime(160 * k, t + dur);
+  const mod = audio.createOscillator();
+  const modAmt = audio.createGain();
+  mod.type = "square";
+  mod.frequency.setValueAtTime(720 * k, t);
+  mod.frequency.exponentialRampToValueAtTime(90 * k, t + dur);
+  modAmt.gain.setValueAtTime(1500, t);
+  modAmt.gain.exponentialRampToValueAtTime(30, t + dur);
+  mod.connect(modAmt).connect(carrier.frequency);
+
+  const bp = audio.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.Q.value = 9;
+  bp.frequency.setValueAtTime(3400 * k, t);
+  bp.frequency.exponentialRampToValueAtTime(300 * k, t + dur);
+  const env = audio.createGain();
+  env.gain.setValueAtTime(0.0001, t);
+  env.gain.exponentialRampToValueAtTime(0.95, t + 0.004);
+  env.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.05);
+  carrier.connect(bp).connect(env).connect(out);
+  carrier.start(t);
+  carrier.stop(t + dur + 0.07);
+  mod.start(t);
+  mod.stop(t + dur + 0.07);
+
+  // detuned twin, slightly behind, for thickness
+  const twin = audio.createOscillator();
+  twin.type = "square";
+  twin.frequency.setValueAtTime(1720 * k, t);
+  twin.frequency.exponentialRampToValueAtTime(180 * k, t + dur * 0.8);
+  const te = audio.createGain();
+  te.gain.setValueAtTime(0.0001, t);
+  te.gain.exponentialRampToValueAtTime(0.3, t + 0.006);
+  te.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.9);
+  twin.connect(te).connect(out);
+  twin.start(t + 0.006);
+  twin.stop(t + dur);
+
+  // muzzle crack
+  const n = noiseSource();
+  const nhp = audio.createBiquadFilter();
+  nhp.type = "highpass";
+  nhp.frequency.setValueAtTime(2600, t);
+  nhp.frequency.exponentialRampToValueAtTime(900, t + 0.07);
+  const ng = audio.createGain();
+  ng.gain.setValueAtTime(0.55, t);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+  n.connect(nhp).connect(ng).connect(out);
+  n.start(t);
+  n.stop(t + 0.08);
+
+  // sub thump so the shot has weight in the chest
+  const sub = audio.createOscillator();
+  const sg = audio.createGain();
+  sub.type = "sine";
+  sub.frequency.setValueAtTime(big ? 150 : 220, t);
+  sub.frequency.exponentialRampToValueAtTime(big ? 38 : 60, t + 0.14);
+  sg.gain.setValueAtTime(big ? 0.7 : 0.4, t);
+  sg.gain.exponentialRampToValueAtTime(0.0001, t + (big ? 0.3 : 0.16));
+  sub.connect(sg).connect(master);
+  sub.start(t);
+  sub.stop(t + (big ? 0.32 : 0.18));
+}
+
+// --- grappling hook: thwip out, metal bite, snapping release ---
+function hookThrow() {
+  if (!audio || muted) return;
+  const t = audio.currentTime;
+  const n = noiseSource();
+  const bp = audio.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.Q.value = 6;
+  bp.frequency.setValueAtTime(600, t);
+  bp.frequency.exponentialRampToValueAtTime(3200, t + 0.16);
+  const gn = audio.createGain();
+  gn.gain.setValueAtTime(0.3, t);
+  gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+  n.connect(bp).connect(gn).connect(master);
+  n.start(t);
+  n.stop(t + 0.2);
+}
+
+function hookBite() {
+  if (!audio || muted) return;
+  const t = audio.currentTime;
+  // metallic clank: two detuned squares clipped short
+  [430, 611].forEach((f, i) => {
+    const o = audio.createOscillator();
+    const gn = audio.createGain();
+    o.type = "square";
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.exponentialRampToValueAtTime(f * 0.7, t + 0.12);
+    gn.gain.setValueAtTime(0.22 - i * 0.08, t);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(gn).connect(master);
+    o.start(t);
+    o.stop(t + 0.18);
+  });
+  const n = noiseSource();
+  const hp = audio.createBiquadFilter();
+  hp.type = "highpass";
+  hp.frequency.value = 3000;
+  const ng = audio.createGain();
+  ng.gain.setValueAtTime(0.3, t);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+  n.connect(hp).connect(ng).connect(master);
+  n.start(t);
+  n.stop(t + 0.08);
+}
+
+function hookSnap() {
+  if (!audio || muted) return;
+  const t = audio.currentTime;
+  const o = audio.createOscillator();
+  const gn = audio.createGain();
+  o.type = "triangle";
+  o.frequency.setValueAtTime(220, t);
+  o.frequency.exponentialRampToValueAtTime(900, t + 0.18);
+  gn.gain.setValueAtTime(0.0001, t);
+  gn.gain.exponentialRampToValueAtTime(0.24, t + 0.02);
+  gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+  o.connect(gn).connect(master);
+  o.start(t);
+  o.stop(t + 0.26);
+}
+
+function boom(size) {
+  if (!audio || muted) return;
+  const t = audio.currentTime;
+  const dur = 0.25 + size * 0.12;
+  const src = noiseSource();
+  const filter = audio.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(500 + size * 400, t);
+  filter.frequency.exponentialRampToValueAtTime(80, t + dur);
+  const gn = audio.createGain();
+  gn.gain.setValueAtTime(0.3, t);
+  gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(filter).connect(gn).connect(master);
+  src.start(t);
+  src.stop(t + dur);
+}
+
+// --- the kraken's warble ---
+let squidSound = null;
+function startWarble() {
+  if (!audio) return;
+  const o = audio.createOscillator();
+  const lfo = audio.createOscillator();
+  const lfoGain = audio.createGain();
+  const gn = audio.createGain();
+  o.type = "triangle";
+  o.frequency.value = 90;
+  lfo.frequency.value = 5;
+  lfoGain.gain.value = 30;
+  lfo.connect(lfoGain);
+  lfoGain.connect(o.frequency);
+  gn.gain.value = 0;
+  o.connect(gn).connect(master);
+  o.start();
+  lfo.start();
+  squidSound = { o, lfo, g: gn };
+}
+function stopWarble() {
+  if (!squidSound) return;
+  try { squidSound.o.stop(); squidSound.lfo.stop(); } catch (e) {}
+  squidSound = null;
+}
+
+// ---------- instrument voices ----------
+// palm-muted power chord: root + fifth, clipped short so it chugs
+function chug(root, t, dur, dest, sustain) {
+  const f = midi(root);
+  const voices = sustain ? [1, 1.4983, 2] : [1, 1.4983];
+  voices.forEach((mul, i) => {
+    const o = audio.createOscillator();
+    const gn = audio.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(f * mul, t);
+    const peak = (i === 0 ? 0.5 : 0.3) * (sustain ? 1 : 0.85);
+    gn.gain.setValueAtTime(0.0001, t);
+    gn.gain.exponentialRampToValueAtTime(peak, t + 0.006);
+    if (!sustain) gn.gain.exponentialRampToValueAtTime(peak * 0.25, t + dur * 0.4);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(gn).connect(dest || guitarBus);
+    o.start(t);
+    o.stop(t + dur + 0.02);
+  });
+}
+
+// harmonised lead line — the hero melody, doubled a fifth up
+function leadNote(note, t, dur) {
+  [[0, 0.34], [7, 0.16]].forEach(([iv, vol]) => {
+    const o = audio.createOscillator();
+    const gn = audio.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(midi(note + iv), t);
+    if (vibrato) vibrato._amt.connect(o.detune);
+    gn.gain.setValueAtTime(0.0001, t);
+    gn.gain.exponentialRampToValueAtTime(vol, t + 0.02);
+    gn.gain.setValueAtTime(vol, t + dur * 0.7);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(gn).connect(leadBus);
+    o.start(t);
+    o.stop(t + dur + 0.02);
+  });
+}
+
+function bassNote(note, t, dur) {
+  const o = audio.createOscillator();
+  const gn = audio.createGain();
+  o.type = "square";
+  o.frequency.setValueAtTime(midi(note), t);
+  gn.gain.setValueAtTime(0.0001, t);
+  gn.gain.exponentialRampToValueAtTime(0.5, t + 0.01);
+  gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(gn).connect(bassBus);
+  o.start(t);
+  o.stop(t + dur + 0.02);
+}
+
+function kick(t, dest) {
+  const o = audio.createOscillator();
+  const gn = audio.createGain();
+  o.frequency.setValueAtTime(155, t);
+  o.frequency.exponentialRampToValueAtTime(45, t + 0.07);
+  gn.gain.setValueAtTime(0.9, t);
+  gn.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+  o.connect(gn).connect(dest || drumBus);
+  o.start(t);
+  o.stop(t + 0.16);
+}
+
+function snare(t, dest) {
+  const src = noiseSource();
+  const bp = audio.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = 1800;
+  bp.Q.value = 0.7;
+  const gn = audio.createGain();
+  gn.gain.setValueAtTime(0.6, t);
+  gn.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+  src.connect(bp).connect(gn).connect(dest || drumBus);
+  src.start(t);
+  src.stop(t + 0.18);
+  // a little body under the crack
+  const o = audio.createOscillator();
+  const og = audio.createGain();
+  o.frequency.setValueAtTime(190, t);
+  o.frequency.exponentialRampToValueAtTime(120, t + 0.09);
+  og.gain.setValueAtTime(0.25, t);
+  og.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+  o.connect(og).connect(dest || drumBus);
+  o.start(t);
+  o.stop(t + 0.12);
+}
+
+function hat(t, open) {
+  const src = noiseSource();
+  const hp = audio.createBiquadFilter();
+  hp.type = "highpass";
+  hp.frequency.value = 7000;
+  const gn = audio.createGain();
+  const dur = open ? 0.18 : 0.045;
+  gn.gain.setValueAtTime(open ? 0.16 : 0.1, t);
+  gn.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  src.connect(hp).connect(gn).connect(drumBus);
+  src.start(t);
+  src.stop(t + dur + 0.01);
+}
+
+function crash(t, dest) {
+  const src = noiseSource();
+  const hp = audio.createBiquadFilter();
+  hp.type = "highpass";
+  hp.frequency.value = 5200;
+  const gn = audio.createGain();
+  gn.gain.setValueAtTime(0.42, t);
+  gn.gain.exponentialRampToValueAtTime(0.001, t + 1.1);
+  src.connect(hp).connect(gn).connect(dest || drumBus);
+  src.start(t);
+  src.stop(t + 1.15);
+}
+
+// ---------- the track ----------
+// A four-section song in E minor rather than one loop on repeat: main theme,
+// a faster drive, a half-time breakdown, then the triumphant lift.
+// classic downpicked gallop: eighth + two sixteenths, four times a bar
+const GALLOP = [0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15];
+const STRAIGHT = [0, 2, 4, 6, 8, 10, 12, 14];
+const RING = [0, 6, 8, 14];
+const HALF = [0, 8];
+const KICKS = [0, 3, 6, 8, 11, 14];
+const DOUBLE_KICKS = [0, 2, 3, 6, 8, 10, 11, 14];
+const HALF_KICKS = [0, 8];
+const SNARES = [4, 12];
+const HALF_SNARES = [8];
+
+// [step, midi note, length in sixteenths], one list per bar
+const SECTIONS = [
+  { // A — the main theme: i VI III VII
+    roots: [40, 48, 43, 50], guitar: GALLOP, kicks: KICKS, snares: SNARES,
+    lead: [
+      [[0, 71, 4], [4, 76, 2], [6, 74, 2], [8, 71, 3], [12, 67, 4]],
+      [[0, 72, 4], [4, 67, 2], [6, 76, 2], [8, 74, 6], [14, 72, 2]],
+      [[0, 71, 4], [4, 74, 4], [8, 79, 4], [12, 76, 4]],
+      [[0, 69, 4], [4, 78, 2], [6, 76, 2], [8, 74, 7]],
+    ],
+  },
+  { // B — the chase: double kick, melody up an octave
+    roots: [40, 50, 48, 50], guitar: GALLOP, kicks: DOUBLE_KICKS, snares: SNARES,
+    lead: [
+      [[0, 83, 2], [3, 81, 2], [6, 79, 2], [8, 76, 4], [12, 79, 4]],
+      [[0, 81, 2], [3, 78, 2], [6, 81, 2], [8, 83, 6]],
+      [[0, 79, 2], [3, 76, 2], [6, 72, 2], [8, 76, 4], [12, 79, 2]],
+      [[0, 78, 4], [4, 81, 4], [8, 83, 8]],
+    ],
+  },
+  { // C — breakdown: half time, no lead, just menace
+    roots: [40, 40, 48, 46], guitar: HALF, kicks: HALF_KICKS, snares: HALF_SNARES,
+    lead: null, sustain: true,
+  },
+  { // D — the lift: ringing chords under a soaring line
+    roots: [48, 50, 40, 40], guitar: RING, kicks: DOUBLE_KICKS, snares: SNARES,
+    sustain: true,
+    lead: [
+      [[0, 76, 8], [8, 79, 8]],
+      [[0, 78, 8], [8, 81, 8]],
+      [[0, 83, 12], [12, 81, 4]],
+      [[0, 79, 8], [8, 76, 7]],
+    ],
+  },
+];
+const SONG = SECTIONS.length * LOOP;
+
+function scheduleStep(step, t) {
+  const sec = SECTIONS[Math.floor(step / LOOP) % SECTIONS.length];
+  const within = step % LOOP;
+  const bar = Math.floor(within / BAR);
+  const s = within % BAR;
+  const root = sec.roots[bar];
+  const playing = state === "playing" && !paused;
+  const hot = playing && level >= 3;   // the track gets meaner as you survive
+
+  // bass drives the whole time, menu included
+  if (s % 2 === 0) bassNote(root - 12, t, STEP * 1.8);
+  else if (hot && sec.kicks === DOUBLE_KICKS) bassNote(root - 12, t, STEP * 0.9);
+
+  // hats keep time
+  hat(t, s % 8 === 4);
+  if (hot && s % 2 === 1) hat(t, false);
+
+  if (!playing) {
+    // menu vamp: a heartbeat and one ringing chord under the bass
+    if (s === 0 || s === 8) kick(t);
+    if (s === 0 && bar % 2 === 0) chug(40, t, STEP * 6, null, true);
+    return;
+  }
+
+  // rhythm guitar
+  if (sec.guitar.includes(s)) {
+    const accent = s === 0 || s === 8 || sec.sustain;
+    chug(root, t, accent ? STEP * 3.2 : STEP * 1.1, null, accent);
+  }
+  // drums
+  const kicks = hot && sec.kicks === KICKS ? DOUBLE_KICKS : sec.kicks;
+  if (kicks.includes(s)) kick(t);
+  if (sec.snares.includes(s)) snare(t);
+  // fill across the last beat of every section, then crash into the next
+  if (bar === 3 && s >= 12) snare(t);
+  if (within === 0) crash(t);
+
+  // hero melody over the top
+  if (sec.lead) {
+    for (const [ms, note, len] of sec.lead[bar]) {
+      if (ms === s) leadNote(note, t, len * STEP * 0.9);
+    }
+  }
+}
+
+function musicScheduler() {
+  if (!audio) return;
+  // volume follows game state; riffs duck the track out of the way
+  let target = muted ? 0
+    : state === "playing" ? (paused ? 0.1 : 0.44)
+    : 0.24;
+  if (audio.currentTime < duckUntil) target *= 0.22;
+  musicBus.gain.setTargetAtTime(target, audio.currentTime, 0.09);
+
+  // a backgrounded tab throttles the timer; resync rather than dumping
+  // every missed sixteenth into the present all at once
+  if (nextStepTime < audio.currentTime - 0.1) {
+    const missed = Math.ceil((audio.currentTime - nextStepTime) / STEP);
+    musicStep += missed;
+    nextStepTime += missed * STEP;
+  }
+  while (nextStepTime < audio.currentTime + 0.14) {
+    if (!muted) scheduleStep(musicStep % SONG, nextStepTime);
+    nextStepTime += STEP;
+    musicStep++;
+  }
+}
+
+function startMusic() {
+  if (!audio || musicTimer) return;
+  musicStep = 0;
+  nextStepTime = audio.currentTime + 0.12;
+  musicScheduler();
+  musicTimer = setInterval(musicScheduler, 25);
+}
+
+// ---------- death riff ----------
+// Same key and tempo as the track, but the band stops everything else:
+// gallop lick, harmonised wail, and a whammy dive when it's really over.
+function playRiff(full) {
+  if (!audio || muted) return;
+  const t0 = audio.currentTime + 0.02;
+  duckUntil = t0 + (full ? 5.2 : 1.6);
+
+  const shaper = audio.createWaveShaper();
+  shaper.curve = distCurve;
+  shaper.oversample = "4x";
+  const lo = audio.createBiquadFilter();
+  lo.type = "lowpass";
+  lo.frequency.value = 3000;
+  const hi = audio.createBiquadFilter();
+  hi.type = "highpass";
+  hi.frequency.value = 90;
+  const amp = audio.createGain();
+  amp.gain.value = 0.42;
+  shaper.connect(lo).connect(hi).connect(amp).connect(master);
+
+  const drums = audio.createGain();
+  drums.gain.value = 0.75;
+  drums.connect(master);
+
+  // bar 1: gallop on E with a walk up — pure Saturday-morning action theme
+  const lick = [
+    [40, 0, 2], [40, 2, 1], [40, 3, 1], [40, 4, 2], [40, 6, 1], [40, 7, 1],
+    [43, 8, 2], [45, 10, 2], [46, 12, 2], [47, 14, 2],
+  ];
+  const lick2 = [
+    [48, 16, 3], [48, 20, 1], [47, 21, 1], [45, 22, 2],
+    [43, 24, 4], [41, 28, 2], [40, 30, 2],
+  ];
+  const notes = full ? lick.concat(lick2) : lick;
+  for (const [n, at, len] of notes) {
+    chug(n, t0 + at * STEP, len * STEP * 1.15, shaper, len >= 3);
+  }
+
+  crash(t0, drums);
+  const bars = full ? 2 : 1;
+  for (let b = 0; b < bars; b++) {
+    for (const s of DOUBLE_KICKS) kick(t0 + (b * BAR + s) * STEP, drums);
+    for (const s of SNARES) snare(t0 + (b * BAR + s) * STEP, drums);
+  }
+
+  // harmonised lead wail across the top
+  const wail = full
+    ? [[76, 0, 4], [79, 4, 4], [78, 8, 4], [76, 12, 4], [83, 16, 8], [81, 24, 8]]
+    : [[76, 0, 4], [79, 4, 4], [78, 8, 8]];
+  for (const [n, at, len] of wail) {
+    leadNote(n, t0 + at * STEP, len * STEP * 0.9);
+  }
+
+  if (full) {
+    // whammy dive into the floor
+    const end = t0 + 32 * STEP;
+    crash(end, drums);
+    [1, 1.4983].forEach((mul) => {
+      const o = audio.createOscillator();
+      const gn = audio.createGain();
+      o.type = "sawtooth";
+      o.frequency.setValueAtTime(midi(40) * mul * 2, end);
+      o.frequency.exponentialRampToValueAtTime(28, end + 1.6);
+      gn.gain.setValueAtTime(0.0001, end);
+      gn.gain.exponentialRampToValueAtTime(0.45, end + 0.01);
+      gn.gain.exponentialRampToValueAtTime(0.0001, end + 1.8);
+      o.connect(gn).connect(shaper);
+      o.start(end);
+      o.stop(end + 1.85);
+    });
+    // pinch-harmonic squeal riding over the dive
+    const sq = audio.createOscillator();
+    const sg = audio.createGain();
+    sq.type = "sawtooth";
+    sq.frequency.setValueAtTime(1480, end);
+    sq.frequency.exponentialRampToValueAtTime(2700, end + 0.4);
+    sg.gain.setValueAtTime(0.0001, end);
+    sg.gain.exponentialRampToValueAtTime(0.15, end + 0.02);
+    sg.gain.exponentialRampToValueAtTime(0.0001, end + 1.0);
+    sq.connect(sg).connect(shaper);
+    sq.start(end);
+    sq.stop(end + 1.05);
+  }
+}
+
+const muteBtn = document.getElementById("mute");
+function setMuted(m) {
+  muted = m;
+  muteBtn.textContent = muted ? "SOUND OFF" : "SOUND ON";
+  ensureAudio();
+}
+muteBtn.addEventListener("click", () => setMuted(!muted));
+
+// ---------- input ----------
+// Two seats at the same cabinet. Player one has the arrow cluster, player two
+// has the left hand of the keyboard, so both can sit at one machine.
+const controls = [
+  { left: "left", right: "right", thrust: "thrust", fire: "fire",
+    bomb: "bomb", hook: "hook" },
+  { left: "left2", right: "right2", thrust: "thrust2", fire: "fire2",
+    bomb: "bomb2", hook: "hook2" },
+];
+const keys = {
+  left: false, right: false, thrust: false, fire: false, bomb: false, hook: false,
+  left2: false, right2: false, thrust2: false, fire2: false, bomb2: false, hook2: false,
+};
+// keys[] is consumed on read for the one-shot actions, so the winch needs its
+// own honest picture of what is still being held down
+const held = Object.assign({}, keys);
+const KEYMAP = {
+  ArrowLeft: "left", ArrowRight: "right", ArrowUp: "thrust",
+  Space: "fire", KeyB: "bomb", ArrowDown: "hook",
+  KeyA: "left2", KeyD: "right2", KeyW: "thrust2",
+  KeyQ: "fire2", KeyE: "bomb2", KeyS: "hook2",
+};
+// one action per physical press — auto-repeat must not re-trigger these
+const EDGE = new Set(["bomb", "bomb2", "hook", "hook2"]);
+window.addEventListener("keydown", (e) => {
+  if (e.code in KEYMAP) {
+    const k = KEYMAP[e.code];
+    if (!(e.repeat && EDGE.has(k))) keys[k] = true;
+    held[k] = true;
+    e.preventDefault();
+  }
+  if (e.code === "Enter" || (e.code === "Space" && state !== "playing")) {
+    ensureAudio();
+    if (state === "start" || state === "over") startGame();
+    e.preventDefault();
+  }
+  // Q from a menu starts a two-seat game outright
+  if (e.code === "KeyQ" && state !== "playing") {
+    ensureAudio();
+    startGame(true);
+    e.preventDefault();
+  }
+  if (e.code === "KeyP" && state === "playing") paused = !paused;
+  if (e.code === "KeyM") setMuted(!muted);
+});
+window.addEventListener("keyup", (e) => {
+  if (!(e.code in KEYMAP)) return;
+  const k = KEYMAP[e.code];
+  held[k] = false;
+  // a one-shot stays latched until the loop has taken it, so a tap quicker than
+  // a frame still counts
+  if (!EDGE.has(k)) keys[k] = false;
+});
+
+window.addEventListener("touchstart", function once() {
+  document.body.classList.add("has-touch");
+  document.getElementById("startPrompt").textContent = "TAP TO START";
+  document.getElementById("overPrompt").textContent = "TAP TO RESTART";
+  window.removeEventListener("touchstart", once);
+}, { passive: true });
+
+function bindHold(id, key) {
+  const el = document.getElementById(id);
+  const up = () => { held[key] = false; if (!EDGE.has(key)) keys[key] = false; };
+  el.addEventListener("pointerdown", (e) => { keys[key] = held[key] = true; e.preventDefault(); });
+  el.addEventListener("pointerup", up);
+  el.addEventListener("pointercancel", up);
+  el.addEventListener("pointerleave", up);
+}
+bindHold("tLeft", "left");
+bindHold("tRight", "right");
+bindHold("tThrust", "thrust");
+bindHold("tFire", "fire");
+bindHold("tBomb", "bomb");
+bindHold("tHook", "hook");
+
+document.getElementById("start").addEventListener("pointerdown", () => {
+  ensureAudio();
+  if (state === "start") startGame();
+});
+document.getElementById("over").addEventListener("pointerdown", () => {
+  ensureAudio();
+  if (state === "over") startGame();
+});
+
+// ---------- palette ----------
+const TAU = Math.PI * 2;
+const rand = (a, b) => a + Math.random() * (b - a);
+let hue = 0; // global spectrum drift
+const FONT = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
+const neon = (h, l = 62, a = 1, s = 100) =>
+  "hsla(" + (((h % 360) + 360) % 360) + "," + s + "%," + l + "%," + a + ")";
+
+// ---------- state ----------
+let state = "start"; // start | playing | over
+let paused = false;
+let players = [], bullets, asteroids, debris;
+let squids = [], squidTimer = 0;
+let nuke = null;
+
+// ---------- difficulty ----------
+// Everything that scales with level lives here, so the ramp is one thing to
+// read and tune rather than a dozen magic numbers scattered through update().
+function tune() {
+  const L = level;
+  return {
+    rocks: Math.min(3 + L, 10),
+    rockSpeed: 30 + L * 6,
+    maxSquids: L >= 10 ? 3 : L >= 6 ? 2 : 1,
+    squidHp: L >= 9 ? 5 : L >= 5 ? 4 : 3,
+    squidAccel: 60 + L * 7,
+    squidSpeed: 78 + L * 9,
+    squidGap: Math.max(5, 15 - L * 1.1),      // seconds between arrivals
+    lungeGap: Math.max(1.6, 4.2 - L * 0.28),
+    diveGap: Math.max(3, 8 - L * 0.5),
+    portalGap: Math.max(12, 26 - L * 1.2),
+    planetGap: Math.max(24, 58 - L * 4),
+  };
+}
+// milestone waves get a name, so the ramp is felt and not just endured
+const WAVE_NAMES = {
+  2: "THEY MULTIPLY", 3: "FULL THROTTLE", 5: "TOUGHER HIDE",
+  6: "TWO KRAKENS", 8: "NO QUARTER", 10: "THREE KRAKENS", 14: "ABYSSAL",
+};
+let portals = null, portalTimer = 0;
+let falcon = null, falconTimer = 999;
+let planet = null, planetTimer = 0;
+let level = 1, levelTimer = 0;
+
+// effects
+let shake = 0, flashA = 0, flashHue = 0, timeScale = 1;
+let shocks = [], popups = [], banner = null, deathFx = 0, aberr = 0;
+let deathAt = null;
+
+let best = 0;
+try { best = Number(localStorage.getItem("asteroids-best")) || 0; } catch (e) {}
+
+// ---------- players ----------
+// Drop-in co-op: player two can join at any moment, and a player who runs out
+// of lives can buy back in whenever they like. Joining is never refused.
+const PLAYER_HUE = [180, 45];
+const PLAYER_NAME = ["P1", "P2"];
+
+function makeShip(p) {
+  const spread = p.idx === 0 ? -60 : 60;
+  return {
+    x: W / 2 + spread, y: H / 2, vx: 0, vy: 0,
+    angle: -Math.PI / 2,
+    radius: 11,
+    invuln: 2.5,
+    dead: false,
+    hook: null,
+    hookCooldown: 0,
+    boost: 0,
+  };
+}
+
+function makePlayer(idx) {
+  const p = {
+    idx,
+    hue: PLAYER_HUE[idx],
+    lives: 3,
+    score: 0,
+    bombs: 2,
+    bombCooldown: 0,
+    fireCooldown: 0,
+    respawnTimer: 0,
+    hook: null,
+    hookCooldown: 0,
+    boost: 0,
+    out: false,
+  };
+  Object.assign(p, makeShip(p));
+  return p;
+}
+
+function joinPlayer(idx) {
+  let p = players[idx];
+  if (!p) {
+    p = makePlayer(idx);
+    players[idx] = p;
+  } else {
+    // buying back in after running out
+    p.lives = 3;
+    p.bombs = Math.max(p.bombs, 2);
+  }
+  p.out = false;
+  p.respawnTimer = 0;
+  Object.assign(p, makeShip(p));
+  p.invuln = 3;
+  shockwave(p.x, p.y, p.hue, 190, 340);
+  screenFlash(p.hue, 0.2);
+  blip(560, 0.2, "square", 0.14);
+  updateHud();
+  return p;
+}
+
+const livePlayers = () => players.filter((p) => p && !p.out);
+const flyingShips = () => players.filter((p) => p && !p.out && !p.dead);
+
+function nearestShip(x, y) {
+  let best = null, bestD = Infinity;
+  for (const p of flyingShips()) {
+    const d = Math.hypot(p.x - x, p.y - y);
+    if (d < bestD) { bestD = d; best = p; }
+  }
+  return best;
+}
+
+function makeAsteroid(x, y, size) {
+  // size 3 = large, 2 = medium, 1 = small
+  const radius = size === 3 ? 42 : size === 2 ? 24 : 13;
+  const speed = rand(0.75, 1.5) * tune().rockSpeed + (3 - size) * 25;
+  const dir = rand(0, TAU);
+  const points = [];
+  const n = 9 + Math.floor(rand(0, 4));
+  for (let i = 0; i < n; i++) points.push(rand(0.72, 1.18));
+  return {
+    x, y,
+    vx: Math.cos(dir) * speed,
+    vy: Math.sin(dir) * speed,
+    angle: rand(0, TAU),
+    spin: rand(-0.8, 0.8),
+    radius, size, points,
+    hueOff: rand(0, 360),
+    pulse: rand(0, TAU),
+  };
+}
+
+function spawnField() {
+  asteroids = [];
+  const count = tune().rocks;
+  for (let i = 0; i < count; i++) {
+    let x, y;
+    do {
+      x = rand(0, W);
+      y = rand(0, H);
+    } while (Math.hypot(x - W / 2, y - H / 2) < 180);
+    asteroids.push(makeAsteroid(x, y, 3));
+  }
+}
+
+// ---------- effects ----------
+function shockwave(x, y, h, max, speed) {
+  shocks.push({ x, y, r: 4, max: max || 140, sp: speed || 320, hue: h });
+}
+function popup(x, y, text, h) {
+  popups.push({ x, y, text, hue: h, life: 1 });
+}
+function kaboom(x, y, n, spread, h, power) {
+  for (let i = 0; i < n; i++) {
+    const dir = rand(0, TAU);
+    const speed = rand(40, 150) * (power || 1);
+    debris.push({
+      x: x + Math.cos(dir) * rand(0, spread),
+      y: y + Math.sin(dir) * rand(0, spread),
+      vx: Math.cos(dir) * speed,
+      vy: Math.sin(dir) * speed,
+      angle: rand(0, TAU),
+      spin: rand(-8, 8),
+      len: rand(3, 11),
+      life: rand(0.4, 1.1),
+      hue: (h === undefined ? rand(0, 360) : h + rand(-40, 40)),
+    });
+  }
+}
+const spawnDebris = (x, y, n, spread) => kaboom(x, y, n, spread);
+
+function screenFlash(h, a) {
+  flashHue = h;
+  flashA = Math.max(flashA, a);
+}
+
+// ---------- squid ----------
+function spawnSquid() {
+  const edge = Math.floor(rand(0, 4));
+  let x, y;
+  if (edge === 0) { x = -30; y = rand(0, H); }
+  else if (edge === 1) { x = W + 30; y = rand(0, H); }
+  else if (edge === 2) { x = rand(0, W); y = -30; }
+  else { x = rand(0, W); y = H + 30; }
+  const T = tune();
+  squids.push({
+    x, y, vx: 0, vy: 0, hp: T.squidHp, maxHp: T.squidHp, radius: 21,
+    phase: rand(0, TAU), roll: rand(0, TAU), flash: 0,
+    windup: 0, lungeTimer: T.lungeGap, lungeBoost: 0,
+    z: 0, zState: "surface", diveTimer: rand(T.diveGap, T.diveGap + 4), deepTimer: 0,
+  });
+  if (falconTimer > 900) falconTimer = rand(6, 14);
+  if (!squidSound) startWarble();
+  shockwave(x, y, 300, 200, 400);
+}
+
+function damageSquid(s, n, owner) {
+  if (!s || s.hp <= 0) return;
+  if (owner) s.lastHitBy = owner;
+  s.hp -= n;
+  s.flash = 0.15;
+  shake = Math.max(shake, 7);
+  aberr = Math.max(aberr, 0.5);
+  if (s.hp <= 0) {
+    boom(3);
+    kaboom(s.x, s.y, 34, 16, 320, 1.6);
+    shockwave(s.x, s.y, 320, 260, 460);
+    shockwave(s.x, s.y, 180, 200, 300);
+    screenFlash(320, 0.35);
+    shake = Math.max(shake, 16);
+    const credit = owner || s.lastHitBy || livePlayers()[0];
+    if (credit) credit.score += 250;
+    popup(s.x, s.y, "+250", 320);
+    const i = squids.indexOf(s);
+    if (i >= 0) squids.splice(i, 1);
+    if (!squids.length) stopWarble();
+    squidTimer = rand(tune().squidGap, tune().squidGap + 8);
+    updateHud();
+  } else {
+    blip(220, 0.12, "sawtooth", 0.15);
+    kaboom(s.x, s.y, 8, 10, 320);
+  }
+}
+
+// ---------- grappling hook ----------
+// It is a tether, not a winch. The line locks at the length it bit at and from
+// then on it only ever *stops* you leaving — it never hauls you in. So a hook
+// turns speed you already had into a curve: you swing round the thing you
+// caught and leave on the tangent, carrying the lot. The line also refuses to
+// let you closer than a ship's width from the anchor, so the one thing it can
+// never do is feed you to the rock. Hold the button and the winch shortens the
+// line: a tighter arc is a faster one, which is how you build real speed.
+const HOOK_SPEED = 900, HOOK_RANGE = 380;
+const HOOK_SNAP = 560;         // haul past this and the line parts
+const HOOK_CLEAR = 26;         // hull-to-rock daylight the line will not give up
+const REEL_RATE = 300;         // px/s the winch takes in while you hold it
+const TETHER_BITE = 0.94;      // how much outward speed the line eats; the rest is stretch
+const WHIP = 0.8;              // arrested speed the line spends sideways instead of losing
+const HOOK_KICK = 110;         // shove off as you cut loose
+const WRECK_SPEED = 170;       // how fast a held rock must swing to break things
+const HARPOON_TICK = 1.5;      // seconds per point of bleed on a hooked kraken
+
+// Everything you can catch answers the same three questions: where is the bite
+// point now, how big is the body, and is it still there to hold on to.
+function anchorPos(h) {
+  const a = h.target;
+  if (!a) return { x: h.x, y: h.y };
+  if (h.kind === "rock") {         // the bite rides along as the rock spins
+    const c = Math.cos(a.angle), s = Math.sin(a.angle);
+    return { x: a.x + h.offX * c - h.offY * s, y: a.y + h.offX * s + h.offY * c };
+  }
+  return { x: a.x + h.offX, y: a.y + h.offY };
+}
+function anchorRadius(h) {
+  const a = h.target;
+  if (!a) return 0;
+  return h.kind === "planet" ? a.r : h.kind === "kraken" ? a.radius + 10 : a.radius;
+}
+function anchorAlive(h) {
+  if (h.kind === "rock") return asteroids.indexOf(h.target) !== -1;
+  if (h.kind === "kraken") return squids.indexOf(h.target) !== -1 && h.target.hp > 0;
+  if (h.kind === "planet") return planet === h.target;
+  return false;
+}
+// Newton gets his say: whatever the line takes off you, it puts on the anchor,
+// divided by how much rock there is. A pebble comes along for the ride; a
+// boulder shrugs; the planet does not even notice.
+function tugAnchor(h, ix, iy) {
+  const a = h.target;
+  if (!a || h.kind === "planet") return;
+  const m = h.kind === "kraken" ? 7 : (a.radius * a.radius) / 169;
+  a.vx += ix / m;
+  a.vy += iy / m;
+}
+
+// A line cannot destroy the speed you brought it — it can only bend it. So
+// whatever the tether arrests head-on it spends sideways instead: even a shot
+// straight down the middle throws you into an arc rather than parking you.
+// Which way round is not arbitrary — the rock's own spin decides it.
+function whipRound(p, h, nx, ny, arrested) {
+  const s = Math.abs(arrested);
+  if (s < 110) return;      // below this it is just the arc being drawn in steps
+  const tx = -ny, ty = nx;
+  let side = p.vx * tx + p.vy * ty;        // keep going whichever way you leaned
+  if (Math.abs(side) < 30) side = h.kind === "rock" ? h.target.spin || 1 : 1;
+  const sg = side >= 0 ? 1 : -1;
+  p.vx += tx * sg * s * WHIP;
+  p.vy += ty * sg * s * WHIP;
+}
+
+function fireHook(p) {
+  if (p.hook || p.hookCooldown > 0 || p.dead) return;
+  p.hook = {
+    x: p.x + Math.cos(p.angle) * 14,
+    y: p.y + Math.sin(p.angle) * 14,
+    vx: p.vx + Math.cos(p.angle) * HOOK_SPEED,
+    vy: p.vy + Math.sin(p.angle) * HOOK_SPEED,
+    radius: 3,
+    state: "flying",
+    travel: 0,
+    spin: p.angle,
+    target: null, kind: null, offX: 0, offY: 0,
+    len: 0, taut: 0, reel: 0, swept: 0, lastA: 0,
+    wreckCd: 0, bleed: HARPOON_TICK,
+  };
+  hookThrow();
+}
+
+function bite(p, h, obj, kind) {
+  h.state = "attached";
+  h.target = obj;
+  h.kind = kind;
+  const dx = h.x - obj.x, dy = h.y - obj.y;
+  if (kind === "rock") {          // store the bite in the rock's own turning frame
+    const c = Math.cos(-obj.angle), s = Math.sin(-obj.angle);
+    h.offX = dx * c - dy * s;
+    h.offY = dx * s + dy * c;
+  } else {
+    h.offX = dx;
+    h.offY = dy;
+  }
+  const anc = anchorPos(h);
+  h.len = Math.max(Math.hypot(p.x - anc.x, p.y - anc.y),
+                   anchorRadius(h) + p.radius + HOOK_CLEAR);
+  h.lastA = Math.atan2(p.y - anc.y, p.x - anc.x);
+  h.taut = 1;
+  kaboom(h.x, h.y, 6, 5, hue + 40);
+  shockwave(h.x, h.y, hue + p.hue, 46, 190);
+  hookBite();
+  if (kind === "kraken") damageSquid(obj, 1, p);   // the barb goes in deep
+}
+
+function releaseHook(p) {
+  const h = p.hook;
+  if (!h) return;
+  if (h.state === "attached") {
+    const sp = Math.hypot(p.vx, p.vy);
+    if (sp > 1) {                 // kick off the line on the way past
+      p.vx += (p.vx / sp) * HOOK_KICK;
+      p.vy += (p.vy / sp) * HOOK_KICK;
+    }
+    // the afterglow lasts as long as the exit was worth having
+    p.boost = Math.min(2.4, 0.5 + sp / 380);
+    if (sp > 560) {
+      popup(p.x, p.y - 24, "SLINGSHOT", hue + p.hue);
+      screenFlash(hue + p.hue, 0.12);
+    }
+    kaboom(h.x, h.y, 5, 5, hue + p.hue);
+    hookSnap();
+  }
+  p.hook = null;
+  p.hookCooldown = 0.3;
+}
+
+// A rock on the end of a line is a mace. Swing one hard enough and it opens up
+// whatever it lands on — free of ammunition, expensive in nerve.
+function wreckPass(p, h, dt) {
+  if (h.kind !== "rock") return;
+  const a = h.target;
+  h.wreckCd -= dt;
+  if (h.wreckCd > 0) return;
+  const sp = Math.hypot(a.vx, a.vy);
+  if (sp < WRECK_SPEED) return;
+
+  for (let i = asteroids.length - 1; i >= 0; i--) {
+    const o = asteroids[i];
+    if (o === a) continue;
+    if (Math.hypot(o.x - a.x, o.y - a.y) >= o.radius + a.radius) continue;
+    const nx = (o.x - a.x) / (o.radius + a.radius), ny = (o.y - a.y) / (o.radius + a.radius);
+    splitAsteroid(o, i, p);
+    p.score += 50;
+    popup(a.x, a.y - 18, "WRECK +50", hue + p.hue);
+    shake = Math.max(shake, 9);
+    a.vx -= nx * sp * 0.5;
+    a.vy -= ny * sp * 0.5;
+    h.wreckCd = 0.18;
+    // swing a pebble at a boulder and the pebble is what breaks
+    if (o.size >= a.size) {
+      const j = asteroids.indexOf(a);
+      if (j !== -1) { splitAsteroid(a, j, p); releaseHook(p); }
+    }
+    return;
+  }
+  for (const s of squids) {
+    if (s.z >= 25 || s.hp <= 0) continue;
+    if (Math.hypot(s.x - a.x, s.y - a.y) >= s.radius + a.radius) continue;
+    damageSquid(s, a.size, p);
+    popup(a.x, a.y - 18, "WRECK", hue + p.hue);
+    a.vx = -a.vx * 0.6;
+    a.vy = -a.vy * 0.6;
+    h.wreckCd = 0.3;
+    return;
+  }
+}
+
+function updateHook(p, dt) {
+  const h = p.hook;
+  if (!h) return;
+
+  if (h.state === "flying") {
+    h.x += h.vx * dt;
+    h.y += h.vy * dt;
+    h.travel += Math.hypot(h.vx, h.vy) * dt;
+    h.spin += 16 * dt;
+    wrap(h);
+    for (const a of asteroids) {
+      if (Math.hypot(a.x - h.x, a.y - h.y) < a.radius) { bite(p, h, a, "rock"); break; }
+    }
+    if (h.state === "flying") {
+      for (const s of squids) {         // a submerged kraken is not there to catch
+        if (s.z >= 25 || s.hp <= 0) continue;
+        if (Math.hypot(s.x - h.x, s.y - h.y) < s.radius + 6) { bite(p, h, s, "kraken"); break; }
+      }
+    }
+    if (h.state === "flying" && planet &&
+        Math.hypot(planet.x - h.x, planet.y - h.y) < planet.r) {
+      bite(p, h, planet, "planet");    // the thing that was going to flatten you
+    }
+    if (h.state === "flying" && h.travel > HOOK_RANGE) {
+      p.hook = null;
+      p.hookCooldown = 0.25;
+    }
+    return;
+  }
+
+  if (!anchorAlive(h)) { releaseHook(p); return; }   // anchor gone, line comes free
+
+  const anc = anchorPos(h);
+  h.x = anc.x;
+  h.y = anc.y;
+  const core = anchorRadius(h);
+  const clear = core + p.radius + HOOK_CLEAR;   // hull-to-body, kept absolutely
+  // The winch stops at the length that still lets you go all the way round at
+  // that clearance. Shorter than this and the line and the rock would be asking
+  // for two different things at once, and the argument costs you all your speed.
+  const bo = Math.hypot(h.x - h.target.x, h.y - h.target.y);
+  const minLen = Math.min(clear + bo, HOOK_RANGE);
+
+  let dx = p.x - h.x, dy = p.y - h.y;
+  let d = Math.hypot(dx, dy) || 1;
+  let nx = dx / d, ny = dy / d;                     // anchor → ship
+
+  // too much line out and it parts — which is also what happens the moment one
+  // of you wraps round the edge of the world
+  if (d > HOOK_SNAP) { releaseHook(p); return; }
+
+  // Hold the button and the winch takes line in. How much you leave out is the
+  // whole tactical choice: a long line is a wide, fast, committed arc; a short
+  // one whips you tight around the rock. Shortening a swing also spins you up,
+  // because the angular momentum has to go somewhere — that is how you build
+  // real speed out of a hook, and it is the only part of the rig that may.
+  const onSkin = Math.hypot(p.x - h.target.x, p.y - h.target.y) <= clear + 1;
+  if (h.reel && h.len > minLen) {
+    const nl = Math.max(minLen, h.len - REEL_RATE * dt);
+    if (!onSkin && d <= h.len + 1) {           // only a line under load pays out speed
+      const gain = Math.min(1.6, 1 + (h.len / nl - 1) * 0.5);  // half what the physics offers
+      const vr = p.vx * nx + p.vy * ny;
+      const tx = p.vx - nx * vr, ty = p.vy - ny * vr;          // tangential part only
+      p.vx = nx * vr + tx * gain;
+      p.vy = ny * vr + ty * gain;
+    }
+    h.len = nl;
+    if (Math.random() < 0.5) {
+      const dir = rand(0, TAU);
+      debris.push({
+        x: h.x, y: h.y,
+        vx: Math.cos(dir) * rand(30, 90), vy: Math.sin(dir) * rand(30, 90),
+        angle: dir, spin: rand(-8, 8),
+        len: rand(2, 5), life: rand(0.15, 0.35),
+        hue: hue + 40 + rand(-25, 25),
+      });
+    }
+  }
+  h.len = Math.max(h.len, minLen);
+
+  // From here on the line may bend what you are carrying but never add to it.
+  // The winch above is the only thing in the rig allowed to make you faster,
+  // which is what keeps a long swing honest instead of a free engine.
+  const sp0 = Math.hypot(p.vx, p.vy);
+
+  h.taut = Math.max(0, h.taut - dt * 3);
+  if (d > h.len) {
+    // the line comes up hard: you stay on the circle and keep everything that
+    // was carrying you sideways
+    const over = d - h.len;
+    p.x -= nx * over;
+    p.y -= ny * over;
+    const vr = p.vx * nx + p.vy * ny;
+    if (vr > 0) {
+      p.vx -= nx * vr * TETHER_BITE;
+      p.vy -= ny * vr * TETHER_BITE;
+      tugAnchor(h, nx * vr * TETHER_BITE, ny * vr * TETHER_BITE);
+      whipRound(p, h, nx, ny, vr * TETHER_BITE);
+      h.taut = Math.min(1, vr / 260);
+    }
+  }
+
+  // And the hard promise: the line keeps your hull off the body it is tied to,
+  // always, whatever the rope is doing. You came in down the middle, or the
+  // rock drifted onto you — either way it fends you off and throws the stopped
+  // speed round the side. That is a suicide run turned into a swing.
+  const a = h.target;
+  let bx = p.x - a.x, by = p.y - a.y;
+  let bd = Math.hypot(bx, by) || 1;
+  if (bd < clear) {
+    const ux = bx / bd, uy = by / bd;
+    p.x += ux * (clear - bd);
+    p.y += uy * (clear - bd);
+    const vr = p.vx * ux + p.vy * uy;
+    if (vr < 0) {
+      p.vx -= ux * vr;
+      p.vy -= uy * vr;
+      tugAnchor(h, ux * vr, uy * vr);
+      whipRound(p, h, ux, uy, vr);
+      if (vr < -120) {
+        kaboom(p.x, p.y, 4, 5, hue + 40);
+        shockwave(p.x, p.y, hue + p.hue, 40, 200);
+        shake = Math.max(shake, 5);
+      }
+    }
+    h.taut = 1;
+    // the body shouldered the line aside, so the winch pays out rather than
+    // fight it — otherwise the two constraints would argue every frame
+    h.len = Math.max(h.len, Math.hypot(p.x - h.x, p.y - h.y));
+  }
+
+  const sp1 = Math.hypot(p.vx, p.vy);
+  if (sp1 > sp0 && sp1 > 1) { p.vx *= sp0 / sp1; p.vy *= sp0 / sp1; }
+
+  // how far round you have come, for the arc readout
+  const ang = Math.atan2(p.y - h.y, p.x - h.x);
+  let da = ang - h.lastA;
+  while (da > Math.PI) da -= TAU;
+  while (da < -Math.PI) da += TAU;
+  h.swept += Math.abs(da);
+  h.lastA = ang;
+
+  wreckPass(p, h, dt);
+
+  if (h.kind === "kraken") {          // the barb keeps working while you ride it
+    h.bleed -= dt;
+    if (h.bleed <= 0) { h.bleed = HARPOON_TICK; damageSquid(h.target, 1, p); }
+  }
+}
+
+function drawHook(p) {
+  const h = p.hook;
+  if (!h || p.dead) return;
+  const taut = h.state === "attached";
+  const dx = h.x - p.x, dy = h.y - p.y;
+  const d = Math.hypot(dx, dy) || 1;
+  const nx = -dy / d, ny = dx / d;
+  const c = neon(hue + p.hue + (taut ? 40 : 0), taut ? 70 + h.taut * 20 : 60);
+
+  // the arc the line will hold you to, drawn only as you come out to meet it —
+  // it fades up exactly when it starts to matter and stays out of the way while
+  // the line is slack
+  const reach = taut ? Math.min(1, Math.max(0, (d / h.len - 0.72) * 3.6)) : 0;
+  if (reach > 0.02) {
+    g.save();
+    glow(neon(hue + p.hue, 60, 0.26 * reach));
+    g.lineWidth = 1;
+    g.setLineDash([5, 9]);
+    g.lineDashOffset = -h.swept * 26;
+    g.beginPath();
+    g.arc(h.x, h.y, h.len, 0, TAU);
+    g.stroke();
+    g.restore();
+  }
+
+  // the line: loose while it flies out, singing while it holds you
+  glow(c);
+  g.lineWidth = taut ? 1.8 + h.taut * 1.6 : 1.4;
+  g.beginPath();
+  g.moveTo(p.x, p.y);
+  const segs = 10;
+  for (let i = 1; i <= segs; i++) {
+    const f = i / segs;
+    const wob = taut
+      ? Math.sin(f * Math.PI) * Math.sin(h.swept * 9) * (1 + h.taut * 5)
+      : Math.sin(f * Math.PI) * Math.sin(h.travel * 0.05) * 7;
+    g.lineTo(p.x + dx * f + nx * wob, p.y + dy * f + ny * wob);
+  }
+  g.stroke();
+
+  // the head: a little barbed claw
+  g.save();
+  g.translate(h.x, h.y);
+  g.rotate(taut ? Math.atan2(-dy, -dx) : h.spin);
+  g.lineWidth = 2;
+  g.beginPath();
+  g.moveTo(-5, 0);
+  g.lineTo(4, 0);
+  g.moveTo(4, 0);
+  g.lineTo(-2, -5);
+  g.moveTo(4, 0);
+  g.lineTo(-2, 5);
+  g.stroke();
+  g.restore();
+}
+
+// ---------- atom bomb ----------
+// The blast front covers half the playfield: pi*r^2 = W*H/2. Everything the
+// front sweeps over is vaporised as it passes, so you watch it eat the screen.
+function blastRadius() {
+  return Math.sqrt((W * H) / (2 * Math.PI));
+}
+
+function detonate(p) {
+  if (!p || p.bombs <= 0 || p.dead || p.bombCooldown > 0 || state !== "playing") return;
+  p.bombs--;
+  p.bombCooldown = 0.8;
+  nuke = { x: p.x, y: p.y, r: 0, max: blastRadius(), life: 1.5,
+           hit: new Set(), owner: p };
+  updateHud();
+  nukeSound();
+  screenFlash(60, 0.95);
+  shake = Math.max(shake, 34);
+  aberr = 1;
+  timeScale = 0.32;
+  // everyone in the blast gets a moment of grace — friendly fire is not a thing
+  for (const q of livePlayers()) q.invuln = Math.max(q.invuln, 1.6);
+  shockwave(nuke.x, nuke.y, 60, nuke.max * 1.05, nuke.max * 2.4);
+  shockwave(nuke.x, nuke.y, 20, nuke.max * 0.8, nuke.max * 1.7);
+  shockwave(nuke.x, nuke.y, 0, nuke.max * 0.55, nuke.max * 1.1);
+}
+
+function updateNuke(dt) {
+  if (!nuke) return;
+  const prev = nuke.r;
+  nuke.r += (nuke.max / 0.55) * dt;     // front crosses its radius in ~0.55s
+  nuke.life -= dt;
+
+  // vaporise rocks the front has just swept past
+  for (let i = asteroids.length - 1; i >= 0; i--) {
+    const a = asteroids[i];
+    const d = Math.hypot(a.x - nuke.x, a.y - nuke.y);
+    if (d <= nuke.r && d > prev - a.radius) {
+      const pts = a.size === 3 ? 20 : a.size === 2 ? 50 : 100;
+      if (nuke.owner) nuke.owner.score += pts;
+      asteroids.splice(i, 1);
+      kaboom(a.x, a.y, 10 + a.size * 4, a.radius * 0.6, 40, 1.5);
+      boom(a.size);
+    }
+  }
+  // krakens caught in the blast take heavy damage, once each
+  for (const s of squids.slice()) {
+    if (nuke.hit.has(s)) continue;
+    if (Math.hypot(s.x - nuke.x, s.y - nuke.y) <= nuke.r) {
+      nuke.hit.add(s);
+      damageSquid(s, 3, nuke.owner);
+    }
+  }
+  if (nuke.life <= 0) nuke = null;
+  updateHud();
+}
+
+function drawNuke() {
+  const n = nuke;
+  const f = Math.min(1, n.r / n.max);
+  const fade = Math.max(0, Math.min(1, n.life / 0.9));
+
+  // the fireball core
+  g.save();
+  const core = g.createRadialGradient(n.x, n.y, 0, n.x, n.y, Math.max(1, n.r));
+  core.addColorStop(0, "rgba(255,255,255," + (0.5 * fade) + ")");
+  core.addColorStop(0.35, neon(50, 60, 0.34 * fade));
+  core.addColorStop(0.75, neon(20, 55, 0.16 * fade));
+  core.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = core;
+  g.beginPath();
+  g.arc(n.x, n.y, Math.max(1, n.r), 0, TAU);
+  g.fill();
+
+  // the shock front itself
+  g.lineCap = "round";
+  for (let i = 0; i < 3; i++) {
+    g.strokeStyle = neon(55 - i * 20, 70, (0.9 - i * 0.25) * fade);
+    g.lineWidth = 7 - i * 2;
+    g.beginPath();
+    g.arc(n.x, n.y, Math.max(1, n.r - i * 9), 0, TAU);
+    g.stroke();
+  }
+  // rolling flame tongues around the rim
+  g.lineWidth = 2.5;
+  for (let i = 0; i < 40; i++) {
+    const a = (i / 40) * TAU + f * 2;
+    const wob = 1 + Math.sin(i * 3.1 + f * 12) * 0.09;
+    g.strokeStyle = neon(35 + Math.sin(i) * 25, 62, 0.55 * fade);
+    g.beginPath();
+    g.moveTo(n.x + Math.cos(a) * n.r * 0.86, n.y + Math.sin(a) * n.r * 0.86);
+    g.lineTo(n.x + Math.cos(a) * n.r * wob, n.y + Math.sin(a) * n.r * wob);
+    g.stroke();
+  }
+  g.restore();
+}
+
+function nukeSound() {
+  if (!audio || muted) return;
+  const t = audio.currentTime;
+  duckUntil = Math.max(duckUntil, t + 2.4);
+
+  // the flash: a bright crack
+  const crackle = noiseSource();
+  const chp = audio.createBiquadFilter();
+  chp.type = "highpass";
+  chp.frequency.setValueAtTime(4000, t);
+  chp.frequency.exponentialRampToValueAtTime(400, t + 0.5);
+  const cg = audio.createGain();
+  cg.gain.setValueAtTime(0.7, t);
+  cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+  crackle.connect(chp).connect(cg).connect(master);
+  crackle.start(t);
+  crackle.stop(t + 0.75);
+
+  // the body: a long filtered roar
+  const roar = noiseSource();
+  const rlp = audio.createBiquadFilter();
+  rlp.type = "lowpass";
+  rlp.frequency.setValueAtTime(1800, t);
+  rlp.frequency.exponentialRampToValueAtTime(90, t + 2.2);
+  const rg = audio.createGain();
+  rg.gain.setValueAtTime(0.0001, t);
+  rg.gain.exponentialRampToValueAtTime(0.85, t + 0.06);
+  rg.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+  roar.connect(rlp).connect(rg).connect(master);
+  roar.start(t);
+  roar.stop(t + 2.5);
+
+  // the punch you feel: a sub dropping through the floor
+  const sub = audio.createOscillator();
+  const sg = audio.createGain();
+  sub.type = "sine";
+  sub.frequency.setValueAtTime(110, t);
+  sub.frequency.exponentialRampToValueAtTime(22, t + 1.2);
+  sg.gain.setValueAtTime(0.0001, t);
+  sg.gain.exponentialRampToValueAtTime(0.9, t + 0.02);
+  sg.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+  sub.connect(sg).connect(master);
+  sub.start(t);
+  sub.stop(t + 1.65);
+}
+
+// ---------- portals ----------
+const PORTAL_R = 26;
+function spawnPortals() {
+  const m = 90;
+  function spot() {
+    for (let i = 0; i < 20; i++) {
+      const x = rand(m, W - m), y = rand(m, H - m);
+      if (planet && Math.hypot(x - planet.x, y - planet.y) < planet.r + 70) continue;
+      return { x, y };
+    }
+    return { x: rand(m, W - m), y: rand(m, H - m) };
+  }
+  const a = spot();
+  let b = spot();
+  for (let i = 0; i < 20 && Math.hypot(a.x - b.x, a.y - b.y) < Math.min(W, H) * 0.4; i++) {
+    b = spot();
+  }
+  portals = { a, b, life: rand(9, 13), age: 0 };
+  blip(520, 0.25, "sine", 0.12);
+  shockwave(a.x, a.y, 190, 90, 200);
+  shockwave(b.x, b.y, 260, 90, 200);
+}
+
+function tryPortal(obj, dt) {
+  obj.portalCd = Math.max(0, (obj.portalCd || 0) - dt);
+  if (!portals || obj.portalCd > 0 || portals.age < 0.4) return;
+  for (const [from, to] of [[portals.a, portals.b], [portals.b, portals.a]]) {
+    if (Math.hypot(obj.x - from.x, obj.y - from.y) < PORTAL_R - 2) {
+      const sp = Math.hypot(obj.vx, obj.vy);
+      let nx, ny;
+      if (sp > 10) { nx = obj.vx / sp; ny = obj.vy / sp; }
+      else { const a = rand(0, TAU); nx = Math.cos(a); ny = Math.sin(a); }
+      kaboom(from.x, from.y, 8, 12, 200);
+      obj.x = to.x + nx * (PORTAL_R + (obj.radius || 2) + 6);
+      obj.y = to.y + ny * (PORTAL_R + (obj.radius || 2) + 6);
+      obj.portalCd = 0.6;
+      kaboom(obj.x, obj.y, 8, 12, 280);
+      shockwave(to.x, to.y, 260, 70, 240);
+      blip(660, 0.12, "sine", 0.08);
+      return;
+    }
+  }
+}
+
+// ---------- falcon / planet ----------
+function spawnFalcon() {
+  const fromLeft = Math.random() < 0.5;
+  falcon = {
+    x: fromLeft ? -60 : W + 60,
+    y: 0,
+    baseY: rand(H * 0.2, H * 0.8),
+    vx: (fromLeft ? 1 : -1) * rand(170, 210),
+    vy: 0,
+    t: 0,
+    fired: false,
+    laserT: 0,
+    beamX: 0, beamY: 0,
+  };
+  falcon.y = falcon.baseY;
+}
+
+function spawnPlanet() {
+  const R = Math.max(W, H) * 1.15;
+  const edge = Math.floor(rand(0, 4));
+  const sp = rand(13, 19);
+  let x, y, vx, vy;
+  if (edge === 0) { x = -R - 60; y = rand(0, H); vx = sp; vy = rand(-3, 3); }
+  else if (edge === 1) { x = W + R + 60; y = rand(0, H); vx = -sp; vy = rand(-3, 3); }
+  else if (edge === 2) { x = rand(0, W); y = -R - 60; vx = rand(-3, 3); vy = sp; }
+  else { x = rand(0, W); y = H + R + 60; vx = rand(-3, 3); vy = -sp; }
+  const craters = [];
+  for (let i = 0; i < 16; i++) {
+    craters.push({ a: rand(0, TAU), d: rand(0.15, 0.96) * R, r: rand(10, 44) });
+  }
+  planet = { x, y, r: R, vx, vy, dir: 1, tIn: rand(15, 20), craters, hueOff: rand(0, 360) };
+}
+
+// ---------- lifecycle ----------
+function startGame(withSecond) {
+  level = 1;
+  bullets = [];
+  debris = [];
+  shocks = [];
+  popups = [];
+  banner = null;
+  players = [];
+  joinPlayer(0);
+  if (withSecond) joinPlayer(1);
+  spawnField();
+  squids = [];
+  nuke = null;
+  stopWarble();
+  squidTimer = rand(10, 16);
+  portals = null;
+  portalTimer = rand(15, 25);
+  falcon = null;
+  falconTimer = 999;
+  planet = null;
+  planetTimer = rand(35, 60);
+  state = "playing";
+  paused = false;
+  for (const k of EDGE) keys[k] = false;   // nothing carried over from the menu
+  levelTimer = 0;
+  timeScale = 1;
+  deathFx = 0;
+  shake = 0;
+  document.getElementById("start").hidden = true;
+  document.getElementById("over").hidden = true;
+  updateHud();
+}
+
+function gameOver() {
+  state = "over";
+  squids = [];
+  stopWarble();
+  portals = null;
+  falcon = null;
+  planet = null;
+  nuke = null;
+  timeScale = 1;
+  const top = Math.max(...players.filter(Boolean).map((p) => p.score), 0);
+  if (top > best) {
+    best = top;
+    try { localStorage.setItem("asteroids-best", String(best)); } catch (e) {}
+  }
+  const joined = players.filter(Boolean);
+  document.getElementById("finalScore").innerHTML = joined.length > 1
+    ? joined.map((p) => PLAYER_NAME[p.idx] + " " + p.score).join(" &nbsp;&middot;&nbsp; ")
+    : String(joined[0] ? joined[0].score : 0);
+  document.getElementById("bestScore").textContent = best;
+  document.getElementById("over").hidden = false;
+}
+
+// ---------- hud ----------
+const levelEl = document.getElementById("level");
+const panelEls = [
+  document.getElementById("p1"),
+  document.getElementById("p2"),
+];
+const SHIP_GLYPH =
+  '<svg width="12" height="15" viewBox="0 0 14 18" fill="none">' +
+  '<path d="M7 1 L13 17 L7 13 L1 17 Z" stroke="currentColor" stroke-width="1.6"/></svg>';
+const BOMB_GLYPH =
+  '<svg width="13" height="13" viewBox="0 0 15 15" fill="none">' +
+  '<circle cx="7.5" cy="9" r="5" stroke="currentColor" stroke-width="1.4"/>' +
+  '<ellipse cx="7.5" cy="9" rx="5" ry="2" stroke="currentColor" stroke-width="1" opacity="0.6"/>' +
+  '<path d="M7.5 4 V1.5 M5.5 2.5 L9.5 0.8" stroke="currentColor" stroke-width="1.3"/></svg>';
+const JOIN_HINT = ["", "PRESS Q TO JOIN"];
+
+let hudKey = "";
+function updateHud() {
+  levelEl.textContent = "LEVEL " + level;
+  const key = players.map((p) => p && [p.score, p.lives, p.bombs, p.out].join()).join("|")
+    + "/" + level + "/" + state;
+  if (key === hudKey) return;
+  hudKey = key;
+
+  for (let i = 0; i < 2; i++) {
+    const el = panelEls[i];
+    const p = players[i];
+    if (!p) {
+      el.className = "player waiting";
+      el.innerHTML = state === "playing"
+        ? '<div class="tag">' + PLAYER_NAME[i] + "</div><div class=\"hint\">"
+          + JOIN_HINT[i] + "</div>"
+        : "";
+      continue;
+    }
+    el.className = "player" + (p.out ? " out" : "");
+    el.innerHTML =
+      '<div class="tag">' + PLAYER_NAME[i] + "</div>" +
+      '<div class="pscore">' + p.score + "</div>" +
+      (p.out
+        ? '<div class="hint">' + (i === 0 ? "PRESS SPACE" : "PRESS Q") + " TO REJOIN</div>"
+        : '<div class="glyphs">' + SHIP_GLYPH.repeat(Math.max(p.lives, 0)) + "</div>" +
+          '<div class="glyphs bombs">' +
+            (p.bombs > 0 ? BOMB_GLYPH.repeat(p.bombs) : '<span class="empty">NO BOMBS</span>') +
+          "</div>");
+  }
+}
+
+// ---------- update ----------
+function wrap(obj) {
+  const m = obj.radius;
+  if (obj.x < -m) obj.x += W + m * 2;
+  if (obj.x > W + m) obj.x -= W + m * 2;
+  if (obj.y < -m) obj.y += H + m * 2;
+  if (obj.y > H + m) obj.y -= H + m * 2;
+}
+
+function splitAsteroid(a, idx, owner) {
+  asteroids.splice(idx, 1);
+  const pts = a.size === 3 ? 20 : a.size === 2 ? 50 : 100;
+  if (owner) owner.score += pts;
+  boom(a.size);
+  const h = hue + a.hueOff;
+  kaboom(a.x, a.y, 8 + a.size * 4, a.radius * 0.5, h);
+  shockwave(a.x, a.y, h, 60 + a.radius * 2, 300);
+  popup(a.x, a.y, "+" + pts, h);
+  shake = Math.max(shake, 3 + a.size * 1.5);
+  if (a.size > 1) {
+    asteroids.push(makeAsteroid(a.x, a.y, a.size - 1));
+    asteroids.push(makeAsteroid(a.x, a.y, a.size - 1));
+  }
+  updateHud();
+  if (asteroids.length === 0) levelTimer = 1.5;
+}
+
+function killShip(p) {
+  boom(3);
+  kaboom(p.x, p.y, 46, 10, undefined, 2.2);
+  shockwave(p.x, p.y, 0, 340, 520);
+  shockwave(p.x, p.y, 60, 240, 380);
+  shockwave(p.x, p.y, 300, 180, 260);
+  screenFlash(0, 0.55);
+  shake = Math.max(shake, 26);
+  aberr = 1;
+  deathFx = 1.4;
+  deathAt = { x: p.x, y: p.y };
+  timeScale = 0.25;
+  p.dead = true;
+  p.hook = null;
+  p.boost = 0;
+  // drop any one-shot still latched, so a press made mid-death does not spend
+  // itself the instant you come back
+  keys[controls[p.idx].bomb] = keys[controls[p.idx].hook] = false;
+  p.lives--;
+  updateHud();
+  // the riff only goes full-length when the whole crew is down
+  const lastStanding = livePlayers().every((q) => q === p || q.lives <= 0);
+  playRiff(p.lives <= 0 && lastStanding);
+  p.respawnTimer = p.lives <= 0 ? 2.2 : 1.7;
+}
+
+function update(dt) {
+  hue += dt * 34;
+
+  // every joined player flies their own ship
+  for (const p of players) {
+    if (!p || p.out) continue;
+    const c = controls[p.idx];
+    if (!p.dead) {
+      if (keys[c.left]) p.angle -= 4.2 * dt;
+      if (keys[c.right]) p.angle += 4.2 * dt;
+      if (keys[c.thrust]) {
+        p.vx += Math.cos(p.angle) * 260 * dt;
+        p.vy += Math.sin(p.angle) * 260 * dt;
+        if (Math.random() < 0.6) {
+          const back = p.angle + Math.PI;
+          const spread = rand(-0.4, 0.4);
+          debris.push({
+            x: p.x + Math.cos(back) * 12,
+            y: p.y + Math.sin(back) * 12,
+            vx: p.vx + Math.cos(back + spread) * rand(60, 150),
+            vy: p.vy + Math.sin(back + spread) * rand(60, 150),
+            angle: back, spin: rand(-6, 6),
+            len: rand(2, 6), life: rand(0.2, 0.45),
+            hue: hue + p.hue + rand(-30, 30),
+          });
+        }
+      }
+      // a swing has to keep what it is carrying, so the line and its afterglow
+      // suspend the usual space-drag — that is what makes the exit worth taking
+      p.boost = Math.max(0, p.boost - dt);
+      const swinging = p.hook && p.hook.state === "attached";
+      const drag = Math.pow(swinging ? 0.94 : p.boost > 0 ? 0.88 : 0.4, dt);
+      p.vx *= drag;
+      p.vy *= drag;
+      const sp = Math.hypot(p.vx, p.vy);
+      if (sp > 820) { p.vx *= 820 / sp; p.vy *= 820 / sp; }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      wrap(p);
+      if (p.invuln > 0) p.invuln -= dt;
+
+      p.hookCooldown = Math.max(0, p.hookCooldown - dt);
+      if (keys[c.hook]) {
+        keys[c.hook] = false;      // tap to throw, tap again to cut it loose
+        if (p.hook) { p.hook.cutAt = 0.16; }   // unless you keep holding it
+        else fireHook(p);
+      }
+      if (p.hook) {
+        // one button, two jobs: a tap cuts the line, a hold works the winch
+        const down = held[c.hook];
+        p.hook.reel = p.hook.state === "attached" && down && p.hook.cutAt === undefined;
+        if (p.hook.cutAt !== undefined) {
+          if (!down) { releaseHook(p); }
+          else if ((p.hook.cutAt -= dt) <= 0) { p.hook.cutAt = undefined; }
+        }
+      }
+      updateHook(p, dt);
+
+      p.fireCooldown -= dt;
+      const mine = bullets.filter((b) => b.owner === p).length;
+      if (keys[c.fire] && p.fireCooldown <= 0 && mine < 5) {
+        bullets.push({
+          x: p.x + Math.cos(p.angle) * 13,
+          y: p.y + Math.sin(p.angle) * 13,
+          vx: p.vx + Math.cos(p.angle) * 480,
+          vy: p.vy + Math.sin(p.angle) * 480,
+          radius: 1.6,
+          life: 1.1,
+          hue: hue * 3 + p.hue,
+          owner: p,
+        });
+        p.fireCooldown = 0.22;
+        blaster();
+        shake = Math.max(shake, 1.8);
+      }
+
+      p.bombCooldown = Math.max(0, p.bombCooldown - dt);
+      if (keys[c.bomb]) {
+        keys[c.bomb] = false;   // one bomb per press, never on auto-repeat
+        detonate(p);
+      }
+    } else {
+      p.respawnTimer -= dt;
+      if (p.respawnTimer <= 0) {
+        if (p.lives <= 0) {
+          p.out = true;                 // spectating; can buy back in any time
+          updateHud();
+          if (!livePlayers().length) { gameOver(); return; }
+        } else {
+          Object.assign(p, makeShip(p));
+          shockwave(p.x, p.y, p.hue, 160, 300);
+        }
+      }
+    }
+  }
+
+  // a player who is out can rejoin at any moment
+  for (let i = 0; i < 2; i++) {
+    const c = controls[i];
+    if (!keys[c.fire]) continue;
+    const p = players[i];
+    if (!p || p.out) { keys[c.fire] = false; joinPlayer(i); }
+  }
+
+  // bullets
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    b.life -= dt;
+    wrap(b);
+    if (b.life <= 0) bullets.splice(i, 1);
+  }
+
+  // asteroids
+  for (const a of asteroids) {
+    a.x += a.vx * dt;
+    a.y += a.vy * dt;
+    a.angle += a.spin * dt;
+    a.pulse += dt * 3;
+    a.clack = Math.max(0, (a.clack || 0) - dt);
+    wrap(a);
+  }
+
+  // rock against rock: elastic bounce with mass by area, so a pebble glances
+  // off a boulder and the boulder barely notices. They keep nearly all their
+  // speed — the collision redirects them rather than stopping them.
+  let clacks = 0;
+  for (let i = 0; i < asteroids.length; i++) {
+    const a = asteroids[i];
+    for (let j = i + 1; j < asteroids.length; j++) {
+      const b = asteroids[j];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const min = a.radius + b.radius;
+      if (Math.abs(dx) > min || Math.abs(dy) > min) continue;   // cheap reject
+      const d = Math.hypot(dx, dy);
+      if (d === 0 || d >= min) continue;
+      const nx = dx / d, ny = dy / d;
+      const ma = a.radius * a.radius, mb = b.radius * b.radius;
+      const total = ma + mb;
+
+      // push them apart so they don't sink into each other
+      const overlap = min - d;
+      a.x -= nx * overlap * (mb / total);
+      a.y -= ny * overlap * (mb / total);
+      b.x += nx * overlap * (ma / total);
+      b.y += ny * overlap * (ma / total);
+
+      const vn = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+      if (vn >= 0) continue;                 // already separating
+      const REST = 0.92;                     // brakes only a little
+      const imp = (-(1 + REST) * vn) / (1 / ma + 1 / mb);
+      a.vx -= (imp / ma) * nx;
+      a.vy -= (imp / ma) * ny;
+      b.vx += (imp / mb) * nx;
+      b.vy += (imp / mb) * ny;
+      // glancing hits set them tumbling
+      a.spin += rand(-0.6, 0.6);
+      b.spin += rand(-0.6, 0.6);
+
+      if (-vn > 45 && a.clack <= 0 && b.clack <= 0 && clacks < 3) {
+        clacks++;
+        a.clack = b.clack = 0.12;
+        const mx = a.x + nx * a.radius, my = a.y + ny * a.radius;
+        kaboom(mx, my, 3, 3, hue + 40);
+        blip(90 + Math.random() * 50, 0.07, "triangle", 0.05);
+      }
+    }
+  }
+
+  // krakens — rage scales with damage taken; they hunt in z as well
+  const T = tune();
+  for (const s of squids) {
+    const rage = s.maxHp - s.hp;
+    // each one stalks whichever pilot is closest to it
+    const prey = nearestShip(s.x, s.y);
+    s.phase += dt * (1 + rage * 0.3);
+    s.roll += dt * (0.9 + rage * 0.4);
+    s.flash = Math.max(0, s.flash - dt);
+    s.lungeBoost = Math.max(0, s.lungeBoost - dt);
+
+    if (s.zState === "down") {
+      s.z += 350 * dt;
+      if (s.z >= 240) { s.z = 240; s.zState = "deep"; s.deepTimer = rand(2, 3.5); }
+    } else if (s.zState === "deep") {
+      s.deepTimer -= dt;
+      if (prey) {
+        const dx = prey.x - s.x, dy = prey.y - s.y;
+        const d = Math.hypot(dx, dy) || 1;
+        s.vx += (dx / d) * 240 * dt;
+        s.vy += (dy / d) * 240 * dt;
+      }
+      if (s.deepTimer <= 0) s.zState = "up";
+    } else if (s.zState === "up") {
+      s.z -= 300 * dt;
+      if (s.z <= 0) {
+        s.z = 0;
+        s.zState = "surface";
+        s.diveTimer = rand(T.diveGap, T.diveGap + 4);
+        s.lungeTimer = Math.min(s.lungeTimer, 1);
+        shockwave(s.x, s.y, 320, 220, 380);
+        shake = Math.max(shake, 8);
+      }
+    } else if (s.windup > 0) {
+      s.windup -= dt;
+      const brake = Math.pow(0.05, dt);
+      s.vx *= brake;
+      s.vy *= brake;
+      if (s.windup <= 0 && prey) {
+        const dx = prey.x - s.x, dy = prey.y - s.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const burst = 300 + rage * 90;
+        s.vx += (dx / d) * burst;
+        s.vy += (dy / d) * burst;
+        s.lungeBoost = 0.7;
+        blip(150 + rage * 40, 0.25, "sawtooth", 0.18);
+        shake = Math.max(shake, 6);
+      }
+    } else {
+      s.diveTimer -= dt;
+      if (s.diveTimer <= 0) {
+        s.zState = "down";
+      } else if (prey) {
+        const dx = prey.x - s.x, dy = prey.y - s.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const accel = T.squidAccel * (1 + rage * 0.3);
+        s.vx += (dx / d) * accel * dt;
+        s.vy += (dy / d) * accel * dt;
+        s.lungeTimer -= dt;
+        if (s.lungeTimer <= 0) {
+          s.windup = 0.45;
+          s.lungeTimer = T.lungeGap + rand(0, 1.4) - rage * 0.4;
+        }
+      }
+      const dir = Math.atan2(s.vy, s.vx);
+      const sway = Math.sin(s.phase * 2.2) * 30;
+      s.vx += Math.cos(dir + Math.PI / 2) * sway * dt;
+      s.vy += Math.sin(dir + Math.PI / 2) * sway * dt;
+    }
+
+    const maxV = s.zState === "deep" ? 300
+      : T.squidSpeed * (1 + rage * 0.35) * (s.lungeBoost > 0 ? 2.2 : 1);
+    const v = Math.hypot(s.vx, s.vy);
+    if (v > maxV) { s.vx *= maxV / v; s.vy *= maxV / v; }
+    s.x += s.vx * dt;
+    s.y += s.vy * dt;
+    wrap(s);
+  }
+  if (squids.length < T.maxSquids) {
+    squidTimer -= dt;
+    if (squidTimer <= 0) {
+      spawnSquid();
+      squidTimer = rand(T.squidGap, T.squidGap + 8);
+    }
+  }
+
+  updateNuke(dt);
+
+  // portals open and close on their own schedule
+  if (portals) {
+    portals.age += dt;
+    portals.life -= dt;
+    if (portals.life <= 0) {
+      portals = null;
+      portalTimer = rand(T.portalGap, T.portalGap + 10);
+    }
+  } else {
+    portalTimer -= dt;
+    if (portalTimer <= 0) spawnPortals();
+  }
+  for (const p of flyingShips()) tryPortal(p, dt);
+  for (const b of bullets) tryPortal(b, dt);
+  for (const a of asteroids) tryPortal(a, dt);
+  for (const s of squids) tryPortal(s, dt);
+
+  // falcon flyby — shows up while the kraken is loose, fires once
+  if (falcon) {
+    const f = falcon;
+    f.t += dt;
+    f.x += f.vx * dt;
+    f.y = f.baseY + Math.sin(f.t * 1.6) * 14;
+    f.vy = Math.cos(f.t * 1.6) * 22;
+    f.laserT = Math.max(0, f.laserT - dt);
+    const progress = f.vx > 0 ? f.x : W - f.x;
+    // it picks off whichever kraken is closest to full health
+    const mark = squids.slice().sort((a, b) => b.hp - a.hp)[0];
+    if (!f.fired && mark && progress > W * 0.3) {
+      f.fired = true;
+      f.beamX = mark.x;
+      f.beamY = mark.y;
+      f.laserT = 0.35;
+      blaster(true);
+      screenFlash(hue + 60, 0.3);
+      damageSquid(mark, 2);
+    }
+    if ((f.vx > 0 && f.x > W + 80) || (f.vx < 0 && f.x < -80)) falcon = null;
+  } else if (squids.length) {
+    falconTimer -= dt;
+    if (falconTimer <= 0) { spawnFalcon(); falconTimer = 999; }
+  }
+
+  // planet creeps in, dwells, then retreats
+  if (planet) {
+    const p = planet;
+    p.x += p.vx * p.dir * dt;
+    p.y += p.vy * p.dir * dt;
+    if (p.dir === 1) {
+      p.tIn -= dt;
+      if (p.tIn <= 0) p.dir = -1;
+    } else {
+      const nx = Math.max(0, Math.min(W, p.x));
+      const ny = Math.max(0, Math.min(H, p.y));
+      if (Math.hypot(p.x - nx, p.y - ny) > p.r + 80) {
+        planet = null;
+        planetTimer = rand(T.planetGap, T.planetGap + 25);
+      }
+    }
+  } else {
+    planetTimer -= dt;
+    if (planetTimer <= 0) spawnPlanet();
+  }
+
+  // planet collisions: bullets burn up, rocks and kraken bounce, the ship dies
+  if (planet) {
+    const p = planet;
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      const b = bullets[i];
+      if (Math.hypot(b.x - p.x, b.y - p.y) < p.r + b.radius) {
+        kaboom(b.x, b.y, 4, 4, b.hue);
+        bullets.splice(i, 1);
+      }
+    }
+    const bouncers = asteroids.concat(squids);
+    for (const o of bouncers) {
+      const dx = o.x - p.x, dy = o.y - p.y;
+      const d = Math.hypot(dx, dy);
+      if (d < p.r + o.radius) {
+        const nx = dx / (d || 1), ny = dy / (d || 1);
+        const dot = o.vx * nx + o.vy * ny;
+        if (dot < 0) {
+          o.vx -= 2 * dot * nx;
+          o.vy -= 2 * dot * ny;
+          if (dot < -20) {
+            blip(70, 0.08, "triangle", 0.05);
+            kaboom(o.x, o.y, 5, 6, hue + 120);
+            shake = Math.max(shake, 4);
+          }
+        }
+        o.x = p.x + nx * (p.r + o.radius + 1);
+        o.y = p.y + ny * (p.r + o.radius + 1);
+      }
+    }
+    for (const q of flyingShips()) {
+      if (q.invuln > 0) continue;
+      if (Math.hypot(q.x - p.x, q.y - p.y) < p.r + q.radius * 0.8) killShip(q);
+    }
+  }
+
+  // debris
+  for (let i = debris.length - 1; i >= 0; i--) {
+    const d = debris[i];
+    d.x += d.vx * dt;
+    d.y += d.vy * dt;
+    d.vx *= Math.pow(0.6, dt);
+    d.vy *= Math.pow(0.6, dt);
+    d.angle += d.spin * dt;
+    d.life -= dt;
+    if (d.life <= 0) debris.splice(i, 1);
+  }
+
+  // shockwaves + popups
+  for (let i = shocks.length - 1; i >= 0; i--) {
+    const s = shocks[i];
+    s.r += s.sp * dt;
+    if (s.r > s.max) shocks.splice(i, 1);
+  }
+  for (let i = popups.length - 1; i >= 0; i--) {
+    const p = popups[i];
+    p.y -= 34 * dt;
+    p.life -= dt * 1.1;
+    if (p.life <= 0) popups.splice(i, 1);
+  }
+  if (banner) {
+    banner.life -= dt;
+    if (banner.life <= 0) banner = null;
+  }
+
+  // bullet vs asteroid
+  outer:
+  for (let i = asteroids.length - 1; i >= 0; i--) {
+    const a = asteroids[i];
+    for (let j = bullets.length - 1; j >= 0; j--) {
+      const b = bullets[j];
+      if (Math.hypot(a.x - b.x, a.y - b.y) < a.radius) {
+        bullets.splice(j, 1);
+        splitAsteroid(a, i, b.owner);
+        continue outer;
+      }
+    }
+  }
+
+  // bullet vs kraken — only when it's near the play plane
+  for (const s of squids.slice()) {
+    if (s.z >= 40) continue;
+    for (let j = bullets.length - 1; j >= 0; j--) {
+      const b = bullets[j];
+      if (Math.hypot(s.x - b.x, s.y - b.y) < s.radius + 6) {
+        bullets.splice(j, 1);
+        damageSquid(s, 1, b.owner);
+        break;
+      }
+    }
+  }
+
+  // ship vs asteroid — the rock on your own line is the one rock that cannot
+  // have you: the tether holds it at arm's length and shoves it off instead
+  for (const p of flyingShips()) {
+    if (p.invuln > 0) continue;
+    const onLine = p.hook && p.hook.state === "attached" ? p.hook.target : null;
+    for (const a of asteroids) {
+      if (a === onLine) continue;
+      if (Math.hypot(a.x - p.x, a.y - p.y) < a.radius + p.radius * 0.7) {
+        killShip(p);
+        break;
+      }
+    }
+  }
+
+  // ship vs kraken — a submerged one passes harmlessly beneath you
+  for (const p of flyingShips()) {
+    if (p.invuln > 0) continue;
+    for (const s of squids) {
+      if (s.z >= 25) continue;
+      if (Math.hypot(s.x - p.x, s.y - p.y) < s.radius + 10 + p.radius * 0.7) {
+        killShip(p);
+        break;
+      }
+    }
+  }
+
+  // next level
+  if (levelTimer > 0) {
+    levelTimer -= dt;
+    if (levelTimer <= 0) {
+      level++;
+      spawnField();
+      for (const p of flyingShips()) p.invuln = Math.max(p.invuln, 1.5);
+      // every wave resupplies one bomb per pilot, up to four in the rack
+      for (const p of livePlayers()) if (p.bombs < 4) p.bombs++;
+      banner = {
+        text: "LEVEL " + level,
+        sub: WAVE_NAMES[level] || null,
+        life: 1.9,
+      };
+      screenFlash(hue + 120, 0.28);
+      shockwave(W / 2, H / 2, hue + 120, Math.max(W, H), 900);
+      updateHud();
+    }
+  }
+}
+
+// ---------- draw ----------
+// 3D helpers for the kraken: roll around the travel axis, tilt toward
+// the viewer, then perspective-project onto the playfield
+const FOCAL = 150;
+function rot3(p, roll, tilt) {
+  const x = p[0] * Math.cos(roll) + p[2] * Math.sin(roll);
+  const z = -p[0] * Math.sin(roll) + p[2] * Math.cos(roll);
+  const y = p[1] * Math.cos(tilt) - z * Math.sin(tilt);
+  const z2 = p[1] * Math.sin(tilt) + z * Math.cos(tilt);
+  return [x, y, z2];
+}
+function proj(p) {
+  const k = FOCAL / (FOCAL + p[2]);
+  return [p[0] * k, p[1] * k, p[2]];
+}
+
+function drawBackground(t) {
+  ctx.fillStyle = "#07030f";
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  // nebula clouds
+  for (const c of clouds) {
+    c.x += c.vx * 0.016;
+    c.y += c.vy * 0.016;
+    if (c.x < -c.r) c.x = W + c.r;
+    if (c.x > W + c.r) c.x = -c.r;
+    if (c.y < -c.r) c.y = H + c.r;
+    if (c.y > H + c.r) c.y = -c.r;
+    const grad = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
+    grad.addColorStop(0, neon(hue + c.hue, 55, 0.22));
+    grad.addColorStop(0.5, neon(hue + c.hue + 40, 48, 0.1));
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, c.r, 0, TAU);
+    ctx.fill();
+  }
+  // starfield
+  for (const s of stars) {
+    const tw = 0.45 + 0.55 * Math.sin(t * 2.5 + s.tw);
+    ctx.fillStyle = neon(hue * 0.6 + s.hue, 80, 0.75 * tw * s.d);
+    const r = s.d * 1.5;
+    ctx.fillRect(s.x - r / 2, s.y - r / 2, r, r);
+  }
+  ctx.restore();
+}
+
+// The halo comes from the bloom pass, not from per-shape shadows —
+// canvas shadowBlur on hundreds of little strokes tanks the frame rate.
+function glow(c) {
+  g.strokeStyle = c;
+}
+
+function drawShip(ship) {
+  if (ship.dead) return;
+  if (ship.invuln > 0 && Math.floor(ship.invuln * 8) % 2 === 0) return;
+  const c = neon(hue + ship.hue, 72);
+  // shield bubble while respawn protection lasts
+  if (ship.invuln > 0) {
+    g.save();
+    g.globalAlpha = 0.5;
+    glow(neon(hue + ship.hue - 60, 70));
+    g.lineWidth = 1.3;
+    g.setLineDash([5, 5]);
+    g.lineDashOffset = -ship.invuln * 30;
+    g.beginPath();
+    g.arc(ship.x, ship.y, 21 + Math.sin(ship.invuln * 9) * 2, 0, TAU);
+    g.stroke();
+    g.restore();
+  }
+  g.save();
+  g.translate(ship.x, ship.y);
+  g.rotate(ship.angle + Math.PI / 2);
+  glow(c);
+  g.lineWidth = 2.2;
+  g.beginPath();
+  g.moveTo(0, -13);
+  g.lineTo(9, 11);
+  g.lineTo(0, 6);
+  g.lineTo(-9, 11);
+  g.closePath();
+  g.stroke();
+  if (keys[controls[ship.idx].thrust] && Math.random() > 0.3) {
+    const f = neon(hue + ship.hue + 60, 65);
+    glow(f);
+    g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(-5, 9);
+    g.lineTo(0, 18 + Math.random() * 8);
+    g.lineTo(5, 9);
+    g.stroke();
+  }
+  g.restore();
+}
+
+function drawAsteroid(a) {
+  const c = neon(hue + a.hueOff, 60 + Math.sin(a.pulse) * 8);
+  g.save();
+  g.translate(a.x, a.y);
+  g.rotate(a.angle);
+  glow(c);
+  g.lineWidth = 1.6;
+  g.beginPath();
+  const n = a.points.length;
+  for (let i = 0; i <= n; i++) {
+    const r = a.radius * a.points[i % n];
+    const th = (i / n) * TAU;
+    const x = Math.cos(th) * r;
+    const y = Math.sin(th) * r;
+    if (i === 0) g.moveTo(x, y);
+    else g.lineTo(x, y);
+  }
+  g.stroke();
+  g.restore();
+}
+
+function drawSquid(s) {
+  const rage = s.maxHp - s.hp;
+  const enraged = rage >= s.maxHp - 1;
+  const tilt = -0.4 + Math.sin(s.phase * 1.3) * 0.12;
+  const thrash = 3 + rage * 1.5;
+  const flare = s.windup > 0 ? 1.9 : 1;
+  const R = 17;
+  const lines = [];
+
+  for (const lat of [0.1, 0.75, 1.25]) {
+    const ring = [];
+    const r = R * Math.cos(lat), y = -R * Math.sin(lat);
+    for (let i = 0; i <= 12; i++) {
+      const a = (i / 12) * TAU;
+      ring.push([Math.cos(a) * r, y, Math.sin(a) * r]);
+    }
+    lines.push(ring);
+  }
+  for (let k = 0; k < 6; k++) {
+    const az = (k / 6) * TAU;
+    const arc = [];
+    for (let i = 0; i <= 5; i++) {
+      const lat = (i / 5) * (Math.PI / 2);
+      const r = R * Math.cos(lat), y = -R * Math.sin(lat);
+      arc.push([Math.cos(az) * r, y, Math.sin(az) * r]);
+    }
+    lines.push(arc);
+  }
+  for (let k = 0; k < 6; k++) {
+    const az = (k / 6) * TAU + 0.5;
+    const tent = [[Math.cos(az) * 11, 4, Math.sin(az) * 11]];
+    for (let i = 1; i <= 6; i++) {
+      const radial = 11 + Math.sin(s.phase * thrash + k * 1.1 + i * 0.9) * i * 1.6 * flare;
+      const tang = Math.cos(s.phase * thrash * 0.8 + k * 2.1 + i * 0.7) * i * 1.4 * flare;
+      tent.push([
+        Math.cos(az) * radial - Math.sin(az) * tang,
+        4 + i * 6.6,
+        Math.sin(az) * radial + Math.cos(az) * tang,
+      ]);
+    }
+    lines.push(tent);
+  }
+
+  // rage drags its color from violet toward a screaming red
+  const baseHue = 300 - rage * 45 + Math.sin(s.phase * 2) * 20;
+  const body = s.flash > 0 || s.windup > 0
+    ? neon(hue * 4, 80)
+    : enraged && Math.sin(s.phase * 9) > 0
+      ? neon(baseHue - 20, 70)
+      : neon(baseHue, 60);
+
+  const kz = FOCAL / (FOCAL + s.z);
+  const depthA = 0.3 + 0.7 * kz;
+
+  g.save();
+  g.translate(s.x, s.y);
+  g.rotate(Math.atan2(s.vy, s.vx) + Math.PI / 2);
+  g.scale(kz, kz);
+  glow(body);
+  g.lineCap = "round";
+
+  // one stroke per polyline, depth-cued by its average z
+  for (const line of lines) {
+    const pts = line.map((p) => proj(rot3(p, s.roll, tilt)));
+    let zSum = 0;
+    for (const p of pts) zSum += p[2];
+    const near = Math.max(0, Math.min(1, (28 - zSum / pts.length) / 56));
+    g.globalAlpha = (0.3 + 0.7 * near) * depthA;
+    g.lineWidth = 1 + 1.1 * near;
+    g.beginPath();
+    g.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]);
+    g.stroke();
+  }
+  g.globalAlpha = depthA;
+
+  // the glare stays locked on you while the body rolls
+  const eye = enraged ? neon(10, 60) : neon(35, 60);
+  glow(eye);
+  g.fillStyle = eye;
+  g.lineWidth = 2.2;
+  const ey = -6;
+  const er = (enraged ? 2.8 : 2.1) + Math.sin(s.phase * 6) * 0.25;
+  g.beginPath();
+  g.moveTo(-6 + er, ey);
+  g.arc(-6, ey, er, 0, TAU);
+  g.moveTo(6 + er, ey);
+  g.arc(6, ey, er, 0, TAU);
+  g.fill();
+  g.beginPath();
+  g.moveTo(-11, ey - 8);
+  g.lineTo(-2, ey - 3.5);
+  g.moveTo(11, ey - 8);
+  g.lineTo(2, ey - 3.5);
+  g.stroke();
+  g.globalAlpha = 1;
+  g.restore();
+}
+
+function drawPlanet(t) {
+  const p = planet;
+  g.save();
+  // dark body so it occludes the starfield behind it
+  g.fillStyle = "rgba(7,3,15,0.93)";
+  g.beginPath();
+  g.arc(p.x, p.y, p.r, 0, TAU);
+  g.fill();
+  glow(neon(hue + p.hueOff, 62));
+  g.lineWidth = 2.4;
+  g.stroke();
+
+  // contour bands hugging the limb, cycling through the spectrum
+  for (let i = 1; i <= 6; i++) {
+    const rr = p.r * (1 - i * 0.055);
+    g.strokeStyle = neon(hue + p.hueOff + i * 30, 58, 0.42 - i * 0.05);
+    g.lineWidth = 1.3;
+    g.beginPath();
+    g.arc(p.x, p.y, rr, 0, TAU);
+    g.stroke();
+  }
+  // meridians crossing the limb, slowly rotating
+  g.lineWidth = 1.1;
+  for (let i = 0; i < 24; i++) {
+    const ang = (i / 24) * TAU + t * 0.06;
+    g.strokeStyle = neon(hue + p.hueOff + i * 15, 55, 0.3);
+    g.beginPath();
+    g.moveTo(p.x + Math.cos(ang) * p.r * 0.62, p.y + Math.sin(ang) * p.r * 0.62);
+    g.lineTo(p.x + Math.cos(ang) * p.r, p.y + Math.sin(ang) * p.r);
+    g.stroke();
+  }
+  for (const c of p.craters) {
+    const cx = p.x + Math.cos(c.a) * c.d;
+    const cy = p.y + Math.sin(c.a) * c.d;
+    if (cx < -60 || cx > W + 60 || cy < -60 || cy > H + 60) continue;
+    g.strokeStyle = neon(hue + p.hueOff + 60, 55, 0.5);
+    g.beginPath();
+    g.arc(cx, cy, c.r, 0, TAU);
+    g.stroke();
+  }
+  g.restore();
+}
+
+function drawPortals(t) {
+  const closing = portals.life < 2;
+  for (const [i, e] of [portals.a, portals.b].entries()) {
+    g.save();
+    g.translate(e.x, e.y);
+    const grow = Math.min(1, portals.age / 0.4);
+    g.scale(grow, grow);
+    g.globalAlpha = closing ? 0.35 + 0.65 * Math.abs(Math.sin(portals.life * 6)) : 1;
+    // swirling rainbow arms
+    for (let k = 0; k < 7; k++) {
+      const c = neon(hue * 2 + k * 51 + i * 180, 62);
+      glow(c);
+      g.lineWidth = 2;
+      g.beginPath();
+      const spin = t * (1.6 + k * 0.12) + k * 0.9;
+      for (let j = 0; j <= 22; j++) {
+        const f = j / 22;
+        const ang = spin + f * 3.4;
+        const rr = f * (PORTAL_R - 1);
+        const x = Math.cos(ang) * rr, y = Math.sin(ang) * rr;
+        if (j === 0) g.moveTo(x, y);
+        else g.lineTo(x, y);
+      }
+      g.stroke();
+    }
+    glow(neon(hue * 3 + i * 180, 75));
+    g.lineWidth = 2.2;
+    g.setLineDash([8, 6]);
+    g.lineDashOffset = -t * 60;
+    g.beginPath();
+    g.arc(0, 0, PORTAL_R - 1, 0, TAU);
+    g.stroke();
+    g.setLineDash([]);
+    g.restore();
+  }
+  g.globalAlpha = 1;
+}
+
+function drawFalcon(t) {
+  const f = falcon;
+  if (f.laserT > 0) {
+    g.save();
+    g.globalAlpha = Math.min(1, f.laserT / 0.2);
+    for (let i = 0; i < 4; i++) {
+      glow(neon(hue * 6 + i * 90, 62));
+      g.lineWidth = 11 - i * 2.6;
+      g.beginPath();
+      g.moveTo(f.x, f.y);
+      g.lineTo(f.beamX + Math.sin(t * 40 + i) * 3, f.beamY + Math.cos(t * 40 + i) * 3);
+      g.stroke();
+    }
+    g.strokeStyle = "#ffffff";
+    g.lineWidth = 1.8;
+    g.beginPath();
+    g.moveTo(f.x, f.y);
+    g.lineTo(f.beamX, f.beamY);
+    g.stroke();
+    g.restore();
+  }
+  g.save();
+  g.translate(f.x, f.y);
+  g.rotate(Math.atan2(f.vy, f.vx));
+  glow(neon(hue + 200, 78));
+  g.lineWidth = 1.4;
+  g.beginPath();
+  g.arc(0, 0, 13, 0, TAU);
+  g.stroke();
+  g.beginPath();
+  g.moveTo(8, -9); g.lineTo(26, -9); g.lineTo(26, -4); g.lineTo(11, -4);
+  g.moveTo(8, 9); g.lineTo(26, 9); g.lineTo(26, 4); g.lineTo(11, 4);
+  g.stroke();
+  g.beginPath();
+  g.arc(5, -12, 3.2, 0, TAU);
+  g.stroke();
+  g.beginPath();
+  g.arc(-2, 0, 4.5, 0, TAU);
+  g.stroke();
+  glow(neon(hue + 20, 62));
+  g.lineWidth = 2.6;
+  g.beginPath();
+  g.moveTo(-13.5, -6);
+  g.lineTo(-13.5, 6);
+  g.stroke();
+  g.restore();
+}
+
+function drawEffects(t) {
+  // shockwave rings
+  for (const s of shocks) {
+    const f = 1 - s.r / s.max;
+    g.save();
+    g.globalAlpha = Math.max(0, f) * 0.85;
+    glow(neon(hue + s.hue, 65));
+    g.lineWidth = 1 + f * 3.5;
+    g.beginPath();
+    g.arc(s.x, s.y, s.r, 0, TAU);
+    g.stroke();
+    g.restore();
+  }
+  // debris shards — flat loop, no per-particle save/restore
+  g.lineCap = "round";
+  g.lineWidth = 1.8;
+  for (const d of debris) {
+    g.globalAlpha = Math.min(1, d.life * 2.2);
+    g.strokeStyle = neon(d.hue, 62);
+    const cx = Math.cos(d.angle) * d.len * 0.5;
+    const cy = Math.sin(d.angle) * d.len * 0.5;
+    g.beginPath();
+    g.moveTo(d.x - cx, d.y - cy);
+    g.lineTo(d.x + cx, d.y + cy);
+    g.stroke();
+  }
+  g.globalAlpha = 1;
+  // bullets
+  for (const b of bullets) {
+    g.fillStyle = neon(b.hue, 75);
+    g.beginPath();
+    g.arc(b.x, b.y, 2.6, 0, TAU);
+    g.fill();
+  }
+  // death kaleidoscope, anchored where the ship actually died
+  if (deathFx > 0 && deathAt) {
+    g.save();
+    g.translate(deathAt.x, deathAt.y);
+    g.rotate(t * 3);
+    g.globalAlpha = deathFx * 0.6;
+    for (let i = 0; i < 16; i++) {
+      glow(neon(hue * 5 + i * 22, 62));
+      g.lineWidth = 2.5;
+      g.beginPath();
+      g.moveTo(0, 0);
+      const len = (1.4 - deathFx) * Math.max(W, H) * 0.9;
+      g.lineTo(Math.cos((i / 16) * TAU) * len, Math.sin((i / 16) * TAU) * len);
+      g.stroke();
+    }
+    g.restore();
+  }
+  // floating score popups
+  if (popups.length) {
+    g.font = "600 15px " + FONT;
+    g.textAlign = "center";
+    for (const p of popups) {
+      g.globalAlpha = Math.min(1, p.life);
+      g.fillStyle = neon(p.hue, 70);
+      g.fillText(p.text, p.x, p.y);
+    }
+    g.globalAlpha = 1;
+  }
+}
+
+function draw(t) {
+  drawBackground(t);
+
+  // fade the entity layer instead of clearing it: trails
+  g.save();
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalCompositeOperation = "destination-out";
+  g.fillStyle = "rgba(0,0,0,0.17)";
+  g.fillRect(0, 0, layer.width, layer.height);
+  g.restore();
+  g.globalCompositeOperation = "source-over";
+
+  if (state === "playing") {
+    if (planet) drawPlanet(t);
+    if (portals) drawPortals(t);
+    for (const s of squids) if (s.z > 30) drawSquid(s);
+  }
+  for (const a of asteroids) drawAsteroid(a);
+  if (state === "playing") {
+    for (const s of squids) if (s.z <= 30) drawSquid(s);
+  }
+  if (state === "playing") {
+    for (const p of livePlayers()) { drawHook(p); drawShip(p); }
+    if (falcon) drawFalcon(t);
+  }
+  if (nuke) drawNuke();
+  drawEffects(t);
+
+  // composite the glowing layer over the sky, with shake and RGB smear
+  ctx.save();
+  if (shake > 0.2) {
+    ctx.translate(rand(-shake, shake), rand(-shake, shake));
+  }
+  ctx.globalCompositeOperation = "lighter";
+  // bloom: downscale the layer, then let the upscale do the blurring
+  bA.clearRect(0, 0, bloomA.width, bloomA.height);
+  bA.drawImage(layer, 0, 0, bloomA.width, bloomA.height);
+  bB.clearRect(0, 0, bloomB.width, bloomB.height);
+  bB.drawImage(bloomA, 0, 0, bloomB.width, bloomB.height);
+  ctx.globalAlpha = 0.55;
+  ctx.drawImage(bloomA, 0, 0, W, H);
+  ctx.globalAlpha = 0.45;
+  ctx.drawImage(bloomB, 0, 0, W, H);
+  ctx.globalAlpha = 1;
+  if (aberr > 0.02) {
+    const o = aberr * 9;
+    ctx.globalAlpha = 0.6;
+    ctx.drawImage(layer, -o, 0, W, H);
+    ctx.drawImage(layer, o, o * 0.5, W, H);
+    ctx.globalAlpha = 1;
+  }
+  ctx.drawImage(layer, 0, 0, W, H);
+  ctx.restore();
+  ctx.globalCompositeOperation = "source-over";
+
+  // full-screen colour flash
+  if (flashA > 0.01) {
+    ctx.fillStyle = neon(hue + flashHue, 60, flashA * 0.75);
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  if (banner) {
+    const f = Math.min(1, banner.life / 1.9);
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, banner.life * 1.6);
+    ctx.translate(W / 2, H / 2);
+    ctx.scale(1 + (1 - f) * 0.45, 1 + (1 - f) * 0.45);
+    ctx.fillStyle = neon(hue * 3, 68);
+    ctx.shadowColor = ctx.fillStyle;
+    ctx.shadowBlur = 24;
+    ctx.font = "600 34px " + FONT;
+    ctx.textAlign = "center";
+    ctx.letterSpacing = "10px";
+    ctx.fillText(banner.text, 0, 0);
+    if (banner.sub) {
+      ctx.font = "600 15px " + FONT;
+      ctx.letterSpacing = "7px";
+      ctx.fillStyle = neon(hue * 3 + 60, 62);
+      ctx.shadowColor = ctx.fillStyle;
+      ctx.fillText(banner.sub, 0, 30);
+    }
+    ctx.letterSpacing = "0px";
+    ctx.restore();
+  }
+
+  if (paused) {
+    ctx.save();
+    ctx.fillStyle = neon(hue * 2, 70);
+    ctx.shadowColor = ctx.fillStyle;
+    ctx.shadowBlur = 18;
+    ctx.font = "600 18px " + FONT;
+    ctx.textAlign = "center";
+    ctx.letterSpacing = "8px";
+    ctx.fillText("PAUSED", W / 2, H / 2);
+    ctx.letterSpacing = "0px";
+    ctx.restore();
+  }
+}
+
+// ---------- attract mode: drifting rocks behind the start screen ----------
+function attractField() {
+  asteroids = [];
+  bullets = [];
+  debris = [];
+  shocks = [];
+  popups = [];
+  for (let i = 0; i < 5; i++) {
+    asteroids.push(makeAsteroid(rand(0, W), rand(0, H), 3));
+  }
+}
+resize();
+attractField();
+
+// ---------- loop ----------
+let last = performance.now();
+let clock = 0;
+function frame(now) {
+  const raw = Math.min((now - last) / 1000, 0.05);
+  last = now;
+  clock += raw;
+
+  if (squidSound) {
+    // the pack sings as one: nearest to the surface sets the volume,
+    // angriest sets the pitch, and more of them means a thicker drone
+    let depth = 0, rage = 0;
+    for (const s of squids) {
+      depth = Math.max(depth, FOCAL / (FOCAL + s.z));
+      rage = Math.max(rage, s.maxHp - s.hp);
+    }
+    const vol = 0.05 * depth * Math.min(1.6, 0.75 + squids.length * 0.35);
+    squidSound.g.gain.value =
+      (muted || paused || state !== "playing") ? 0 : vol;
+    squidSound.o.frequency.value = 90 + rage * 45;
+    squidSound.lfo.frequency.value = 5 + rage * 3;
+  }
+
+  // effect decay runs on real time so slow-mo doesn't stall it
+  shake *= Math.pow(0.02, raw);
+  flashA *= Math.pow(0.03, raw);
+  aberr *= Math.pow(0.05, raw);
+  if (deathFx > 0) deathFx = Math.max(0, deathFx - raw);
+  timeScale += (1 - timeScale) * Math.min(1, raw * 1.6);
+
+  const dt = raw * timeScale;
+  if (state === "playing" && !paused) {
+    update(dt);
+  } else {
+    hue += raw * 24;
+    for (const a of asteroids) {
+      a.x += a.vx * 0.3 * raw;
+      a.y += a.vy * 0.3 * raw;
+      a.angle += a.spin * 0.3 * raw;
+      a.pulse += raw * 2;
+      wrap(a);
+    }
+    for (let i = debris.length - 1; i >= 0; i--) {
+      const d = debris[i];
+      d.x += d.vx * raw;
+      d.y += d.vy * raw;
+      d.life -= raw;
+      if (d.life <= 0) debris.splice(i, 1);
+    }
+    for (let i = shocks.length - 1; i >= 0; i--) {
+      const s = shocks[i];
+      s.r += s.sp * raw;
+      if (s.r > s.max) shocks.splice(i, 1);
+    }
+  }
+  draw(clock);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
