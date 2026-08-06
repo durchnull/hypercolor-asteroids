@@ -214,7 +214,7 @@ function is_stat(l) { return (l ~ /^(-|[0-9]+)\t(-|[0-9]+)\t./) }
 function is_raw(l)  { return (l ~ /^:[0-7]+ [0-7]+ [0-9a-f]+ [0-9a-f]+ [A-Z]/) }
 function is_referee(p) {
   return (p == "CLAUDE.md" || p == "GOLDEN_RULES.md" || p == ".gitattributes" ||
-          p ~ /^tools\// || p ~ /^\.githooks\// ||
+          p == ".env.example" || p ~ /^tools\// || p ~ /^\.githooks\// ||
           p == ".claude/settings.json" || p ~ /^\.claude\/skills\//)
 }
 '
