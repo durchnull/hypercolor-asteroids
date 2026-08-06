@@ -1,0 +1,27 @@
+#!/bin/sh
+# GR7, the part of it that only shows up at push time: the history is the
+# scoreboard, and you do not get to edit the scoreboard. Your own branches are
+# yours to rebase; main belongs to everyone.
+set -u
+Z=0000000000000000000000000000000000000000
+status=0
+
+while read -r _local lsha rref rsha; do
+  case "$rref" in refs/heads/main|refs/heads/master) ;; *) continue ;; esac
+
+  if [ "$lsha" = "$Z" ]; then
+    printf '\n  GR7  refusing to delete %s. that is everybody'\''s history.\n\n' "$rref" >&2
+    status=1
+    continue
+  fi
+  [ "$rsha" = "$Z" ] && continue
+
+  if ! git merge-base --is-ancestor "$rsha" "$lsha" 2>/dev/null; then
+    printf '\n  GR7  this push rewrites %s - commits that other pilots already have\n' "$rref" >&2
+    printf '       would disappear. Land a new commit instead; the old one stays\n' >&2
+    printf '       in the book either way.\n\n' >&2
+    status=1
+  fi
+done
+
+exit $status

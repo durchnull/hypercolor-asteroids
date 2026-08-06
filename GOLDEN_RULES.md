@@ -1,0 +1,328 @@
+# THE GOLDEN RULES
+
+Many hands, one cabinet. Somebody lands a version, and the next person to pull
+and press ENTER finds out what happened by playing. That is the entire game
+behind the game, and these twelve rules exist to keep it playable for everyone
+— not to slow anybody down.
+
+They are enforced three times: while you work (your editor tells you), when you
+commit (the hooks), and forever after (the history, which nobody can quietly
+edit). Run the referee yourself any time:
+
+```sh
+tools/golden-check.sh          # what would the referee say right now?
+tools/golden-check.sh --install  # once per clone, wires up the hooks
+```
+
+Rules come in four weights, and the weight is the whole fairness argument:
+
+| weight | what it means | which |
+|---|---|---|
+| **red line** | cannot be overridden by anyone. To change one, change this file — in its own commit, in front of everybody. | GR1, GR2, GR7, GR10, GR11, GR12 |
+| **budget** | you may spend past it, but only in writing. One line in the commit message and you are through. That line stays in the book forever. | GR4, GR5, GR6 |
+| **nudge** | the referee mentions it and gets out of your way. | GR3, GR9 |
+| **on your honour** | no check exists and none could. It is the rule that decides whether the game is any good. | GR8 |
+
+The point of a budget is not to stop you. It is that **nobody can do anything
+big silently.** You always have a way through; you never have a way through
+unnoticed.
+
+---
+
+## GR1 — Leave it playable. `red line`
+
+Every commit opens in a browser and plays. Not "works on my branch", not
+"almost" — someone is going to pull this and press ENTER expecting a game.
+
+*Checked:* every changed `.js` file parses; every module path listed in
+`src/features.js` points at a file that ships; every `src=` and `href=` in
+`index.html` points at something that exists in the commit.
+
+There is no `import` anywhere in `src/` — modules are classic scripts loaded
+from the manifest, because that is what opens from `file://` without a server.
+The referee checks relative import specifiers too, for the day somebody tries.
+
+## GR2 — No dependencies, no build step, no network. `red line`
+
+The cabinet is one page you open. No package manager, no bundler, no
+TypeScript, nothing fetched from a CDN, nothing phoning home. The game plays on
+a plane, from a USB stick, in ten years.
+
+*Checked:* no `package.json`, lockfiles, `node_modules/`, bundler configs or
+`.ts`/`.tsx`/`.jsx` files; no `fetch`, `XMLHttpRequest`, `WebSocket`,
+`EventSource` or `sendBeacon`; no remote `src=`/`href=`/`@import`.
+
+It applies to the referee as much as to the game: `tools/` is sh, awk and git,
+and nothing in it installs anything. One tool is allowed to speak to the world,
+on purpose and in the open: `tools/chronicle-art.sh` paints one plate per
+version into `docs/art/`, using credentials in an untracked `.env` that only
+the book's writer has (see `.env.example`). It runs on their machine, never in
+the game or the page, asks once per version ever, and with no credentials it
+exits quietly. By the time any reader sees a plate it is an ordinary committed
+file. The cabinet itself still plays on a plane.
+
+## GR3 — Your feature, your file. `nudge`
+
+Anything that lives, moves or draws goes in its own module — `src/entities/`
+for things in the field, `src/game/` for rules, `src/ui/` for panels,
+`src/render/` for the ones that only draw — registered with `register({...})`,
+plus one line in the manifest `src/features.js`. That is the whole integration.
+
+The manifest is a list of paths, not imports. Its first block is the commons
+and the order there matters; append yours to the second block, alphabetically,
+where it does not.
+
+This is why several people can land several features in the same week without
+ever touching the same lines, and why the only file two branches are likely to
+both touch is a sorted list where the merge is trivial. It is also how
+ownership becomes obvious: the file is yours because `git log` says you created
+it.
+
+*Checked:* a file calling `register()` from outside those four directories is
+flagged; a new feature whose path is not in `src/features.js` is flagged,
+because nothing will ever load it.
+
+## GR4 — Add, don't undo. `budget: 25 lines`
+
+You may extend anyone's feature. You may tune anyone's numbers — balance is
+everybody's business and a few lines is all it takes. You may not gut, disable
+or quietly delete someone else's work to make room for yours.
+
+The owner of a file is whoever's commit created it. Your own files are yours
+entirely; do what you like.
+
+*Checked:* removing more than 25 net lines from a file you did not create, or
+deleting it outright, needs `Golden-Rule-Override: GR4 - <why>`.
+
+## GR5 — The commons stays common. `budget: 60 lines`
+
+`index.html`, `src/main.js`, `src/features.js`, `src/core/`, `src/render/`,
+`src/input/`, `src/ui/`, the shared rules in `src/game/` (`players.js`,
+`difficulty.js`, `lifecycle.js`, `events.js`, `profile.js`, `tally.js`),
+`src/audio/context.js`, `src/audio/buses.js`, `styles/tokens.css` and the
+`README` belong to everybody. Add hooks, add fields, add tokens — freely. But
+keep it backwards compatible: if you change what a hook is called or what it is
+handed, three other people's features break while they are asleep.
+
+The song is deliberately not on that list. `src/audio/voices.js`, `song.js`,
+`sfx.js` and `riff.js` load with the commons but they are somebody's work, and
+GR4's tighter budget on them is the point rather than an oversight.
+
+The frame object in `loop.js` exists precisely so you can add a field without
+changing a signature. Use that shape of solution.
+
+*Checked:* removing more than 60 net lines from a commons file, or deleting
+one, needs `Golden-Rule-Override: GR5 - <why>`.
+
+## GR6 — One surprise per commit. `budget: 1200 lines / 25 files`
+
+Land one idea at a time. A commit that changes everything leaves the next
+person nothing to discover and nothing to review, and it makes the book
+unreadable.
+
+Nothing under `docs/` counts against you — the book is generated, and the map
+beside it is not the cabinet.
+
+*Checked:* over budget needs `Golden-Rule-Override: GR6 - <why>`. Over 600
+added lines is a nudge, not a block.
+
+## GR7 — Sign your work in git, not in the code. `red line`
+
+`git blame` is the credit system, which is why nothing in the source needs an
+`@author` tag and nobody puts their name in the HUD. It is also why the history
+is not editable: no force-pushing `main`, no rewriting or reassigning commits
+other people already have. Land a new commit instead — the old one stays in the
+book either way.
+
+Write the subject line for the next pilot, not for the diff. "Comets, and they
+come in threes" beats "add comet feature".
+
+*Checked:* `git config user.name` must be set; no `@author` tags in source; the
+pre-push hook refuses any non-fast-forward push to `main`. Thin or generic
+subjects get a nudge.
+
+## GR8 — Play fair in the game, too. `on your honour`
+
+The referee cannot check this one, so it is on you, and it is the rule that
+actually keeps the game good:
+
+- Nothing makes the player invincible and nothing makes the game unloseable.
+  Every new power has a cost, a cooldown, or a finite count — the atom bomb is
+  the precedent: two to start, one more each wave.
+- Both seats stay equal. Any control you add exists for player one and player
+  two.
+- Difficulty may rise. It may not become unfair — the player must be able to
+  see the thing that is about to kill them.
+- It still holds 60fps on a laptop, and it still works on a keyboard with no
+  numpad.
+- You do not nerf somebody's feature to make yours look better.
+
+## GR9 — Keep the surprise. `nudge`
+
+The reveal happens in the game, not in the diff. Ship a `guide` entry with your
+feature so it appears in the field guide and the next player discovers it by
+playing; leave the README describing the cabinet, not your changelog.
+
+Write a `Chronicle:` line in your commit message. That is the sentence that
+goes in the book, and the book is read for fun.
+
+*Checked:* a new feature with no `guide` entry is flagged; a README edit
+alongside a new feature is flagged; a missing `Chronicle:` line is mentioned.
+
+## GR10 — Changing the rules is its own commit. `red line`
+
+`CLAUDE.md`, `GOLDEN_RULES.md`, `tools/`, `.githooks/`, `.gitattributes`,
+`.claude/settings.json` and `.claude/skills/` may not move in the same commit
+as game code, and a rule change needs a `Rule-Change: <why>` line. Widen your
+own permissions if you can convince people — but never in the same breath as
+using them.
+
+Nobody may disable the referee for a commit. `--no-verify` is not a tool, it is
+a confession.
+
+*Checked:* referee files and game files in one commit is refused; a rule change
+with no `Rule-Change:` line is refused. Neither is overridable.
+
+## GR11 — An event belongs to the pilot who wrote it. `red line`
+
+An **event** is an unexpected challenge dropped into a live wave — three
+krakens surfacing at once from three sides, a ring of rock closing in, portals
+opening exactly where you were about to be. Anyone may write them, in one file
+under `src/events/` named after themselves, and one rule makes it worth doing:
+
+> **An event never fires for the pilot who wrote it.**
+
+You cannot be ambushed by your own trap. Everybody else can. That is why the
+splash screen asks who is flying before it lets you in, and why laying a good
+one is the most direct route there is to ruining a friend's evening.
+
+So this rule is a red line and has no budget, not even an override: the whole
+mechanic rests on nobody being able to disarm the thing that is waiting for
+them.
+
+- Your own event file is yours forever — rewrite it, retune it, delete it.
+- Another pilot's event file is not yours to touch. Not one line.
+- Sign every event `by:` your git name, exactly. `by: A.HOUSE` means the event
+  belongs to nobody and fires for everyone, author included — the honourable
+  option when you want the thing in the game more than the credit for it.
+- Balance still applies (GR8). An event is a challenge, not a firing squad:
+  make it survivable by a pilot who reads it early and reacts well.
+
+That `by:` is the one name that belongs in the source, and GR7 is not bent by
+it: it is not a credit line, it is a targeting instruction. `git blame` still
+says who wrote the file.
+
+**One exception, written here rather than hidden in the rule that uses it.**
+The tally (GR12) counts the times a pilot has bent a rule in the open. At three
+the runner stops making the exception for them, and their own traps start
+firing at them like everybody else's. That is not a way to disarm somebody's
+event — nothing is, ever, that is what the red line is for — it is the only way
+in the cabinet to arm one *more*, and the only event it can arm is your own,
+against you, because you earned it. GR11 still has no override. This is not
+one; it is another red line reaching across.
+
+**The machinery counts too.** Two files decide whether any of this is true —
+`src/game/events.js`, which skips an event for its own author, and
+`src/game/profile.js`, which decides who that is. They are commons (GR5), they
+are not anybody's feature, and the guard inside the runner is part of the red
+line rather than part of the code. The seat itself is local: `tools/whoami.sh`
+writes your git name into `src/game/whoami.local.js`, which is untracked and
+stays on your machine, so your own traps go quiet and everybody else's stay
+armed. Without that file the splash screen simply asks.
+
+*Checked:* touching or deleting an event file you did not create is refused;
+signing an event with a name that is not yours and is not the house is refused;
+deleting the runner or the seat is refused; and changing the runner so that it
+no longer skips an event for its author is refused. Rewrite it as you like, but
+leave the guard recognisable — `e.by !== A.HOUSE && e.by === <the pilot>` — and
+leave the only condition on it the one GR12 puts there. No overrides on any of
+it.
+
+## GR12 — The tally remembers. `red line`
+
+A budget is spent in the open or it is not spent at all. So the moment a
+version lands carrying a `Golden-Rule-Override:` line — or lands with the
+referee never having run on it at all — the hooks write it down and commit it
+on the spot, under the name of whoever just flew, while they are still reading
+their own commit message:
+
+```
+THE LEDGER: Dave Okoro bends GR6, and it goes on the record
+```
+
+Nothing is blocked and nothing is undone. You keep the override, you keep the
+version, and you also keep a number. `src/game/ledger.js` is that number, one
+line per pilot, and `tools/tally.sh` reads it off the history exactly the way
+`tools/chronicle.sh` reads the book. What the number does to a pilot's field is
+`src/game/tally.js`, and that file is commons (GR5) — a punishment the punished
+could quietly switch off would not be one.
+
+A bend costs one. Going round the referee costs two — `--no-verify`, hooks
+unset, a check edited until it passes — because a rule bent quietly costs more
+than a rule bent out loud. The referee cannot stop you doing it. It can notice
+afterwards that it was never asked, and that turns out to be enough.
+
+The number is not a scolding. It is a difficulty setting, and it is yours:
+
+| bends | what the cabinet does about it |
+|---|---|
+| 0 | nothing at all. The field behaves. |
+| 1+ | events come for you sooner — every bend shortens the gap, to a floor of half. |
+| 3+ | **your own events stop sparing you.** |
+| 4+ | a wave may hold one more ambush than it used to. |
+
+Read the third row twice, because it is the expensive one. GR11 promises that
+your own trap never fires at you, and this is the one thing in the cabinet that
+takes the promise back — which is why it is written into GR11 as well, where
+somebody looking for it will find it.
+
+Nobody else's field changes. It follows the name on the splash screen, so yes,
+you could pick somebody else's and fly clean. You would then be flying as
+somebody whose events are all armed against you, including the ones you wrote
+yourself, which is a worse deal than the tally on any reading. The cheapest way
+out of the ledger costs more than the ledger. That is the design.
+
+It does not decay, because the history does not decay. Land good versions
+instead; the number stops mattering the moment you stop adding to it.
+
+*Checked:* `src/game/ledger.js` must say what `tools/tally.sh` reads off the
+history, with the pending commit message in hand. Editing your own count is
+refused, deleting the file is refused, and there is no override on either — the
+tally is the one number in this project nobody writes for themselves.
+
+---
+
+## Spending a budget
+
+Add a line to the commit message:
+
+```
+Golden-Rule-Override: GR4 - the kraken's dive state was unreachable after the
+                            portal change; rewriting it with Mira's agreement
+```
+
+The referee lets it through. `docs/index.html` records it forever, under your
+name, in a chapter people read for fun. That is the price, and it is the
+right price: cheap to pay, impossible to hide.
+
+One commit later the ledger records it too, and the ledger is read by the game
+rather than by people (GR12). The override line is the receipt. The tally is
+what the field does about it.
+
+## Versions
+
+A version is a commit that changed the game — `index.html`, `src/` or
+`styles/`, the files that ship in the page you open. v1 is the first commit
+that touched them and the newest is however many there have been since.
+
+Everything else in the repository is real work and gets a mention rather than a
+number: rewriting these rules, rebuilding the book, fixing a line in the
+README. The cabinet is the same cabinet afterwards, and the next pilot has
+nothing new to find out by playing.
+
+Nobody assigns the numbers. `tools/chronicle.sh` counts them off the history —
+so a clone that never installed the hooks arrives at exactly the same numbers
+as everybody else — and writes `docs/index.html`, one chapter per version. Your
+`Chronicle:` line is what it quotes.
+
+Read the book. Then go and do something to annoy the others.

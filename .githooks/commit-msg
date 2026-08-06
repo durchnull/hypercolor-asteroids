@@ -1,0 +1,17 @@
+#!/bin/sh
+# The budgets. Rules you are allowed to spend past, as long as you say so in
+# the message - which is why they are checked here, where the message exists.
+#
+# This is also the last word the referee gets before a commit exists, so it
+# leaves a note saying it was here: the tree it just cleared. GR12 reads that
+# note afterwards and compares it against what actually landed. A commit whose
+# tree the referee never signed off is a commit that went round it, and going
+# round it costs two rather than one.
+set -u
+ROOT=$(git rev-parse --show-toplevel) || exit 1
+
+"$ROOT/tools/golden-check.sh" --stage commit-msg --message-file "$1" || exit 1
+
+GITDIR=$(git rev-parse --git-dir 2>/dev/null) || exit 0
+git write-tree > "$GITDIR/asteroids-referee" 2>/dev/null || rm -f "$GITDIR/asteroids-referee"
+exit 0

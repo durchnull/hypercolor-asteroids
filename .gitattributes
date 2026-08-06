@@ -1,0 +1,26 @@
+# The taglines are append-only and everybody appends to the end of them, which
+# is the one shape of file git is worst at merging. union keeps both lines
+# instead of asking, and since a duplicate or a missing line is repaired by the
+# next  tools/chronicle.sh  anyway, there is nothing here worth stopping a
+# pilot mid-pull to resolve.
+docs/taglines.tsv merge=union
+
+# Generated after every commit, by everybody. Never worth a conflict: rebuild
+# it and the argument is over.
+docs/index.html   merge=union
+docs/chronicle.css merge=union
+
+# One page per version, same machine, same argument. A union merge of two whole
+# pages is nonsense to read, but it is nonsense that still opens in a browser
+# and that the next  tools/chronicle.sh  throws away - which beats stopping a
+# pilot mid-pull over a file neither of them wrote.
+docs/v*.html      merge=union
+
+# The plates and the list of them. A plate is asked for once and never asked
+# for again, so two clones can only ever have painted different versions, not
+# the same one differently — union is exactly right for the list, and the
+# pictures themselves are binary and never touched twice.
+docs/art/index.tsv merge=union
+docs/art/*.jpg    binary
+docs/art/*.png    binary
+docs/art/*.webp   binary

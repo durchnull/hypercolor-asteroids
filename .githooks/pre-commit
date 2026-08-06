@@ -1,0 +1,4 @@
+#!/bin/sh
+# The red lines. Six rules that nobody gets to override, checked against what
+# is staged, before the message is even written. See GOLDEN_RULES.md.
+exec "$(git rev-parse --show-toplevel)/tools/golden-check.sh" --staged --stage pre-commit

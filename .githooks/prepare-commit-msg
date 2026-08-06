@@ -1,0 +1,67 @@
+#!/bin/sh
+# Stamps the version this commit is about to become - if it is about to become
+# one at all. A commit that leaves index.html, src/ and styles/ alone changes
+# the scaffolding around the cabinet, not the cabinet: no version, no chapter,
+# and nothing for the next pilot to find out by playing. It still goes in the
+# book, as an interlude, because everything goes in the book.
+#
+# Also shows the tagline the version would land under, so a pilot who does not
+# care for it can write their own before it is kept for good.
+set -u
+MSG=$1
+SOURCE=${2:-}
+
+ROOT=$(git rev-parse --show-toplevel) || exit 0
+VER=$(sh "$ROOT/tools/chronicle.sh" --next 2>/dev/null) || exit 0
+NOW=$(sh "$ROOT/tools/chronicle.sh" --version 2>/dev/null) || exit 0
+
+grep -qi '^Version:' "$MSG" 2>/dev/null && exit 0
+
+case "$SOURCE" in
+  merge|squash|commit) exit 0 ;;
+esac
+
+TMP=$(mktemp) || exit 0
+{
+  cat "$MSG"
+  [ "$VER" != "-" ] && printf '\nVersion: %s\n' "$VER"
+
+  if [ -z "$SOURCE" ] && [ "$VER" != "-" ]; then
+    TAG=$(sh "$ROOT/tools/tagline.sh" 2>/dev/null)
+    cat <<EOF
+#
+# This commit becomes $VER. The subject line is what the next pilot reads
+# before they press ENTER, so write it from their seat, not from the diff.
+#
+# Optional, and read by tools/chronicle.sh into docs/index.html:
+#
+#   Chronicle: one line for the book. Third person, and funny is allowed.
+#
+#   Tagline: what happened to the game, in one line. Leave it out and the
+#            referee writes one; either way it is kept for good in
+#            docs/taglines.tsv. Yours would replace this:
+#
+#              $TAG
+#
+# Spending a budget (GR4, GR5, GR6) needs a reason, kept forever:
+#
+#   Golden-Rule-Override: GR4 - <why this is fair>
+#
+EOF
+  elif [ -z "$SOURCE" ]; then
+    cat <<EOF
+#
+# This one leaves the game alone - nothing under index.html, src/ or styles/
+# moves - so it is not a version and gets no chapter. $NOW stays on the
+# cabinet, and the book notes that this happened while it was there.
+#
+# Changing the rules is one of the things that lands this way, and it needs a
+# reason, kept forever:
+#
+#   Rule-Change: <why>
+#
+EOF
+  fi
+} > "$TMP"
+cat "$TMP" > "$MSG"
+rm -f "$TMP"

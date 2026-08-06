@@ -1,0 +1,133 @@
+#!/bin/sh
+# Something just landed, so the book is out of date. Rewrite it - which also
+# writes the tagline for whatever the new version turned out to be, and for any
+# version somebody landed in a clone that never installed these hooks.
+#
+# Both land with the next commit, which is fine: they are generated, never
+# authored, and anybody can rebuild them at any time.
+#
+# The ledger does not wait for the next commit. GR12: if this version bent a
+# rule - an override in the message, or the referee never having been on the
+# field at all - the tally is written down and committed now, under the name of
+# whoever just flew, while they are still reading their own commit message.
+# Nothing is blocked and nothing is undone. It is only that the field knows,
+# and from here on the field is less patient with them.
+set -u
+ROOT=$(git rev-parse --show-toplevel) || exit 0
+GITDIR=$(git rev-parse --git-dir) || exit 0
+
+# The last thing the referee did before this commit existed was write down the
+# tree it had just cleared. Read it and clear it first thing: a note left lying
+# about would excuse the next commit instead of this one.
+MARK="$GITDIR/asteroids-referee"
+SAW=$(cat "$MARK" 2>/dev/null || true)
+rm -f "$MARK"
+
+# The ledger commit is a commit too, and it does not get to tally itself.
+[ -n "${ASTEROIDS_TALLY:-}" ] && exit 0
+
+sh "$ROOT/tools/chronicle.sh" >/dev/null 2>&1 || exit 0
+
+VER=$(sh "$ROOT/tools/chronicle.sh" --version)
+
+if sh "$ROOT/tools/chronicle.sh" --moved HEAD; then
+  TAG=$(sh "$ROOT/tools/tagline.sh" HEAD 2>/dev/null)
+  printf '\n  %s is on the cabinet.\n' "$VER"
+  [ -n "$TAG" ] && printf '  %s\n' "$TAG"
+  printf '  docs/index.html has the chapter.\n'
+  printf '  Next pilot in: git pull && open index.html\n\n'
+else
+  printf '\n  The game did not move, so that was not a version - %s is still\n' "$VER"
+  printf '  on the cabinet. The book notes it happened all the same.\n\n'
+fi
+
+# --- GR12, the tally --------------------------------------------------------
+
+WHO=$(git config user.name 2>/dev/null || true)
+[ -n "$WHO" ] || exit 0
+
+# A merge is nobody's bend, and neither is replaying somebody else's work.
+[ "$(git rev-list --parents -n 1 HEAD | wc -w)" -gt 2 ] && exit 0
+for f in CHERRY_PICK_HEAD REVERT_HEAD MERGE_HEAD rebase-merge rebase-apply; do
+  if [ -e "$GITDIR/$f" ]; then exit 0; fi
+done
+
+SHA=$(git rev-parse --short HEAD)
+TREE=$(git rev-parse HEAD^{tree} 2>/dev/null || true)
+
+# Which budgets this one spent, straight off its own message.
+BENT=$(git log -1 --format='%B' \
+  | sed -n 's/^[[:space:]]*[Gg]olden-[Rr]ule-[Oo]verride:[[:space:]]*\([A-Za-z][A-Za-z]*[0-9][0-9]*\).*/\1/p' \
+  | tr 'a-z' 'A-Z' | sort -u | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+
+# And whether the referee was on the field at all. It signed off a tree on its
+# way out; if that is not the tree that landed, it never saw this one.
+SKIPPED=0
+{ [ -n "$SAW" ] && [ "$SAW" = "$TREE" ]; } || SKIPPED=1
+
+[ -z "$BENT" ] && [ "$SKIPPED" = 0 ] && exit 0
+
+# The trailer first, because the count has to include it: going round the
+# referee is worth two, and this commit here is what puts it in the history.
+TRAIL=$(mktemp) || exit 0
+MSGF=$(mktemp) || { rm -f "$TRAIL"; exit 0; }
+trap 'rm -f "$TRAIL" "$MSGF"' EXIT INT TERM
+
+: > "$TRAIL"
+if [ "$SKIPPED" = 1 ]; then
+  printf 'Referee-Skipped: %s landed with the golden check never run\n' "$SHA" >> "$TRAIL"
+fi
+
+NOW=$(sh "$ROOT/tools/tally.sh" --plus "$TRAIL" --count "$WHO" 2>/dev/null || echo 0)
+case "$NOW" in ''|*[!0-9]*) exit 0 ;; esac
+[ "$NOW" -gt 0 ] || exit 0
+
+if [ "$NOW" -ge 3 ]; then
+  EARNED="Their own events have stopped making an exception for them."
+else
+  EARNED="Three is where a pilot's own events stop making an exception."
+fi
+if [ "$NOW" = 1 ]; then BENDS="1 bend"; else BENDS="$NOW bends"; fi
+
+{
+  if [ "$SKIPPED" = 1 ]; then
+    printf 'THE LEDGER: %s went round the referee\n\n' "$WHO"
+    printf 'Commit %s landed with the golden check never run on it. It is not\n' "$SHA"
+    printf 'forbidden and it has not been undone. It was only never going to be\n'
+    printf 'private. Two on the tally for that one, because a rule bent quietly\n'
+    printf 'costs more than a rule bent out loud.\n\n'
+    printf 'Chronicle: %s switched the referee off for one commit, and the ledger\n' "$WHO"
+    printf '           switched something on for them. %s now.\n' "$BENDS"
+    printf '           %s\n' "$EARNED"
+  else
+    printf 'THE LEDGER: %s bends %s, and it goes on the record\n\n' "$WHO" "$BENT"
+    printf 'A budget is spent in the open or it is not spent at all, so here it is,\n'
+    printf 'in the history, under their own name, one commit after the fact.\n\n'
+    printf 'Chronicle: %s spent an override on %s, and the ledger had it written\n' "$WHO" "$BENT"
+    printf '           down before the terminal had stopped scrolling. %s now.\n' "$BENDS"
+    printf '           %s\n' "$EARNED"
+  fi
+  printf 'Tally: %s - %s\n' "$WHO" "$NOW"
+  cat "$TRAIL"
+} > "$MSGF"
+
+sh "$ROOT/tools/tally.sh" --plus "$MSGF" >/dev/null 2>&1
+
+if git diff --quiet -- src/game/ledger.js 2>/dev/null &&
+   git diff --cached --quiet -- src/game/ledger.js 2>/dev/null; then
+  exit 0                                       # already said. nothing to add
+fi
+
+if ASTEROIDS_TALLY=1 git add -- src/game/ledger.js >/dev/null 2>&1 &&
+   ASTEROIDS_TALLY=1 git commit --quiet --only --file "$MSGF" -- src/game/ledger.js >/dev/null 2>&1
+then
+  printf '  THE LEDGER  %s, %s. It is a commit now, and it is in the book.\n' "$WHO" "$BENDS"
+  if [ "$NOW" -ge 3 ]; then
+    printf '              Your own events are armed against you.  tools/tally.sh --roll\n\n'
+  else
+    printf '              The field will come for you sooner.  tools/tally.sh --roll\n\n'
+  fi
+else
+  printf '  THE LEDGER  could not land src/game/ledger.js on its own. It is in your\n'
+  printf '              tree, %s is on %s, and it wants committing.\n\n' "$WHO" "$NOW"
+fi
