@@ -173,6 +173,7 @@ is_generated() {
     docs/index.html|docs/chronicle.css|docs/taglines.tsv) return 0 ;;
     docs/v[0-9]*.html) return 0 ;;      # one page per version, same machine
     docs/art/*) return 0 ;;             # the plates, painted once and kept
+    docs/faces/*) return 0 ;;           # the pilots, painted once and never again
     src/game/ledger.js) return 0 ;;
   esac
   return 1

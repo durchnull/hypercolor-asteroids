@@ -118,6 +118,7 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 .roster td:first-child { color: var(--ink); }
+.roster .pilot { display: flex; align-items: center; gap: 0.5rem; }
 .roster td:nth-child(2) { color: var(--amber); }
 .roster a { color: var(--cyan); text-decoration: none; }
 
@@ -144,7 +145,32 @@ h1 {
   text-wrap: pretty;
 }
 .cv a:hover span { text-shadow: 0 0 12px rgba(255, 176, 32, 0.5); }
-.cv i { font-style: normal; font-size: 0.6rem; letter-spacing: 0.12em; color: var(--dim); }
+.cv i {
+  font-style: normal;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  color: var(--dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* The pilots' faces. One each, painted once by tools/chronicle-art.sh, and the
+   same one everywhere their name is written — which is the reason it is worth
+   painting at all. Round, because a portrait among all these straight lines
+   should not read as one more panel, and because the helmet fills the frame
+   and crops well. A pilot with no face costs nothing: the name simply sits
+   where it always did. */
+.face {
+  flex: none;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #05010c;
+  border: 1px solid rgba(160, 75, 255, 0.55);
+  box-shadow: 0 0 10px rgba(160, 75, 255, 0.4);
+}
 .ci {
   padding: 0.5rem 0.3rem 0.5rem 4.3rem;
   font-size: 0.66rem;
@@ -190,6 +216,17 @@ body.page { padding: 0; overflow: hidden; }
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--cyan);
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+/* Whoever flew it, at the top of their own chapter, where there is room for
+   them to be slightly more than a line of text. */
+.plate .who .face {
+  width: 2rem;
+  height: 2rem;
+  border-color: rgba(33, 243, 255, 0.55);
+  box-shadow: 0 0 12px rgba(33, 243, 255, 0.35);
 }
 .plate .when {
   font-size: 0.58rem;

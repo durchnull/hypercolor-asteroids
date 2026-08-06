@@ -1,0 +1,11 @@
+# THE FACES
+#
+# One line per pilot who has a painted face in docs/faces/, written by
+# tools/chronicle-art.sh the one time it asked about them and read by
+# tools/chronicle.sh into every place their name appears. This line is the
+# lock, and it is a firmer one than the plates have: a pilot with a line
+# here is never asked about again, file or no file, flag or no flag. There
+# is no --force and no --prune for a face. See the top of the script.
+#
+# pilot	file	what was asked for
+David Friedrich	david-friedrich.jpg	A pilot in a space suit, seeded from the name and asked for once.

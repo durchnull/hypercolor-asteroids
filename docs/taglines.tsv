@@ -12,3 +12,5 @@
 #
 # <commit>	<what happened to the game>
 1e4d4cb2cf109d303f0a07ac0954a0e366c9dc28	Somebody went in under the hood and closed it again.
+996441266d6f94511290c7034719d0035503a8c8	The game asks who is flying now, and it remembers what they did.
+d4197de7f9876a30b91ba87729e606369b29c689	The cabinet keeps score with slightly different arithmetic now.

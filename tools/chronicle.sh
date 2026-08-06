@@ -41,6 +41,14 @@
 # in any other book. Which is why nothing here depends on it: a version with no
 # plate has the drawn field and the chapter reads exactly as it did before.
 #
+# The pilots have faces for the same reason and by the same route, out of
+# docs/faces/ and asked for by the same script. A face belongs to a person
+# rather than to a commit, so it turns up in all three places this book writes
+# somebody's name - the roster on the cover, the line under each version in the
+# contents, and the head of every chapter they flew - and it is the identical
+# picture in each, because it was only ever painted once. A pilot with no face
+# reads as a name, exactly as everybody did before there were any.
+#
 #   tools/chronicle.sh                rewrite docs/index.html
 #   tools/chronicle.sh --version      the version on the cabinet now
 #   tools/chronicle.sh --next         the version the next commit becomes, or
@@ -169,6 +177,20 @@ plates() {
   }' docs/art/index.tsv
 }
 
+# The pilots' faces, folded in the same way once more: a name, and the picture
+# that belongs to it from now on. Same missing-file rule as the plates, for the
+# same reason - except that this one will not be repainted, so a face whose file
+# has gone is a name that simply reads as a name again.
+faces() {
+  [ -f docs/faces/index.tsv ] || return 0
+  awk -F'\t' 'NF >= 2 && $1 !~ /^#/ {
+    if ((getline junk < ("docs/faces/" $2)) >= 0) {
+      close("docs/faces/" $2)
+      printf "\036FACE\037%s\037%s", $1, $2
+    }
+  }' docs/faces/index.tsv
+}
+
 # One record per commit: header fields, then the raw diff, then the numstat.
 # --raw is there for one letter: D. A deleted file and a file that only lost
 # lines are the same two numbers, and GR6 counts one of them and not the other.
@@ -248,11 +270,24 @@ mkdir -p docs
 # comes back and a chapter for a version that no longer exists does not.
 rm -f docs/v[0-9]*.html
 
-{ taglines; owners; plates; history '%d %B %Y|%H:%M'; } \
+{ taglines; owners; plates; faces; history '%d %B %Y|%H:%M'; } \
   | awk -v RS='\036' -v FS='\037' -v total="$TOTAL" -v rules="$RULES" "$LIB"'
 function esc(s) { gsub(/&/,"\\&amp;",s); gsub(/</,"\\&lt;",s); gsub(/>/,"\\&gt;",s); return s }
 function att(s) { s = esc(s); gsub(/"/, "\\&quot;", s); return s }
 function plural(n) { return n == 1 ? "" : "s" }
+# A pilot, wherever their name is written. Painted once by tools/chronicle-art.sh
+# and kept from then on, so it is the same face on the cover, in the contents and
+# at the top of every chapter they flew - which is the whole point of it being
+# painted once. Empty for a pilot who has none, and every place this is used
+# reads the same with nothing in it.
+#
+# alt is deliberately empty: the name is always right beside the picture, and a
+# screen reader announcing it twice is worse than not announcing it at all.
+function face(p,   f) {
+  f = mug[p]
+  if (f == "") return ""
+  return "<img class=\"face\" src=\"faces/" f "\" alt=\"\" loading=\"lazy\" decoding=\"async\">"
+}
 function ord(n,   t) {
   t = n % 100
   if (t >= 11 && t <= 13) return n "th"
@@ -392,6 +427,7 @@ $1 == "TAG" { tag[$2] = $3; next }
 $1 == "OWN" { owner[$2] = $3; next }
 $1 == "ART" { art[$2] = $3; altof[$2] = $4; next }
 $1 == "ART" { plate[$2] = $3; plated[$2] = $4; next }
+$1 == "FACE" { mug[$2] = $3; next }
 NF < 4 { next }
 {
   # Reading newest first, this is where the rules stop existing. The commit that
@@ -572,8 +608,8 @@ END {
     if (bent[p])  cell = bent[p] " override" plural(bent[p])
     if (cheat[p]) cell = cell (cell ? ", " : "") cheat[p] " unrecorded"
     if (cell == "") cell = "&mdash;"
-    roster = roster sprintf("<tr><td>%s</td><td>%d</td><td>%s</td><td>%s%s%s</td></tr>\n", \
-             esc(p), pilots[p], \
+    roster = roster sprintf("<tr><td><span class=\"pilot\">%s%s</span></td><td>%d</td><td>%s</td><td>%s%s%s</td></tr>\n", \
+             face(p), esc(p), pilots[p], \
              (peak[p] ? sprintf("<a href=\"v%d.html\">v%d</a>", peak[p], peak[p]) : "&mdash;"), \
              (cheat[p] ? "<b>" : ""), cell, (cheat[p] ? "</b>" : ""))
   }
@@ -614,8 +650,8 @@ END {
     split(ENT[i], e, SUBSEP)
     if (e[1] == "V") {
       v = e[2]
-      printf "<li class=\"cv\"><a href=\"v%s.html\"><b>v%s</b><span>%s</span><i>%s</i></a></li>\n", \
-             v, v, esc(shout(v)), esc(VW[v]) > cover
+      printf "<li class=\"cv\"><a href=\"v%s.html\"><b>v%s</b><span>%s</span><i>%s%s</i></a></li>\n", \
+             v, v, esc(shout(v)), face(VW[v]), esc(VW[v]) > cover
     } else
       printf "<li class=\"ci\">%s</li>\n", e[2] > cover
   }
@@ -634,8 +670,8 @@ END {
     print "<main>" > f
     printf "<header class=\"plate\"><span class=\"num\">CHAPTER %s</span><span class=\"ver\">v%s</span>", \
            roman(v), v > f
-    printf "<span class=\"who\">%s</span><span class=\"when\">%s &middot; %s</span></header>\n", \
-           esc(VW[v]), esc(VN[v]), VC[v] > f
+    printf "<span class=\"who\">%s%s</span><span class=\"when\">%s &middot; %s</span></header>\n", \
+           face(VW[v]), esc(VW[v]), esc(VN[v]), VC[v] > f
     printf "<h1 class=\"shout\">%s</h1>\n", esc(shout(v)) > f
     # The plate, if this version has one, above the drawn field: the scene
     # first and the diff underneath it, which is the order a reader wants them
@@ -823,6 +859,7 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 .roster td:first-child { color: var(--ink); }
+.roster .pilot { display: flex; align-items: center; gap: 0.5rem; }
 .roster td:nth-child(2) { color: var(--amber); }
 .roster a { color: var(--cyan); text-decoration: none; }
 
@@ -849,7 +886,32 @@ h1 {
   text-wrap: pretty;
 }
 .cv a:hover span { text-shadow: 0 0 12px rgba(255, 176, 32, 0.5); }
-.cv i { font-style: normal; font-size: 0.6rem; letter-spacing: 0.12em; color: var(--dim); }
+.cv i {
+  font-style: normal;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  color: var(--dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* The pilots' faces. One each, painted once by tools/chronicle-art.sh, and the
+   same one everywhere their name is written — which is the reason it is worth
+   painting at all. Round, because a portrait among all these straight lines
+   should not read as one more panel, and because the helmet fills the frame
+   and crops well. A pilot with no face costs nothing: the name simply sits
+   where it always did. */
+.face {
+  flex: none;
+  width: 3.1rem;
+  height: 3.1rem;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #05010c;
+  border: 1px solid rgba(160, 75, 255, 0.55);
+  box-shadow: 0 0 10px rgba(160, 75, 255, 0.4);
+}
 .ci {
   padding: 0.5rem 0.3rem 0.5rem 4.3rem;
   font-size: 0.66rem;
@@ -895,6 +957,17 @@ body.page { padding: 0; overflow: hidden; }
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--cyan);
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+/* Whoever flew it, at the top of their own chapter, where there is room for
+   them to be slightly more than a line of text. */
+.plate .who .face {
+  width: 4rem;
+  height: 4rem;
+  border-color: rgba(33, 243, 255, 0.55);
+  box-shadow: 0 0 12px rgba(33, 243, 255, 0.35);
 }
 .plate .when {
   font-size: 0.58rem;

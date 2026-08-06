@@ -80,10 +80,13 @@ Everything hangs off a feature registry, and that is the one idea you need.
   pastes it to you and says *read the black box*: `/blackbox` verifies the seal
   with `tools/blackbox.sh` and ranks the flight in `docs/RANKINGS.md`. A tape
   that fails the seal ranks nowhere, whoever asks.
-- `tools/chronicle-art.sh` — paints one plate per version into `docs/art/`,
-  once each, if the book-writer's `.env` holds Cloudflare credentials (see
-  `.env.example`). Without them it exits quietly and the book builds as ever.
-  `.env` is gitignored and never committed; do not read it or ask for it.
+- `tools/chronicle-art.sh` — paints one plate per version into `docs/art/` and
+  one face per pilot into `docs/faces/`, once each, if the book-writer's `.env`
+  holds Cloudflare credentials (see `.env.example`). Without them it exits
+  quietly and the book builds as ever. `.env` is gitignored and never
+  committed; do not read it or ask for it. A plate can be repainted; a face
+  cannot, by anybody, ever — one pilot, one portrait, and the manifest line is
+  the lock. There is no flag for it and adding one is a rule change.
 
 The longer map is [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and it is not
 generated — read it when the shape of something is not obvious from here.

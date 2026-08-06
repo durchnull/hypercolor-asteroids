@@ -24,3 +24,15 @@ docs/art/index.tsv merge=union
 docs/art/*.jpg    binary
 docs/art/*.png    binary
 docs/art/*.webp   binary
+
+# The faces, and the same argument once more with one thing added: a pilot is
+# painted once and never again, so two clones can only ever have painted
+# different people. Union keeps both, which is the right answer and also the
+# only one — a conflict here would be two clones arguing over somebody's face,
+# and neither of them is entitled to settle it. faces.js is written out of the
+# list one assignment per line for exactly this reason.
+docs/faces/index.tsv merge=union
+docs/faces/faces.js  merge=union
+docs/faces/*.jpg  binary
+docs/faces/*.png  binary
+docs/faces/*.webp binary
