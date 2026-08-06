@@ -163,8 +163,8 @@ h1 {
    where it always did. */
 .face {
   flex: none;
-  width: 1.55rem;
-  height: 1.55rem;
+  width: 3.1rem;
+  height: 3.1rem;
   border-radius: 50%;
   object-fit: cover;
   background: #05010c;
@@ -223,8 +223,8 @@ body.page { padding: 0; overflow: hidden; }
 /* Whoever flew it, at the top of their own chapter, where there is room for
    them to be slightly more than a line of text. */
 .plate .who .face {
-  width: 2rem;
-  height: 2rem;
+  width: 4rem;
+  height: 4rem;
   border-color: rgba(33, 243, 255, 0.55);
   box-shadow: 0 0 12px rgba(33, 243, 255, 0.35);
 }

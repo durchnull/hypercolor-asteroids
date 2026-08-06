@@ -6,7 +6,11 @@
 //
 // It re-renders on every return to the splash, which is how the locked seat
 // arrives — whoami.local.js loads a moment after the page and asks for a
-// redraw when it does.
+// redraw when it does. The faces arrive the same way and for the same reason:
+// docs/faces/faces.js is written by tools/chronicle-art.sh out of the list of
+// pilots who have been painted, it is a script rather than data because there
+// is no fetch in this project (GR2), and a clone that has none of it simply
+// gets the cards it always had.
 
 (function (A) {
   "use strict";
@@ -16,6 +20,10 @@
     .replace(/"/g, "&quot;");
 
   const plural = (n, one, many) => n + " " + (n === 1 ? one : many);
+
+  // The picture belonging to a name, if one was ever painted. GUEST is not a
+  // person and never gets one.
+  const faceOf = (name) => (A.FACES && A.FACES[name]) || "";
 
   A.renderPilot = function renderPilot() {
     const root = document.getElementById("pilot");
@@ -36,7 +44,10 @@
       <h2>WHO IS FLYING</h2>
       <div class="pilots">${(known ? shown : seats).map((p) => `
         <button type="button" class="pilotcard${p.name === active ? " on" : ""}"
-                data-pilot="${esc(p.name)}"${locked ? " disabled" : ""}>
+                data-pilot="${esc(p.name)}"${locked ? " disabled" : ""}>${
+          faceOf(p.name) ? `
+          <img class="pface" src="docs/faces/${esc(faceOf(p.name))}" alt="">`
+          : ""}
           <span class="pname">${esc(p.name)}</span>
           <span class="pmeta">${
             p.events < 0 ? "every trap armed"
@@ -61,6 +72,13 @@
         : "Events are written by the pilots, and never fire for the one who "
           + "wrote them. Pick your own name and theirs are armed against you; "
           + "pick somebody else's and you only spoil your own."}</p>`;
+
+    // A face is never repainted, so a manifest can outlive the picture it
+    // names. Rather than leave a broken image sitting on somebody's seat, the
+    // card gives the space back and reads as it did before there were faces.
+    root.querySelectorAll(".pface").forEach((img) => {
+      img.addEventListener("error", () => img.remove(), { once: true });
+    });
   };
 
   function onClick(ev) {
@@ -69,6 +87,16 @@
     A.setPilot(card.dataset.pilot);
     A.renderPilot();
   }
+
+  // The faces, asked for the same way the seat is and just as optionally: it
+  // is a generated file that only exists once somebody has been painted, so a
+  // miss is silent and a hit asks for a redraw of whatever is already on screen.
+  const f = document.createElement("script");
+  f.src = "docs/faces/faces.js";
+  f.async = false;
+  f.onerror = () => {};                      // nobody painted yet: names, then
+  f.onload = () => { if (A.renderPilot) A.renderPilot(); };
+  document.head.append(f);
 
   A.register({
     id: "ui:profile",

@@ -1,0 +1,48 @@
+/* The pilots' faces, on the seat they fly from.
+
+   One each, painted once by tools/chronicle-art.sh and kept in docs/faces/
+   from then on — the same picture the chronicle puts beside their name, which
+   is the entire reason it is painted once rather than per page. The cabinet
+   borrows it from the book; nothing here is fetched and nothing here is drawn.
+
+   Everything in this file has to survive the picture not being there. A clone
+   with no faces, a pilot who has never been painted, a file that went missing
+   — all three land on a card that looks exactly like a card always did. */
+
+.pilotcard {
+  /* the face on the left, the name and everything under it on the right */
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.7rem;
+  align-items: center;
+}
+/* Every line of text belongs in the right-hand column. Without this the card
+   would fall back to one item per row the moment a face appeared, which is the
+   layout it has now and the one it keeps for a pilot with no face. */
+.pilotcard > :not(.pface) { grid-column: 2; }
+
+.pface {
+  grid-row: 1 / -1;
+  width: 3.1rem;
+  height: 3.1rem;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #05010c;
+  border: 1px solid rgba(160, 75, 255, 0.55);
+  box-shadow: 0 0 10px rgba(160, 75, 255, 0.4);
+}
+/* The seat you are in, lit the way the card around it is. */
+.pilotcard.on .pface {
+  border-color: var(--cyan);
+  box-shadow: 0 0 14px rgba(33, 243, 255, 0.45);
+}
+.pilotcard.on:disabled .pface {
+  border-color: var(--lime);
+  box-shadow: 0 0 14px rgba(182, 255, 61, 0.4);
+}
+
+/* The splash has to land above the fold on a laptop, and a portrait is the
+   cheapest thing on the card to shrink — the name is what has to stay. */
+@media (max-height: 940px) {
+  .pface { width: 2.2rem; height: 2.2rem; }
+}
