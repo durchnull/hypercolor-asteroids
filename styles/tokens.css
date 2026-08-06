@@ -1,0 +1,36 @@
+/* Palette, reset and the two animations everything else borrows.
+   Everything in here is shared: change it and you change the whole cabinet. */
+:root {
+  --void: #07030f;
+  --ink: #f2e9ff;
+  --dim: #9a86bd;
+  --magenta: #ff3ec8;
+  --cyan: #21f3ff;
+  --violet: #a04bff;
+  --lime: #b6ff3d;
+  --amber: #ffb020;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  background: var(--void);
+  color: var(--ink);
+  font-family: var(--mono);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#game {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes cycle {
+  from { filter: hue-rotate(0deg); }
+  to { filter: hue-rotate(360deg); }
+}

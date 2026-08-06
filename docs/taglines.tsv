@@ -1,0 +1,14 @@
+# THE TAGLINES
+#
+# One line per version of ASTEROIDS // HYPERCOLOR, saying what happened to the
+# game. Appended by tools/tagline.sh when a version lands, read by
+# tools/chronicle.sh into the book, and never rewritten: once a line is in
+# here it is the record, even after the script that first wrote it changes its
+# mind about jokes.
+#
+# Which is the invitation. If the machine gave your version a limp line, edit
+# it here and it stays edited. If you would rather not leave it to chance, put
+# a  Tagline: <line>  in the commit message and that is what lands.
+#
+# <commit>	<what happened to the game>
+1e4d4cb2cf109d303f0a07ac0954a0e366c9dc28	Somebody went in under the hood and closed it again.

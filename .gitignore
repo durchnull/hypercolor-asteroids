@@ -6,3 +6,15 @@
 
 # Local Claude Code settings
 .claude/settings.local.json
+
+# Credentials, and the one file in here that must never be committed. Only
+# tools/chronicle-art.sh reads it, only on the machine of whoever is writing
+# the book, and nothing in the game has ever heard of it. See .env.example.
+.env
+.env.*
+!.env.example
+
+# Your seat. Written by tools/whoami.sh from your git identity, local to your
+# machine — if this ever got committed, everybody would inherit your seat and
+# stop being ambushed by your events.
+src/game/whoami.local.js

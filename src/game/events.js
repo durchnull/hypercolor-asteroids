@@ -1,0 +1,193 @@
+// Events. The field has moods.
+//
+// An event is an unexpected challenge dropped into a live wave: three krakens
+// surfacing at once from three directions, a ring of rock closing in, a pair
+// of portals opening exactly where you were about to be. Any pilot may write
+// them, in their own file under src/events/, and one rule makes it worth
+// doing:
+//
+//     an event never fires for the pilot who wrote it.
+//
+// You cannot be ambushed by your own trap. Everybody else can. That is why the
+// splash screen asks who is flying before it lets you in — see game/profile.js
+// — and why laying a good one is the most direct way there is to ruin a
+// friend's run.
+//
+// Writing one:
+//
+//   A.defineEvent({
+//     id: "pincer",              // unique across the whole game
+//     by: "Dave Okoro",          // your git name, exactly. or A.HOUSE.
+//     name: "PINCER",            // the banner the victim gets
+//     blurb: "From three sides", // the small line under it
+//     minWave: 4,                // earliest wave it may fire on
+//     weight: 2,                 // relative likelihood against the others
+//     cooldown: 3,               // waves before it may repeat
+//     fire(tick) { ... },        // do your worst
+//   });
+//
+// `by: A.HOUSE` means the event belongs to nobody and fires for everyone,
+// author included. Use it when you want a thing in the game more than you want
+// the credit for springing it.
+//
+// One thing revokes that protection, and only for the pilot who bought it: the
+// tally. Bend a golden rule three times and game/tally.js stops letting the
+// runner make an exception for you — see GR12, and see the ledger, which you
+// do not get to edit.
+//
+// The referee will not let you touch another pilot's event file, and will not
+// let you sign an event with a name that is not yours. See GR11.
+
+(function (A) {
+  "use strict";
+
+  A.HOUSE = "THE HOUSE";
+
+  const events = [];
+
+  A.defineEvent = function defineEvent(event) {
+    for (const e of [].concat(event)) {
+      if (!e || !e.id) throw new Error("an event needs an id");
+      if (!e.by) throw new Error("event " + e.id + " is not signed: it needs a `by`");
+      if (typeof e.fire !== "function") throw new Error("event " + e.id + " needs a fire()");
+      if (events.some((o) => o.id === e.id)) {
+        throw new Error("duplicate event id: " + e.id);
+      }
+      events.push(e);
+    }
+  };
+
+  /**
+   * How many events are pointed at whoever is flying right now. A count and
+   * never a list: knowing there are six out there is the fun part, knowing
+   * which six is the end of it.
+   */
+  A.armedCount = function armedCount() {
+    const me = A.activePilot();
+    const mine = mineToo();
+    return events.filter((e) => mine || e.by === A.HOUSE || e.by !== me).length;
+  };
+
+  // The tally, if it is loaded, decides whether a pilot's own traps are still
+  // making an exception for them. Three bends and they are not. GR11 and GR12.
+  const mineToo = () => !!(A.ownEventsArmed && A.ownEventsArmed());
+
+  /** The pilots who have laid traps, and how many each. For the picker. */
+  A.eventPilots = function eventPilots() {
+    const count = new Map();
+    for (const e of events) {
+      if (e.by === A.HOUSE) continue;
+      count.set(e.by, (count.get(e.by) || 0) + 1);
+    }
+    return [...count]
+      .map(([name, events]) => ({ name, events }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  };
+
+  // ---- the director --------------------------------------------------------
+
+  const SETTLE = 4;          // seconds into a wave before anything may happen
+  const MAX_PER_WAVE = 2;    // an ambush is only an ambush if it is rare
+  const GAP = [16, 30];      // seconds between attempts, before the ramp
+
+  let timer = 0;
+  let firedThisWave = 0;
+  let wave = 0;
+  const lastFiredOn = new Map();
+
+  // A pilot who has bent a rule waits less between ambushes, and a wave may
+  // hold one more of them. Both come off the ledger, both are capped, and
+  // neither exists for anybody who has not earned it. GR12.
+  const heat = () => (A.eventHeat ? A.eventHeat() : 1);
+  const quota = () => MAX_PER_WAVE + (A.eventQuotaBonus ? A.eventQuotaBonus() : 0);
+
+  const gap = () => Math.max(9, A.rand(GAP[0], GAP[1]) - A.game.level * 0.7) * heat();
+
+  function eligible() {
+    const me = A.activePilot();
+    const mine = mineToo();
+    return events.filter((e) => {
+      if (e.by !== A.HOUSE && e.by === me && !mine) return false;   // never your own
+      if ((e.minWave || 1) > A.game.level) return false;
+      const last = lastFiredOn.get(e.id);
+      if (last !== undefined && A.game.level - last < (e.cooldown || 2)) return false;
+      return true;
+    });
+  }
+
+  function pick(pool) {
+    let total = 0;
+    for (const e of pool) total += e.weight || 1;
+    let n = Math.random() * total;
+    for (const e of pool) {
+      n -= e.weight || 1;
+      if (n <= 0) return e;
+    }
+    return pool[pool.length - 1];
+  }
+
+  function announce(e) {
+    // Your own trap, coming back at you. Say so — the tally is a punishment,
+    // and a punishment nobody notices is only a bug.
+    const own = e.by !== A.HOUSE && e.by === A.activePilot();
+    A.showBanner(e.name || "INCOMING", own ? "YOURS. YOU EARNED THIS ONE" : e.blurb || null, 1.8);
+    A.screenFlash(A.hue + 200, 0.34);
+    A.shakeBy(10);
+    A.blip(180, 0.4, "sawtooth", 0.16);
+  }
+
+  function reset(mode) {
+    timer = gap();
+    firedThisWave = 0;
+    wave = A.game.level;
+    if (mode === "play") lastFiredOn.clear();
+  }
+
+  function resolve(tick) {
+    // a new wave: the clock and the quota start again
+    if (A.game.level !== wave) {
+      wave = A.game.level;
+      firedThisWave = 0;
+      timer = SETTLE + gap();
+    }
+
+    if (A.game.levelTimer > 0) return;        // between waves, let it breathe
+    if (firedThisWave >= quota()) return;
+    if (!A.flyingShips().length) return;      // nobody alive to ambush
+
+    timer -= tick.dt;
+    if (timer > 0) return;
+    timer = gap();
+
+    const pool = eligible();
+    if (!pool.length) return;
+
+    const e = pick(pool);
+    lastFiredOn.set(e.id, A.game.level);
+    firedThisWave++;
+    announce(e);
+    try {
+      e.fire(tick);
+    } catch (err) {
+      // one bad event must not take the game down with it
+      console.error("ASTEROIDS: event " + e.id + " (" + e.by + ") threw", err);
+    }
+  }
+
+  A.register({
+    id: "events",
+    order: { resolve: 850 },     // before waves, which closes the level out
+    reset,
+    resolve,
+    guide: {
+      name: "EVENTS",
+      meta: "unannounced",
+      tint: "var(--amber)",
+      icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
+        stroke="currentColor" stroke-width="1.6">
+        <path d="M17 3v7M17 24v7M3 17h7M24 17h7M7 7l5 5M22 22l5 5M27 7l-5 5M12 22l-5 5"/>
+        <circle cx="17" cy="17" r="4.5"/></svg>`,
+      desc: "The field has moods. Somebody wrote one of them for you, and it is not the one they get.",
+    },
+  });
+})(ASTEROIDS);

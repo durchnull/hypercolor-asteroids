@@ -1,0 +1,82 @@
+/* The pilot picker on the splash screen. Cards come from the event registry,
+   so this file only cares how one card is laid out — the panel around them is
+   part of the rack, and overlay.css draws that. */
+
+/* auto-fill, not auto-fit: one pilot gets a card the size of a card, rather
+   than one card the width of the panel */
+.pilot .pilots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.5rem;
+}
+.pilotcard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.55rem 0.7rem;
+  background: rgba(12, 5, 24, 0.6);
+  border: 1px solid rgba(160, 75, 255, 0.35);
+  color: var(--dim);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.pilotcard:hover:not(:disabled) {
+  border-color: rgba(33, 243, 255, 0.6);
+  color: var(--ink);
+}
+.pilotcard.on {
+  border-color: var(--cyan);
+  background: rgba(33, 243, 255, 0.08);
+  color: var(--ink);
+  box-shadow: 0 0 18px rgba(33, 243, 255, 0.22),
+              inset 0 0 22px rgba(33, 243, 255, 0.06);
+}
+/* Locked to a git identity: still the seat, just not a choice. */
+.pilotcard:disabled { cursor: default; opacity: 1; }
+.pilotcard.on:disabled { border-color: var(--lime); box-shadow: 0 0 18px rgba(182, 255, 61, 0.2); }
+.pilotcard.on:disabled .pname { color: var(--lime); }
+
+.pilotcard .pname {
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  color: var(--ink);
+}
+.pilotcard .pmeta {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+}
+.pilotcard:not(.on) .pmeta { color: var(--dim); }
+
+/* Only ever there for a pilot who has bent something. GR12. */
+.pilotcard .pbends {
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  color: var(--magenta);
+  font-variant-numeric: tabular-nums;
+}
+
+.pilotarmed {
+  margin-top: 0.55rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  color: var(--magenta);
+  text-shadow: 0 0 10px currentColor;
+  font-variant-numeric: tabular-nums;
+}
+.pilotnote {
+  margin-top: 0.35rem;
+  font-size: 0.62rem;
+  line-height: 1.65;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  text-wrap: pretty;
+}
+
+@media (max-height: 940px) {
+  .pilotnote { display: none; }
+  .pilotcard { padding: 0.4rem 0.55rem; }
+}

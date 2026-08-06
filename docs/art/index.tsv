@@ -1,0 +1,10 @@
+# THE PLATES
+#
+# One line per version that has a painted plate in docs/art/, written by
+# tools/chronicle-art.sh the one time it asked for that version and read by
+# tools/chronicle.sh into the chapter. Append-only: a line in here is what
+# stops the same commit ever being painted twice, so it is not rewritten and
+# it is not reordered. A version with no line simply has no plate.
+#
+# commit	file	alt text
+1e4d4cb2cf109d303f0a07ac0954a0e366c9dc28	1e4d4cb2.jpg	Somebody went in under the hood and closed it again.

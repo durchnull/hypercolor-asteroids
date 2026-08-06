@@ -1,0 +1,49 @@
+/* Touch controls: hidden unless a touch is detected. The buttons themselves
+   are generated from TOUCH_PADS in src/input/bindings.js. */
+.touch {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: none;
+  justify-content: space-between;
+  padding: 0 1.2rem calc(1.2rem + env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+body.has-touch .touch { display: flex; }
+.touch .pad { display: flex; gap: 0.9rem; pointer-events: auto; }
+.touch button {
+  width: 4.2rem;
+  height: 4.2rem;
+  border-radius: 50%;
+  border: 1px solid rgba(33,243,255,0.5);
+  background: rgba(160,75,255,0.12);
+  color: var(--cyan);
+  font-family: var(--mono);
+  font-size: 1.25rem;
+  touch-action: none;
+}
+.touch button:active { background: rgba(255,62,200,0.3); }
+.touch button.bomb {
+  border-color: rgba(255,176,32,0.6);
+  color: var(--amber);
+}
+.touch button.hookbtn {
+  border-color: rgba(182,255,61,0.6);
+  color: var(--lime);
+}
+#mute {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  background: none;
+  border: none;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  padding: 0.4rem;
+}
+#mute:focus-visible { outline: 1px solid var(--cyan); }
+body.has-touch #mute { bottom: auto; top: 3.6rem; }

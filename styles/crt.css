@@ -1,0 +1,38 @@
+/* CRT dressing: vignette, scanlines, and a slow rolling refresh bar. */
+.crt {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+.crt.vignette {
+  background: radial-gradient(ellipse at center, transparent 48%, rgba(7,3,15,0.72) 100%);
+}
+.crt.scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0,0,0,0.22) 3px
+  );
+  opacity: 0.45;
+}
+.crt.roll {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(255,255,255,0.045) 45%,
+    rgba(255,255,255,0.075) 50%,
+    rgba(255,255,255,0.045) 55%,
+    transparent 100%
+  );
+  height: 22vh;
+  inset: auto 0 auto 0;
+  animation: roll 7s linear infinite;
+}
+@keyframes roll {
+  from { transform: translateY(-25vh); }
+  to { transform: translateY(105vh); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .crt.roll { animation: none; }
+}

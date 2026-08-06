@@ -1,0 +1,65 @@
+/* One panel per seat: seat 0 left, seat 1 right, wave in the middle.
+   Seat colour is set inline from SEATS in src/input/bindings.js, so a new
+   seat needs no CSS at all. */
+.hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.1rem 1.4rem;
+  pointer-events: none;
+  animation: cycle 9s linear infinite;
+}
+.hud .player {
+  min-width: 8rem;
+  color: var(--cyan);
+}
+.hud .player.out { opacity: 0.6; }
+.hud .player .tag {
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  opacity: 0.8;
+}
+.hud .player .pscore {
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+  text-shadow: 0 0 12px currentColor, 0 0 26px currentColor;
+}
+.hud .player .glyphs {
+  display: flex;
+  gap: 0.3rem;
+  height: 1rem;
+  margin-top: 0.25rem;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+.hud .player .glyphs.bombs { color: var(--lime); }
+.hud .player .glyphs .empty {
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+  filter: none;
+}
+.hud .player .hint {
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  color: var(--dim);
+  margin-top: 0.3rem;
+  animation: blink 1.6s step-end infinite;
+}
+.hud .right { text-align: right; }
+.hud .right .glyphs { justify-content: flex-end; }
+.hud .level {
+  font-size: 0.7rem;
+  letter-spacing: 0.28em;
+  color: var(--violet);
+  text-shadow: 0 0 10px currentColor;
+  padding-top: 0.5rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hud { animation: none; }
+}

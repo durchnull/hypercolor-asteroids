@@ -1,0 +1,55 @@
+/* Seat lobby on the splash. Cards are generated from SEATS
+   (src/input/bindings.js) — seat colour arrives inline, so adding a seat is
+   still a one-file change. The panel around them belongs to the rack in
+   overlay.css. */
+.lobby .seats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.7rem;
+}
+.lobby .seat {
+  border: 1px solid currentColor;
+  padding: 0.6rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.lobby .who {
+  font-size: 0.62rem;
+  letter-spacing: 0.24em;
+  color: currentColor;
+}
+.lobby .binds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.6rem;
+  font-size: 0.62rem;
+  color: var(--dim);
+  letter-spacing: 0.04em;
+}
+.lobby .binds b {
+  color: var(--ink);
+  font-weight: 500;
+  margin-right: 0.15rem;
+}
+.lobby .ready {
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  color: var(--lime);
+}
+.lobby .ready.open {
+  color: var(--amber);
+  animation: blink 1.6s step-end infinite;
+}
+.lobby .lobbynote {
+  font-size: 0.65rem;
+  line-height: 1.6;
+  color: var(--dim);
+  margin-top: 0.6rem;
+}
+@media (max-height: 940px) {
+  .lobby .lobbynote { display: none; }
+}
+@media (max-width: 460px) {
+  .lobby .seats { grid-template-columns: 1fr; }
+}
