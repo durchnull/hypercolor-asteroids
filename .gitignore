@@ -1,6 +1,10 @@
 # macOS
 .DS_Store
 
+# Local developer notebook — notes on the game behind the game, per machine,
+# never part of the cabinet.
+.dev/
+
 # Playwright MCP scratch output (screenshots, console logs, snapshots)
 .playwright-mcp/
 
