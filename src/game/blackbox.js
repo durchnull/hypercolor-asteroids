@@ -199,7 +199,7 @@
     const body = b64(bytes);
 
     const lines = [
-      ";; ── ASTEROIDS//HYPERCOLOR · BLACK BOX · FLIGHT RECORD ──",
+      ";; ── HYPERCOLOR ASTEROIDS · BLACK BOX · FLIGHT RECORD ──",
       ";; pilot " + record.pilot + " · score " + score +
         " · wave " + record.wave + " · " + clock(record.time),
       ";; the tape survived the ship. paste all of this into",

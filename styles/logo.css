@@ -1,0 +1,93 @@
+/* The mark: signet on the left, two words on the right, one object. The
+   drawing comes from src/ui/logo.js; everything about how big it is and how it
+   moves is here. One length drives the whole lockup, so tuning it for a short
+   screen is one line rather than five. */
+
+/* The splash title used to be a word, and the rule in overlay.css does word
+   things to it: clips a moving gradient to the glyphs, tracks it out, hangs a
+   drop-shadow off it. A lockup laid on top of that would inherit a transparent
+   colour and vanish, so this takes it all back off. The gradient is not lost —
+   it moves down onto HYPERCOLOR, which is the word it was always about. */
+.overlay h1.logo {
+  --logo: clamp(1.4rem, 4.4vw, 2.85rem);
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: var(--ink);
+  filter: none;
+  letter-spacing: normal;
+  margin-right: 0;
+  animation: none;
+  font-weight: 500;
+  line-height: 1;
+}
+.lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--logo) * 0.52);
+}
+
+/* The signet drifts with the rack (overlay.css, `cycle`), which means its
+   `filter` is spoken for — hence the bloom being painted into the drawing
+   instead of hung off the element. The three hues stay the same distance apart
+   however far round the wheel they have got to, so the misregistration reads
+   the same at every point in the drift. */
+.signet {
+  flex: none;
+  width: calc(var(--logo) * 2.15);
+  height: calc(var(--logo) * 2.15);
+  animation: cycle 9s linear infinite;
+}
+
+/* Two lines, and the column is as wide as the wider of them. Whichever that
+   is, the other one is stretched to match and spaces itself out across the
+   difference — so the lockup is square on a face this was designed against and
+   square on one nobody here has ever seen. */
+.wordmark {
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  gap: calc(var(--logo) * 0.11);
+}
+.hyper {
+  font-size: var(--logo);
+  line-height: 1;
+  letter-spacing: 0.14em;
+  margin-right: -0.14em;   /* tracking on the last letter is air, not width */
+  background: linear-gradient(100deg,
+    #ff3ec8, #ffb020, #b6ff3d, #21f3ff, #a04bff, #ff3ec8);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 14px rgba(255, 62, 200, 0.45));
+  animation: slide 6s linear infinite;
+}
+/* Nine letters and eight gaps, and the gaps are whatever is left over. The
+   word is deliberately the quiet half of the pair: one line is doing the
+   colour, and if they both shouted neither would be the name. */
+.roids {
+  display: flex;
+  justify-content: space-between;
+  font-size: calc(var(--logo) * 0.86);
+  line-height: 1;
+  color: var(--ink);
+  text-shadow: 0 0 10px rgba(33, 243, 255, 0.6);
+}
+.roids i {
+  flex: none;
+  font-style: normal;
+}
+
+/* The same trade the rack makes below 940px: a tighter mark, not a smaller
+   one — the splash is a screen with a dock, and the dock is what has to stay
+   findable. */
+@media (max-height: 940px) {
+  .overlay h1.logo { --logo: clamp(1.2rem, 3.3vw, 1.95rem); }
+}
+@media (max-width: 30rem) {
+  .overlay h1.logo { --logo: 1.35rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .signet, .hyper { animation: none; }
+}

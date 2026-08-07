@@ -1,4 +1,4 @@
-# ASTEROIDS // HYPERCOLOR
+# HYPERCOLOR ASTEROIDS
 
 A neon vector rewrite of the 1979 arcade game. Canvas graphics, Web Audio music,
 hand written HTML, CSS and JavaScript. No build step, no dependencies, no

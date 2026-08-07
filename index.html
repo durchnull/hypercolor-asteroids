@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ASTEROIDS // HYPERCOLOR</title>
+<title>HYPERCOLOR ASTEROIDS</title>
 <link rel="stylesheet" href="styles/tokens.css">
 <link rel="stylesheet" href="styles/crt.css">
 <link rel="stylesheet" href="styles/hud.css">
 <link rel="stylesheet" href="styles/overlay.css">
+<link rel="stylesheet" href="styles/logo.css">
 <link rel="stylesheet" href="styles/lobby.css">
 <link rel="stylesheet" href="styles/pilot.css">
 <link rel="stylesheet" href="styles/board.css">
@@ -35,7 +36,9 @@
      scrolls; the dock never does, because the one thing on this screen you
      have to be able to find is the instruction to start. -->
 <div class="overlay splash" id="start">
-  <h1>ASTEROIDS</h1>
+  <!-- The logo fills itself in, out of src/ui/logo.js, which is also where the
+       tab icon comes from: one drawing of the name, in one file. -->
+  <h1 class="logo" data-logo aria-label="Hypercolor Asteroids"></h1>
 
   <div class="deck">
     <section class="brief" aria-label="Field guide">
