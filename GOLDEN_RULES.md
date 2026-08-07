@@ -250,7 +250,11 @@ them.
   belongs to nobody and fires for everyone, author included — the honourable
   option when you want the thing in the game more than the credit for it.
 - Balance still applies (GR8). An event is a challenge, not a firing squad:
-  make it survivable by a pilot who reads it early and reacts well.
+  make it survivable by a pilot who reads it early and reacts well — and the
+  author is the one pilot who can prove that before it lands. Fly your own
+  trap (GUEST arms everything, yours included) and put the survived-it tape
+  beside the landing. On your honour, like GR1's playtest promise; a trap
+  that lands unproven is something the book gets to say.
 
 That `by:` is the one name that belongs in the source, and GR7 is not bent by
 it: it is not a credit line, it is a targeting instruction. `git blame` still

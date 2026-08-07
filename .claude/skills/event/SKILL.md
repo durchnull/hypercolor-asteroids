@@ -87,4 +87,22 @@ You cannot test your own event by playing as yourself — that is the point. To
 see it fire, pick GUEST in the picker, or delete `src/game/whoami.local.js`
 temporarily. Do not ship a change to the profile system to make testing easier.
 
+## Prove it survivable
+
+GR8 says an event is a challenge, not a firing squad, and the author is the
+one pilot who can prove it before it lands. Fly as GUEST — every trap armed,
+yours included — let your own trap fire, and fly out the other side. The tape
+is the proof: the reader's ambush reel names your event and says `flown
+clear`. Put it beside the landing — paste the tape into the conversation that
+lands the event, and let the `Chronicle:` line say the author flew it and
+survived. A proof tape flown as GUEST carries a seat mismatch and ranks
+nowhere, which is fine; it is a proof, not a score.
+
+Died inside your own trap? Good — you just learned something the next pilot
+would have learned the hard way. Retune it and fly it again.
+
+None of this blocks. It is honour, the same honour as GR1's playtest promise
+— but a Chronicle line that cannot say "survived it" is how the book notes a
+trap nobody proved.
+
 Then land it with `/land`, and write the `Chronicle:` line as the boast it is.
