@@ -6,15 +6,16 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 18,
-    latest: { v: 18, pilot: "David Friedrich", date: "07 August 2026", line: "Somebody rewrote a rule the game had been taking for granted.", plate: "e0a7f624.jpg", alt: "Somebody rewrote a rule the game had been taking for granted." },
+    versions: 19,
+    latest: { v: 19, pilot: "David Friedrich", date: "07 August 2026", line: "The cabinet keeps score with slightly different arithmetic now.", plate: "b842dec3.jpg", alt: "The cabinet keeps score with slightly different arithmetic now." },
     plates: [
+      { v: 19, file: "b842dec3.jpg", alt: "The cabinet keeps score with slightly different arithmetic now.", line: "The cabinet keeps score with slightly different arithmetic now." },
       { v: 18, file: "e0a7f624.jpg", alt: "Somebody rewrote a rule the game had been taking for granted.", line: "Somebody rewrote a rule the game had been taking for granted." },
       { v: 17, file: "e055287b.jpg", alt: "The HUD is more forthcoming than it used to be. The picture followed.", line: "The cabinet put its name up. A rock three colours out of true is holding it." },
       { v: 16, file: "9538f273.jpg", alt: "The instrument panel developed an opinion. It looks different, too.", line: "The instrument panel developed an opinion. It looks different, too." },
-      { v: 15, file: "f6412bc2.jpg", alt: "The splash screen stopped describing the ship and showed it.", line: "The splash screen stopped describing the ship and showed it." },
     ]
   };
   A.BOARD = [
+    { rank: "1", pilot: "David Friedrich", score: "16530", wave: "4", time: "4:42", hits: "17%", line: "Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end." },
   ];
 })(ASTEROIDS);
