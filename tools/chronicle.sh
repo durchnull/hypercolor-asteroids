@@ -2668,6 +2668,12 @@ cat > docs/chronicle-song.js <<'JS'
    its own pace. A page with the sound on scrolls exactly as fast as one
    without it.
 
+   And it is visible. A ring of light fades and scales up in the panel the
+   chapter opens with, off to the side of the sentence, where it hangs and
+   drifts and answers the music. It is drawn off a tap in the graph, so what
+   it answers is what is coming out rather than a clock. Off is the same
+   backwards.
+
    Each chapter gets its own key and its own progression, off its own number,
    so v3 always sounds like v3 — and where the reader arrives from somewhere
    else in the book, the harmony changes under a piece that keeps its place.
@@ -2766,7 +2772,7 @@ cat > docs/chronicle-song.js <<'JS'
   // alone goes through.
 
   var ctx = null, out = null, dry = null, send = null, echo = null, wide = null;
-  var noise = null, timer = null, air = null;
+  var noise = null, timer = null, air = null, eye = null;
   var playing = false, at = 0, step = (CH % 4) * 16, noted = -9;
 
   // A context made at the foot of this file to ask the browser a question, and
@@ -2791,7 +2797,18 @@ cat > docs/chronicle-song.js <<'JS'
 
     out = ctx.createGain();
     out.gain.value = 0;
-    out.connect(lid);
+    // Everything the room makes goes past a tap on its way to the ceiling, so
+    // the ring in the chapter's opening panel is drawing the music rather than
+    // a picture of music. An analyser is a pass-through: it is heard by nobody,
+    // it changes nothing, and it sits in the path rather than hanging off it
+    // so the browser has a reason to keep filling it.
+    eye = ctx.createAnalyser();
+    eye.fftSize = 1024;
+    // Its own smoothing, before the orb does any of its own. Between the two
+    // of them a band answers a note rather than answering a frame.
+    eye.smoothingTimeConstant = 0.75;
+    out.connect(eye);
+    eye.connect(lid);
 
     dry = ctx.createGain();
     dry.gain.value = 0.9;
@@ -3214,6 +3231,7 @@ cat > docs/chronicle-song.js <<'JS'
     tick();
     timer = setInterval(tick, 250);
     mark();                 // it is a room now rather than the promise of one
+    show();                 // and a room this one is allowed to have a face
   }
 
   function wait() {
@@ -3230,6 +3248,7 @@ cat > docs/chronicle-song.js <<'JS'
     playing = false;
     remember("off");
     mark();
+    fade();               // the ring scales back down to nothing and goes
     if (!ctx) return;
     keep();               // where it stopped, while there is still a timer to ask
     var t = ctx.currentTime;
@@ -3239,6 +3258,1863 @@ cat > docs/chronicle-song.js <<'JS'
     clearInterval(timer);
     timer = null;
     setTimeout(function () { if (!playing && ctx) ctx.suspend(); }, 1500);
+  }
+
+  // ---- the orb ------------------------------------------------------------
+  // Four bars in the corner were the whole picture of the room, and they were
+  // never a picture of anything: they danced on a timer whether or not a note
+  // was playing. There is a truthful picture available for the cost of one
+  // node, so the book draws that as well — and it draws it as an object rather
+  // than as a meter. A ring of light hangs in the panel a chapter opens with,
+  // off to the side of the sentence, and it breathes with what is actually
+  // coming out of the speakers. The switch keeps its bars and stays where it
+  // is; the ring is the honest reading, next to the sentence, where the eye
+  // already is.
+  //
+  // Turning it on fades and scales the ring up out of nothing. Turning it off
+  // is the same backwards.
+  //
+  // The rings are the waveform and the body is the spectrum, and the object
+  // hears one thing at two speeds rather than carrying two readings that
+  // argue. The rings wiggle at the speed of the wire. The rock, the threads
+  // and the scanlines swell at the speed of a note — every band rising
+  // quickly and falling slowly, the way an instrument does.
+  //
+  // The case against a time-domain trace was that it twitches, and it was a
+  // fair one: the window it is read through is not locked to the note, so
+  // every frame is a different slice of the same chord and the line reads as
+  // interference rather than as music. The answer is the one an oscilloscope
+  // has used since there were oscilloscopes. Do not draw whatever happened to
+  // be in the buffer at the moment it was asked for — wait for the wave to
+  // cross the middle going up, and start reading there. The window is then
+  // pinned to the note rather than to the clock: the trace holds still for as
+  // long as the note is held, and it moves when the music moves and not
+  // before. It is a dozen lines, and it is the whole difference between a
+  // waveform and a hash.
+  //
+  // The three rings are three readings of that one trace, each following it
+  // less closely than the last, which is what a wave with a wake looks like.
+  // A slower ring is not a slower wave, it is the same wave a moment ago.
+  //
+  // What the trace is measured against is found rather than fixed. This piece
+  // is quiet on purpose and a reader has no knob for it, so the scale rides a
+  // peak that jumps to a louder bar at once and takes seconds to come back
+  // down. The clamp on that is where the honesty is kept: a silent gap is not
+  // opened out into a storm, it simply goes round.
+  //
+  // It is symmetrical on purpose. Half a ring of bands, mirrored, so the
+  // shape closes on itself and has an axis. A ring without one is an
+  // equaliser bent round until its ends meet; a ring with one is an object,
+  // and this one is meant to be looked at rather than read.
+  //
+  // What the object is, though, is a rock. This is the chronicle of a game
+  // about shooting them, and the thing in the panel had every part of one
+  // except the part that says so: a circle is a lens, and a lens is not what
+  // the cabinet is full of. So the body is cut — twelve corners at twelve
+  // fixed radii, the spread src/entities/asteroids.js rolls its own inside.
+  // The cut is fixed, where the cabinet rolls a fresh rock for every one it
+  // throws, because a book with a face should wear the same face on every page
+  // of it. The breathing is not fixed: the corners ride the same mirrored bands
+  // the rings do, so a lopsided shape still swells along the object's axis, and
+  // the rock and the light around it are plainly one thing hearing one thing.
+  // It sits inside the rings with the light behind it, and it wears its own
+  // scanlines — every page of this book lays them over its panels and the ring
+  // is drawn above them, so the body draws its own, bright where the light is
+  // and gone by the far side.
+  //
+  // And it is a solid, which is the one thing in this panel worth a third
+  // dimension. Everything else here is flat on purpose — a ring is a ring from
+  // wherever you stand — but a rock cut flat is a badge of a rock, and it gave
+  // itself away the moment it turned: an outline spinning in its own plane is a
+  // coin, and the eye knows a coin. So the twelve corners are the twelve corners
+  // of an icosahedron rather than twelve points round a circle. Subdivide it
+  // once for eighty faces, tumble it on three axes at three speeds with no
+  // common multiple, throw away everything pointing away from the reader, and
+  // put a short lens in front of it so the near side of the body is larger than
+  // the far side. The table of radii never changed. It stopped being read as a
+  // silhouette and started being read as a shape, and that is the whole edit.
+  //
+  // And it is a rock made of glass, which is a decision about which rock. The
+  // cabinet's are hollow outlines with nothing on the near face at all, and
+  // that is right for something you are meant to shoot before it reaches you;
+  // this one is meant to be looked at for the length of a chapter, so it gets
+  // faces: eighty of them, flat-shaded off one light, in a ramp that runs from
+  // the violet of the rings to the amber of the star behind it. The edges are
+  // still where most of the light lives, in the same three colours on the same
+  // three thirds of the spectrum. Its outline is not drawn from a table any
+  // more — it is found, every frame, as the edges where a face turned towards
+  // the reader meets one turned away, which is why the shape of it changes as
+  // the thing rolls. And because it is glass, the edges round the back are
+  // drawn too, faintly, which is the difference between a solid and a shell.
+  // Craters were the other way to say all this and they said something else:
+  // a rock with pits in it is a moon.
+  //
+  // And what is behind it is a star rather than a tint. A shape lit from inside
+  // by the average of the spectrum reads as a lamp on a dimmer; the same light
+  // with a small hard centre in it, warm where it is brightest, reads as
+  // something burning. Amber is the one warm colour this project already owns
+  // (--amber, styles/tokens.css), so that is the colour of the hot part and the
+  // flare over it is gilded to match, and the rest of the object stays the
+  // three neons it was.
+  //
+  // And it hangs in weather rather than in nothing. Eight clouds of gas in the
+  // colours already in the panel, some behind everything and some drifting
+  // across the front of the rock, wandering at eight speeds with no multiple
+  // between them and breathing on the slowest of the three envelopes. The
+  // blending is not a setting, it is the argument: everything in here is drawn
+  // in lighter, so two clouds crossing make the colour between them rather than
+  // the nearer of the two, and where one passes over the star the star wins
+  // because it is brighter. A specimen on a black card was what the object had
+  // been until then.
+  //
+  // It is the busiest thing in this book by a wide margin and it is still
+  // cheap, which is worth saying plainly rather than implying. A few dozen
+  // gradients and strokes go into a canvas the size of a postcard, once a
+  // frame, and only ever between the room arriving and the room leaving —
+  // there is no loop at all when the switch is off, a hidden tab is not
+  // animated because that is what requestAnimationFrame already promises, the
+  // panel it hangs in is measured about once a second rather than sixty
+  // times, and nothing in here allocates on a beat. Every page of this book
+  // still scrolls the same with it up as without it.
+
+  var still = !!(window.matchMedia &&
+                 window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  var RING = 64;                 // points round the circle
+  var BANDS = RING / 2;          // distinct bands; the far side is the mirror
+  var RAYS = 32;                 // threads in the corona, on the same axis
+  var HUES = ["33, 243, 255", "160, 75, 255", "255, 62, 200"];
+  // Standing back a notch each, now the rock is the loudest shape in the panel:
+  // three rings as bright as the body turn a rock into a rock in a cage.
+  var DIMS = [0.85, 0.62, 0.48];
+  // Where each ring sits, how closely it follows the trace, how fast the
+  // spectrum under it answers — rise, then fall — and how slowly it turns.
+  // The cyan one is nearly the wire itself, the magenta one is a moment
+  // behind it, and one of the three goes the other way. Three readings of one
+  // wave at three speeds is what stops a circle looking like a dial.
+  var RINGS = [
+    { r: 1.00, lag: 0.80, up: 0.38, dn: 0.090, spin:  0.00013 },
+    { r: 0.84, lag: 0.40, up: 0.24, dn: 0.060, spin: -0.00009 },
+    { r: 1.16, lag: 0.20, up: 0.15, dn: 0.040, spin:  0.00021 }
+  ];
+  // The trace, and the four numbers that decide what it looks like.
+  // SPAN is how much of the wire one reading covers, and it is the timebase
+  // knob. This piece sits between 130 and 200 cycles a second, so six
+  // milliseconds is about one turn of the note — which is what an
+  // oscilloscope is set to when it is being read rather than measured. It was
+  // twice this to begin with and that was the wrong answer for a reason worth
+  // keeping: thirty-two points across two cycles of a pad with harmonics on it
+  // lands two or three points on each turn of the harmonic, and a wave sampled
+  // that thinly comes back as a comb. Half the window is twice the detail.
+  // SWING is how far a trough pulls the ring off the round, and it is larger
+  // than the old spectrum figure because a trace is signed — it goes inwards
+  // as readily as out, so the same excursion costs half as much shape.
+  var SPAN = 256;                // samples in one window: about 6ms of wire
+  var SWING = 0.34;              // how far the trace pulls a ring off the round
+  var QUIET = 0.02;              // below this the trace is silence, not signal
+  var REACH = 7;                 // and nothing is ever opened out further
+  var LO = 1, HI = 150;          // the bins worth looking at: 45 Hz to 7 kHz
+  var TOP = 20;                  // the first band that counts as the bright end
+  // Rings that leave. One is thrown outwards whenever the room does something
+  // — a chord landing, the pulse on the beat, a pluck — and it carries away
+  // the shape the spectrum had at the moment it was born, so what crosses the
+  // panel is the print of that note rather than a circle. They thin and fade
+  // as they go, they overlap each other, and there are never more than a
+  // handful because the pool is fixed and nothing here allocates on a beat.
+  var WAVES = 6;
+  // A few points of light going round at their own speeds, lit by the top of
+  // the spectrum. Nothing is reported by these; they are the difference
+  // between a diagram of an object and an object.
+  var GLINTS = 5;
+  // The body. Twelve corners cut once and kept — the note at the top of this
+  // section is where the argument for cutting them at all lives.
+  // The spread is the cabinet's own — 0.72 to 1.18 of the radius, the range
+  // src/entities/asteroids.js rolls its corners inside — because narrower than
+  // that and twelve corners read as a ball somebody has nudged.
+  var ROCK = [1.00, 0.82, 1.17, 0.73, 0.94, 1.12, 0.79, 1.06, 0.87, 1.18, 0.72, 0.98];
+  // Nearly the whole object. The rock is the thing and the rings are the light
+  // around it, which only works if it is the biggest shape in the panel: at
+  // three quarters of the radius it read as a pip in the middle of three
+  // circles, and the circles were the object.
+  var BODY = 0.9;
+  // How far in front of the body the reader is standing, in radii. Nine and
+  // there is no lens at all and the rock might as well be flat again; three
+  // and the near corner comes at the reader like a fist. Five is the distance
+  // at which it looks like an object photographed rather than an object
+  // diagrammed, and it is also what decides how much of the rock is visible at
+  // once: two fifths of a surface, never quite half, which is what standing in
+  // front of a real one buys you.
+  var LENS = 5;
+  // Facet edges are drawn in three colours rather than one, which is the whole
+  // reason the face reads as glass and not as wireframe. Two of them are the
+  // book's own; the third is the star's, so the rock is carrying the light it
+  // is lit by.
+  var EDGE = ["33, 243, 255", "255, 62, 200", "255, 176, 32"];
+  // The faces, from the ones with their backs to the light to the ones staring
+  // into it — the rings' violet at one end and the star's amber at the other,
+  // so the body is lit by the two things that are actually in the panel with
+  // it. Six steps and not a colour per face: a flat-shaded face is one colour
+  // whatever you do, so all quantising costs is that neighbours sometimes
+  // agree, and what it buys is six fills a frame instead of forty.
+  var SHADE = ["58, 30, 122", "104, 40, 168", "168, 56, 172",
+               "230, 92, 132", "255, 152, 74", "255, 214, 152"];
+  var SLATS = 9;                 // scanlines across the body
+  var SUN = "255, 176, 32";      // --amber: the one warm colour in the project
+
+  var cv = null, cg = null, host = null, adrift = false, bins = null;
+  var lev = [], raw = new Float32Array(BANDS), soft = new Float32Array(BANDS);
+  var px = new Float32Array(RING), py = new Float32Array(RING);
+  var en = new Float32Array(3);          // a third of the spectrum per colour
+  // Named for what they are and not for what they hold, because the mesh
+  // above already owns "tone" and a second one would quietly become an
+  // array of eighty face shades halfway down this function.
+  var wire = null;                       // the wire itself, one window of it
+  var trace = new Float32Array(BANDS);   // this frame's reading, folded down
+  var tr = [], gauge = 0;                // one per ring, and what they scale to
+  var wave = [], fast = 0, slow = 0, since = 9, cast = 0, cold = true, warm = 0;
+  var raf = 0, last = 0, life = 0, gone = 0, glow = 0;
+  var hx = 0, hy = 0, cx = 0, cy = 0, R = 0, took = -9e9;
+
+  // Where it hangs. A chapter opens with a panel that has the sentence in one
+  // corner of it and a lot of painted sky to the right of that, which is the
+  // only place on any page of this book with room for an object. The cover and
+  // the notes have no such panel, so there it keeps to the corner under the
+  // switch, small, and out of the way of the words.
+  function place() {
+    var w = cv.clientWidth, h = cv.clientHeight;
+    if (adrift) {
+      hx = w / 2; hy = h / 2;
+      R = Math.min(w, h) * 0.29;
+      return;
+    }
+    var box = cv.getBoundingClientRect();
+    var say = host.querySelector(".say");
+    var cred = host.querySelector(".credits");
+    var full = host.querySelector(".plate-full");
+    var l = say ? say.getBoundingClientRect().right - box.left + 16 : w * 0.5;
+    var r = w - 10, t = 10;
+    var b = cred ? cred.getBoundingClientRect().top - box.top - 12 : h - 10;
+    // The link to the full plate lives in that corner and is drawn over
+    // everything, so the ring starts below it rather than behind it.
+    if (full) t = Math.max(t, full.getBoundingClientRect().bottom - box.top + 10);
+    // Too tight to hang anything in — a narrow window, where the sentence has
+    // the panel to itself. It goes in the corner over the painting instead,
+    // and small, which is what the painting is behind the words for.
+    if (r - l < 74 || b - t < 74) { l = w * 0.52; r = w - 8; b = h * 0.55; }
+    hx = (l + r) / 2;
+    hy = (t + b) / 2;
+    R = Math.max(22, Math.min(92, Math.min(r - l, b - t) * 0.26));
+  }
+
+  function fit() {
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.max(1, Math.round(cv.clientWidth * dpr));
+    cv.height = Math.max(1, Math.round(cv.clientHeight * dpr));
+    cg.setTransform(dpr, 0, 0, dpr, 0, 0);
+    place();
+  }
+
+  function resize() {
+    if (!cv) return;
+    took = -9e9;
+    fit();
+    if (still) paint();
+  }
+
+  // Built by the script and dressed by it too. Everything else in this book
+  // keeps its clothes in a stylesheet, but there are two of those — the
+  // chapters read one and the notes read the other — and eight declarations
+  // for an element nobody can select is not worth saying twice.
+  function make() {
+    host = document.querySelector(".cel.splash");
+    adrift = !host;
+    cv = document.createElement("canvas");
+    cv.className = "orb";
+    cv.setAttribute("aria-hidden", "true");
+    var s = cv.style;
+    s.pointerEvents = "none";        // it is a readout, not a lid
+    if (adrift) {
+      s.position = "fixed";
+      s.zIndex = "4";
+      s.top = "2.9rem";
+      s.right = "0.4rem";
+      s.width = "8.5rem";
+      s.height = "8.5rem";
+      document.body.appendChild(cv);
+    } else {
+      s.position = "absolute";
+      s.left = "0";
+      s.top = "0";
+      s.width = "100%";
+      s.height = "100%";
+      s.zIndex = "1";                // over the painting, under the sentence
+      host.appendChild(cv);
+    }
+    cg = cv.getContext("2d");
+    var i;
+    cold = true;                     // no history yet, so nothing to compare to
+    // And no room yet either, only a room arriving. out.gain climbs from
+    // nothing to LEVEL over two and a half seconds, and a detector watching
+    // for the bright end to get louder cannot tell that ramp from a bar full
+    // of struck notes: it reads the arrival as one continuous onset and
+    // throws a ring every fifth of a second for the whole of it, which is a
+    // fistful of rings for a room that has not done anything yet. So it
+    // listens through the arrival and reports none of it, and starts counting
+    // when the room is at the level it means to stay at.
+    warm = 2.6;
+    gauge = 0;
+    mist();                          // the weather, built once and reused
+    for (i = 0; i < RINGS.length; i++) {
+      lev.push(new Float32Array(BANDS));
+      tr.push(new Float32Array(BANDS));
+    }
+    // Spent, all of them, until the room throws one.
+    for (i = 0; i < WAVES; i++) wave.push({ t: 1, amp: 0, hue: 0, sh: new Float32Array(BANDS) });
+    fit();
+    addEventListener("resize", resize);
+  }
+
+  function tear() {
+    hush();
+    if (!cv) return;
+    removeEventListener("resize", resize);
+    if (cv.parentNode) cv.parentNode.removeChild(cv);
+    cv = null; cg = null; host = null; bins = null; lev = []; NEB = null;
+    tr = []; wire = null; gauge = 0;
+    life = 0; gone = 0; glow = 0;
+  }
+
+  // Half a ring of bands, spaced by ear rather than by bin — an octave is an
+  // octave wide wherever it sits, so the bass end gets the room it deserves
+  // instead of one point of it — and then smoothed twice. Once round the ring,
+  // which is what stops it spiking, and once in time, which is what stops it
+  // flickering. The time one is not symmetrical: a band jumps most of the way
+  // to a new note and takes seconds to come back down, because that is what
+  // the note itself does.
+  function hem(i) { return i < 0 ? 0 : i > BANDS - 1 ? BANDS - 1 : i; }
+
+  function listen(dt) {
+    var i, k;
+    if (!eye) return;
+    if (!bins) bins = new Uint8Array(eye.frequencyBinCount);
+    eye.getByteFrequencyData(bins);
+    var sum = 0;
+    for (k = 0; k < BANDS; k++) {
+      var a = Math.round(LO * Math.pow(HI / LO, k / BANDS));
+      var b = Math.max(a + 1, Math.round(LO * Math.pow(HI / LO, (k + 1) / BANDS)));
+      var peak = 0;
+      for (i = a; i < b && i < bins.length; i++) if (bins[i] > peak) peak = bins[i];
+      // The ear is not linear and neither is this: the square root opens out
+      // the quiet end, which is where nearly all of this piece lives.
+      raw[k] = Math.sqrt(peak / 255);
+      sum += raw[k];
+    }
+    // Five taps and not three: neighbouring bands here are the better part of
+    // an octave apart, and a narrower blur leaves a polygon wearing a curve.
+    // Clamped at the ends rather than wrapped, because the ends are the two
+    // poles of the mirror and each of them is its own neighbour.
+    for (k = 0; k < BANDS; k++)
+      soft[k] = (raw[hem(k - 2)] + raw[hem(k - 1)] * 4 + raw[k] * 6 +
+                 raw[hem(k + 1)] * 4 + raw[hem(k + 2)]) / 16;
+    for (i = 0; i < RINGS.length; i++) {
+      // Per second rather than per frame, so a 120Hz screen does not make the
+      // room twice as jumpy as a 60Hz one.
+      var up = 1 - Math.pow(1 - RINGS[i].up, dt * 60);
+      var dn = 1 - Math.pow(1 - RINGS[i].dn, dt * 60);
+      var L = lev[i];
+      for (k = 0; k < BANDS; k++)
+        L[k] += (soft[k] - L[k]) * (soft[k] > L[k] ? up : dn);
+    }
+
+    // The same tap read the other way, for the rings. A window of samples
+    // rather than a window of bands, and the whole of what makes it usable is
+    // where the window starts.
+    if (!wire) wire = new Uint8Array(eye.fftSize);
+    eye.getByteTimeDomainData(wire);
+    // The trigger. 128 is the middle of a byte-encoded wave, and a rise
+    // through it is the same place in the cycle every time — which is why the
+    // trace holds still while a note is held instead of shivering at the
+    // frame rate. Hunted for only in the part of the buffer with a whole
+    // window left behind it, so a crossing found near the end is not one.
+    // Nothing found means silence or a wave that never came back, and reading
+    // from the top of the buffer is the right answer to both.
+    var head = wire.length - SPAN, start = 0;
+    for (i = 1; i < head; i++)
+      if (wire[i - 1] < 128 && wire[i] >= 128) { start = i; break; }
+    // Folded down to the half ring the mirror wants, by averaging and not by
+    // picking: sixteen samples to a point is a low-pass filter for free, and
+    // it is the reason a trace this small reads as a wave and not as a comb.
+    var wide = SPAN / BANDS, mean = 0;
+    for (k = 0; k < BANDS; k++) {
+      var from = start + k * wide, upto = from + wide, v = 0;
+      for (i = from; i < upto; i++) v += wire[i] - 128;
+      trace[k] = v / (wide * 128);
+      mean += trace[k];
+    }
+    // And its own middle taken out of it. A window this short does not always
+    // hold a whole turn of the note, so a reading can sit entirely above the
+    // middle or entirely below it — and an offset on a trace does not change
+    // the ring's shape, it changes the ring's size, which is a job this
+    // reading has already given away to the level. Taking the mean out leaves
+    // the wave and nothing else, which is the same trick the rings that leave
+    // play on the spectrum a few lines further down, for the same reason.
+    mean /= BANDS;
+    var loud = 0;
+    for (k = 0; k < BANDS; k++) {
+      v = trace[k] - mean;
+      trace[k] = v;
+      if (v > loud) loud = v; else if (-v > loud) loud = -v;
+    }
+    // What it is measured against: up at once, down over seconds. A bar that
+    // gets louder is answered immediately, and one that goes quiet is not
+    // hauled back up to fill the ring for a few seconds yet. QUIET is the
+    // floor under the division and REACH the ceiling over it, and between
+    // them they are the reason silence draws a circle rather than drawing the
+    // noise floor at full size.
+    gauge += (loud - gauge) * (loud > gauge ? 1 - Math.pow(0.4, dt * 60)
+                                            : 1 - Math.pow(0.988, dt * 60));
+    var open = Math.min(REACH, 1 / Math.max(QUIET, gauge));
+    for (k = 0; k < BANDS; k++) {
+      var w = trace[k] * open;
+      trace[k] = w > 1 ? 1 : w < -1 ? -1 : w;
+    }
+    // And the three rings follow it at three distances. Plain and symmetrical
+    // where the spectrum's envelopes are neither, because a trace is signed: a
+    // filter that rose faster than it fell would quietly drag a wave off its
+    // own middle and the rings would sit permanently swollen.
+    for (i = 0; i < RINGS.length; i++) {
+      var f = 1 - Math.pow(1 - RINGS[i].lag, dt * 60);
+      var T = tr[i];
+      for (k = 0; k < BANDS; k++) T[k] += (trace[k] - T[k]) * f;
+    }
+
+    // The rings that leave come off the top of the spectrum and nothing else. The pad and
+    // the bass are always there — they are the room, and a room does not throw
+    // rings — so what launches one is the bright end: the arpeggio, the bell
+    // that lands on the twelfth step, the pulse on the beat. Two envelopes on
+    // that number at two speeds, and where the quick one gets clear of the
+    // slow one, something was struck. That is the whole detector, and a quiet
+    // bar honestly shows nothing leaving.
+    var top = 0;
+    for (k = TOP; k < BANDS; k++) top += raw[k];
+    top /= BANDS - TOP;
+    // The first read is not a comparison, and neither is any read taken while
+    // the room is still arriving. Both envelopes start at nothing, so a chord
+    // already hanging in the air when the orb appears clears the slow one by a
+    // mile. Worse, out.gain climbs from nothing to LEVEL over two and a half
+    // seconds, and every frame of that climb is louder than the one before it,
+    // so the slow envelope is cleared again and again the whole way up: a ring
+    // thrown every fifth of a second for a room that has not played a note yet
+    // — which is what switching the sound on used to look like. So through the
+    // arrival both envelopes are simply told where the level is, and the
+    // detector starts once they are level with each other and with the room.
+    if (cold || warm > 0) {
+      if (cold) { cold = false; glow = sum / BANDS; }
+      else glow += (sum / BANDS - glow) * (1 - Math.pow(0.92, dt * 60));
+      warm -= dt;
+      fast = slow = top;
+      since = 0;
+      return;
+    }
+    fast += (top - fast) * (1 - Math.pow(0.55, dt * 60));
+    slow += (top - slow) * (1 - Math.pow(0.982, dt * 60));
+    glow += (sum / BANDS - glow) * (1 - Math.pow(0.92, dt * 60));
+    since += dt;
+    if (since > 0.18 && fast > slow * 1.14 + 0.01) throw_(top);
+  }
+
+  // Out goes another one, on the oldest slot there is. A pool and not a queue:
+  // the beat is not a place to be making arrays.
+  function throw_(amp) {
+    since = 0;
+    var old = wave[0];
+    for (var i = 1; i < WAVES; i++) if (wave[i].t > old.t) old = wave[i];
+    old.t = 0;
+    old.amp = Math.min(1, 0.35 + amp * 2.2);
+    old.hue = (cast++) % HUES.length;
+    // What it carries is the spectrum with its own average taken out, so the
+    // lobes go outward and inward from the circle rather than all one way.
+    var k, m = 0;
+    for (k = 0; k < BANDS; k++) m += soft[k];
+    m /= BANDS;
+    for (k = 0; k < BANDS; k++) old.sh[k] = (soft[k] - m) * 1.8;
+  }
+
+  // Half the points are read forwards and half backwards. That is the mirror,
+  // and the mirror is why the shape has an axis and closes without a seam.
+  function band(k) { return k < BANDS ? k : RING - 1 - k; }
+
+  // A closed curve through the points rather than a polygon between them: the
+  // corners are where a ring stops looking like light and starts looking like
+  // a chart.
+  function loop() {
+    cg.beginPath();
+    cg.moveTo((px[RING - 1] + px[0]) / 2, (py[RING - 1] + py[0]) / 2);
+    for (var k = 0; k < RING; k++) {
+      var j = (k + 1) % RING;
+      cg.quadraticCurveTo(px[k], py[k], (px[k] + px[j]) / 2, (py[k] + py[j]) / 2);
+    }
+    cg.closePath();
+  }
+
+  // Shiny is one light crossing the object, which is one gradient turning
+  // slowly rather than a second pass over everything. Four strokes over the
+  // one path — two wide and dim for the halo, one for the colour, a hairline
+  // for the filament — which is the cabinet's bloom done by hand, and cheaper
+  // than a canvas shadow by a wide margin.
+  // The rock is stroked by the same light as the rings, and the only thing it
+  // asks for is its corners back: mitred joins, because a rock with the corners
+  // rounded off it is a pebble and the cabinet does not throw pebbles.
+  function shine(c, now, rr, al, turn, t, sharp) {
+    var a = now * 0.00034 + turn;
+    var ax = Math.cos(a) * rr * 1.5, ay = Math.sin(a) * rr * 1.5;
+    var gr = cg.createLinearGradient(cx - ax, cy - ay, cx + ax, cy + ay);
+    gr.addColorStop(0, "rgba(" + c + ", 0.14)");
+    gr.addColorStop(0.4, "rgba(" + c + ", 0.7)");
+    gr.addColorStop(0.5, "rgba(242, 233, 255, 1)");
+    gr.addColorStop(0.6, "rgba(" + c + ", 0.7)");
+    gr.addColorStop(1, "rgba(" + c + ", 0.14)");
+    cg.strokeStyle = gr;
+    cg.lineCap = "round";
+    cg.lineJoin = sharp ? "miter" : "round";
+    // And the thickness is the music too. A ring that only changes shape is a
+    // reading; one that also thickens where the room is loud and draws down to
+    // a filament in the gaps between chords is the room breathing. The halo
+    // passes move least, because a glow that doubles is a flash.
+    cg.lineWidth = 10 + t * 7;    cg.globalAlpha = al * 0.05; cg.stroke();
+    cg.lineWidth = 5 + t * 4.5;   cg.globalAlpha = al * 0.11; cg.stroke();
+    cg.lineWidth = 1.5 + t * 3.2; cg.globalAlpha = al * 0.4;  cg.stroke();
+    cg.lineWidth = 0.6 + t * 1.5; cg.globalAlpha = al;        cg.stroke();
+    // A lens does not put every colour in the same place, and the same ring
+    // drawn a hair either side in the two ends of the spectrum is what that
+    // looks like. It is under a pixel of offset and it is the difference
+    // between a line and a thing seen through glass.
+    cg.lineWidth = 0.8;
+    cg.globalAlpha = al * 0.4;
+    cg.strokeStyle = "rgba(33, 243, 255, 1)";
+    cg.translate(0.9, -0.5);  cg.stroke(); cg.translate(-0.9, 0.5);
+    cg.strokeStyle = "rgba(255, 62, 200, 1)";
+    cg.translate(-0.9, 0.5);  cg.stroke(); cg.translate(0.9, -0.5);
+  }
+
+  // The glare. Anything looking at something this bright streaks, so it does:
+  // one long spike across the object and two shorter ones over it, six arms
+  // between them, turning very slowly and lit by the level rather than by a
+  // clock. It is the one part of this that is not the object — it is what the
+  // object does to whatever is looking at it.
+  function glare(now, rr, al) {
+    var v = Math.min(1, 0.16 + glow * 1.7);
+    var turn = now * 0.00008;
+    // Kept inside the canvas it is drawn on. A flare that runs off the edge
+    // does not read as a flare, it reads as a line somebody forgot to finish,
+    // and the corner of a notes page has a lot less room than a chapter's
+    // opening panel does.
+    var room = Math.min(cx, cy, cv.clientWidth - cx, cv.clientHeight - cy) * 0.96;
+    for (var i = 0; i < 3; i++) {
+      var a = turn + i * 1.0472;
+      var len = Math.min(room, rr * (i ? 1.9 : 3.6) * v);
+      var co = Math.cos(a) * len, si = Math.sin(a) * len;
+      var gr = cg.createLinearGradient(cx - co, cy - si, cx + co, cy + si);
+      gr.addColorStop(0, "rgba(242, 233, 255, 0)");
+      gr.addColorStop(0.42, "rgba(160, 75, 255, 0.45)");
+      // Warm where it crosses the star and neon at both ends of it, because a
+      // flare is the colour of the thing that caused it in the middle and the
+      // colour of the glass everywhere else.
+      gr.addColorStop(0.47, "rgba(" + SUN + ", 0.8)");
+      gr.addColorStop(0.5, "rgba(255, 255, 255, 1)");
+      gr.addColorStop(0.53, "rgba(" + SUN + ", 0.8)");
+      gr.addColorStop(0.58, "rgba(33, 243, 255, 0.45)");
+      gr.addColorStop(1, "rgba(242, 233, 255, 0)");
+      cg.strokeStyle = gr;
+      cg.beginPath();
+      cg.moveTo(cx - co, cy - si);
+      cg.lineTo(cx + co, cy + si);
+      cg.lineWidth = 7;   cg.globalAlpha = al * v * 0.07; cg.stroke();
+      cg.lineWidth = 1.6; cg.globalAlpha = al * v * 0.3;  cg.stroke();
+    }
+  }
+
+  // Glass, and two things do all of the work. A highlight sitting off centre
+  // where the light is, which is the near wall of the sphere catching it, and
+  // a thin crescent opposite, which is the same light arriving at the far one.
+  // Both travel with the angle the rings are shining along, so the object is
+  // lit from one place rather than from several, which is the whole difference
+  // between glossy and merely bright.
+  function gloss(now, rr, al) {
+    var a = now * 0.00034 + 3.14159;
+    var lx = cx + Math.cos(a) * rr * 0.42, ly = cy + Math.sin(a) * rr * 0.42;
+    var k = al * (0.15 + glow * 0.5);
+    var gr = cg.createRadialGradient(lx, ly, 0, lx, ly, rr * 0.74);
+    gr.addColorStop(0, "rgba(255, 255, 255, " + k.toFixed(3) + ")");
+    gr.addColorStop(0.4, "rgba(242, 233, 255, " + (k * 0.3).toFixed(3) + ")");
+    gr.addColorStop(1, "rgba(242, 233, 255, 0)");
+    cg.globalAlpha = 1;
+    cg.fillStyle = gr;
+    cg.beginPath();
+    cg.arc(lx, ly, rr * 0.74, 0, 6.28318);
+    cg.fill();
+
+    var b = a + 3.14159;
+    var fx = cx + Math.cos(b) * rr, fy = cy + Math.sin(b) * rr;
+    var g2 = cg.createRadialGradient(fx, fy, 0, fx, fy, rr * 1.25);
+    g2.addColorStop(0, "rgba(255, 255, 255, 1)");
+    g2.addColorStop(1, "rgba(255, 255, 255, 0)");
+    cg.strokeStyle = g2;
+    cg.beginPath();
+    cg.arc(cx, cy, rr * 0.92, b - 0.9, b + 0.9);
+    cg.lineWidth = 6;   cg.globalAlpha = al * 0.09; cg.stroke();
+    cg.lineWidth = 1.6; cg.globalAlpha = al * 0.42; cg.stroke();
+  }
+
+  function ring(i, now, rr, al) {
+    var cfg = RINGS[i], T = tr[i], L = lev[i], k, m = 0;
+    for (k = 0; k < BANDS; k++) m += L[k];
+    m /= BANDS;
+    // Shape from the trace, size from the level. The wave is what pushes the
+    // ring off the round — outwards where the wire is above the middle and
+    // inwards where it is below, which is the part a reader actually sees as
+    // sound — and the spectrum underneath only breathes the radius and the
+    // thickness. Keeping the two jobs apart is what stops a loud bar simply
+    // inflating the ring: a ring that changes size with the music says the
+    // same thing a lamp on a dimmer says, and a ring that changes shape with
+    // it says which music.
+    var base = rr * (cfg.r + m * 0.14), sw = rr * SWING, spin = now * cfg.spin;
+    for (k = 0; k < RING; k++) {
+      var a = spin + k / RING * 6.28318;
+      var d = base + T[band(k)] * sw;
+      px[k] = cx + Math.cos(a) * d;
+      py[k] = cy + Math.sin(a) * d;
+    }
+    loop();
+    shine(HUES[i], now, rr, al * DIMS[i], i * 0.7, Math.min(1, m * 2.2));
+  }
+
+  // The light inside it, in two parts. The wide one is the whole level and
+  // nothing else — no band, no number — and it is what makes the thing look lit
+  // from within rather than drawn. The tight one is the star: a small disc with
+  // white at the middle of it and amber on the way out, falling off fast enough
+  // to have an edge. A glow that only spreads is a haze; a glow with something
+  // hard in the middle of it is a source, and the rock in front of it is being
+  // lit by that rather than tinted by it.
+  function core(rr, al) {
+    var k = al * (0.1 + glow * 0.55);
+    var gr = cg.createRadialGradient(cx, cy, 0, cx, cy, rr * 2.05);
+    gr.addColorStop(0, "rgba(255, 249, 236, " + (k * 0.62).toFixed(3) + ")");
+    gr.addColorStop(0.16, "rgba(" + SUN + ", " + (k * 0.4).toFixed(3) + ")");
+    gr.addColorStop(0.42, "rgba(160, 75, 255, " + (k * 0.32).toFixed(3) + ")");
+    gr.addColorStop(1, "rgba(33, 243, 255, 0)");
+    cg.globalAlpha = 1;
+    cg.fillStyle = gr;
+    cg.beginPath();
+    cg.arc(cx, cy, rr * 2.05, 0, 6.28318);
+    cg.fill();
+
+    // Kept modest on purpose. Everything in here is drawn in lighter, so a
+    // centre much brighter than this stops being a star and starts being a hole
+    // in the panel with the rings sticking out of it.
+    var h = al * (0.16 + glow * 0.42);
+    var g2 = cg.createRadialGradient(cx, cy, 0, cx, cy, rr * 0.6);
+    g2.addColorStop(0, "rgba(255, 255, 255, " + h.toFixed(3) + ")");
+    g2.addColorStop(0.34, "rgba(255, 226, 168, " + (h * 0.6).toFixed(3) + ")");
+    g2.addColorStop(0.72, "rgba(" + SUN + ", " + (h * 0.22).toFixed(3) + ")");
+    g2.addColorStop(1, "rgba(" + SUN + ", 0)");
+    cg.fillStyle = g2;
+    cg.beginPath();
+    cg.arc(cx, cy, rr * 0.6, 0, 6.28318);
+    cg.fill();
+  }
+
+  // Which band a thread, or a corner of the rock, is standing in. Half of them
+  // read forwards and half back, the same way the rings do, so anything hung
+  // round the object shares its axis instead of cutting across it.
+  // Clamped, because an odd count has a middle: nine scanlines fold about the
+  // fifth one, which lands half a band past the top of the spectrum and would
+  // read a band that is not there.
+  function mir(j, n) {
+    var h = n / 2;
+    return hem(Math.round((j < h ? j : n - 1 - j) / (h - 1) * (BANDS - 1)));
+  }
+
+  // A thread of light out of every other band, so the thing has an edge that
+  // moves. Faint on purpose: it is what a reader sees while they are not
+  // looking at it. Each one fades in off nothing and back out into nothing —
+  // a thread hanging in the air rather than a spoke bolted on at both ends —
+  // and that is one gradient apiece, which is what an end that stops rather
+  // than an end that is cut costs.
+  function corona(now, rr, al) {
+    var L = lev[0], sp = now * 0.00007;
+    cg.lineWidth = 1.4;
+    cg.lineCap = "butt";
+    for (var j = 0; j < RAYS; j++) {
+      var v = L[mir(j, RAYS)];
+      var a = sp + (j + 0.5) / RAYS * 6.28318;
+      var co = Math.cos(a), si = Math.sin(a);
+      var i0 = rr * 1.3, i1 = i0 + (0.12 + v) * rr * 0.37;
+      var x0 = cx + co * i0, y0 = cy + si * i0;
+      var x1 = cx + co * i1, y1 = cy + si * i1;
+      var gr = cg.createLinearGradient(x0, y0, x1, y1);
+      gr.addColorStop(0, "rgba(242, 233, 255, 0)");
+      gr.addColorStop(0.3, "rgba(242, 233, 255, 1)");
+      gr.addColorStop(0.6, "rgba(242, 233, 255, 0.8)");
+      gr.addColorStop(1, "rgba(242, 233, 255, 0)");
+      cg.strokeStyle = gr;
+      cg.globalAlpha = al * (0.18 + v * 0.55);
+      cg.beginPath();
+      cg.moveTo(x0, y0);
+      cg.lineTo(x1, y1);
+      cg.stroke();
+    }
+  }
+
+  // ---- the clouds ---------------------------------------------------------
+  // Gas, because the object was hanging in nothing and a rock hanging in
+  // nothing is a specimen on a black card. Eight clouds, some of them behind
+  // everything and some of them drifting across the front of the rock, in the
+  // four colours this panel already owns and no others.
+  //
+  // The whole of what makes them read as gas rather than as eight lamps is the
+  // profile: bright at the middle, then a fall so steep it is nearly a wall,
+  // then a long shelf of almost nothing that reaches twice as far again. One
+  // of those on its own is a smudge. Eight of them overlapping, at eight sizes,
+  // wandering at eight speeds that share no multiple, and every one of them
+  // squashed and turned so that not one is a circle — that is weather.
+  //
+  // Blended by being drawn in lighter with the rest of it, which is not a
+  // setting so much as the whole argument. Nothing in this panel covers
+  // anything: two clouds crossing make the colour between them rather than the
+  // nearer of the two, the rock behind one is dimmed by nothing and lit by it,
+  // and where a cloud passes over the star the star wins, because it is
+  // brighter. That is how light actually behaves, and it is the reason this
+  // panel has never once needed to work out what is in front of what.
+  //
+  // They cost nothing to speak of. Four gradients built once when the canvas
+  // is — at the origin and at unit radius, so a cloud is placed and sized by
+  // the transform rather than by a new gradient every frame — and twenty-four
+  // fills a frame between the lot of them.
+  var NEB = null;
+  // Where each one hangs and what it answers. Fixed, like the rock's twelve
+  // radii and for the same reason: a book with a face wears the same face on
+  // every page of it.
+  //   at: where it starts   r: how far out   s: how big   c: which colour
+  //   sp: how fast it wanders   w: the phase of its own breathing
+  //   k: the band it listens to   fore: in front of the rock, or behind it all
+  // Big, and overlapping each other and the object. Clouds small enough to have
+  // a shape of their own read as eight lozenges in orbit; the size is what
+  // turns eight of them into one sky with the orb inside it.
+  var CLOUD = [
+    { at: 0.55, r: 1.15, s: 2.00, c: 1, sp:  0.000029, w: 2.4, k: 2,  fore: 0 },
+    { at: 2.10, r: 1.55, s: 1.60, c: 0, sp: -0.000041, w: 1.7, k: 9,  fore: 0 },
+    { at: 3.60, r: 0.95, s: 2.30, c: 2, sp:  0.000023, w: 3.1, k: 17, fore: 0 },
+    { at: 5.05, r: 1.75, s: 1.40, c: 1, sp: -0.000019, w: 0.9, k: 25, fore: 0 },
+    { at: 1.35, r: 2.00, s: 1.70, c: 0, sp:  0.000037, w: 4.0, k: 30, fore: 0 },
+    { at: 4.35, r: 0.80, s: 1.15, c: 2, sp: -0.000051, w: 1.2, k: 6,  fore: 1 },
+    { at: 0.15, r: 0.90, s: 0.95, c: 3, sp:  0.000044, w: 2.8, k: 21, fore: 1 },
+    { at: 2.85, r: 1.05, s: 1.10, c: 1, sp: -0.000033, w: 5.2, k: 13, fore: 1 }
+  ];
+
+  function mist() {
+    var i, c;
+    NEB = [];
+    for (i = 0; i < 4; i++) {
+      c = i < 3 ? HUES[i] : SUN;
+      var g = cg.createRadialGradient(0, 0, 0, 0, 0, 1);
+      // No hard step anywhere along it, which is the only thing standing
+      // between a cloud and a disc. The first attempt put a wall a third of the
+      // way out — bright inside it, nearly nothing past it — and every one of
+      // the eight came out with a rim on it and read as a lozenge with a lamp
+      // in. Gas has no rim: it thins the whole way and it is still thinning
+      // where it stops.
+      //
+      // The brightest part of it is not the middle either, for the same reason.
+      // A peak at dead centre survives being scaled down to a lobe the size of
+      // a full stop, and a cloud with a full stop in it is a cloud with a fault
+      // in it; a peak a fifth of the way out has nothing small enough to leave
+      // behind.
+      g.addColorStop(0, "rgba(255, 248, 240, 0.26)");
+      g.addColorStop(0.2, "rgba(" + c + ", 0.42)");
+      g.addColorStop(0.42, "rgba(" + c + ", 0.19)");
+      g.addColorStop(0.66, "rgba(" + c + ", 0.07)");
+      g.addColorStop(0.86, "rgba(" + c + ", 0.018)");
+      g.addColorStop(1, "rgba(" + c + ", 0)");
+      NEB.push(g);
+    }
+  }
+
+  // Drawn twice a frame, once for what is behind the object and once for what
+  // is in front of it, so the thing is inside the weather rather than pasted on
+  // top of a picture of it. The ones in front are a fifth the strength: a cloud
+  // you cannot read the rock through is a smear over the one thing in the panel
+  // worth looking at.
+  function clouds(now, rr, al, fore) {
+    var L = lev[2], i;
+    for (i = 0; i < CLOUD.length; i++) {
+      var c = CLOUD[i];
+      if (c.fore !== fore) continue;
+      var v = L[c.k];
+      var a = c.at + now * c.sp;
+      // In and out as well as round. A cloud going round at a fixed distance is
+      // a moon, and this panel already has something in orbit.
+      var d = rr * c.r * (1 + Math.sin(now * 0.00013 + c.w) * 0.17 + v * 0.22);
+      var s = rr * c.s * (0.8 + v * 0.55);
+      // A floor under it, and the floor is most of the reading. This piece is
+      // one chord every eight seconds and the level spends most of its life
+      // near nothing; weather that only exists on the loud part is a panel
+      // that is empty for six seconds in every eight.
+      var k = Math.min(1, (0.42 + v * 1.05) * (0.55 + glow * 1.1));
+      cg.globalAlpha = al * k * (fore ? 0.26 : 0.52);
+      cg.fillStyle = NEB[c.c];
+      // Everything from here is in the cloud's own frame, where it is one unit
+      // across — which is the whole trick, because the four gradients were
+      // built one unit across too and a gradient is painted in whatever space
+      // it is painted in. Place it and size it with the brush and none of them
+      // ever has to be built again.
+      cg.save();
+      cg.translate(cx + Math.cos(a) * d, cy + Math.sin(a) * d);
+      // Turned and squashed, and the squash gives out on a loud band, so a
+      // cloud rounds up as the room fills and goes back to a streak after.
+      cg.rotate(a * 0.6 + c.w);
+      cg.scale(s, s * (0.6 + v * 0.28));
+      cg.beginPath();
+      cg.arc(0, 0, 1, 0, 6.28318);
+      cg.fill();
+      // Two more lobes off the first, each smaller and off in its own
+      // direction, because a cloud with one centre in it is a lamp with a soft
+      // shade on. Moving the brush moves the light with it, so a lobe is one
+      // more fill and nothing else — no gradient, no path, no arithmetic.
+      cg.translate(0.5, -0.34);
+      cg.scale(0.66, 0.66);
+      cg.globalAlpha *= 0.82;
+      cg.beginPath();
+      cg.arc(0, 0, 1, 0, 6.28318);
+      cg.fill();
+      cg.translate(-0.8, 0.62);
+      cg.scale(0.85, 0.85);
+      cg.globalAlpha *= 0.82;
+      cg.beginPath();
+      cg.arc(0, 0, 1, 0, 6.28318);
+      cg.fill();
+      cg.restore();
+    }
+  }
+
+  // ---- the rock -----------------------------------------------------------
+  // A solid, cut once at load and kept. Twelve corners is what the flat rock
+  // was cut to and twelve corners is what an icosahedron has, so the table of
+  // radii did not change when the shape did: ROCK is read as twelve radii in
+  // space instead of twelve round a circle, and the note at the top of this
+  // section is where the argument for going round lives.
+  //
+  // Subdivided once, because twenty faces is a die and eighty is a rock. Every
+  // corner the subdivision adds sits half way along the edge it came from and
+  // takes the mean of the two radii either end of it, which is why a body with
+  // eighty faces on it still reads as the same twelve numbers.
+
+  // The twelve, at the corners of three golden rectangles, and the twenty
+  // faces between them. Both tables are the textbook's; what this file does
+  // with them afterwards is the part worth reading.
+  var PHI = 1.6180339887;
+  var ICO = [
+    [-1, PHI, 0], [1, PHI, 0], [-1, -PHI, 0], [1, -PHI, 0],
+    [0, -1, PHI], [0, 1, PHI], [0, -1, -PHI], [0, 1, -PHI],
+    [PHI, 0, -1], [PHI, 0, 1], [-PHI, 0, -1], [-PHI, 0, 1]
+  ];
+  var TRI = [
+    [0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11],
+    [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
+    [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9],
+    [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]
+  ];
+
+  // Forty-two corners, eighty faces, a hundred and twenty edges. A corner keeps
+  // a heading, a radius and a band; a face keeps three corners; an edge keeps
+  // two corners and the face on either side of it, which is the one thing the
+  // outline is ever found from.
+  var NV = 0, NF = 0, NE = 0;
+  var ux, uy, uz, ur, ub;
+  var f0, f1, f2, d0, d1, dl, dr;
+  // And the same again, rewritten once a frame: where each corner turned to,
+  // where it landed on the glass, and for each face whether the reader can see
+  // it and how lit it is when they can.
+  var wx, wy, wz, qx, qy, vis, tone;
+
+  function carve() {
+    var vs = [], fs = [], mid = {}, i, f;
+
+    function corner(x, y, z, r) {
+      var d = Math.sqrt(x * x + y * y + z * z);
+      vs.push([x / d, y / d, z / d, r]);
+      return vs.length - 1;
+    }
+
+    // Remembered on the way, because the two triangles either side of an edge
+    // have to come out holding the same corner rather than one each: a mesh
+    // with its seams unsewn has no edges to find an outline along.
+    //
+    // Half way along the edge, and half way between the two radii — but not
+    // exactly. A midpoint that only ever splits the difference smooths the
+    // twelve numbers into a dome by the second row of triangles, and a dome
+    // with eighty panels on it is a planetarium rather than a rock. So each one
+    // is knocked off the mean by a figure read out of the same table, at the
+    // pair of corners it sits between. It is fixed like everything else about
+    // this body, it is half the size of the twelve, and it is the whole of the
+    // difference between a geodesic and a thing that has been hit.
+    function half(a, b) {
+      var lo = a < b ? a : b, hi = a < b ? b : a, key = lo * 64 + hi;
+      if (key in mid) return mid[key];
+      var p = vs[a], q = vs[b];
+      var lump = 1 + (ROCK[(lo * 5 + hi * 7) % ROCK.length] - 0.95) * 0.55;
+      return (mid[key] = corner(p[0] + q[0], p[1] + q[1], p[2] + q[2],
+                                (p[3] + q[3]) / 2 * lump));
+    }
+
+    for (i = 0; i < ICO.length; i++) corner(ICO[i][0], ICO[i][1], ICO[i][2], ROCK[i]);
+    for (i = 0; i < TRI.length; i++) {
+      var t = TRI[i], ab = half(t[0], t[1]), bc = half(t[1], t[2]), ca = half(t[2], t[0]);
+      fs.push([t[0], ab, ca], [t[1], bc, ab], [t[2], ca, bc], [ab, bc, ca]);
+    }
+
+    NV = vs.length;
+    NF = fs.length;
+    ux = new Float32Array(NV); uy = new Float32Array(NV); uz = new Float32Array(NV);
+    ur = new Float32Array(NV); ub = new Uint8Array(NV);
+    for (i = 0; i < NV; i++) {
+      ux[i] = vs[i][0]; uy[i] = vs[i][1]; uz[i] = vs[i][2]; ur[i] = vs[i][3];
+      // Which band a corner stands in: its latitude, mirrored north to south
+      // the way everything else hung on this object is mirrored. The bass sits
+      // round the waist and the bright end at the two poles, so a chord landing
+      // fattens the rock about its middle — and it fattens it in the body's own
+      // frame rather than the reader's, so the swelling rolls round with the
+      // rock instead of staying stuck to the panel.
+      ub[i] = Math.round(Math.abs(vs[i][1]) * (BANDS - 1));
+    }
+
+    f0 = new Uint8Array(NF); f1 = new Uint8Array(NF); f2 = new Uint8Array(NF);
+    for (f = 0; f < NF; f++) {
+      var i0 = fs[f][0], i1 = fs[f][1], i2 = fs[f][2];
+      // Every face wound so its normal points out of the body, worked out here
+      // rather than trusted from the table above. Which way a face is turned is
+      // the whole of how the far side of the rock gets thrown away, and one
+      // triangle wound backwards is a hole in the thing for as long as it faces
+      // the reader.
+      var ox = ux[i0] * ur[i0], oy = uy[i0] * ur[i0], oz = uz[i0] * ur[i0];
+      var ax = ux[i1] * ur[i1] - ox, ay = uy[i1] * ur[i1] - oy, az = uz[i1] * ur[i1] - oz;
+      var bx = ux[i2] * ur[i2] - ox, by = uy[i2] * ur[i2] - oy, bz = uz[i2] * ur[i2] - oz;
+      if ((ay * bz - az * by) * ox + (az * bx - ax * bz) * oy +
+          (ax * by - ay * bx) * oz < 0) { var s = i1; i1 = i2; i2 = s; }
+      f0[f] = i0; f1[f] = i1; f2[f] = i2;
+    }
+
+    // The edges, each one found twice — once from the face on its left and once
+    // from the face on its right — which is exactly how it learns both.
+    var seen = {}, c0 = [], c1 = [], lf = [], rf = [];
+    for (f = 0; f < NF; f++) {
+      var v = [f0[f], f1[f], f2[f]];
+      for (i = 0; i < 3; i++) {
+        var p = v[i], q = v[(i + 1) % 3];
+        var k = (p < q ? p : q) * 64 + (p < q ? q : p);
+        if (k in seen) { rf[seen[k]] = f; continue; }
+        seen[k] = c0.length;
+        c0.push(p); c1.push(q); lf.push(f); rf.push(f);
+      }
+    }
+    NE = c0.length;
+    d0 = new Uint8Array(c0); d1 = new Uint8Array(c1);
+    dl = new Uint8Array(lf); dr = new Uint8Array(rf);
+
+    wx = new Float32Array(NV); wy = new Float32Array(NV); wz = new Float32Array(NV);
+    qx = new Float32Array(NV); qy = new Float32Array(NV);
+    vis = new Uint8Array(NF); tone = new Uint8Array(NF);
+  }
+
+  carve();
+
+  // The rock, turned and put on the glass. It is the only place in this file
+  // where anything is in three dimensions at all — everything after it reads
+  // qx and qy and never asks what happened.
+  //
+  // Three angles at three speeds with no common multiple between them, which is
+  // the difference between tumbling and spinning: the axis it turns about is
+  // itself turning, the way a rock in free fall does and a wheel does not. All
+  // three are slow. A body this lumpy is legible at the speed of a minute hand
+  // and unreadable at anything much faster, and the panel it hangs in is
+  // something a reader has open for the length of a chapter.
+  function tumble(now, base, L, m) {
+    var i, f;
+    var a = now * 0.000103, b = now * 0.000067, c = now * 0.000041;
+    var sa = Math.sin(a), ca = Math.cos(a);
+    var sb = Math.sin(b), cb = Math.cos(b);
+    var sc = Math.sin(c), cc = Math.cos(c);
+    // Rz·Ry·Rx multiplied out once rather than three passes over forty-two
+    // corners: nine numbers, and nothing allocated to hold them.
+    var m00 = cc * cb, m01 = cc * sb * sa - sc * ca, m02 = cc * sb * ca + sc * sa;
+    var m10 = sc * cb, m11 = sc * sb * sa + cc * ca, m12 = sc * sb * ca - cc * sa;
+    var m20 = -sb,     m21 = cb * sa,                m22 = cb * ca;
+    var eye = base * LENS;
+    for (i = 0; i < NV; i++) {
+      // Off the fastest of the three envelopes, so the corners visibly go in
+      // and out with the spectrum instead of the body merely trembling.
+      var d = base * (ur[i] + (L[ub[i]] - m) * 0.7);
+      var x = ux[i] * d, y = uy[i] * d, z = uz[i] * d;
+      var X = m00 * x + m01 * y + m02 * z;
+      var Y = m10 * x + m11 * y + m12 * z;
+      var Z = m20 * x + m21 * y + m22 * z;
+      wx[i] = X; wy[i] = Y; wz[i] = Z;
+      // The lens: one divide per corner, and most of what tells a reader they
+      // are looking at a solid rather than at the outline of one. The near side
+      // of the body comes out a quarter larger than the far side, so a face
+      // rolling towards them grows on the way round.
+      var s = eye / (eye - Z);
+      qx[i] = cx + X * s;
+      qy[i] = cy + Y * s;
+    }
+    // Where the light is standing: the same angle the rings shine along, leaned
+    // a little towards the reader so the body has a near side as well as a lit
+    // one. Written out already unit length, because it is a constant with a
+    // turning handle on it and not a vector anybody needs to measure.
+    var at = now * 0.00034;
+    var lx = Math.cos(at) * 0.851, ly = Math.sin(at) * 0.851, lz = 0.527;
+    for (f = 0; f < NF; f++) {
+      var j0 = f0[f], j1 = f1[f], j2 = f2[f];
+      var ex = wx[j1] - wx[j0], ey = wy[j1] - wy[j0], ez = wz[j1] - wz[j0];
+      var gx = wx[j2] - wx[j0], gy = wy[j2] - wy[j0], gz = wz[j2] - wz[j0];
+      var nx = ey * gz - ez * gy, ny = ez * gx - ex * gz, nz = ex * gy - ey * gx;
+      var mx = (wx[j0] + wx[j1] + wx[j2]) / 3;
+      var my = (wy[j0] + wy[j1] + wy[j2]) / 3;
+      var mz = (wz[j0] + wz[j1] + wz[j2]) / 3;
+      // Facing the reader, which with a lens in the way is not the same
+      // question as pointing along the view: a face out near the edge of the
+      // body can have its back to an eye it is still leaning towards. So the
+      // test is against the line to the eye rather than against the axis, and
+      // what it leaves standing is two fifths of the surface rather than half,
+      // which is what looking at a real one buys you.
+      vis[f] = nx * -mx + ny * -my + nz * (eye - mz) > 0 ? 1 : 0;
+      var len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+      var v = (nx * lx + ny * ly + nz * lz) / len;
+      tone[f] = v <= 0 ? 0 : Math.min(SHADE.length - 1, (v * SHADE.length) | 0);
+    }
+  }
+
+  // The near side of the body as one shape, for the scanlines that want the
+  // outline rather than the mesh. Overlapping triangles under the non-zero rule
+  // are their own union, so this is the silhouette without anybody having to
+  // work out where the silhouette is.
+  function hull() {
+    cg.beginPath();
+    for (var f = 0; f < NF; f++) {
+      if (!vis[f]) continue;
+      cg.moveTo(qx[f0[f]], qy[f0[f]]);
+      cg.lineTo(qx[f1[f]], qy[f1[f]]);
+      cg.lineTo(qx[f2[f]], qy[f2[f]]);
+      cg.closePath();
+    }
+  }
+
+  // The glass, and the plainest reading in the whole object. Bright bands across
+  // the body, one per band of the spectrum, each as long as its band is loud and
+  // clipped to the rock — so a loud bar fills it out to the outline and a quiet
+  // one leaves nothing but a stripe in the middle. It is a spectrum lying on its
+  // side inside a rock, which is what a rock lit from within by music ought to
+  // look like when you look straight at it. The colour still runs along the
+  // light rather than across it, so the bands fade out on the side facing away.
+  //
+  // They are the one thing on the body that does not turn with it. These are
+  // the room's reading laid over the rock rather than a marking on it, and a
+  // reading that rolled away out of sight would be one you could not take.
+  function slats(now, base, al) {
+    var a = now * 0.00034;
+    var co = Math.cos(a) * base, si = Math.sin(a) * base;
+    var gr = cg.createLinearGradient(cx - co, cy - si, cx + co, cy + si);
+    gr.addColorStop(0, "rgba(33, 243, 255, 0.12)");
+    gr.addColorStop(0.55, "rgba(255, 244, 224, 0.55)");
+    gr.addColorStop(1, "rgba(" + SUN + ", 0.16)");
+    cg.save();
+    cg.clip();
+    cg.strokeStyle = gr;
+    cg.lineWidth = 1;
+    // Under the mesh rather than beside it: the facets are what the near face is
+    // for, and bands bright enough to compete with them turn the whole body into
+    // one lit slab.
+    cg.globalAlpha = al * (0.1 + glow * 0.34);
+    cg.beginPath();
+    for (var i = 0; i < SLATS; i++) {
+      // Mirrored, like everything else hung on this object, so the loudest
+      // bands sit across the middle of the rock and the quiet ends of the
+      // spectrum are the stripes nearest its top and bottom.
+      var w = base * (0.3 + lev[0][mir(i, SLATS)] * 1.3);
+      var y = cy + (i / (SLATS - 1) - 0.5) * base * 2.1;
+      cg.moveTo(cx - w, y);
+      cg.lineTo(cx + w, y);
+    }
+    cg.stroke();
+    cg.restore();
+  }
+
+  // The faces, flat-shaded, one fill per step of the ramp. Everything in this
+  // panel is drawn in lighter, so nothing in here can put a shadow anywhere: a
+  // face with its back to the light is not darkened, it is simply given almost
+  // nothing, and the star behind the rock goes on burning through it. Which is
+  // the right answer for a rock made of glass and would be the wrong one for
+  // any other kind.
+  function facets(al) {
+    var t, f, any, k = al * (0.06 + glow * 0.46);
+    for (t = 0; t < SHADE.length; t++) {
+      any = false;
+      cg.beginPath();
+      for (f = 0; f < NF; f++) {
+        if (!vis[f] || tone[f] !== t) continue;
+        cg.moveTo(qx[f0[f]], qy[f0[f]]);
+        cg.lineTo(qx[f1[f]], qy[f1[f]]);
+        cg.lineTo(qx[f2[f]], qy[f2[f]]);
+        cg.closePath();
+        any = true;
+      }
+      if (!any) continue;
+      cg.fillStyle = "rgba(" + SHADE[t] + ", 1)";
+      // Bent rather than straight, so the step from the darkest face to the
+      // next one is a good deal smaller than the step into the brightest. A
+      // linear ramp over six steps reads as six terraces; this one reads as a
+      // curve somebody has quantised, which is what it is.
+      cg.globalAlpha = k * (0.08 + Math.pow(t / (SHADE.length - 1), 1.8) * 0.92);
+      cg.fill();
+    }
+  }
+
+  // The mesh: facets, not craters. A rock with pits in it is a moon, and the one
+  // this was drawn from is a rock made of glass — the light living in the edges
+  // rather than on the faces, in the three colours it always wore and on the
+  // three thirds of the spectrum it always answered. Three gradients and seven
+  // strokes for a hundred and twenty edges: a bucket per colour, and none of
+  // them a path of its own.
+  //
+  // The far side goes first and faintly. It is the one thing in here drawn from
+  // behind the body, it is the reason the rock reads as glass rather than as a
+  // shell, and it is kept dim enough that a reader takes it for depth instead of
+  // for clutter.
+  function wires(now, base, al) {
+    var c, e, gr;
+    var a = now * 0.00034;
+    var co = Math.cos(a) * base, si = Math.sin(a) * base;
+    cg.lineCap = "round";
+    cg.lineJoin = "round";
+    cg.beginPath();
+    for (e = 0; e < NE; e++) {
+      if (vis[dl[e]] || vis[dr[e]]) continue;
+      cg.moveTo(qx[d0[e]], qy[d0[e]]);
+      cg.lineTo(qx[d1[e]], qy[d1[e]]);
+    }
+    cg.strokeStyle = "rgba(160, 75, 255, 1)";
+    cg.lineWidth = 0.7;
+    cg.globalAlpha = al * (0.07 + glow * 0.14);
+    cg.stroke();
+    for (c = 0; c < 3; c++) {
+      cg.beginPath();
+      for (e = c; e < NE; e += 3) {
+        if (!vis[dl[e]] && !vis[dr[e]]) continue;
+        cg.moveTo(qx[d0[e]], qy[d0[e]]);
+        cg.lineTo(qx[d1[e]], qy[d1[e]]);
+      }
+      // One gradient per colour laid along the light the rest of the object
+      // shines by, so the edges on the near side of the rock are white-hot and
+      // the ones round the far side are structure and nothing more.
+      gr = cg.createLinearGradient(cx - co, cy - si, cx + co, cy + si);
+      gr.addColorStop(0, "rgba(" + EDGE[c] + ", 0.1)");
+      gr.addColorStop(0.6, "rgba(" + EDGE[c] + ", 0.85)");
+      // White where the light actually strikes and coloured again past it. Pearl
+      // all the way to the lit edge looked right on one colour and washed all
+      // three of them out together, which is three gradients spent on grey.
+      gr.addColorStop(0.9, "rgba(242, 233, 255, 1)");
+      gr.addColorStop(1, "rgba(" + EDGE[c] + ", 1)");
+      cg.strokeStyle = gr;
+      // Thickness on its own third of the spectrum as well as brightness. An
+      // edge that only brightens is a lamp; one that also fattens is a string.
+      cg.lineWidth = 2.2 + en[c] * 2.6;
+      cg.globalAlpha = al * (0.03 + en[c] * 0.16);
+      cg.stroke();
+      cg.lineWidth = 0.6 + en[c] * 1.2;
+      cg.globalAlpha = al * (0.2 + en[c] * 0.68);
+      cg.stroke();
+    }
+  }
+
+  // Where the near side ends. An edge with a face on the reader's side of it
+  // and a face on the far side is the outline of the body at this instant, and
+  // it is found rather than read off a table, which is the whole of why the
+  // shape of the thing changes as it rolls. It gets the same four-stroke bloom
+  // the rings get and its corners left sharp, because the flat rock's rim had
+  // both and losing them would have been the price of going round.
+  function brink(now, base, al, t) {
+    cg.beginPath();
+    for (var e = 0; e < NE; e++) {
+      if (vis[dl[e]] === vis[dr[e]]) continue;
+      cg.moveTo(qx[d0[e]], qy[d0[e]]);
+      cg.lineTo(qx[d1[e]], qy[d1[e]]);
+    }
+    shine("33, 243, 255", now, base, al, 2.2, t, true);
+  }
+
+  function rock(now, rr, al) {
+    var L = lev[0], M = lev[1], c, k, m = 0;
+    for (k = 0; k < BANDS; k++) m += L[k];
+    m /= BANDS;
+    var base = rr * BODY * (1 + m * 0.1);
+    tumble(now, base, L, m);
+    // A third of the spectrum each for the three colours of the mesh, off the
+    // second envelope where the body itself rides the first, so the inside of
+    // the rock is a beat behind its outline: cyan on the bass, magenta on the
+    // middle, amber on the bright end. A mesh where every line pulses on the
+    // same number is a mesh on a dimmer, and the reason for having three
+    // colours was to have three things to watch.
+    var t = BANDS / 3;
+    for (c = 0; c < 3; c++) {
+      en[c] = 0;
+      for (k = Math.round(c * t); k < Math.round((c + 1) * t); k++) en[c] += M[k];
+      en[c] /= t;
+    }
+    hull();
+    slats(now, base, al);
+    facets(al);
+    wires(now, base, al);
+    brink(now, base, al, Math.min(1, m * 2.2));
+  }
+
+  // The rings on their way out. Each keeps the shape it was born with and
+  // takes it outwards, thinning and fading and turning a little as it goes, so
+  // a chord that landed three seconds ago is still crossing the panel while
+  // the next one lands on top of it.
+  function waves(now, rr, al, dt) {
+    for (var w = 0; w < WAVES; w++) {
+      var v = wave[w];
+      if (v.t >= 1) continue;
+      v.t = Math.min(1, v.t + dt / 2.4);
+      var e = 1 - Math.pow(1 - v.t, 2.2);        // away quickly, then coasting
+      var base = rr * (0.86 + e * 2);
+      // The lobes it left with stay lobes most of the way out, and they go
+      // both ways round the circle, so what crosses the panel is wavy rather
+      // than a circle with a texture on it.
+      var bend = rr * (0.32 - v.t * 0.14);
+      for (var k = 0; k < RING; k++) {
+        var a = k / RING * 6.28318 + v.t * 0.55;
+        var d = base + v.sh[band(k)] * bend;
+        px[k] = cx + Math.cos(a) * d;
+        py[k] = cy + Math.sin(a) * d;
+      }
+      loop();
+      var c = HUES[v.hue], f = al * v.amp * Math.pow(1 - v.t, 1.6);
+      var a2 = now * 0.00034 + v.t * 2.4;
+      var ax = Math.cos(a2) * base * 1.2, ay = Math.sin(a2) * base * 1.2;
+      var gr = cg.createLinearGradient(cx - ax, cy - ay, cx + ax, cy + ay);
+      gr.addColorStop(0, "rgba(" + c + ", 0.25)");
+      gr.addColorStop(0.45, "rgba(" + c + ", 1)");
+      gr.addColorStop(0.5, "rgba(242, 233, 255, 1)");
+      gr.addColorStop(0.55, "rgba(" + c + ", 1)");
+      gr.addColorStop(1, "rgba(" + c + ", 0.25)");
+      cg.strokeStyle = gr;
+      var t = 1.1 + (1 - v.t) * 1.6;             // thinning as it goes
+      cg.lineWidth = t * 5; cg.globalAlpha = f * 0.09; cg.stroke();
+      cg.lineWidth = t * 2; cg.globalAlpha = f * 0.24; cg.stroke();
+      cg.lineWidth = t;     cg.globalAlpha = f * 0.85; cg.stroke();
+    }
+  }
+
+  function glints(now, rr, al) {
+    cg.strokeStyle = "rgba(242, 233, 255, 1)";
+    cg.fillStyle = "rgba(242, 233, 255, 1)";
+    cg.lineWidth = 1;
+    for (var i = 0; i < GLINTS; i++) {
+      var a = now * (0.00022 + i * 0.00009) + i * 1.9;
+      var d = rr * (1.05 + (i % 3) * 0.26);
+      var v = lev[0][BANDS - 1 - i * 3];
+      var s = (0.35 + v * 1.6) * rr * 0.08;
+      var x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d;
+      cg.globalAlpha = al * (0.22 + v * 0.7);
+      cg.beginPath();
+      cg.moveTo(x - s, y); cg.lineTo(x + s, y);
+      cg.moveTo(x, y - s); cg.lineTo(x, y + s);
+      cg.stroke();
+      cg.beginPath();
+      cg.arc(x, y, 1.1, 0, 6.28318);
+      cg.fill();
+    }
+  }
+
+  // The one circle in here that stays a circle. It used to be the one line that
+  // answered nothing, on the argument that an object needs something that holds
+  // still — but a readout with a dead line in it invites the reader to wonder
+  // which of the others are honest. So it keeps its shape and gives up its
+  // radius: it stands off further while the room is loud, like the last ring of
+  // a bell, and it is the only thing in here that reports the level and nothing
+  // else at all.
+  function halo(now, rr, al) {
+    cg.beginPath();
+    // The ceiling on how far it stands off is the corner of a notes page, where
+    // the whole object lives in a canvas the size of a stamp: a ring that leaves
+    // the canvas on a loud bar is not a ring, it is four arcs.
+    cg.arc(cx, cy, rr * (1.5 + glow * 0.2), 0, 6.28318);
+    var a = now * 0.00034 + 1.9;
+    var ax = Math.cos(a) * rr * 1.7, ay = Math.sin(a) * rr * 1.7;
+    var gr = cg.createLinearGradient(cx - ax, cy - ay, cx + ax, cy + ay);
+    gr.addColorStop(0, "rgba(160, 75, 255, 0.04)");
+    gr.addColorStop(0.5, "rgba(242, 233, 255, 0.8)");
+    gr.addColorStop(1, "rgba(160, 75, 255, 0.04)");
+    cg.strokeStyle = gr;
+    cg.lineWidth = 6; cg.globalAlpha = al * 0.05; cg.stroke();
+    cg.lineWidth = 1; cg.globalAlpha = al * 0.3;  cg.stroke();
+  }
+
+  function draw(now, dt) {
+    cg.clearRect(0, 0, cv.clientWidth, cv.clientHeight);
+    // Arriving, it overshoots a little and settles, which is the difference
+    // between a thing appearing and a switch being thrown. Leaving, it goes
+    // straight down to nothing: it is not being switched off, it is going.
+    var e = 1 - Math.pow(1 - life, 3);
+    var grow = e + Math.sin(e * Math.PI) * 0.1;
+    var al = Math.min(1, life * 1.7);
+    if (gone > 0) {
+      grow = Math.pow(1 - gone, 1.7);
+      al = Math.pow(1 - gone, 1.2);
+    }
+    // It floats. Two slow circles at odds with each other on each axis, so it
+    // never repeats anywhere a reader could catch it repeating.
+    cx = hx + (Math.sin(now * 0.00021) * 0.13 + Math.sin(now * 0.00013) * 0.07) * R;
+    cy = hy + (Math.cos(now * 0.00017) * 0.11 + Math.sin(now * 0.00029) * 0.05) * R;
+    // And it throbs on the bottom of the spectrum, because that is where this
+    // piece keeps its heartbeat.
+    var bass = (lev[0][0] + lev[0][1] + lev[0][2] + lev[0][3]) / 4;
+    var rr = R * grow * (1 + Math.sin(now * 0.00043) * 0.02 + bass * 0.13 + kick(dt));
+    cg.globalCompositeOperation = "lighter";
+    clouds(now, rr, al, 0);
+    core(rr, al);
+    waves(now, rr, al, dt);
+    glare(now, rr, al);
+    corona(now, rr, al);
+    for (var i = RINGS.length - 1; i >= 0; i--) ring(i, now, rr, al);
+    rock(now, rr, al);
+    clouds(now, rr, al, 1);
+    gloss(now, rr, al);
+    halo(now, rr, al);
+    glints(now, rr, al);
+    cg.globalCompositeOperation = "source-over";
+    cg.globalAlpha = 1;
+  }
+
+  function beat(now) {
+    raf = 0;
+    if (!cv) return;
+    var dt = last ? Math.min(0.05, (now - last) / 1000) : 0.016;
+    last = now;
+    if (now - took > 900) { took = now; place(); }
+
+    if (gone > 0) gone = Math.min(1, gone + dt / 0.62);
+    else if (life < 1) life = Math.min(1, life + dt / 0.9);
+
+    listen(dt);
+    draw(now, dt);
+
+    if (gone >= 1) { tear(); return; }
+    raf = requestAnimationFrame(beat);
+  }
+
+  function run() { if (!raf) { last = 0; raf = requestAnimationFrame(beat); } }
+
+  // A reader who asked for less motion gets the same object holding still: it
+  // is there, it is lit, and it says the room is on, which is all the four
+  // bars in the corner ever said either.
+  function paint() {
+    place();
+    for (var i = 0; i < RINGS.length; i++)
+      for (var k = 0; k < BANDS; k++) {
+        lev[i][k] = 0.34 + Math.sin(k / BANDS * 6.28318) * 0.16;
+        // One frame of the trace, held. Three plain circles would be the
+        // honest reading of a wave nobody is allowed to see move, and it would
+        // also be the one shape this object is not. Each ring is turned a
+        // little further back than the last, which is where the wake went.
+        var t = k / BANDS * 6.28318 - i * 0.5;
+        tr[i][k] = Math.sin(t * 2.5) * 0.66 + Math.sin(t * 5) * 0.24;
+      }
+    glow = 0.32;
+    life = 1;
+    gone = 0;
+    draw(0, 0);
+  }
+
+  // The room arrived, by whatever route: a hand on the switch, or a page that
+  // came in with the answer already in storage. Both get the entrance, because
+  // a chapter arriving is the moment for one.
+  function show() {
+    if (cv) return;
+    make();
+    life = 0;
+    gone = 0;
+    // A frame's wait before the still one is drawn, because the panel it
+    // measures itself against has only just been laid out. The moving one
+    // measures again as it goes and never notices.
+    if (still) requestAnimationFrame(function () { if (cv) paint(); });
+    else run();
+    mouth();
+  }
+
+  function fade() {
+    hush();
+    if (!cv) return;
+    if (still) { tear(); return; }
+    gone = 0.001;
+    run();
+  }
+
+  // ---- the voice ----------------------------------------------------------
+  // The thing in the panel has been a meter, then an object, then a rock with
+  // weather round it, and at every step it got harder to look at without
+  // wondering what it makes of all this. So it thinks, visibly, every twenty
+  // seconds or so, and holds the thought for about as long as one takes to
+  // read.
+  //
+  // Who is thinking matters more than the mechanism does. It is something old
+  // enough to have watched this cabinet get built in several universes and to
+  // have been unimpressed in each of them, and that register is the only one in
+  // which a book can be rude about the people writing it and stay funny: the
+  // observation is about pilots in general, or about the twenty-third century,
+  // and the pilot reading it is welcome to conclude it is about them. It keeps
+  // the house voice while it does it — flat, dry, no exclamation marks —
+  // because an ancient being that shouts is a mascot.
+  //
+  // It is drawn in comic grammar because the panel it hangs in is a comic cel:
+  // plate, halftone, hard border, ink dropped behind it. And it is a thought
+  // rather than a speech, which is a decision about manners rather than about
+  // shape. A spike pointing at the rock would mean the rock is addressing you;
+  // two puffs trailing back to it mean the rock is thinking and you are near
+  // enough to catch it. Nothing in this panel asked for a reader. The being is
+  // not performing, it has simply been here a long time and has opinions, and
+  // overhearing those is funnier than being told them.
+  //
+  // White paper and no outline, which is the one thing in this book that is
+  // neither lit nor bordered. Everything on the page glows because everything
+  // on the page is on a screen inside a screen, and a thought is not part of
+  // that machinery. An outline is what a shape needs to hold its own against a
+  // background, and white against a neon plate does not need one.
+  //
+  // Arriving, it grows out of the thinker: the origin it scales about is the
+  // rock rather than its own middle, its width opens from a third to all of it,
+  // and the sentence writes itself in a character at a time behind that. Three
+  // things on one curve, and what they add up to is a thought forming rather
+  // than a panel being shown. Leaving is the same backwards, into whatever
+  // corner the rock has drifted to by then.
+  //
+  // Two of the facts it uses are read off the page rather than kept here: who
+  // flew this chapter and which number it is, both already printed in the
+  // credits under the sentence. Same argument the signet makes — the fact is on
+  // the page, so read it instead of holding a copy that can go stale. A page
+  // with no credits, the cover and the notes, simply never has a thought that
+  // wanted one.
+  //
+  // It runs on a timer of its own rather than on the frame, it allocates one
+  // element for as long as the room is on and a line's worth of spans when a
+  // line arrives, and it exists only while the room does. A reader who asked
+  // for less motion gets the orb holding still and thinking nothing, which is
+  // the answer that reader already gets from everything else in here.
+
+  var SKIN = "#f2f6ff";                    // paper, cooled a shade to sit on a
+                                           // page lit by a cathode ray tube
+  var INK = "#0b0418";                     // and what is written on it
+  var ROUND = 18;                          // the corner the paper is cut with
+  var CURL = 0.45;                         // and the corner the puffs are, as a
+                                           // share of their own height. Not the
+                                           // balloon's corner scaled: a corner
+                                           // scaled down with everything else
+                                           // stops reading as a corner, so the
+                                           // small ones are rounded almost to
+                                           // the ends to keep the shape they
+                                           // are a copy of
+  // The trail back to the thinker, as fractions of the balloon rather than as
+  // sizes. They are the same shape it is — same proportions, same corner, the
+  // corner scaled with everything else — because a thought coming apart into
+  // circles is a thought coming apart into something else, and two smaller
+  // copies of the thing itself say what is happening without being explained.
+  var PUFF = [0.32, 0.18];
+  var LAP = 5;                             // and each laps over the one behind
+                                           // it, so they read as one thought in
+                                           // pieces rather than as three shapes
+  var RUN = [];                            // where each of their middles lands
+  var STALK = 0.35;                        // where it leaves the balloon: left
+                                           // of its middle, which is where a
+                                           // comic has always hung one
+  var STROKE = 13;                         // milliseconds a character waits for
+                                           // the character in front of it
+  var OPEN = 0.3;                          // the width it opens from
+
+  // Fifty-odd observations from something with no stake in any of this. {who}
+  // is the pilot who flew the chapter and {ch} is its number; a line that asks
+  // for either is only offered on a page that can answer.
+  var LINES = [
+    "I have watched this cabinet get built in four hundred universes. In one of them the rocks shoot back, and it is not an improvement.",
+    "I am older than the idea of a corner. This shape is a courtesy.",
+    "I have outlived nine suns and one build system. The suns lasted longer.",
+    "Every civilisation I have visited eventually invents a game about hitting rocks. Each of them is certain it invented it.",
+    "In the next universe over this song is in a major key, and the pilots there are insufferable.",
+    "There is a timeline where nobody added the kraken. It is a calmer book and a worse one.",
+    "I attended the heat death of a galaxy. Fewer particles than you would hope for.",
+    "Entropy takes everything in the end. The third rock usually gets there first, and from behind.",
+    "In universe 6,441 this is a spreadsheet. The competition is precisely as bitter.",
+    "Somewhere the phosphor never fades. Nothing there is ever quite over, and it is exhausting.",
+    "I have stood at the edge of three universes. Two of them had a border two pixels wide, like this one.",
+    "A species gets fire, then writing, then the concept of a cooldown. The order took me by surprise.",
+    "Time is a flat circle in most places. Here it has a slight wobble, somewhere around v17.",
+    "I have seen how this book ends. It is not at the last chapter, which I thought was well judged.",
+    "The rocks do not know they are the antagonists. Very few things do.",
+    "Somebody spent an entire evening choosing this magenta. They were right to, and nobody will ever thank them.",
+    "This rock has twelve corners. I have counted them roughly nine million times and the number holds.",
+    "Nothing here picks an absolute colour. Everything picks an offset from a hue that will not sit still. I find it restful.",
+    "A vector line has no thickness. Somebody gave this one a glow regardless, which is the whole project in a single decision.",
+    "The trails are not a trick of the eye. The layer is faded rather than cleared, which is one way of saying the past is still slightly here.",
+    "Two seats, one keyboard. I have seen empires founded on less and lost over rather more.",
+    "There is an atom bomb in the cabinet and you are given two. Restraint is the entire genre.",
+    "Twelve rules, six of which cannot be bent. Six is more than most civilisations manage.",
+    "The referee is a shell script. Do not let that reassure you.",
+    "Somebody will read this commit in four hundred years and still not know why the number is 0.72.",
+    "A budget spent in writing is still spent. The ledger noticed. The field will bring it up later.",
+    "I have read every commit message in this repository. Three of them were load-bearing jokes.",
+    "The tally forgives after three clean landings. I forgive nothing, but then nothing enforces me.",
+    "One surprise per commit is a rule written by somebody who had just shipped six.",
+    "The best trap in this cabinet was laid by the one pilot it can never fire at. Petty, elegant, working as intended.",
+    "This book is generated by a shell script. Do not tell it. It believes it is literature.",
+    "Every feature here is one file and one line in a list. I have watched empires come apart for want of that arrangement.",
+    "Somebody is about to retune a number in somebody else's file. Balance is everybody's business, apparently.",
+    "The history cannot be rewritten here. I have visited places where it can, and I do not recommend the food.",
+    "A commit that changes the game gets a number. A commit that files the paperwork gets silence. I approve of the silence.",
+    "There is no build step. In eleven universes out of twelve that is the difference between a game and a folder of regret.",
+    "Pilots come in two kinds: the ones who add a feature, and the ones who quietly retune everybody else's at two in the morning.",
+    "Every project has one person who names things beautifully and one who names them tmp2. Here they are the same person.",
+    "There is always one pilot who reads the rules before building. It is never the one who needed to.",
+    "Somebody will refactor this. It will be whoever wrote it, and they will be annoyed at themselves in the third person.",
+    "I have met {who} in eleven timelines. In all eleven, {who} said one small change, after midnight.",
+    "{who} flew this chapter. In three universes out of four, {who} even played it first.",
+    "The pilot who writes the most careful comments is the pilot who broke it last time. This holds in every universe I have checked.",
+    "Somebody is going to blame the physics. It is never the physics.",
+    "In another timeline {who} shipped this a week earlier and it was worse. Slowness is underrated.",
+    "The most dangerous sentence in any universe is: while I am in here anyway.",
+    "I am technically a readout. The opinions are a side effect.",
+    "Somebody switched the sound on. Very few readers do. I notice every one of them.",
+    "I exist only while the room is on. A limited engagement, but the lighting is exceptional.",
+    "Nobody needs to mind me. I am largely here for the acoustics.",
+    "Chapter {ch}. I already know how it goes and I am not going to spoil it.",
+    "{ch} versions. The pyramids took longer and do considerably less.",
+    "I answer to the music rather than to a clock, which is more than can be said for most oracles.",
+    "I have nothing to sell anybody, which should distinguish me from most things that appear in a bubble."
+  ];
+
+  // A thought landing is felt by the thing having it: the rock swells, springs
+  // back past where it started, and settles. That is a second-order system
+  // rather than a curve, and it is written as one on purpose — a curve has to
+  // be told how long to take, and a spring only has to be told how hard it was
+  // hit. draw() adds what this returns to the radius, which is why the whole
+  // object goes with it: the rings, the corona, the weather, all of it, because
+  // they are all measured off that one number.
+  var JOLT = 4.2;                          // the shove, in radii per second
+  var STIFF = 340, DAMP = 13;              // stiff and lightly damped, so it
+                                           // overshoots once and is done in
+                                           // under a second
+  var jolt = 0, jolted = 0;                // how far out it is, and how fast
+
+  function kick(dt) {
+    if (!jolt && !jolted) return 0;
+    // Velocity first and then position off the new velocity, which is the one
+    // ordering of these two lines that does not blow up at a long frame.
+    jolted += (-STIFF * jolt - DAMP * jolted) * dt;
+    jolt += jolted * dt;
+    if (Math.abs(jolt) < 0.0004 && Math.abs(jolted) < 0.004) jolt = jolted = 0;
+    return jolt;
+  }
+
+  // bub is the frame the whole thought is hung in and the thing that scales;
+  // pane is the paper inside it, which is the part whose width opens; sen is
+  // the sentence, pinned to the width it was laid out at so that opening the
+  // paper uncovers the words rather than re-wrapping them sixty times.
+  var bub = null, pane = null, sen = null, puff = [], bag = [], pend = 0, brim = 0;
+
+  function facts() {
+    var f = { ch: CH > 0 ? String(CH) : "", who: "" };
+    var el = document.querySelector(".credits .who");
+    if (el) f.who = (el.textContent || "").trim().split(/\s+/)[0] || "";
+    return f;
+  }
+
+  // A line whose blanks cannot be filled on this page is not a line on this
+  // page. Nothing is patched with a placeholder — an oracle that says "chapter
+  // undefined" is a bug wearing a costume.
+  function dress(s, f) {
+    if (s.indexOf("{who}") >= 0 && !f.who) return "";
+    if (s.indexOf("{ch}") >= 0 && !f.ch) return "";
+    return s.split("{who}").join(f.who).split("{ch}").join(f.ch);
+  }
+
+  // A bag rather than a die: everything gets thought once before anything gets
+  // thought twice, so a reader who stays for a whole chapter never sees the
+  // same observation come round again. Math.random and not the chapter's own
+  // seed, which is the one place in this file that wants a different answer
+  // every time — the music is meant to be the same v3 whenever you open it, and
+  // the being is meant not to be.
+  function refill() {
+    var f = facts(), i, j, t;
+    bag = [];
+    for (i = 0; i < LINES.length; i++) {
+      t = dress(LINES[i], f);
+      if (t) bag.push(t);
+    }
+    for (i = bag.length - 1; i > 0; i--) {
+      j = Math.floor(Math.random() * (i + 1));
+      t = bag[i]; bag[i] = bag[j]; bag[j] = t;
+    }
+  }
+
+  // Wherever the rock has got to, in whatever coordinates the balloon is hung
+  // in — the panel's for a chapter, the window's for the fixed corner the cover
+  // and the notes put it in.
+  function whence() {
+    var b;
+    if (!adrift) return { x: cx || hx, y: cy || hy };
+    b = cv.getBoundingClientRect();
+    return { x: (b.left + b.right) / 2, y: (b.top + b.bottom) / 2 };
+  }
+
+  // The thought grows out of the thinker and collapses back into it, so the
+  // origin it scales about is the rock. Kept apart from spot() because leaving
+  // needs the origin brought up to date and must not move the balloon while it
+  // is still being read.
+  function aim() {
+    if (!bub || !cv) return;
+    var o = whence();
+    bub.style.transformOrigin =
+      Math.round(o.x - parseFloat(bub.style.left)) + "px " +
+      Math.round(o.y - parseFloat(bub.style.top)) + "px";
+  }
+
+  // Measured at the width it wants and then pinned there. Everything after this
+  // — the opening, the placing, the trail — works off one number that does not
+  // move while it is being animated.
+  function size(open) {
+    if (!bub || !cv) return;
+    var max = adrift ? Math.min(272, document.documentElement.clientWidth - 20)
+                     : Math.min(300, cv.clientWidth * 0.6);
+    // Measured back at the origin, because a box that shrinks to fit its
+    // contents also shrinks to fit the room left in front of it, and this one
+    // is usually still parked against the right-hand edge from last time. On
+    // the cover, where it lives in the corner, that came out as a column one
+    // word wide. spot() puts it back where it belongs a moment later.
+    bub.style.left = "0px";
+    bub.style.top = "0px";
+    bub.style.width = "";
+    pane.style.width = "";
+    pane.style.maxWidth = Math.round(max) + "px";
+    sen.style.width = "";
+    brim = pane.offsetWidth;
+    sen.style.width = sen.offsetWidth + "px";
+    bub.style.width = brim + "px";
+    pane.style.width = Math.round(brim * (open ? 1 : OPEN)) + "px";
+  }
+
+  // Where each puff's middle falls along the trail, and how far the whole trail
+  // reaches. Both depend on how tall the balloon turned out to be this time,
+  // because the puffs are that balloon scaled down and it is a different size
+  // for every sentence. The trail runs off the edge facing the rock, which is
+  // very nearly straight up or straight down, so heights are the measurement
+  // that matters and the small error at an angle is not worth the arithmetic.
+  function trail(bh) {
+    var i, last = 0, run = 0;
+    for (i = 0; i < PUFF.length; i++) {
+      run += (last + PUFF[i]) * bh / 2 - LAP;
+      RUN[i] = run;
+      last = PUFF[i];
+    }
+    return run + last * bh / 2 + 6;        // the far edge, and a little air
+  }
+
+  // Over the rock if there is room over the rock, under it otherwise, and never
+  // across an edge of a panel that clips whatever leaves it.
+  function spot() {
+    if (!bub || !cv) return;
+    var L, T, up, w, h, b, el, lid, o = whence();
+    var bw = bub.offsetWidth, bh = bub.offsetHeight, reach = trail(bh);
+    if (adrift) {
+      b = cv.getBoundingClientRect();
+      w = document.documentElement.clientWidth;
+      T = b.bottom - 2;
+      L = Math.max(10, Math.min(b.right - bw, w - bw - 10));
+    } else {
+      b = cv.getBoundingClientRect();
+      w = cv.clientWidth; h = cv.clientHeight;
+      // Two things in this panel are drawn over it: the link to the full plate
+      // in the top corner and the chapter's own sentence along the foot. Where
+      // a circle of radius R fits is place()'s question; this is the smaller
+      // one of what a paragraph must not sit on, and its answer differs above
+      // the rock and below it.
+      el = host.querySelector(".plate-full");
+      lid = el ? el.getBoundingClientRect().bottom - b.top + 8 : 6;
+      up = o.y - R - bh - reach >= lid;
+      T = up ? o.y - R - bh - reach : o.y + R + reach;
+      T = Math.max(lid, Math.min(T, h - bh - 6));
+      // The trail leaves from a third or so in from the left, so the balloon is
+      // offset by that much rather than centred: it is the puffs that should
+      // line up under the rock, not the middle of the paper.
+      L = o.x - bw * STALK;
+      el = up ? null : host.querySelector(".say");
+      if (el) L = Math.max(L, el.getBoundingClientRect().right - b.left + 12);
+      L = Math.max(6, Math.min(L, w - bw - 6));
+    }
+    bub.style.left = Math.round(L) + "px";
+    bub.style.top = Math.round(T) + "px";
+    aim();
+
+    // The trail leaves from that same point, on whichever edge faces
+    // the rock, and walks towards it — so the two of them lead back to the
+    // thinker from whatever side the balloon ended up on, and go on leading
+    // back to it as the rock drifts.
+    var ax = bw * STALK, ay = o.y < T + bh / 2 ? 0 : bh;
+    var dx = o.x - (L + ax), dy = o.y - (T + ay);
+    var m = Math.sqrt(dx * dx + dy * dy) || 1;
+    dx /= m; dy /= m;
+    for (var i = 0; i < puff.length; i++) {
+      var k = PUFF[i], pw = bw * k, ph = bh * k, q = puff[i].style;
+      // Held inside the balloon's own width. A puff is a third of the paper
+      // wide, and centring the widest of them on a stalk a tenth in would hang
+      // it off the left-hand edge, which reads as a mistake rather than as a
+      // trail.
+      var mx = Math.min(Math.max(ax + dx * RUN[i], pw / 2), bw - pw / 2);
+      q.width = Math.round(pw) + "px";
+      q.height = Math.round(ph) + "px";
+      q.borderRadius = Math.max(3, Math.round(ph * CURL)) + "px";
+      q.left = Math.round(mx - pw / 2) + "px";
+      q.top = Math.round(ay + dy * RUN[i] - ph / 2) + "px";
+    }
+  }
+
+  // A thought does not arrive finished. Each character waits on the one in
+  // front of it and then fades, which at thirteen milliseconds apart reads as
+  // the sentence being written rather than as a sentence animating. Spaces stay
+  // ordinary text so the browser can still break a line wherever it likes.
+  function write(line) {
+    var i, ch, el, n = 0;
+    while (sen.firstChild) sen.removeChild(sen.firstChild);
+    for (i = 0; i < line.length; i++) {
+      ch = line.charAt(i);
+      if (ch === " ") { sen.appendChild(document.createTextNode(" ")); continue; }
+      el = document.createElement("span");
+      el.textContent = ch;
+      el.style.opacity = "0";
+      // The paper is given a moment to start opening before the first letter
+      // lands on it, because a thought written before it is thought is a
+      // subtitle.
+      el.style.transition = "opacity 0.22s linear " + (140 + n * STROKE) + "ms";
+      sen.appendChild(el);
+      n++;
+    }
+  }
+
+  function speak() {
+    pend = 0;
+    if (!bub) return;
+    if (!bag.length) refill();
+    var line = bag.pop();
+    if (!line) return;                    // a page that can answer nothing
+    write(line);
+    size(0);
+    spot();                               // and this is what settles the layout
+    bub.style.opacity = "1";
+    bub.style.transform = "none";
+    pane.style.width = brim + "px";
+    jolted = JOLT;                        // and the rock notices it thought
+    for (var i = 0; i < sen.children.length; i++) sen.children[i].style.opacity = "1";
+    // As long as it takes to read it, and a beat either side of that. Nobody
+    // should have to hurry for a joke they did not ask for.
+    pend = setTimeout(lull, Math.min(15000, 3600 + line.length * 52));
+  }
+
+  function lull() {
+    pend = 0;
+    if (!bub) return;
+    aim();                                // back into wherever the rock is now
+    bub.style.opacity = "0";
+    bub.style.transform = "scale(0.06)";
+    pane.style.width = Math.round(brim * OPEN) + "px";
+    pend = setTimeout(speak, 9000 + Math.random() * 13000);
+  }
+
+  // The panel it hangs in can change shape under it. Re-measure, re-place, and
+  // do not close a thought somebody is halfway through reading.
+  function again() {
+    if (!bub) return;
+    size(bub.style.opacity === "1");
+    spot();
+  }
+
+  function mouth() {
+    if (bub || still || !cv) return;
+    var home = adrift ? document.body : host;
+    // A panel too narrow to hold a sentence beside a rock gets the rock. On a
+    // phone the chapter's own sentence has already taken the panel, which is
+    // the right call and this does not argue with it.
+    if (!home || (!adrift && cv.clientWidth < 340)) return;
+
+    bub = document.createElement("div");
+    // Decoration, and decoration that arrives unannounced every twenty seconds.
+    // Read out, it would interrupt the chapter a reader actually came for.
+    bub.setAttribute("aria-hidden", "true");
+    var s = bub.style;
+    s.position = adrift ? "fixed" : "absolute";
+    s.left = "0px";
+    s.top = "0px";
+    s.zIndex = adrift ? "5" : "3";
+    s.pointerEvents = "none";             // it is a thought, not furniture
+    s.opacity = "0";
+    s.transform = "scale(0.06)";
+    // Out of the rock and back into it. The curve is the one a cel arrives on
+    // in chronicle.css, because a thought opening in a panel of cels should
+    // move the way the panel did.
+    s.transition = "opacity 0.4s ease, transform 0.46s cubic-bezier(0.2, 0.85, 0.3, 1)";
+
+    pane = document.createElement("div");
+    var p = pane.style;
+    p.overflow = "hidden";                // so opening it uncovers the sentence
+    p.padding = "0.62rem 0.85rem";
+    p.borderRadius = ROUND + "px";        // and the puffs take the same corner
+    p.background = SKIN;
+    p.color = INK;
+    p.fontSize = "0.7rem";
+    p.lineHeight = "1.55";
+    p.letterSpacing = "0.01em";
+    // No outline and no shadow. What holds the shape against the plate is the
+    // same thing that holds every other shape in this book against it: it is
+    // lit. A white bloom, close in and then broad, so the paper looks like the
+    // brightest thing in the panel rather than like a cutout laid on top of it.
+    p.boxShadow = "0 0 14px rgba(255, 255, 255, 0.6), 0 0 42px rgba(255, 255, 255, 0.28)";
+    p.transition = "width 0.44s cubic-bezier(0.2, 0.85, 0.3, 1)";
+    bub.appendChild(pane);
+
+    sen = document.createElement("span");
+    sen.style.display = "block";
+    sen.style.textWrap = "pretty";
+    pane.appendChild(sen);
+
+    for (var i = 0; i < PUFF.length; i++) {
+      var el = document.createElement("i"), q = el.style;
+      q.position = "absolute";
+      q.background = SKIN;
+      q.boxShadow = "0 0 10px rgba(255, 255, 255, 0.6), 0 0 24px rgba(255, 255, 255, 0.28)";
+      puff.push(el);
+      bub.appendChild(el);
+    }
+
+    home.appendChild(bub);
+    addEventListener("resize", again);
+    // Long enough that the rock has finished arriving and been looked at. A
+    // thing that starts thinking the moment it appears is a pop-up.
+    pend = setTimeout(speak, 4000 + Math.random() * 5000);
+  }
+
+  function hush() {
+    if (pend) { clearTimeout(pend); pend = 0; }
+    if (!bub) return;
+    removeEventListener("resize", again);
+    if (bub.parentNode) bub.parentNode.removeChild(bub);
+    bub = null; pane = null; sen = null; puff = []; bag = [];
   }
 
   // ---- the switch ---------------------------------------------------------
