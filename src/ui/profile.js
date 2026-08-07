@@ -66,7 +66,7 @@
             : p.events === 0 ? A.ico("trap", "cold") + "no traps laid"
             : A.ico("trap") + plural(p.events, "trap", "traps") + " laid"
           }</span>${bends(p.name) ? `
-          <span class="pbends${bends(p.name) >= 3 ? " hot" : ""}">${A.ico("bend")}${
+          <span class="pbends${(A.pilotHeatBends ? A.pilotHeatBends(p.name) : bends(p.name)) >= 3 ? " hot" : ""}">${A.ico("bend")}${
             plural(bends(p.name), "bend", "bends")} on the ledger</span>`
           : ""}
         </button>`).join("")}

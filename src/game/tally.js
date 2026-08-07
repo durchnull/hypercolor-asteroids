@@ -9,6 +9,12 @@
 // past THEIRS they stop making the one exception GR11 grants everybody — your
 // own traps start recognising you as the target rather than the author.
 //
+// The field also forgives, without forgetting: every MERCY clean versions a
+// pilot lands after their last bend take one bend back out of the arithmetic.
+// The record never moves — the marks on the wall stay — but heat, crowding
+// and the armed-own-traps line all read the eased number. The next bend
+// resets the clean count and the whole discount with it.
+//
 // Deliberately capped at both ends. One bend is a nuisance and ten bends are
 // the same nuisance plus your own events; nothing here can make a wave
 // unsurvivable, and nothing here touches anybody else's field. GR8 still
@@ -21,12 +27,24 @@
   const FLOOR = 0.5;       // and never more than twice as often, whatever you do
   const THEIRS = 3;        // bends before your own events stop sparing you
   const CROWD = 4;         // bends before a wave may hold one more ambush
+  const MERCY = 3;         // clean versions since the last bend, per bend eased
 
   const row = (name) => (A.LEDGER || {})[name === undefined ? A.activePilot() : name];
+
+  const eased = (name) => {
+    const r = row(name);
+    if (!r) return 0;
+    return Math.max(0, Math.max(0, r.bends | 0) - Math.floor(Math.max(0, r.clean | 0) / MERCY));
+  };
 
   A.pilotBends = function pilotBends(name) {
     const r = row(name);
     return r ? Math.max(0, r.bends | 0) : 0;
+  };
+
+  /** The number the field actually charges: the record, minus earned mercy. */
+  A.pilotHeatBends = function pilotHeatBends(name) {
+    return eased(name);
   };
 
   /** What they bent last, for the splash screen. "GR6", or the referee itself. */
@@ -37,17 +55,17 @@
 
   /** Gap multiplier for the events director. 1 is an honest pilot's field. */
   A.eventHeat = function eventHeat() {
-    return Math.max(FLOOR, 1 / (1 + PER_BEND * A.pilotBends()));
+    return Math.max(FLOOR, 1 / (1 + PER_BEND * eased()));
   };
 
   /** How many extra ambushes a wave may hold. Zero, or one. */
   A.eventQuotaBonus = function eventQuotaBonus() {
-    return A.pilotBends() >= CROWD ? 1 : 0;
+    return eased() >= CROWD ? 1 : 0;
   };
 
   /** GR11 spares you your own traps. This is the one thing that takes it back. */
   A.ownEventsArmed = function ownEventsArmed() {
-    return A.pilotBends() >= THEIRS;
+    return eased() >= THEIRS;
   };
 
   // The marks, bottom left, dim enough to ignore and present enough to notice
@@ -97,7 +115,8 @@
         <path d="M9 9v16M14 9v16M19 9v16M24 9v16M6 26L27 8"/></svg>`,
       desc: `Every rule a pilot bends is counted, by a machine, off the history.
         The field comes for them quicker &mdash; and at three, their own traps
-        stop making an exception.`,
+        stop making an exception. Three clean versions landed since the last
+        bend ease it all by one; the marks stay on the wall.`,
     },
   });
 })(ASTEROIDS);

@@ -5,7 +5,11 @@
 // the referee: a ledger that disagrees with the history is a commit that does
 // not land. Nobody edits their own record. That is the whole of it.
 //
+// clean is the other half of the arithmetic: versions the pilot has landed
+// since their last bend, read off the same history. Three of them ease the
+// field by one bend's worth - src/game/tally.js does that sum. See GR12.
+//
 // What the number does to a pilot's field is in src/game/tally.js. See GR12.
 ASTEROIDS.LEDGER = {
-  "David Friedrich": { bends: 5, last: "GR6" },
+  "David Friedrich": { bends: 5, clean: 7, last: "GR6" },
 };
