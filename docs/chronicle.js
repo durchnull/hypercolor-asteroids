@@ -6,13 +6,13 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 17,
-    latest: { v: 17, pilot: "David Friedrich", date: "07 August 2026", line: "The cabinet put its name up. A rock three colours out of true is holding it.", plate: "e055287b.jpg", alt: "The HUD is more forthcoming than it used to be. The picture followed." },
+    versions: 18,
+    latest: { v: 18, pilot: "David Friedrich", date: "07 August 2026", line: "Somebody rewrote a rule the game had been taking for granted.", plate: "e0a7f624.jpg", alt: "Somebody rewrote a rule the game had been taking for granted." },
     plates: [
+      { v: 18, file: "e0a7f624.jpg", alt: "Somebody rewrote a rule the game had been taking for granted.", line: "Somebody rewrote a rule the game had been taking for granted." },
       { v: 17, file: "e055287b.jpg", alt: "The HUD is more forthcoming than it used to be. The picture followed.", line: "The cabinet put its name up. A rock three colours out of true is holding it." },
       { v: 16, file: "9538f273.jpg", alt: "The instrument panel developed an opinion. It looks different, too.", line: "The instrument panel developed an opinion. It looks different, too." },
       { v: 15, file: "f6412bc2.jpg", alt: "The splash screen stopped describing the ship and showed it.", line: "The splash screen stopped describing the ship and showed it." },
-      { v: 14, file: "6a386812.jpg", alt: "The instrument panel developed an opinion. It brought company.", line: "The instrument panel developed an opinion. It brought company." },
     ]
   };
   A.BOARD = [
