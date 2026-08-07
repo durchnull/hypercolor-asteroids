@@ -80,10 +80,10 @@
 #
 # And one thing a commit cannot keep out. Every version is re-refereed as the
 # book is written, against the rules that can be proved from the commit alone:
-# GR6, GR10, GR11. Break one of those and write no override line and the commit
-# could not have got past the referee at all - which means somebody turned the
-# referee off. That gets an entry too, in the chapter and in the roster, and it
-# is the one line in the book that nobody chose to write.
+# GR4, GR5, GR6, GR10, GR11. Break one of those and write no override line and
+# the commit could not have got past the referee at all - which means somebody
+# turned the referee off. That gets an entry too, in the chapter and in the
+# roster, and it is the one line in the book that nobody chose to write.
 #
 # The arithmetic is the referee's own, deliberately in its forgiving form:
 # docs/ is generated and never counts against anybody, and anywhere this check
@@ -158,19 +158,21 @@ taglines() {
   awk -F'\t' 'NF >= 2 && $1 !~ /^#/ { printf "\036TAG\037%s\037%s", $1, $2 }' docs/taglines.tsv
 }
 
-# Who created each event file, folded into the stream the same way. GR11 is
-# ownership per file and the book has to arrive at the same answer the referee
-# did, so this is tools/golden-check.sh's owner_of, verbatim: whoever's commit
-# first added the file.
+# Who created each file, folded into the stream the same way. Ownership is
+# tools/golden-check.sh's owner_of - whoever's commit first added the file -
+# derived here for the whole tree in one pass: the log arrives newest first,
+# so the last A record seen for a path is its oldest, and that one wins. GR11
+# reads it for the event files and GR4 for everything else. --no-renames where
+# owner_of follows renames, so the two can disagree about a renamed file - and
+# where they could, the audits below stay quiet, as ever.
 owners() {
-  git log --diff-filter=A --pretty=format: --name-only --no-renames \
-          -- 'src/events/*.js' 2>/dev/null \
-    | sort -u \
-    | while IFS= read -r f; do
-        [ -n "$f" ] || continue
-        o=$(git log --follow --diff-filter=A --format='%an' -- "$f" 2>/dev/null | tail -1)
-        [ -n "$o" ] && printf '\036OWN\037%s\037%s' "$f" "$o"
-      done
+  git log --format='%x1e%an' --diff-filter=A --name-only --no-renames 2>/dev/null \
+    | awk -v RS='\036' '
+        {
+          n = split($0, L, "\n")
+          for (i = 2; i <= n; i++) if (L[i] != "") own[L[i]] = L[1]
+        }
+        END { for (p in own) printf "\036OWN\037%s\037%s", p, own[p] }'
 }
 
 # The painted plates, folded in the same way again: commit, file, and the line
@@ -233,6 +235,26 @@ function is_referee(p) {
           p == ".env.example" || p ~ /^tools\// || p ~ /^\.githooks\// ||
           p == ".claude/settings.json" || p ~ /^\.claude\/skills\//)
 }
+# The shared ground GR5 protects, and is_commons in tools/golden-check.sh is
+# the list this one has to match: an audit accusing somebody of gutting the
+# commons had better mean the same commons the referee meant.
+function is_commons(p) {
+  return (p == "index.html" || p == "src/main.js" || p == "src/features.js" ||
+          p ~ /^src\/core\// || p ~ /^src\/render\// || p ~ /^src\/input\// ||
+          p ~ /^src\/ui\// ||
+          p == "src/game/players.js" || p == "src/game/difficulty.js" ||
+          p == "src/game/lifecycle.js" || p == "src/game/events.js" ||
+          p == "src/game/profile.js" || p == "src/game/tally.js" ||
+          p == "src/audio/context.js" || p == "src/audio/buses.js" ||
+          p == "styles/tokens.css" || p == "README.md")
+}
+# What GR4 and GR5 measure a path at all for: the referee leaves its own files
+# to GR10, docs/ and the ledger to the machines that write them, and
+# src/events/ to GR11, which has no budget to spend.
+function is_gutted_ground(p) {
+  return (!is_referee(p) && p !~ /^docs\// && p != "src/game/ledger.js" &&
+          p !~ /^src\/events\//)
+}
 '
 
 case "${1:-}" in
@@ -285,8 +307,8 @@ if [ "${1:-}" = "--skips" ]; then
         if (bound && $1 == rules) bound = 0
         sha = $1; who = $2; rest = $6
         overrides = ""; rulechange = 0; refstrict = 0; nonref = 0; stolen = 0
-        acmr = 0; ins = 0; mode = ""
-        split("", deleted)
+        acmr = 0; ins = 0; fpn = 0; mode = ""
+        split("", deleted); split("", fseen); split("", fadd); split("", fdel)
         n = split(rest, b, "\n")
         for (k = 1; k <= n; k++) {
           t = b[k]; lt = tolower(t)
@@ -304,6 +326,11 @@ if [ "${1:-}" = "--skips" ]; then
               if (!(p in deleted)) acmr++
               if (ns[1] != "-") ins += ns[1]
             }
+            if (is_gutted_ground(p)) {
+              if (!(p in fseen)) { fseen[p] = 1; fp[++fpn] = p }
+              fadd[p] += (ns[1] == "-" ? 0 : ns[1])
+              fdel[p] += (ns[2] == "-" ? 0 : ns[2])
+            }
             mode = ""; continue
           }
           if (lt ~ /^[[:space:]]*golden-rule-override:/) { sub(/^[^:]*:[[:space:]]*/, "", t); overrides = overrides " " t; mode = "o"; continue }
@@ -317,6 +344,20 @@ if [ "${1:-}" = "--skips" ]; then
         if (refstrict && nonref) unrec = 1
         if (refstrict && !rulechange) unrec = 1
         if (stolen) unrec = 1
+        # GR4 and GR5, off the same numbers the referee reads: net lines out of
+        # a file against its first author, the commons against everybody. Same
+        # budgets, overrides honoured, and a file with no known owner is new,
+        # which means it is theirs.
+        for (j = 1; j <= fpn; j++) {
+          p = fp[j]
+          if (p in deleted) {
+            if (is_commons(p)) { if (toupper(overrides) !~ /GR5/) unrec = 1 }
+            else if ((p in owner) && owner[p] != who && toupper(overrides) !~ /GR4/) unrec = 1
+          } else if (is_commons(p)) {
+            if (fdel[p] - fadd[p] > 60 && toupper(overrides) !~ /GR5/) unrec = 1
+          } else if ((p in owner) && owner[p] != who && fdel[p] - fadd[p] > 25 && \
+                     toupper(overrides) !~ /GR4/) unrec = 1
+        }
         if (unrec) printf "%s\t%s\n", sha, who
       }'
   exit 0
@@ -554,10 +595,10 @@ NF < 4 { next }
   # Trailers, including the wrapped ones: a line indented under a trailer is a
   # continuation of it, which is how anybody sane writes a two-line reason.
   line = ""; overrides = ""; rulechange = ""; tallyline = ""; breach = ""; mode = ""
-  gamefiles = 0; files = 0; acmr = 0; ins = 0; del = 0; kc = 0
+  gamefiles = 0; files = 0; acmr = 0; ins = 0; del = 0; kc = 0; fpn = 0
   refmoved = 0; docmoved = 0; bookmoved = 0; readmemoved = 0; elsemoved = 0
   refstrict = 0; nonref = 0; stolen = 0
-  split("", deleted)
+  split("", deleted); split("", fseen); split("", fadd); split("", fdel)
   n = split(rest, b, "\n")
   for (k = 1; k <= n; k++) {
     t = b[k]
@@ -589,6 +630,13 @@ NF < 4 { next }
       # GR11 has no budget and no override, so the only question is who made it.
       if (p ~ /^src\/events\/.+\.js$/ && (p in owner) && owner[p] != who)
         stolenpath[++stolen] = p
+      # GR4 and GR5 ask per file rather than per commit, so the audit keeps
+      # both sides of the numstat for every path they measure.
+      if (is_gutted_ground(p)) {
+        if (!(p in fseen)) { fseen[p] = 1; fp[++fpn] = p }
+        fadd[p] += (ns[1] == "-" ? 0 : ns[1])
+        fdel[p] += (ns[2] == "-" ? 0 : ns[2])
+      }
       if (p !~ /^docs\//) {
         files++
         if (!(p in deleted)) acmr++
@@ -619,10 +667,12 @@ NF < 4 { next }
 
   # ---- what the referee would have said, had anybody let it look ------------
   # Only the rules a commit can still be judged by on its own, years later: the
-  # size budget, the two halves of GR10, and whose event file this was. Break
-  # one of them with no override line and the commit never met the referee at
-  # all, because the referee would not have let it past. Somebody switched it
-  # off, and that is a thing the book knows how to say.
+  # size budget, the two halves of GR10, whose event file this was, and the
+  # gutting budgets - net lines out of a file, measured against its first
+  # author (GR4) or against everybody (GR5). Break one of them with no override
+  # line and the commit never met the referee at all, because the referee would
+  # not have let it past. Somebody switched it off, and that is a thing the
+  # book knows how to say.
   unrec = ""
   if (bound) {
     # A commit that is nothing but the rules and their machinery is exempt
@@ -641,6 +691,27 @@ NF < 4 { next }
     for (q = 1; q <= stolen; q++)
       unrec = unrec "It touched " esc(owner[stolenpath[q]]) "&rsquo;s event file, " esc(stolenpath[q]) \
                     ", which GR11 leaves to " esc(owner[stolenpath[q]]) " alone. "
+    # GR4 and GR5, per file: the same net-lines arithmetic the referee runs,
+    # measured against whoever first added the file, overrides honoured. Keep
+    # this in lockstep with the --skips mode above - same budgets, same
+    # exemptions.
+    for (q = 1; q <= fpn; q++) {
+      p = fp[q]
+      if (p in deleted) {
+        if (is_commons(p)) {
+          if (toupper(overrides) !~ /GR5/)
+            unrec = unrec "It deleted " esc(p) ", which is commons and everybody&rsquo;s, past GR5 with nothing written down. "
+        } else if ((p in owner) && owner[p] != who && toupper(overrides) !~ /GR4/)
+          unrec = unrec "It deleted " esc(owner[p]) "&rsquo;s " esc(p) " outright, past GR4 with nothing written down. "
+      } else if (is_commons(p)) {
+        if (fdel[p] - fadd[p] > 60 && toupper(overrides) !~ /GR5/)
+          unrec = unrec "It cut " (fdel[p] - fadd[p]) " lines net out of " esc(p) \
+                        ", which is commons, past GR5&rsquo;s budget with nothing written down. "
+      } else if ((p in owner) && owner[p] != who && fdel[p] - fadd[p] > 25 && \
+                 toupper(overrides) !~ /GR4/)
+        unrec = unrec "It gutted " esc(owner[p]) "&rsquo;s " esc(p) " by " (fdel[p] - fadd[p]) \
+                      " lines net, past GR4&rsquo;s budget with nothing written down. "
+    }
     sub(/[[:space:]]+$/, "", unrec)
   }
 

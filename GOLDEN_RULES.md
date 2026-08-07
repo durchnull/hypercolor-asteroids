@@ -95,7 +95,9 @@ entirely; do what you like.
 deleting it outright, needs `Golden-Rule-Override: GR4 - <why>`. Net is a
 proxy with a blind spot — replacing somebody's hundred lines with a hundred
 different ones — so a rewrite past 100 gross lines gets a nudge: nothing
-blocks, the room just looks.
+blocks, the room just looks. The book re-referees this one off the history
+too: past the budget with no override line reads as a referee that was never
+asked, and costs two (GR12).
 
 ## GR5 — The commons stays common. `budget: 60 lines`
 
@@ -116,7 +118,9 @@ changing a signature. Use that shape of solution.
 
 *Checked:* removing more than 60 net lines from a commons file, or deleting
 one, needs `Golden-Rule-Override: GR5 - <why>`. As with GR4, a rewrite past
-240 gross lines gets a nudge even when the net stays small.
+240 gross lines gets a nudge even when the net stays small — and as with GR4,
+the book re-referees the budget off the history, so spending it silently
+costs two (GR12).
 
 ## GR6 — One surprise per commit. `budget: 1200 lines / 25 files`
 
@@ -336,7 +340,9 @@ good versions; that was always the way out, and now the field can tell.
 history, with the pending commit message in hand — the clean-version count
 beside each name included, derived the same way, and the skips included too,
 judged off the history by the book's own audit rather than by anybody's
-hooks. Editing your own count is refused, deleting the file is refused, and
+hooks, against every rule a machine can prove from a commit alone: GR4, GR5,
+GR6, GR10, GR11. Editing your own count is refused, deleting the file is
+refused, and
 there is no override on either — the tally is the one number in this project
 nobody writes for themselves.
 
