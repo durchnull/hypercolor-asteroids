@@ -8,6 +8,7 @@
   "use strict";
 
   A.musicBus = A.guitarBus = A.leadBus = A.bassBus = A.drumBus = A.vibrato = null;
+  A.rig = null;
 
   A.onAudioReady(function buildBuses() {
     const audio = A.audio;
@@ -64,5 +65,11 @@
     A.drumBus = audio.createGain();
     A.drumBus.gain.value = 0.7;
     A.drumBus.connect(A.musicBus);
+
+    // The knobs on the desk, left where a hand can reach them. The graph is
+    // everybody's; how hard it is driven belongs to whichever soundtrack the
+    // cabinet rolled — src/audio/themes.js turns these the moment the audio
+    // comes up, and nothing else has any business in here.
+    A.rig = { gShape, gLo, gHi, gAmp, lShape, lLo, lAmp, bLo, vibAmt };
   });
 })(ASTEROIDS);

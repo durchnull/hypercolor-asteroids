@@ -19,6 +19,7 @@ ASTEROIDS.MODULES = [
   "./render/compositor.js",
   "./audio/context.js",
   "./audio/buses.js",
+  "./audio/themes.js",
   "./audio/voices.js",
   "./audio/song.js",
   "./audio/sfx.js",
@@ -56,6 +57,7 @@ ASTEROIDS.MODULES = [
   "./ui/debrief.js",
   "./ui/hud.js",
   "./ui/profile.js",
+  "./ui/soundtrack.js",
 
   // ---- the events: one file per pilot, and the pilot owns it ---------------
   // Yours never fire for you. Add your own line, never touch anybody else's.
