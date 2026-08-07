@@ -7,12 +7,19 @@
   grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
   gap: 0.7rem;
 }
+/* Named areas rather than a wrapper div: the ship is one cell down the left
+   spanning everything the card says, and the three lines stack beside it in
+   the order they were always in. */
 .lobby .seat {
   border: 1px solid currentColor;
   padding: 0.6rem 0.7rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  display: grid;
+  grid-template:
+    "ship who"   auto
+    "ship binds" auto
+    "ship ready" auto / auto 1fr;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
   /* the same pane the pilot cards are cut from — the seat colour arrives on
      the border and the text, so the fill has to stay neutral or every seat
      would wear a different glass */
@@ -21,12 +28,42 @@
     rgba(12, 5, 24, 0.3);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13);
 }
+
+/* The hull, at the weight the game strokes it (2.2 in the same units the point
+   list is in, so the viewBox does the scaling and the proportions cannot come
+   out wrong). The flame takes the same +60 off the hull's hue that
+   entities/ship.js gives it, which here is one filter rather than a second
+   colour to keep in step. */
+.lobby .hull {
+  grid-area: ship;
+  width: 2rem;
+  height: auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+.lobby .hull .jet {
+  stroke-width: 2;
+  filter: hue-rotate(60deg);
+  /* the engine in the field is lit on about two frames in three, and a flame
+     that holds perfectly still is the one thing this card could get wrong */
+  animation: burn 0.26s steps(1, end) infinite;
+}
+@keyframes burn {
+  0%, 66% { opacity: 1; }
+  67%, 100% { opacity: 0.15; }
+}
 .lobby .who {
+  grid-area: who;
   font-size: 0.62rem;
   letter-spacing: 0.24em;
   color: currentColor;
 }
 .lobby .binds {
+  grid-area: binds;
   display: flex;
   flex-wrap: wrap;
   gap: 0.15rem 0.6rem;
@@ -40,13 +77,44 @@
   margin-right: 0.15rem;
 }
 .lobby .ready {
+  grid-area: ready;
   font-size: 0.58rem;
   letter-spacing: 0.2em;
   color: var(--lime);
 }
-.lobby .ready.open {
+
+/* An empty seat, as glass. Everything that only answers a question you have
+   not asked yet — the name, the key map, the cold hull behind it — steps back
+   far enough that the card reads as unoccupied from across the room, and the
+   one line that is an instruction comes forward instead. Nothing is removed:
+   lean in and the card still tells you which five keys you are about to need.
+
+   The border and the fill go first, because a lit frame is what makes a seat
+   look taken, and no amount of dimming the contents undoes it. */
+.lobby .seat.open {
+  border-color: color-mix(in srgb, currentColor 26%, transparent);
+  background: rgba(12, 5, 24, 0.14);
+  box-shadow: none;
+}
+.lobby .seat.open .who { opacity: 0.4; }
+.lobby .seat.open .binds { opacity: 0.32; }
+/* the engine is not running, so the flame is not there at all */
+.lobby .seat.open .hull { opacity: 0.26; filter: none; }
+.lobby .seat.open .hull .jet { display: none; }
+/* This line used to blink the way the start prompt does, hard off and hard on,
+   which was fine while it was one lit thing among several. Now it is the only
+   lit thing on the card, and a card that has nothing on it at all for eight
+   hundred milliseconds in every sixteen looks broken rather than inviting. So
+   it breathes instead: never out, never still. */
+.lobby .seat.open .ready {
   color: var(--amber);
-  animation: blink 1.6s step-end infinite;
+  font-size: 0.62rem;
+  text-shadow: 0 0 11px currentColor;
+  animation: invite 1.9s ease-in-out infinite;
+}
+@keyframes invite {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.48; }
 }
 .lobby .lobbynote {
   font-size: 0.65rem;
@@ -59,6 +127,13 @@
 @media (max-height: 1340px) {
   .lobby .lobbynote { display: none; }
 }
+@media (max-height: 780px) {
+  .lobby .hull { width: 1.6rem; }
+}
 @media (max-width: 460px) {
   .lobby .seats { grid-template-columns: 1fr; }
+}
+/* a flame that never moves, for anybody who asked the machine to hold still */
+@media (prefers-reduced-motion: reduce) {
+  .lobby .hull .jet { animation: none; }
 }

@@ -13,6 +13,22 @@
   const MAX_SHOTS = 5;       // bullets each pilot may have in the air
   const CUT_WINDOW = 0.16;   // hold the grapple button longer than this to winch
 
+  // The hull, and the flame off the back of it, as points rather than as
+  // drawing calls — because the seat cards on the splash print the same two
+  // outlines (src/ui/lobby.js), and a ship on the card that is not the ship in
+  // the field is worse than no ship on the card at all.
+  A.SHIP_HULL = [[0, -13], [9, 11], [0, 6], [-9, 11]];
+  A.SHIP_FLAME = [[-5, 9], [0, 18], [5, 9]];
+
+  /** Open a path along a point list. Closing and stroking is the caller's. */
+  function trace(g, pts) {
+    g.beginPath();
+    for (let i = 0; i < pts.length; i++) {
+      if (i) g.lineTo(pts[i][0], pts[i][1]);
+      else g.moveTo(pts[i][0], pts[i][1]);
+    }
+  }
+
   function reset(mode) {
     if (mode !== "over") A.resetPlayers();
     A.clearEdgeKeys();
@@ -147,20 +163,15 @@
     g.rotate(ship.angle + Math.PI / 2);
     A.glow(c);
     g.lineWidth = 2.2;
-    g.beginPath();
-    g.moveTo(0, -13);
-    g.lineTo(9, 11);
-    g.lineTo(0, 6);
-    g.lineTo(-9, 11);
+    trace(g, A.SHIP_HULL);
     g.closePath();
     g.stroke();
     if (A.keys[ship.idx].thrust && Math.random() > 0.3) {
       A.glow(A.neon(A.hue + ship.hue + 60, 65));
       g.lineWidth = 2;
-      g.beginPath();
-      g.moveTo(-5, 9);
-      g.lineTo(0, 18 + Math.random() * 8);
-      g.lineTo(5, 9);
+      // the tip stretches, the roots stay bolted to the hull
+      const [root, tip, far] = A.SHIP_FLAME;
+      trace(g, [root, [tip[0], tip[1] + Math.random() * 8], far]);
       g.stroke();
     }
     g.restore();
