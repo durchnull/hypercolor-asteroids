@@ -402,12 +402,17 @@ check_gr45() {
     is_generated "$f" && continue
     case "$f" in src/events/*) continue ;; esac   # GR11's ground, and it has no budget
     a=$(added_of "$f"); d=$(removed_of "$f"); net=$((d - a))
+    # Net is a proxy, and a rewrite is its blind spot: replace 200 lines with
+    # 210 different ones and net says almost nothing moved. The nudge below
+    # does not block - the diff is public, this just makes the room look.
     if is_commons "$f"; then
       if [ "$net" -gt 60 ]; then
         overridden GR5 || {
           fail GR5 "$f loses $net lines net - the commons is shared ground"
           note "keep it additive, or say why: Golden-Rule-Override: GR5 - <reason>"
         }
+      elif [ "$d" -gt 240 ] && ! overridden GR5; then
+        warn GR5 "$f has $d lines rewritten in place - net says little moved, the diff says otherwise"
       fi
     else
       o=$(owner_of "$f")
@@ -416,6 +421,8 @@ check_gr45() {
           fail GR4 "$f is $o's and loses $net lines net"
           note "tune it freely, gut it never - or: Golden-Rule-Override: GR4 - <reason>"
         }
+      elif [ "$o" != "$ME" ] && [ "$d" -gt 100 ] && ! overridden GR4; then
+        warn GR4 "$f is $o's and has $d lines rewritten in place - net hides a rewrite"
       fi
     fi
   done < "$TMP/files"
@@ -494,6 +501,41 @@ check_gr12() {
 }
 
 # ---------------------------------------------------------------------------
+# GR8, the one checkable corner of it: a breach line the table writes.
+#
+# The fairness rule itself stays on honour - no machine judges whether a
+# feature is fair. What is checkable is the paperwork: a breach must name a
+# pilot the history has actually seen (a typo would charge a phantom and let
+# the real pilot walk), it must give a reason, and it should land as the
+# ritual shape GR8 describes - the line and the regenerated ledger, nothing
+# else riding along.
+# ---------------------------------------------------------------------------
+check_breach() {
+  [ -n "$MSGFILE" ] && [ -f "$MSGFILE" ] || return 0
+  grep -Eiq '^[[:space:]]*golden-rule-breach:' "$MSGFILE" || return 0
+
+  grep -Ei '^[[:space:]]*golden-rule-breach:' "$MSGFILE" > "$TMP/blines"
+  git log --format='%an' 2>/dev/null | sort -u > "$TMP/pilots"
+
+  while IFS= read -r bl; do
+    if ! printf '%s' "$bl" | grep -Eiq '^[[:space:]]*golden-rule-breach:[[:space:]]*GR[0-9]+[[:space:]]+.+[[:space:]]-[[:space:]].+'; then
+      warn GR8 "a breach line is malformed and will count for nothing"
+      note "the shape is: Golden-Rule-Breach: GR8 <git name> - <why the table agrees>"
+      continue
+    fi
+    nm=$(printf '%s' "$bl" | sed -E 's/^[[:space:]]*[Gg][^:]*:[[:space:]]*//; s/^[A-Za-z0-9]+[[:space:]]+//; s/[[:space:]]+-[[:space:]].*$//')
+    [ -n "$nm" ] || continue
+    grep -qxF "$nm" "$TMP/pilots" || \
+      hard GR12 "a breach names \"$nm\", and no commit here was ever authored by them"
+  done < "$TMP/blines"
+
+  # the ritual shape: the message and the ledger, not a vehicle for other work
+  if grep -Ev '^docs/|^src/game/ledger\.js$' "$TMP/files" 2>/dev/null | grep -q .; then
+    warn GR8 "a breach commit should carry the ledger and nothing else - this one carries more"
+  fi
+}
+
+# ---------------------------------------------------------------------------
 # GR3  Your feature, your file.   GR9  Keep the surprise.
 # ---------------------------------------------------------------------------
 check_gr39() {
@@ -554,9 +596,9 @@ check_message() {
 
 case "$STAGE" in
   pre-commit) check_gr1; check_gr2; check_gr7; check_gr10; check_gr11; check_gr12; check_gr39 ;;
-  commit-msg) check_gr45; check_gr6; check_gr10; check_gr12; check_message ;;
+  commit-msg) check_gr45; check_gr6; check_gr10; check_gr12; check_breach; check_message ;;
   *)          check_gr1; check_gr2; check_gr7; check_gr10; check_gr11
-              check_gr45; check_gr6; check_gr12; check_gr39 ;;
+              check_gr45; check_gr6; check_gr12; check_breach; check_gr39 ;;
 esac
 
 if [ ! -s "$TMP/out" ]; then

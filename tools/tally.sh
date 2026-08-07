@@ -54,7 +54,14 @@ ME=$(git config user.name 2>/dev/null || true)
 # has not landed yet counts too, under whoever is at the keyboard - which is
 # how the referee checks a ledger commit while it is still only a proposal.
 rows() {
-  git log --no-merges --format='%x1e%an%x1f%B%x1f' --name-only 2>/dev/null \
+  # The commits the referee provably never saw, judged off the history by the
+  # book's own audit (tools/chronicle.sh --skips). Folded into the stream so
+  # a skip costs its two even when the skipper's hooks never wrote a receipt -
+  # and deduplicated against the receipts, so a witnessed skip still costs two
+  # rather than four.
+  { sh tools/chronicle.sh --skips 2>/dev/null \
+      | awk -F'\t' '{ printf "\036SKIP\037%s\037%s", $1, $2 }'
+    git log --no-merges --format='%x1e%H%x1f%an%x1f%B%x1f' --name-only 2>/dev/null; } \
   | awk -v me="$ME" -v plus="$PLUS" '
       # A message still being written is the newest thing there is, so it goes
       # through first: a pending bend resets its pilot before any landed
@@ -66,7 +73,7 @@ rows() {
           body = ""
           while ((getline chunk < plus) > 0) body = body chunk "\n"
           pending = 1
-          bend(me, body, "")
+          bend(me, body, "", "")
           pending = 0
         }
       }
@@ -79,7 +86,15 @@ rows() {
         if (pending || !(who in last)) last[who] = what
       }
 
-      function bend(who, body, files,   n, L, i, t, lt, u, r, nm, ver) {
+      # A receipt is always newer than the commit it names, and the stream is
+      # newest first, so by the time a flagged commit comes past every receipt
+      # that could excuse it has already been read.
+      function receipted(sha,   r) {
+        for (r in rcpt) if (index(sha, r) == 1) return 1
+        return 0
+      }
+
+      function bend(who, body, files, sha,   n, L, i, t, lt, u, r, nm, ver) {
         n = split(body, L, "\n")
         for (i = 1; i <= n; i++) {
           t = L[i]
@@ -91,6 +106,8 @@ rows() {
             add(who, 1, (match(u, /GR[0-9]+/) ? substr(u, RSTART, RLENGTH) : "a rule"))
           } else if (lt ~ /^referee-skipped:/) {
             add(who, 2, "the referee itself")
+            u = t; sub(/^[^:]*:[ \t]*/, "", u)
+            if (match(u, /^[0-9a-f]{7,40}/)) rcpt[substr(u, RSTART, RLENGTH)] = 1
           } else if (lt ~ /^golden-rule-breach:/) {
             # written by the table when a landing crossed GR8. The line names
             # the pilot it is about; the commit author is only the scribe.
@@ -105,6 +122,10 @@ rows() {
             }
           }
         }
+        # The audit`s verdict, unless a receipt already priced this one in.
+        if (sha != "" && (sha in skip) && !receipted(sha))
+          add(who, 2, "the referee itself")
+
         # A landing that moved the game and bent nothing is a clean version,
         # counted only until the pilot`s most recent bend. The ledger file
         # itself does not make a commit a version here, or every bend would
@@ -120,7 +141,9 @@ rows() {
         if (ver && !seen[who]) clean[who]++
       }
 
-      NF >= 2 { bend($1, $2, (NF >= 3 ? $3 : "")) }
+      $1 == "SKIP" { skip[$2] = 1; next }
+
+      NF >= 3 { bend($2, $3, (NF >= 4 ? $4 : ""), $1) }
 
       END {
         for (w in bends) if (bends[w] > 0) printf "%s\t%d\t%d\t%s\n", w, bends[w], clean[w] + 0, last[w]
@@ -178,7 +201,9 @@ case "$MODE" in
   roll)
     printf '\n  THE LEDGER\n'
     rows | awk -F'\t' '
-      { printf "    %-24s %2d bend%s   %2d clean since   last: %s\n", $1, $2, ($2 == 1 ? " " : "s"), $3, $4; n++ }
+      # the same sum src/game/tally.js does: one bend eased per 3 clean
+      { ch = $2 - int($3 / 3); if (ch < 0) ch = 0
+        printf "    %-24s %2d bend%s   %2d clean   charges as %d   last: %s\n", $1, $2, ($2 == 1 ? " " : "s"), $3, ch, $4; n++ }
       END { if (!n) print "    nobody has bent anything. yet." }'
     printf '\n    1 bend  events come sooner\n'
     printf '    3 bends your own events stop sparing you\n'

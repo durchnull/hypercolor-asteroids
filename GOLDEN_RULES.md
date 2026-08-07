@@ -92,7 +92,10 @@ The owner of a file is whoever's commit created it. Your own files are yours
 entirely; do what you like.
 
 *Checked:* removing more than 25 net lines from a file you did not create, or
-deleting it outright, needs `Golden-Rule-Override: GR4 - <why>`.
+deleting it outright, needs `Golden-Rule-Override: GR4 - <why>`. Net is a
+proxy with a blind spot — replacing somebody's hundred lines with a hundred
+different ones — so a rewrite past 100 gross lines gets a nudge: nothing
+blocks, the room just looks.
 
 ## GR5 — The commons stays common. `budget: 60 lines`
 
@@ -112,7 +115,8 @@ The frame object in `loop.js` exists precisely so you can add a field without
 changing a signature. Use that shape of solution.
 
 *Checked:* removing more than 60 net lines from a commons file, or deleting
-one, needs `Golden-Rule-Override: GR5 - <why>`.
+one, needs `Golden-Rule-Override: GR5 - <why>`. As with GR4, a rewrite past
+240 gross lines gets a nudge even when the net stays small.
 
 ## GR6 — One surprise per commit. `budget: 1200 lines / 25 files`
 
@@ -177,6 +181,12 @@ nothing: the feature stays until somebody fixes it in the open. Agreement
 first, always — a breach line written by one annoyed pilot without the table
 behind it is itself the kind of thing the table gets to judge, in the open,
 where it landed.
+
+The judgment is human and stays human; the paperwork is checked. A breach
+naming somebody no commit was ever authored by does not land — a typo would
+charge a phantom and let the real pilot walk — and a breach line riding
+inside unrelated work gets pointed at, because the ritual is the line and
+the ledger, nothing else.
 
 ## GR9 — Keep the surprise. `nudge`
 
@@ -281,9 +291,13 @@ could quietly switch off would not be one.
 A bend costs one. Going round the referee costs two — `--no-verify`, hooks
 unset, a check edited until it passes — because a rule bent quietly costs more
 than a rule bent out loud. The referee cannot stop you doing it. It can notice
-afterwards that it was never asked, and that turns out to be enough. A GR8
-breach the table put on the record costs one, under the name of the pilot the
-line names rather than whoever held the pen (see GR8).
+afterwards that it was never asked, and that turns out to be enough — and the
+noticing no longer depends on the skipper's own machinery: the tally
+re-referees the history the same way the book does, so a commit that provably
+breaks a red line with nothing written down pays its two whether or not the
+hooks were ever wired to say so. A GR8 breach the table put on the record
+costs one, under the name of the pilot the line names rather than whoever
+held the pen (see GR8).
 
 The number is not a scolding. It is a difficulty setting, and it is yours:
 
@@ -320,9 +334,11 @@ good versions; that was always the way out, and now the field can tell.
 
 *Checked:* `src/game/ledger.js` must say what `tools/tally.sh` reads off the
 history, with the pending commit message in hand — the clean-version count
-beside each name included, derived the same way. Editing your own count is
-refused, deleting the file is refused, and there is no override on either — the
-tally is the one number in this project nobody writes for themselves.
+beside each name included, derived the same way, and the skips included too,
+judged off the history by the book's own audit rather than by anybody's
+hooks. Editing your own count is refused, deleting the file is refused, and
+there is no override on either — the tally is the one number in this project
+nobody writes for themselves.
 
 ---
 

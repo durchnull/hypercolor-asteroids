@@ -73,6 +73,10 @@
 #                                          hooks put it on the ledger commit
 #                                          they land after somebody bends a
 #                                          rule, and the book quotes it
+#   Golden-Rule-Breach: GR8 <pilot> - <why>  the table calling a landing across
+#                                          the fairness line (GR8). It charges
+#                                          the pilot it names, not the scribe,
+#                                          and the book says the table spoke
 #
 # And one thing a commit cannot keep out. Every version is re-refereed as the
 # book is written, against the rules that can be proved from the commit alone:
@@ -264,6 +268,59 @@ esac
 # that brought the rules, which no referee could have been running for either.
 # Empty means the rules are not in the history yet and nobody is being judged.
 RULES=$(git log --diff-filter=A --format='%H' --no-renames -- GOLDEN_RULES.md 2>/dev/null | tail -1)
+
+# The audit above, reduced to a verdict: one line per commit the referee
+# provably never saw - full sha, a tab, the pilot who flew it. Read by
+# tools/tally.sh, which prices a skip at two (GR12) without depending on the
+# skipper's own hooks having written a receipt. Keep this in lockstep with the
+# audit in the book builder below - same forgiving form, same exemptions, and
+# anywhere the two could disagree, both stay quiet.
+if [ "${1:-}" = "--skips" ]; then
+  { owners; history '%d %b %Y'; } \
+  | awk -v RS='\036' -v FS='\037' -v rules="$RULES" "$LIB"'
+      BEGIN { bound = (rules != "") }
+      $1 == "OWN" { owner[$2] = $3; next }
+      NF < 6 { next }
+      {
+        if (bound && $1 == rules) bound = 0
+        sha = $1; who = $2; rest = $6
+        overrides = ""; rulechange = 0; refstrict = 0; nonref = 0; stolen = 0
+        acmr = 0; ins = 0; mode = ""
+        split("", deleted)
+        n = split(rest, b, "\n")
+        for (k = 1; k <= n; k++) {
+          t = b[k]; lt = tolower(t)
+          if (is_raw(t)) {
+            split(t, rw, "\t"); rn = split(rw[1], rf, " ")
+            if (rf[rn] ~ /^D/) deleted[rw[2]] = 1
+            mode = ""; continue
+          }
+          if (is_stat(t)) {
+            split(t, ns, "\t"); p = ns[3]
+            if (is_referee(p)) refstrict = 1
+            else if (p !~ /^docs\// && p != "src/game/ledger.js") nonref = 1
+            if (p ~ /^src\/events\/.+\.js$/ && (p in owner) && owner[p] != who) stolen = 1
+            if (p !~ /^docs\//) {
+              if (!(p in deleted)) acmr++
+              if (ns[1] != "-") ins += ns[1]
+            }
+            mode = ""; continue
+          }
+          if (lt ~ /^[[:space:]]*golden-rule-override:/) { sub(/^[^:]*:[[:space:]]*/, "", t); overrides = overrides " " t; mode = "o"; continue }
+          if (lt ~ /^[[:space:]]*rule-change:/) { rulechange = 1; mode = ""; continue }
+          if (mode == "o" && t ~ /^[[:space:]]+[^[:space:]]/) { overrides = overrides " " t; continue }
+          mode = ""
+        }
+        if (!bound) next
+        unrec = 0
+        if ((ins > 1200 || acmr > 25) && !(refstrict && !nonref) && toupper(overrides) !~ /GR6/) unrec = 1
+        if (refstrict && nonref) unrec = 1
+        if (refstrict && !rulechange) unrec = 1
+        if (stolen) unrec = 1
+        if (unrec) printf "%s\t%s\n", sha, who
+      }'
+  exit 0
+fi
 
 # Every version that does not have a line yet gets one now. This is what makes
 # the whole arrangement work for a pilot who never ran --install: the hooks are
@@ -496,7 +553,7 @@ NF < 4 { next }
 
   # Trailers, including the wrapped ones: a line indented under a trailer is a
   # continuation of it, which is how anybody sane writes a two-line reason.
-  line = ""; overrides = ""; rulechange = ""; tallyline = ""; mode = ""
+  line = ""; overrides = ""; rulechange = ""; tallyline = ""; breach = ""; mode = ""
   gamefiles = 0; files = 0; acmr = 0; ins = 0; del = 0; kc = 0
   refmoved = 0; docmoved = 0; bookmoved = 0; readmemoved = 0; elsemoved = 0
   refstrict = 0; nonref = 0; stolen = 0
@@ -525,9 +582,10 @@ NF < 4 { next }
       else elsemoved = 1
       # For the audit, and only for it: the two sides GR10 keeps apart. docs/ is
       # on neither, being written by a machine from the history - carrying the
-      # rebuilt book along with a rule change is not a rule broken.
+      # rebuilt book along with a rule change is not a rule broken. The ledger
+      # is machine-written too, and the referee treats it the same way.
       if (is_referee(p)) refstrict = 1
-      else if (p !~ /^docs\//) nonref = 1
+      else if (p !~ /^docs\// && p != "src/game/ledger.js") nonref = 1
       # GR11 has no budget and no override, so the only question is who made it.
       if (p ~ /^src\/events\/.+\.js$/ && (p in owner) && owner[p] != who)
         stolenpath[++stolen] = p
@@ -545,12 +603,15 @@ NF < 4 { next }
                                                      overrides = overrides (overrides ? " // " : "") t; mode = "o"; continue }
     if (lt ~ /^[[:space:]]*rule-change:/)          { sub(/^[^:]*:[[:space:]]*/, "", t); rulechange = t; mode = "r"; continue }
     if (lt ~ /^[[:space:]]*tally:/)                { sub(/^[^:]*:[[:space:]]*/, "", t); tallyline = t; mode = ""; continue }
+    if (lt ~ /^[[:space:]]*golden-rule-breach:/)   { sub(/^[^:]*:[[:space:]]*/, "", t)
+                                                     breach = breach (breach ? " // " : "") t; mode = "b"; continue }
     if (lt ~ /^[[:space:]]*tagline:/)              { mode = "t"; continue }   # kept in docs/taglines.tsv, printed from there
     if (mode != "" && t ~ /^[[:space:]]+[^[:space:]]/) {
       sub(/^[[:space:]]+/, "", t)
       if (mode == "c") line = line " " t
       else if (mode == "o") overrides = overrides " " t
       else if (mode == "r") rulechange = rulechange " " t
+      else if (mode == "b") breach = breach " " t
       continue
     }
     mode = ""
@@ -564,7 +625,10 @@ NF < 4 { next }
   # off, and that is a thing the book knows how to say.
   unrec = ""
   if (bound) {
-    if ((ins > 1200 || acmr > 25) && toupper(overrides) !~ /GR6/) {
+    # A commit that is nothing but the rules and their machinery is exempt
+    # from the size budget - GR6 says so since the amendments - so the audit
+    # must not accuse what the referee now allows.
+    if ((ins > 1200 || acmr > 25) && !(refstrict && !nonref) && toupper(overrides) !~ /GR6/) {
       if (ins > 1200 && acmr > 25) how = ins " line" plural(ins) " aboard across " acmr " sector" plural(acmr)
       else if (ins > 1200)         how = ins " line" plural(ins) " aboard"
       else                         how = acmr " sector" plural(acmr) " touched"
@@ -599,7 +663,8 @@ NF < 4 { next }
     # was written up by the ledger is still an event, whatever else it touched,
     # and it keeps its note.
     if (bookmoved && !docmoved && !refmoved && !readmemoved && !elsemoved &&
-        overrides == "" && rulechange == "" && unrec == "" && tallyline == "")
+        overrides == "" && rulechange == "" && unrec == "" && tallyline == "" &&
+        breach == "")
       next
 
     if (rulechange != "" || refmoved) deed = "changed the rules"
@@ -619,6 +684,8 @@ NF < 4 { next }
       note = note "  <p class=\"override\">On this day " esc(who) " invoked an override: " esc(overrides) "</p>\n"
     if (tallyline != "")
       note = note "  <p class=\"ledger\">The ledger, written by the machine and not by the pilot: " esc(tallyline) "</p>\n"
+    if (breach != "")
+      note = note "  <p class=\"override\">On this day the table spoke, and called a landing across the fairness line: " esc(breach) "</p>\n"
     # Already escaped where it quotes anybody - it is assembled, not copied.
     if (unrec != "")
       note = note "  <p class=\"unrecorded\">The referee never saw this one. " unrec "</p>\n"
@@ -644,7 +711,7 @@ NF < 4 { next }
   VS[v] = subj;  VL[v] = line; VT[v] = ($1 in tag) ? tag[$1] : ""
   VP[v] = ($1 in plate) ? plate[$1] : "";  VQ[v] = ($1 in plated) ? plated[$1] : ""
   VF[v] = files; VI[v] = ins;  VJ[v] = del
-  VO[v] = overrides; VU[v] = unrec; VR[v] = rulechange
+  VO[v] = overrides; VU[v] = unrec; VR[v] = rulechange; VB[v] = breach
   VP[v] = ($1 in art) ? art[$1] : ""; VQ[v] = altof[$1]
   RC[v] = kc;    RM[v] = kn[1]
   for (k = 1; k <= kc; k++) { RP[v,k] = kp[k]; RN[v,k] = kn[k]; RD[v,k] = kd[k] }
@@ -759,7 +826,7 @@ END {
     # write anything down, whether anything happened alongside, and whether so
     # much happened alongside that it has outgrown the margin. Any of them
     # missing and its neighbour takes the room instead of leaving a hole.
-    kept = (VU[v] != "" || VO[v] != "" || VR[v] != "")
+    kept = (VU[v] != "" || VO[v] != "" || VR[v] != "" || VB[v] != "")
     printf "<main class=\"ch%s%s%s\">\n", (kept ? " has-record" : ""), \
            ((v in IB) ? " has-aside" : ""), (IBN[v] >= 3 ? " long-aside" : "") > f
 
@@ -842,6 +909,11 @@ END {
       if (VR[v] != "") {
         printf "<article class=\"cel loud law\"><h2 class=\"tab\">%s the rules themselves</h2>", ico("scroll") > f
         printf "<p class=\"klaxon\">AMENDED</p><p class=\"reason\">%s</p></article>\n", esc(VR[v]) > f
+      }
+      if (VB[v] != "") {
+        printf "<article class=\"cel loud over\"><h2 class=\"tab\">%s the table spoke</h2>", ico("eye") > f
+        printf "<p class=\"klaxon\">GR8</p><p class=\"reason\">%s</p>", esc(VB[v]) > f
+        printf "<p class=\"byline\">a breach called by the table, on the pilot it names</p></article>\n" > f
       }
       print "</section>" > f
     }

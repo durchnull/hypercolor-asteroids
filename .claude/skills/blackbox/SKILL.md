@@ -33,14 +33,16 @@ is what makes the board worth reading.
    A hit means this exact flight already landed — point at its row and stop,
    because one flight is one entry no matter how many times it is pasted.
 
-4. **Whose name is in the seat?** The tape says who flew. If that is not the
-   pilot at this keyboard (`git config user.name`), stop and ask one question
-   before ranking: was this genuinely the named pilot's flight? Couriering a
-   friend's real tape is fine and lands under the friend's name. A run flown
-   under a borrowed name — somebody dodging their own tally or somebody
-   else's traps — ranks nowhere, keeps no best score, and puts nothing on
-   the board, however good the numbers (GR12). The seal proves the tape;
-   this step is what proves the pilot.
+4. **Whose name is in the seat?** The reader prints a seat verdict under the
+   seal. `SEAT CONFIRMED` — carry on. `SEAT MISMATCH` — the run was flown
+   under a borrowed name: it ranks nowhere, keeps no best score, and puts
+   nothing on the board, however good the numbers (GR12); say so and stop.
+   `NO SEAT ON TAPE` (an older tape, or an unlocked cabinet) — the tape's
+   pilot line is unverified: if it is not the pilot at this keyboard
+   (`git config user.name`), ask one question before ranking — was this
+   genuinely the named pilot's flight? Couriering a friend's real tape is
+   fine and lands under the friend's name. The seal proves the tape; this
+   step is what proves the pilot.
 
 5. **Work out the fun numbers.** The JSON has the raw counts per seat; derive
    the ones people actually enjoy reading:

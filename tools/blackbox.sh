@@ -13,6 +13,11 @@
 # Prints the verdict and the JSON. Exit 0 with the seal intact, 1 when the
 # tape was edited or mangled, 2 when there is no tape in the input at all.
 #
+# Under the seal verdict comes a seat verdict: newer tapes seal the name the
+# cabinet was locked to (whoami) beside the name that flew (pilot). A mismatch
+# means the run was flown under a borrowed name, and GR12 says what that is
+# worth: nothing. Older tapes carry no seat and say so.
+#
 # The seal is honesty, not security: anyone who can read this file can forge
 # a tape. They would be lying to a scoreboard in a git repo, and the history
 # would remember them doing it, which is deterrent enough around here.
@@ -56,4 +61,17 @@ if [ "$CRC" != "$CLAIM" ]; then
 fi
 
 printf 'SEAL INTACT (crc %s)\n' "$CRC"
+
+PILOT=$(printf '%s' "$JSON" | sed -n 's/.*"pilot":"\([^"]*\)".*/\1/p')
+SEAT=$(printf '%s' "$JSON" | sed -n 's/.*"whoami":"\([^"]*\)".*/\1/p')
+if [ -z "$SEAT" ]; then
+  printf 'NO SEAT ON TAPE: sealed before seats were taped, or the cabinet was\n'
+  printf 'never locked (tools/whoami.sh). The pilot line is the tape'\''s word alone.\n'
+elif [ "$SEAT" = "$PILOT" ]; then
+  printf 'SEAT CONFIRMED: %s flew this from their own seat.\n' "$PILOT"
+else
+  printf 'SEAT MISMATCH: flown as %s from %s'\''s seat. A borrowed name ranks\n' "$PILOT" "$SEAT"
+  printf 'nowhere, whoever asks - GR12. The numbers decode below all the same.\n'
+fi
+
 printf '%s\n' "$JSON"
