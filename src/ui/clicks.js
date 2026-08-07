@@ -123,9 +123,8 @@
         <path d="M27 8a11.5 11.5 0 0 1 0 18" opacity="0.4"/>
       </svg>`,
       desc: `This screen answers back. Every card, row and door has a note of
-        its own &mdash; picked by where it sits, tuned to whatever the band is
-        playing tonight &mdash; so pointing at things is an instrument and
-        running a cursor down this list is a scale. M still turns the lot off.`,
+        its own, picked by where it sits and tuned to tonight's key, so running
+        a cursor down this list is a scale. M still turns the lot off.`,
     },
   });
 })(ASTEROIDS);

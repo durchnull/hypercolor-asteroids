@@ -96,8 +96,8 @@
         stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
         <path d="M9 9v16M14 9v16M19 9v16M24 9v16M6 26L27 8"/></svg>`,
       desc: `Every rule a pilot bends is counted, by a machine, off the history.
-        The field is quicker to come for them afterwards &mdash; and at three,
-        their own traps stop making an exception.`,
+        The field comes for them quicker &mdash; and at three, their own traps
+        stop making an exception.`,
     },
   });
 })(ASTEROIDS);

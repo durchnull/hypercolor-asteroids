@@ -231,8 +231,8 @@
         <path d="M12 17 H22" opacity="0.65"/>
         <path d="M9 25 L7 29 M25 25 L27 29" stroke-linecap="round" opacity="0.65"/>
       </svg>`,
-      desc: `Every flight is taped. When the last ship dies the wreckage is
-        yours to copy — take it to claude and get on the record.`,
+      desc: `Every flight is taped. When the last ship dies, copy the wreckage
+        and take it to claude to get on the record.`,
     },
   });
 })(ASTEROIDS);

@@ -402,11 +402,10 @@
         <path d="M18 14 L24 8 M24 8 L17 7 M24 8 L25 15" stroke-linecap="round" stroke-linejoin="round"/>
         <circle cx="27" cy="6" r="5" stroke-dasharray="2.5 3" opacity="0.6"/>
       </svg>`,
-      desc: `The line locks where it bites and never hauls you in &mdash; it
-        swings you. Arc round a rock and cut loose to fly off on the tangent,
-        faster than you came. <b>Hold</b> to winch tighter: a smaller circle is
-        a quicker one. The rock swings too, and it wrecks whatever it meets.
-        Whatever you have on the line cannot touch you.`,
+      desc: `The line locks where it bites and swings you rather than hauling
+        you in. Cut loose to fly off on the tangent, faster than you came;
+        <b>hold</b> to winch tighter, since a smaller circle is a quicker one.
+        The rock swings too, wrecks what it meets, and cannot touch you.`,
     },
   });
 })(ASTEROIDS);

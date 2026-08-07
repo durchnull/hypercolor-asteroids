@@ -19,9 +19,8 @@
         <path d="M4 17 h3 M11 17 h3 M18 17 h3 M25 17 h3" opacity="0.35"/>
         <path d="M5.5 13.5 v7 M12.5 8 v18 M19.5 11 v12 M26.5 6 v22"/>
       </svg>`,
-      desc: `${A.theme.blurb} One of ten &mdash; the splash, the flight, the
-        death and the way out, all in the same key. Rolled when the page
-        opened, so reload for a different evening.`,
+      desc: `${A.theme.blurb} One of ten, and the whole cabinet is in its key.
+        Rolled when the page opened, so reload for a different evening.`,
     },
   });
 })(ASTEROIDS);

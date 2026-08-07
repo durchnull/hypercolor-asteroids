@@ -135,8 +135,8 @@
         <circle cx="25" cy="17" r="6.5" stroke-dasharray="3.5 3"/>
         <path d="M15.5 17 h3 M20 17 h1" opacity="0.7" stroke-linecap="round"/>
       </svg>`,
-      desc: `A pair blinks open. Fly in one and out the other &mdash; so can your
-        shots, and so can the kraken.`,
+      desc: `A pair blinks open: in one, out the other. So can your shots, and
+        so can the kraken.`,
     },
   });
 })(ASTEROIDS);

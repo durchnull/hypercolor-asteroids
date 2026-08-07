@@ -149,8 +149,8 @@
         <circle cx="26" cy="15" r="2.2" opacity="0.6"/>
         <circle cx="12" cy="31" r="2" opacity="0.6"/>
       </svg>`,
-      desc: `Too big for the screen. Rocks bounce off it, shots burn up on it, and
-        it will happily flatten you.`,
+      desc: `Too big for the screen. Rocks bounce off, shots burn up, and it
+        will happily flatten you.`,
     },
   });
 })(ASTEROIDS);

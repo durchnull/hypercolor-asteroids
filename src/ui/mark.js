@@ -176,12 +176,10 @@
         stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
         <path d="M17 5l10.4 6v12L17 29 6.6 23V11z"/>
         <path d="M17 11.6v7.2M16.97 22.6h.06"/></svg>`,
-      desc: `Whatever the field is doing to you signs the foot of the screen,
-        and the sign stays up for as long as the thing does. The ring is how
-        much of it is left; a ring that turns instead ends when it ends. When
-        it is over the glyph walks into the bottom left corner and joins
-        everything else this game has thrown at you. A mark that will not hold
-        still is one of your own.`,
+      desc: `Whatever the field is doing to you signs the foot of the screen for
+        as long as it lasts. The ring is how much is left; one that turns
+        instead ends when it ends. Spent glyphs gather in the bottom left
+        corner. A mark that will not hold still is one of your own.`,
     },
   });
 })(ASTEROIDS);

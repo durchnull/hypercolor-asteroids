@@ -115,7 +115,7 @@
         <circle cx="16" cy="20" r="14" stroke-dasharray="2.5 3.5" opacity="0.65"/>
       </svg>`,
       desc: `Your panic button. The blast front eats half the screen, vaporising
-        every rock it touches and gutting any kraken. One more each wave.`,
+        every rock and gutting any kraken. One more each wave.`,
     },
   });
 })(ASTEROIDS);
