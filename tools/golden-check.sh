@@ -98,7 +98,11 @@ else
   done < "$TMP/new"
 fi
 
-if [ ! -s "$TMP/files" ] && [ ! -s "$TMP/gone" ]; then
+# Nothing changed is usually nothing to check - unless a message is on the
+# table. An --allow-empty commit still carries its message, a message can
+# carry a breach line, and a breach naming a phantom must not land however
+# little else the commit does (GR8, GR12).
+if [ ! -s "$TMP/files" ] && [ ! -s "$TMP/gone" ] && [ -z "$MSGFILE" ]; then
   [ "$FORMAT" = text ] && printf 'nothing to check.\n'
   exit 0
 fi

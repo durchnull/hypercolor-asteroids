@@ -6,16 +6,16 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 28,
-    latest: { v: 28, pilot: "David Friedrich", date: "07 August 2026", line: "A rule was taken out, looked at, and put back differently. The colours moved as well.", plate: "34959e88.jpg", alt: "A rule was taken out, looked at, and put back differently. The colours moved as well." },
+    versions: 29,
+    latest: { v: 29, pilot: "David Friedrich", date: "07 August 2026", line: "A rule was taken out, looked at, and put back differently.", plate: "7164cd03.jpg", alt: "A rule was taken out, looked at, and put back differently." },
     plates: [
+      { v: 29, file: "7164cd03.jpg", alt: "A rule was taken out, looked at, and put back differently.", line: "A rule was taken out, looked at, and put back differently." },
       { v: 28, file: "34959e88.jpg", alt: "A rule was taken out, looked at, and put back differently. The colours moved as well.", line: "A rule was taken out, looked at, and put back differently. The colours moved as well." },
       { v: 27, file: "d3d78842.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
       { v: 26, file: "2c4f2c36.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
-      { v: 25, file: "e4fa7990.jpg", alt: "The rules of the field changed while nobody was flying.", line: "The rules of the field changed while nobody was flying." },
     ],
     roster: {
-      "David Friedrich": 28,
+      "David Friedrich": 29,
     }
   };
   A.BOARD = [
