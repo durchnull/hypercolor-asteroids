@@ -32,7 +32,19 @@
     const active = A.activePilot();
     const locked = A.pilotLocked();
     const pilots = A.eventPilots ? A.eventPilots() : [];
-    const seats = [{ name: A.GUEST, events: -1 }].concat(pilots);
+
+    // Everyone with a trap in the game, then everyone on the guest list who has
+    // not laid one yet, then whoever is locked into this seat even if they are
+    // on neither — a pilot whose git name nobody spelled right still gets to see
+    // their own card. Names collapse: the count only ever comes from the
+    // registry, and the roster decides nothing except who else gets a card.
+    const named = new Map(pilots.map((p) => [p.name, p]));
+    for (const name of (A.ROSTER || []).concat(locked ? [active] : [])) {
+      if (name && name !== A.GUEST && !named.has(name)) named.set(name, { name, events: 0 });
+    }
+
+    const seats = [{ name: A.GUEST, events: -1 }].concat(
+      [...named.values()].sort((a, b) => a.name.localeCompare(b.name)));
 
     // A locked seat shows itself and nothing else; there is nothing to choose.
     const shown = locked ? seats.filter((p) => p.name === active) : seats;

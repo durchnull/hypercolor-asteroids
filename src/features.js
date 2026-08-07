@@ -28,6 +28,7 @@ ASTEROIDS.MODULES = [
   "./game/difficulty.js",
   "./game/players.js",
   "./game/profile.js",
+  "./game/roster.js",
   "./game/ledger.js",
   "./game/tally.js",
   "./game/events.js",
