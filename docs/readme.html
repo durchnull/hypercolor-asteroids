@@ -19,6 +19,14 @@ hand written HTML, CSS and JavaScript. No build step, no dependencies, no
 network.
 </p>
 <p>
+It is two games in one. On the screen: rocks, portals, a kraken. In the repo: a
+slow multiplayer game between the developers who share it. The git history is
+the save file, the commit log is the leaderboard, and nobody has to be online
+at the same time. That half is explained in
+<a href="#the-game-behind-the-game">The game behind the game</a> — you can also ignore it
+and just fly.
+</p>
+<p>
 <img src="../media/field.png" alt="Two pilots, a kraken, a pair of portals, and somebody on the end of a grapple line" loading="lazy" decoding="async">
 </p>
 <h2 id="play">Play</h2>
@@ -77,39 +85,22 @@ people adding two features never edit the same lines.
 <hr>
 <h2 id="the-game-behind-the-game">The game behind the game</h2>
 <p>
-<b>Several developers share this cabinet, and nobody announces what they built.</b>
-You commit it, the next person pulls, presses ENTER, and finds out by playing.
-Reading the diff first is like shaking the presents.
+The repo is not just where the game is stored — it is where the game is played.
+It works like this:
+</p>
+<p>
+<b>Commits are turns.</b> A commit that touches <code>index.html</code>, <code>src/</code> or <code>styles/</code>
+gets a version number, counted off the git history by a script; docs and tools
+do not. Nobody announces what they built. You commit it, the next person pulls,
+presses ENTER, and finds out by playing. Reading the diff first is like shaking
+the presents.
 </p>
 <p>
 <img src="../media/cabinet.png" alt="The splash screen: the field guide, and a card saying who is flying and what the ledger has on them" loading="lazy" decoding="async">
 </p>
 <p>
-<b>Every change to the game is a numbered version.</b> A commit touching
-<code>index.html</code>, <code>src/</code> or <code>styles/</code> gets a number, counted off the git history by a
-script. Docs and tools are not versions.
-</p>
-<p>
-<b>The book.</b> After every commit a script rewrites the chronicle —
-<a href="index.html">docs/index.html</a> is the cover, one page per version behind it.
-Put a <code>Chronicle:</code> line in your commit and the book quotes you.
-</p>
-<p>
-<b>Twelve rules, and a script enforces them.</b> <a href="golden-rules.html">GOLDEN_RULES.md</a>
-is the whole rulebook. <i>Red lines</i> are hard stops. <i>Budgets</i> you may exceed, but
-you must say so in the commit: <code>Golden-Rule-Override: GR4 - &lt;why&gt;</code>, and that line
-stays in the history under your name. <i>Nudges</i> just get mentioned.
-</p>
-<p>
-<b>Bending rules has a price.</b> Overrides are counted from the history into a
-ledger nobody may edit by hand, and the game reads your number: 1 bend and
-ambushes come sooner, 3 and your own traps stop sparing you, 4 and a wave may
-hold an extra ambush. Skipping the hooks costs two instead of one. Nothing
-blocks you and nobody shames you — your game just gets harder, in public.
-</p>
-<p>
-<b>Events are traps we lay for each other</b>, each in its own file under
-<code>src/events/</code>. One rule makes it worth doing:
+<b>Traps connect the players.</b> An event is a surprise dropped into a live wave,
+each in its own file under <code>src/events/</code>, and one rule makes it worth doing:
 </p>
 <blockquote>
 <p><b>Your own trap never fires for you.</b></p>
@@ -119,10 +110,36 @@ Nobody may edit your event file or sign one with your name. No override exists
 for this.
 </p>
 <p>
-<b>The black box.</b> When a flight ends, copy the tape off the game-over screen,
-paste it to claude and say <i>read the black box</i>. The tape carries a checksum, so
-an edited one ranks nowhere. Honest flights land in
+<b>Playing counts.</b> When a flight ends, copy the tape off the game-over screen,
+paste it to claude and say <i>read the black box</i>. The tape carries a checksum,
+so an edited one ranks nowhere. Honest flights land in
 <a href="rankings.html">docs/RANKINGS.md</a>.
+</p>
+<p>
+<b>The rules are part of the game.</b> <a href="golden-rules.html">GOLDEN_RULES.md</a> is the
+whole rulebook — twelve rules, one page. <i>Red lines</i> are hard stops. <i>Budgets</i>
+you may spend, but you must say so in the commit —
+<code>Golden-Rule-Override: GR4 - &lt;why&gt;</code> — and that line stays in the history under
+your name. <i>Nudges</i> just get mentioned. Changing a rule is allowed too, in its
+own commit, in the open.
+</p>
+<p>
+<b>Bending rules has a price.</b> Overrides are counted from the history into a
+ledger nobody may edit by hand, and the game reads your number: 1 bend and
+ambushes come sooner, 3 and your own traps stop sparing you, 4 and a wave may
+hold an extra ambush. Skipping the hooks costs two instead of one. Nothing
+blocks you and nobody shames you — your game just gets harder, in public.
+</p>
+<p>
+<b>A referee at the keyboard.</b> <code>tools/golden-check.sh</code> checks the rules on
+every commit. With Claude Code, <a href="claude.html">CLAUDE.md</a> makes claude a referee
+too: it enforces the rulebook, refuses the shortcuts, and brings skills for the
+ritual — <code>/scout</code>, <code>/event</code>, <code>/land</code>, <code>/blackbox</code>, <code>/fairplay</code>.
+</p>
+<p>
+<b>The book.</b> After every commit a script rewrites the chronicle —
+<a href="index.html">docs/index.html</a> is the cover, one page per version behind
+it. Put a <code>Chronicle:</code> line in your commit and the book quotes you.
 </p>
 <h2 id="joining-in">Joining in</h2>
 <pre><code class="lang-sh">
@@ -133,14 +150,12 @@ open index.html                   # find out what the others did to you
 </code></pre>
 <p>
 Then build something — one new file, one line in <code>src/features.js</code> — play it,
-and commit it with a subject line the next pilot will enjoy. With Claude Code,
-<a href="claude.html">CLAUDE.md</a> makes claude the referee at your keyboard, and there are
-skills for the ritual: <code>/scout</code>, <code>/event</code>, <code>/land</code>, <code>/blackbox</code>, <code>/fairplay</code>.
+and commit it with a subject line the next pilot will enjoy.
 </p>
 <p>
-Nobody has to trust anybody. <code>git blame</code> says who made a thing, the book says who
-bent which rule, and the ledger is computed from both. That is all the governance
-a game about shooting rocks needs.
+Nobody has to trust anybody. <code>git blame</code> says who made a thing, the book says
+who bent which rule, and the ledger is computed from both. That is all the
+governance a game about shooting rocks needs.
 </p>
 <p>
 Now go and do something to annoy the others.
@@ -148,8 +163,8 @@ Now go and do something to annoy the others.
 <nav class="flip" aria-label="the notes">
 <span class="here">README</span>
 <a href="architecture.html">ARCHITECTURE</a>
-<a href="golden-rules.html">GOLDEN RULES</a>
 <a href="rankings.html">RANKINGS</a>
+<a href="golden-rules.html">GOLDEN RULES</a>
 <a href="claude.html">CLAUDE</a>
 <a class="out" href="index.html">THE CHRONICLE</a>
 <a class="out" href="../index.html">PLAY</a>

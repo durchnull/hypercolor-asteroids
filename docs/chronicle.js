@@ -6,13 +6,13 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 9,
-    latest: { v: 9, pilot: "David Friedrich", date: "07 August 2026", line: "The splash screen grew a second column and a floor. PRESS ENTER stopped moving.", plate: "d6cccea7.jpg", alt: "The spectrum drifted somewhere else. The HUD says so, too." },
+    versions: 11,
+    latest: { v: 11, pilot: "David Friedrich", date: "07 August 2026", line: "The cabinet learned a new noise. The panels caught up.", plate: "fd19f663.jpg", alt: "The cabinet learned a new noise. The panels caught up." },
     plates: [
+      { v: 11, file: "fd19f663.jpg", alt: "The cabinet learned a new noise. The panels caught up.", line: "The cabinet learned a new noise. The panels caught up." },
+      { v: 10, file: "12b58215.jpg", alt: "A rule was taken out, looked at, and put back differently.", line: "A rule was taken out, looked at, and put back differently." },
       { v: 9, file: "d6cccea7.jpg", alt: "The spectrum drifted somewhere else. The HUD says so, too.", line: "The splash screen grew a second column and a floor. PRESS ENTER stopped moving." },
       { v: 8, file: "b1dabac1.jpg", alt: "The soundtrack picked up a habit. The panels caught up.", line: "The soundtrack picked up a habit. The panels caught up." },
-      { v: 7, file: "2b086162.jpg", alt: "The cabinet keeps score with slightly different arithmetic now. The screen was told as well.", line: "The cabinet keeps score with slightly different arithmetic now. The screen was told as well." },
-      { v: 6, file: "05242494.jpg", alt: "The rules of the field changed while nobody was flying.", line: "The rules of the field changed while nobody was flying." },
     ]
   };
   A.BOARD = [
