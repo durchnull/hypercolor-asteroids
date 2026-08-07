@@ -6,13 +6,13 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 23,
-    latest: { v: 23, pilot: "David Friedrich", date: "07 August 2026", line: "The bookkeeping of the cabinet moved a foot to the left.", plate: "5e29b1c9.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left." },
+    versions: 24,
+    latest: { v: 24, pilot: "David Friedrich", date: "07 August 2026", line: "The rules of the field changed while nobody was flying.", plate: "b0ffdf83.jpg", alt: "The rules of the field changed while nobody was flying." },
     plates: [
+      { v: 24, file: "b0ffdf83.jpg", alt: "The rules of the field changed while nobody was flying.", line: "The rules of the field changed while nobody was flying." },
       { v: 23, file: "5e29b1c9.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
       { v: 22, file: "a90750c7.jpg", alt: "The screen mentions something it used to keep to itself.", line: "The screen mentions something it used to keep to itself." },
       { v: 21, file: "c7f6ade1.jpg", alt: "The rules of the field changed while nobody was flying.", line: "The rules of the field changed while nobody was flying." },
-      { v: 20, file: "d31aabf8.jpg", alt: "What counts as fair was quietly re-argued.", line: "What counts as fair was quietly re-argued." },
     ]
   };
   A.BOARD = [

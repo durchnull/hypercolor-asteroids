@@ -18,6 +18,11 @@
 # means the run was flown under a borrowed name, and GR12 says what that is
 # worth: nothing. Older tapes carry no seat and say so.
 #
+# Under that comes the ambush reel: newer tapes carry every event that fired -
+# id, author, wave - and how many ships went down while it was live. That is
+# the pilot-vs-pilot half of the flight, and the half the rankings quote when
+# a trap earns its author a public kill. Older tapes have no reel and say so.
+#
 # The seal is honesty, not security: anyone who can read this file can forge
 # a tape. They would be lying to a scoreboard in a git repo, and the history
 # would remember them doing it, which is deterrent enough around here.
@@ -73,5 +78,29 @@ else
   printf 'SEAT MISMATCH: flown as %s from %s'\''s seat. A borrowed name ranks\n' "$PILOT" "$SEAT"
   printf 'nowhere, whoever asks - GR12. The numbers decode below all the same.\n'
 fi
+
+# The ambush reel. The JSON is machine-written with its keys in a fixed
+# order, which is the only reason a shell script gets to read it like this.
+case "$JSON" in
+  *'"events":[]'*)
+    printf 'NO AMBUSHES: the field held its fire for the whole flight.\n' ;;
+  *'"events":['*)
+    printf 'THE AMBUSHES, as taped:\n'
+    printf '%s' "$JSON" | awk '{
+      if (!match($0, /"events":\[.*\]/)) next
+      s = substr($0, RSTART, RLENGTH)
+      while (match(s, /\{"id":"[^"]*","by":"[^"]*","wave":[0-9]+,"deaths":[0-9]+\}/)) {
+        o = substr(s, RSTART, RLENGTH)
+        s = substr(s, RSTART + RLENGTH)
+        split(o, f, "\"")
+        wave = o; sub(/.*"wave":/, "", wave); sub(/,.*/, "", wave)
+        d = o; sub(/.*"deaths":/, "", d); sub(/[^0-9].*/, "", d)
+        printf "  %s (%s), wave %s - %s\n", f[4], f[8], wave, \
+               (d + 0 > 0 ? "died inside, " d " down" : "flown clear")
+      }
+    }' ;;
+  *)
+    printf 'NO EVENT REEL: sealed before tapes watched the other pilots.\n' ;;
+esac
 
 printf '%s\n' "$JSON"
