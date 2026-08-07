@@ -385,9 +385,18 @@ A version is a commit that changed the game — `index.html`, `src/` or
 that touched them and the newest is however many there have been since.
 
 Everything else in the repository is real work and gets a mention rather than a
-number: rewriting these rules, rebuilding the book, fixing a line in the
-README. The cabinet is the same cabinet afterwards, and the next pilot has
-nothing new to find out by playing.
+number: rewriting these rules, ranking a flight, fixing a line in the README.
+The cabinet is the same cabinet afterwards, and the next pilot has nothing new
+to find out by playing.
+
+One class of commit gets less than a mention. Every landing leaves `docs/` a
+commit out of date, and the commit after it carries the pages the hooks wrote —
+a book that narrated its own filing would never reach a last chapter. So a
+commit that touches nothing but the book's generated files is passed over in
+silence, on the cover and in the digest alike. The history keeps it, as it
+keeps everything; the book just does not read it out. A commit carrying an
+override, a rule change, a ledger receipt or a breach keeps its mention
+whatever files it rode in on.
 
 Nobody assigns the numbers. `tools/chronicle.sh` counts them off the history —
 so a clone that never installed the hooks arrives at exactly the same numbers

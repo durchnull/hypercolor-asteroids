@@ -8,8 +8,10 @@ lands a version; the next person pulls, presses ENTER, and finds out what
 happened *by playing*. The diff is not the deliverable — the surprise is. A
 commit that changes the game — `index.html`, `src/` or `styles/` — is a
 numbered version; everything else is real work that leaves the cabinet as it
-was, and gets a mention rather than a number. The book tells the story of all
-of it — `docs/index.html` is the cover, `docs/v<N>.html` one page per version.
+was, and gets a mention rather than a number — except the book's own paperwork,
+which gets nothing: the filing of pages and plates is not a story, and the book
+passes over it in silence everywhere it speaks. The book tells the story of the
+rest — `docs/index.html` is the cover, `docs/v<N>.html` one page per version.
 
 You are the referee at the keyboard. Help the pilot in front of you land
 something good, and protect everybody who is not in the room.

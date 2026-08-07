@@ -4,10 +4,15 @@
 #
 # A version is a commit that changed the game: index.html, src/ or styles/, the
 # files that ship in the page you open. Nothing else in this repository is the
-# game. Rewriting the rules, regenerating this book, fixing a line in the
-# README - real work, all of it, but the cabinet is the same cabinet
-# afterwards, and the next pilot has nothing new to find out by playing. So it
-# does not get a version. It gets a mention.
+# game. Rewriting the rules, ranking a flight, fixing a line in the README -
+# real work, all of it, but the cabinet is the same cabinet afterwards, and the
+# next pilot has nothing new to find out by playing. So it does not get a
+# version. It gets a mention - with one exception. The book filing its own
+# pages is not a story: a commit that touched nothing but the book's generated
+# files is passed over in silence, on the cover and in the digest alike, unless
+# it carries an override, a rule change, a ledger receipt or a breach. The
+# history keeps every such commit either way; the book just stops narrating
+# its own paperwork.
 #
 # The numbers are counted, never stored: v1 is the first commit that touched
 # the game and the newest is however many there have been since. Nobody assigns
@@ -105,6 +110,7 @@
 #   the subject     -> landed as "..."
 #   no Chronicle:   -> nobody wrote this one down
 #   not a version   -> an interlude: while vN was on the cabinet, ...
+#   the book's own paperwork -> nothing at all, anywhere the book speaks
 #
 # The one exception is machinery somebody has to type: the checkout command
 # under each chapter stays literal, because a joke you cannot paste into a
@@ -270,16 +276,29 @@ case "${1:-}" in
           $1 == "TAG" { tag[$2] = $3; next }
           NF < 4 { next }
           {
-            game = 0; line = ""; mode = 0
+            game = 0; line = ""; mode = 0; bookish = 0; offbook = 0; event = 0
             n = split($6, b, "\n")
             for (k = 1; k <= n; k++) {
-              if (is_stat(b[k])) { split(b[k], ns, "\t"); if (is_game(ns[3])) game = 1; mode = 0; continue }
+              if (is_stat(b[k])) {
+                split(b[k], ns, "\t")
+                if (is_game(ns[3])) game = 1
+                if (is_book(ns[3])) bookish = 1; else offbook = 1
+                mode = 0; continue
+              }
+              if (tolower(b[k]) ~ /^[[:space:]]*(golden-rule-override|rule-change|tally|golden-rule-breach):/)
+                event = 1
               if (tolower(b[k]) ~ /^[[:space:]]*chronicle:/) {
                 sub(/^[^:]*:[[:space:]]*/, "", b[k]); line = b[k]; mode = 1
               } else if (mode && b[k] ~ /^[[:space:]]+[^[:space:]]/) {
                 sub(/^[[:space:]]+/, "", b[k]); line = line " " b[k]
               } else mode = 0
             }
+            # The book filing its own pages is not a story, in the digest any
+            # more than on the cover. Keep this in lockstep with the interlude
+            # skip in the book builder below - same test, same exceptions: an
+            # override, a rule change, a ledger receipt or a breach keeps its
+            # line whatever files it rode in on.
+            if (!game && bookish && !offbook && !event) next
             # The pilot wrote it, or the tagline says it, or the subject has to do.
             if (line == "" && game && $1 in tag) line = tag[$1]
             if (line == "") line = $4
@@ -896,7 +915,8 @@ NF < 4 { next }
     # lost by passing over it: the pages it wrote are the book you are reading.
     # A commit that spent an override, altered a rule, went round the referee or
     # was written up by the ledger is still an event, whatever else it touched,
-    # and it keeps its note.
+    # and it keeps its note. The digest above keeps the same silence - change
+    # one, change both.
     if (bookmoved && !docmoved && !refmoved && !readmemoved && !elsemoved &&
         overrides == "" && rulechange == "" && unrec == "" && tallyline == "" &&
         breach == "")
