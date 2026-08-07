@@ -26,13 +26,17 @@
 # itself. Both are generated, both are committed, and a page stands on its own -
 # somebody who has never cloned this can be handed a link to v7.
 #
-# The picture is not decoration and it is not the same picture twice. Every rock
-# is a sector the commit touched, sized by how much of it moved and coloured by
-# which part of the cabinet it was; a dashed one left the repository; the pilot
-# is underneath taking a shot at the biggest thing they moved. The seed is the
-# commit hash, so a version draws the identical field on every machine and in
-# every clone, forever. That is what makes a generated file worth committing:
-# rebuild it anywhere and the bytes come back the same.
+# The picture is not decoration and it is not the same picture twice. Every
+# shape is a sector the commit touched, drawn as the thing it is - a trap is a
+# mine, the rules are a gear, the song is a note, a panel is a panel - sized by
+# how much of it moved and coloured by which part of the cabinet it was. The
+# diff picks the pilot's move: wreckage is shot down and sheds shards, a new
+# arrival rides in on a tow beam and rings while it settles, a tuning pass gets
+# a reticle where a shot would be, and anything else is the standing order -
+# fire at the biggest thing you moved. The seed is the commit hash, so a
+# version draws the identical field on every machine and in every clone,
+# forever. That is what makes a generated file worth committing: rebuild it
+# anywhere and the bytes come back the same.
 #
 # A chapter can also carry a plate: a painted scene of whatever its tagline says
 # happened, asked for once by tools/chronicle-art.sh and kept in docs/art/ from
@@ -469,12 +473,12 @@ function tint(s) {
 
 # The twelve busiest paths of a commit, biggest first, kept as they arrive.
 # Twelve because thirteen rocks is a mess to look at, not because git ran out.
-function keep(p, n, gone,   i, j, last) {
+function keep(p, n, gone, born,   i, j, last) {
   for (i = 1; i <= kc; i++) if (n > kn[i]) break
   if (i > 12) return
   last = (kc < 12 ? kc : 11)
-  for (j = last; j >= i; j--) { kp[j+1] = kp[j]; kn[j+1] = kn[j]; kd[j+1] = kd[j] }
-  kp[i] = p; kn[i] = n; kd[i] = gone
+  for (j = last; j >= i; j--) { kp[j+1] = kp[j]; kn[j+1] = kn[j]; kd[j+1] = kd[j]; kb[j+1] = kb[j] }
+  kp[i] = p; kn[i] = n; kd[i] = gone; kb[i] = born
   if (kc < 12) kc++
 }
 
@@ -483,32 +487,127 @@ function keep(p, n, gone,   i, j, last) {
 # something, so it borrows from further down the page.
 function shout(v) { return VT[v] != "" ? VT[v] : (VL[v] != "" ? VL[v] : VS[v]) }
 
-function caption(v,   s) {
+function caption(v,   s, k, born, gone) {
   if (RC[v] == 0) return "An empty field. Nothing in this one moved."
-  s = RC[v] " rock" plural(RC[v]) ", one for each sector; the heavy one is " RP[v,1]
-  if (VF[v] > RC[v]) s = s ", with " (VF[v] - RC[v]) " smaller ones left off the scan"
+  born = 0; gone = 0
+  for (k = 1; k <= RC[v]; k++) { if (RD[v,k]) gone++; else if (RA[v,k]) born++ }
+  s = RC[v] " sector" plural(RC[v]) " on the scan, " (RC[v] == 1 ? "drawn" : "each drawn") " as the thing it is"
+  if (born) s = s "; " born " of them arrived in this commit"
+  if (gone) s = s "; " gone " shot out of the field for good"
+  if (born == 0 && gone == 0 && VI[v] + VJ[v] < 40)
+    s = s "; nothing moved but numbers, and the sights are on " RP[v,1]
+  else
+    s = s "; the heavy one is " RP[v,1]
+  if (VF[v] > RC[v]) s = s ", with " (VF[v] - RC[v]) " smaller left off the scan"
   return s "."
 }
 
-function picture(v,   out, k, K, j, a, c, rb, ang, rad, x, y, r, br, bx, by, pts, mx) {
+# What a path is, not just where it sits. The picture draws a trap as a mine
+# and the song as a note, so a chapter says what happened before the caption
+# gets a word in. Entities the cabinet actually has get their own silhouette;
+# anything unrecognised in the field stays a rock, which is what an asteroids
+# game would assume anyway.
+function kindof(p,   b) {
+  if (p ~ /^src\/events\//)   return "mine"
+  if (p ~ /^src\/entities\//) {
+    b = tolower(p)
+    if (b ~ /kraken/)            return "kraken"
+    if (b ~ /nuke|bomb/)         return "bomb"
+    if (b ~ /portal/)            return "portal"
+    if (b ~ /planet/)            return "planet"
+    if (b ~ /falcon/)            return "falcon"
+    if (b ~ /hook/)              return "hook"
+    if (b ~ /bullet|blast|shot/) return "bolts"
+    if (b ~ /ship/)              return "fighter"
+    return "rock"
+  }
+  if (p ~ /^src\/game\//)   return "gear"
+  if (p ~ /^src\/core\//)   return "atom"
+  if (p ~ /^src\/render\//) return "prism"
+  if (p ~ /^src\/audio\//)  return "note"
+  if (p ~ /^src\/input\//)  return "keycap"
+  if (p ~ /^src\/ui\//)     return "panel"
+  if (p == "index.html" || p ~ /^styles\//) return "screen"
+  return "wrench"
+}
+
+# The silhouettes, drawn on the same 24-grid as ico() and stroked the same
+# way, so the field and the margin read as one hand. "solid" is the body that
+# blots out the stars behind it; "pip" is the little light a thing keeps on;
+# "whirl" turns, slowly, because a gear that does not is a decal.
+function glyphart(n) {
+  if (n == "mine")
+    return "<circle class=\"solid\" r=\"6.5\"/>" \
+           "<path d=\"M0 -11V-6.5M7.8 -7.8 4.6 -4.6M11 0H6.5M7.8 7.8 4.6 4.6M0 11V6.5M-7.8 7.8 -4.6 4.6M-11 0H-6.5M-7.8 -7.8 -4.6 -4.6\"/>" \
+           "<circle class=\"pip\" r=\"1.7\"/>"
+  if (n == "gear")
+    return "<g class=\"whirl\"><circle class=\"solid\" r=\"7\"/><circle r=\"2.6\"/>" \
+           "<path d=\"M7 0H10.5M4.9 4.9 7.4 7.4M0 7V10.5M-4.9 4.9 -7.4 7.4M-7 0H-10.5M-4.9 -4.9 -7.4 -7.4M0 -7V-10.5M4.9 -4.9 7.4 -7.4\"/></g>"
+  if (n == "atom")
+    return "<circle class=\"pip\" r=\"2\"/><g class=\"whirl\"><ellipse rx=\"11\" ry=\"4.2\"/>" \
+           "<ellipse rx=\"11\" ry=\"4.2\" transform=\"rotate(60)\"/><ellipse rx=\"11\" ry=\"4.2\" transform=\"rotate(120)\"/></g>"
+  if (n == "prism")
+    return "<path class=\"solid\" d=\"M0 -8.5 8 7H-8z\"/><path d=\"M-13 1H-4.7\"/><path d=\"M4.7 1 13 -3.5M4.7 1H13M4.7 1 13 5.5\"/>"
+  if (n == "note")
+    return "<path d=\"M-4.5 6.5V-6.5L7.5 -8.5V4.5\"/><path d=\"M-4.5 -3.5 7.5 -5.5\"/>" \
+           "<circle class=\"solid\" cx=\"-7\" cy=\"6.5\" r=\"2.6\"/><circle class=\"solid\" cx=\"5\" cy=\"4.5\" r=\"2.6\"/>"
+  if (n == "keycap")
+    return "<rect class=\"solid\" x=\"-9\" y=\"-8\" width=\"18\" height=\"16\" rx=\"2.5\"/><path d=\"M0 4V-3.5M-3.5 0 0 -3.5 3.5 0\"/>"
+  if (n == "panel")
+    return "<rect class=\"solid\" x=\"-11\" y=\"-8.5\" width=\"22\" height=\"17\" rx=\"1.5\"/>" \
+           "<path d=\"M-11 -4.5H11\"/><path d=\"M-8 0H7M-8 4H2\"/><circle class=\"pip\" cx=\"8.7\" cy=\"-6.5\" r=\"0.9\"/>"
+  if (n == "screen")
+    return "<rect class=\"solid\" x=\"-11\" y=\"-9\" width=\"22\" height=\"18\" rx=\"2.5\"/>" \
+           "<rect x=\"-7.5\" y=\"-5.5\" width=\"15\" height=\"11\"/><path class=\"scan\" d=\"M-7.5 -2H7.5M-7.5 1H7.5M-7.5 4H7.5\"/>"
+  if (n == "kraken")
+    return "<path class=\"solid\" d=\"M-7 0A7 7 0 0 1 7 0z\"/>" \
+           "<path d=\"M-7 0C-8.5 3.5 -6 5.5 -7.5 9M-2.3 0C-3.3 4 -1 6 -2 10M2.3 0C1.3 4 3.6 6 2.6 10M7 0C8.5 3.5 6 5.5 7.5 9\"/>" \
+           "<circle class=\"pip\" cx=\"-2.6\" cy=\"-2.8\" r=\"0.9\"/><circle class=\"pip\" cx=\"2.6\" cy=\"-2.8\" r=\"0.9\"/>"
+  if (n == "bomb")
+    return "<circle class=\"solid\" cy=\"2.5\" r=\"7\"/><path d=\"M-2.5 -4.5H2.5\"/><path d=\"M0 -4.5C1 -8 3.5 -8 4.5 -10.5\"/>" \
+           "<path class=\"spark\" d=\"M3.2 -11.8 5.8 -9.2M5.8 -11.8 3.2 -9.2\"/>"
+  if (n == "portal")
+    return "<g class=\"whirl\"><circle r=\"8.5\" stroke-dasharray=\"4.5 3.5\"/></g><circle r=\"4\"/><circle class=\"pip\" r=\"1.2\"/>"
+  if (n == "planet")
+    return "<circle class=\"solid\" r=\"6.5\"/><ellipse rx=\"11\" ry=\"3.2\" transform=\"rotate(-18)\"/>"
+  if (n == "falcon")
+    return "<path class=\"solid\" d=\"M0 -8 4 -3 11 7 3 3 0 10 -3 3 -11 7 -4 -3z\"/>"
+  if (n == "hook")
+    return "<path d=\"M-9 -11 1.5 0.5\"/><path d=\"M1.5 0.5C2.5 5.5 9 6 9.5 1.5C9.8 -1.5 7.5 -3.5 5 -3\"/><path d=\"M5 -3 6.5 -5.5\"/>"
+  if (n == "bolts")
+    return "<path d=\"M-10 -5H-2M-4 0H4M-2 5H10\"/>"
+  if (n == "fighter")
+    return "<polygon class=\"solid\" points=\"11,0 -7,-6 -3.5,0 -7,6\"/>"
+  return "<g transform=\"rotate(-42)\"><path d=\"M-3.2 -11V-7A3.4 3.4 0 0 0 3.2 -7V-11\"/><path d=\"M0 -3.6V9\"/><circle cx=\"0\" cy=\"10.5\" r=\"1.6\"/></g>"
+}
+
+function picture(v,   out, k, K, j, q, a, c, rb, ang, rad, x, y, r, s, kind, tt, act, tk, bx, by, br, pts, mx, ix, iy, px, py, nx, ny, sa) {
   seed(VH[v])
   K = RC[v]
   mx = (RM[v] > 0 ? RM[v] : 1)
   a = rr(0, 6.28318)
   # The field is drawn to fill the frame whether the commit touched one sector
-  # or twelve: fewer rocks means they stand further apart and each one is
+  # or twelve: fewer shapes means they stand further apart and each one is
   # bigger, so a one-file version is a close-up rather than a lonely speck.
   c = 300 / sqrt(K > 0 ? K : 1)
   if (c > 200) c = 200
   if (c < 92)  c = 92
   rb = 0.44 * c
   if (rb > 86) rb = 86
+  # What the pilot is doing down there, the diff decides: a commit that
+  # deleted something shot it down, one that brought a new file flies it in
+  # on a tow beam, a handful of tuned numbers is a sighting pass, and
+  # anything else is the standing order - fire at the biggest thing you moved.
+  act = "shot"; tk = 1
+  for (k = 1; k <= K; k++) if (RD[v,k]) { act = "kill"; tk = k; break }
+  if (act == "shot") for (k = 1; k <= K; k++) if (RA[v,k]) { act = "deploy"; tk = k; break }
+  if (act == "shot" && VI[v] + VJ[v] < 40) act = "tune"
   out = "<svg class=\"art\" viewBox=\"0 0 1400 640\" preserveAspectRatio=\"xMidYMid meet\" aria-hidden=\"true\">"
   out = out "<text class=\"ghost\" x=\"46\" y=\"590\">" roman(v) "</text>"
   for (k = 0; k < 64; k++)
     out = out "<circle class=\"star\" cx=\"" int(rr(10, 1390)) "\" cy=\"" int(rr(10, 630)) \
               "\" r=\"" f1(rr(0.7, 2.2)) "\" style=\"--d:-" f1(rr(0, 4)) "s\"/>"
-  # A sunflower spiral: the rocks land evenly without anybody having to solve
+  # A sunflower spiral: the shapes land evenly without anybody having to solve
   # for overlap, and the busiest sector of the commit sits in the middle of it.
   for (k = 1; k <= K; k++) {
     ang = a + k * 2.39996
@@ -516,22 +615,69 @@ function picture(v,   out, k, K, j, a, c, rb, ang, rad, x, y, r, br, bx, by, pts
     x = 700 + cos(ang) * rad + rr(-14, 14)
     y = 312 + sin(ang) * rad * 0.72 + rr(-14, 14)
     r = rb * (0.42 + 0.58 * sqrt(RN[v,k] / mx))
-    if (k == 1) { bx = x; by = y; br = r }
-    pts = ""
-    for (j = 0; j < 9; j++) {
-      ang = j * 0.6981
-      pts = pts f1(x + cos(ang) * r * rr(0.74, 1.2)) "," f1(y + sin(ang) * r * rr(0.74, 1.2)) " "
+    if (k == tk) { bx = x; by = y; br = r }
+    kind = kindof(RP[v,k])
+    tt = "<title>" att(RP[v,k]) " &mdash; " (RD[v,k] ? "shot down, " : (RA[v,k] ? "flown in new, " : "")) \
+         RN[v,k] " line" plural(RN[v,k]) "</title>"
+    out = out "<g class=\"drift\" style=\"--d:-" f1(rr(0, 9)) "s;--c:" tint(sector(RP[v,k])) "\">"
+    if (kind == "rock") {
+      pts = ""
+      for (j = 0; j < 9; j++) {
+        q = j * 0.6981
+        pts = pts f1(x + cos(q) * r * rr(0.74, 1.2)) "," f1(y + sin(q) * r * rr(0.74, 1.2)) " "
+      }
+      out = out "<polygon class=\"rock" (RD[v,k] ? " gone" : "") "\" points=\"" pts \
+                "\" style=\"--s:" f1(rr(18, 46)) "s\">" tt "</polygon>"
+    } else {
+      # Drawn at radius 12 and scaled to the rock size it would have had, with
+      # the stroke divided back out so every silhouette carries the same line.
+      s = r / 12
+      out = out "<g class=\"glyph " kind (RD[v,k] ? " gone" : "") "\" transform=\"translate(" f1(x) "," f1(y) \
+                ") scale(" sprintf("%.2f", s) ")\" stroke-width=\"" sprintf("%.2f", 2.6 / s) "\""
+      if (RD[v,k]) out = out " stroke-dasharray=\"" sprintf("%.2f", 5 / s) " " sprintf("%.2f", 8 / s) "\""
+      out = out ">" glyphart(kind) tt "</g>"
     }
-    out = out "<g class=\"drift\" style=\"--d:-" f1(rr(0, 9)) "s\">"
-    out = out "<polygon class=\"rock" (RD[v,k] ? " gone" : "") "\" points=\"" pts \
-              "\" style=\"--s:" f1(rr(18, 46)) "s;--c:" tint(sector(RP[v,k])) "\">"
-    out = out "<title>" att(RP[v,k]) " &mdash; " RN[v,k] " line" plural(RN[v,k]) "</title></polygon></g>"
+    if (RD[v,k]) {
+      # Wreckage sheds. Three shards, each on its own way out.
+      for (j = 0; j < 3; j++) {
+        sa = rr(0, 6.28318)
+        out = out "<path class=\"shard\" style=\"--d:-" f1(rr(0, 3)) "s;--tx:" f1(cos(sa) * rr(18, 30)) \
+                  "px;--ty:" f1(sin(sa) * rr(12, 24)) "px\" d=\"M" f1(x + cos(sa) * r * 0.9) " " f1(y + sin(sa) * r * 0.9) \
+                  "l" f1(rr(4, 9)) " " f1(rr(-3, 3)) "l" f1(rr(-7, -2)) " " f1(rr(3, 7)) "z\"/>"
+      }
+    } else if (RA[v,k]) {
+      # A new arrival rings, twice, like a thing still settling into orbit.
+      out = out "<circle class=\"born\" cx=\"" f1(x) "\" cy=\"" f1(y) "\" r=\"" f1(r + 7) "\" style=\"--d:0s\"/>" \
+                "<circle class=\"born\" cx=\"" f1(x) "\" cy=\"" f1(y) "\" r=\"" f1(r + 7) "\" style=\"--d:-1.4s\"/>"
+    }
+    out = out "</g>"
   }
-  # The pilot, aiming at the biggest thing they moved.
-  if (K == 0) { bx = 700; by = 312; br = 0 }
+  # The pilot, and the move the diff says they made.
+  if (K == 0) { bx = 700; by = 312; br = 0; act = "shot" }
   ang = atan2(by - 556, bx - 140)
-  out = out "<line class=\"shot\" x1=\"" f1(140 + cos(ang) * 32) "\" y1=\"" f1(556 + sin(ang) * 32) \
-            "\" x2=\"" f1(bx - cos(ang) * (br + 8)) "\" y2=\"" f1(by - sin(ang) * (br + 8)) "\"/>"
+  nx = 140 + cos(ang) * 32; ny = 556 + sin(ang) * 32
+  if (act == "tune") {
+    out = out "<line class=\"aim\" x1=\"" f1(nx) "\" y1=\"" f1(ny) "\" x2=\"" f1(bx - cos(ang) * (br + 24)) \
+              "\" y2=\"" f1(by - sin(ang) * (br + 24)) "\"/>"
+    out = out "<g transform=\"translate(" f1(bx) "," f1(by) ")\"><g class=\"ret\"><circle r=\"" f1(br + 16) "\"/>" \
+              "<path d=\"M0 " f1(-br - 23) "V" f1(-br - 9) "M0 " f1(br + 9) "V" f1(br + 23) "M" f1(-br - 23) \
+              " 0H" f1(-br - 9) "M" f1(br + 9) " 0H" f1(br + 23) "\"/></g></g>"
+  } else if (act == "deploy") {
+    px = -sin(ang); py = cos(ang)
+    out = out "<line class=\"beam\" x1=\"" f1(nx) "\" y1=\"" f1(ny) "\" x2=\"" f1(bx + px * br * 0.9) \
+              "\" y2=\"" f1(by + py * br * 0.9) "\"/>"
+    out = out "<line class=\"beam\" x1=\"" f1(nx) "\" y1=\"" f1(ny) "\" x2=\"" f1(bx - px * br * 0.9) \
+              "\" y2=\"" f1(by - py * br * 0.9) "\"/>"
+  } else {
+    ix = bx - cos(ang) * (br + 8); iy = by - sin(ang) * (br + 8)
+    out = out "<line class=\"shot\" x1=\"" f1(nx) "\" y1=\"" f1(ny) "\" x2=\"" f1(ix) "\" y2=\"" f1(iy) "\"/>"
+    if (act == "kill")
+      for (j = 0; j < 6; j++) {
+        sa = j * 1.0472 + rr(-0.25, 0.25)
+        out = out "<line class=\"hit\" x1=\"" f1(ix + cos(sa) * 5) "\" y1=\"" f1(iy + sin(sa) * 5) \
+                  "\" x2=\"" f1(ix + cos(sa) * rr(14, 24)) "\" y2=\"" f1(iy + sin(sa) * rr(14, 24)) "\"/>"
+      }
+  }
   out = out "<g class=\"ship\" transform=\"translate(140,556) rotate(" f1(ang * 57.29578) ")\">"
   out = out "<polygon points=\"30,0 -19,-16 -9,0 -19,16\"/></g>"
   # The three things a chapter cannot keep quiet, stamped across the field
@@ -613,17 +759,20 @@ NF < 4 { next }
   gamefiles = 0; files = 0; acmr = 0; ins = 0; del = 0; kc = 0; fpn = 0
   refmoved = 0; docmoved = 0; bookmoved = 0; readmemoved = 0; elsemoved = 0
   refstrict = 0; nonref = 0; stolen = 0
-  split("", deleted); split("", fseen); split("", fadd); split("", fdel)
+  split("", deleted); split("", arrived); split("", fseen); split("", fadd); split("", fdel)
   n = split(rest, b, "\n")
   for (k = 1; k <= n; k++) {
     t = b[k]
     lt = tolower(t)
     # The raw diff arrives ahead of the numstat, so by the time the counting
-    # starts the book already knows which paths left the repository.
+    # starts the book already knows which paths left the repository - and which
+    # ones this commit brought into it, because the picture draws the two
+    # differently.
     if (is_raw(t)) {
       split(t, rw, "\t")
       rn = split(rw[1], rf, " ")
       if (rf[rn] ~ /^D/) deleted[rw[2]] = 1
+      else if (rf[rn] ~ /^A/) arrived[rw[2]] = 1
       mode = ""; continue
     }
     if (is_stat(t)) {
@@ -657,7 +806,7 @@ NF < 4 { next }
         if (!(p in deleted)) acmr++
         if (ns[1] != "-") ins += ns[1]
         if (ns[2] != "-") del += ns[2]
-        keep(p, (ns[1] == "-" ? 0 : ns[1]) + (ns[2] == "-" ? 0 : ns[2]), (p in deleted))
+        keep(p, (ns[1] == "-" ? 0 : ns[1]) + (ns[2] == "-" ? 0 : ns[2]), (p in deleted), (p in arrived))
       }
       mode = ""; continue
     }
@@ -800,7 +949,7 @@ NF < 4 { next }
   VO[v] = overrides; VU[v] = unrec; VR[v] = rulechange; VB[v] = breach
   VP[v] = ($1 in art) ? art[$1] : ""; VQ[v] = altof[$1]
   RC[v] = kc;    RM[v] = kn[1]
-  for (k = 1; k <= kc; k++) { RP[v,k] = kp[k]; RN[v,k] = kn[k]; RD[v,k] = kd[k] }
+  for (k = 1; k <= kc; k++) { RP[v,k] = kp[k]; RN[v,k] = kn[k]; RD[v,k] = kd[k]; RA[v,k] = kb[k] }
   ENT[++en] = "V" SUBSEP v
 }
 # Same tokens, same CRT as the game itself, so the book follows along on its own
@@ -1831,11 +1980,15 @@ html { scroll-padding-bottom: 6rem; }
   color: var(--dim);
 }
 
-/* The commit, drawn: one rock per sector it touched, sized by how much of that
-   sector moved, coloured by which part of the cabinet it was, dashed if it left
-   the repository altogether. The ship is the pilot, taking a shot at the
-   biggest thing they moved. None of it is random — tools/chronicle.sh seeds it
-   with the commit hash, so a version looks the same in every clone forever. */
+/* The commit, drawn: one shape per sector it touched, drawn as the thing it
+   is — a trap is a mine, the rules are a gear, the song is a note, a panel is
+   a panel — sized by how much of that sector moved and coloured by which part
+   of the cabinet it was. The diff picks the pilot's move: wreckage is shot
+   down and sheds shards, a new arrival rides in on a tow beam and rings while
+   it settles, a tuning pass gets a reticle where a shot would be, and
+   anything else is the standing order — fire at the biggest thing you moved.
+   None of it is random — tools/chronicle.sh seeds it with the commit hash, so
+   a version looks the same in every clone forever. */
 /* Seven columns rather than twelve: the field is drawn on a 1400x640 board, so
    at full width it turns into a wall of empty space with three rocks in it.
    Beside the margin it is a picture. With nothing in the margin it takes the
@@ -1884,6 +2037,79 @@ html { scroll-padding-bottom: 6rem; }
   filter: drop-shadow(0 0 6px var(--c));
 }
 .art .rock.gone { fill: none; stroke-dasharray: 5 8; opacity: 0.4; filter: none; }
+/* The rest of the field's vocabulary. A glyph is a sector drawn as what it
+   is; its stroke arrives pre-divided by the group's scale so every silhouette
+   carries the same line the rocks do. "solid" blots out the stars behind a
+   body, "pip" is the light a thing keeps on, "whirl" turns because a gear
+   that does not is a decal. */
+.art .glyph {
+  fill: none;
+  stroke: var(--c);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px var(--c));
+}
+.art .glyph .solid { fill: rgba(7, 3, 15, 0.5); }
+.art .glyph .pip { fill: var(--c); stroke: none; animation: pip 1.6s ease-in-out infinite alternate; }
+.art .glyph .spark { animation: pip 0.9s ease-in-out infinite alternate; }
+.art .glyph .scan { opacity: 0.55; }
+.art .glyph .whirl {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: spin 26s linear infinite;
+}
+.art .glyph.gone { opacity: 0.4; filter: none; }
+.art .glyph.gone .solid { fill: none; }
+.art .glyph.gone .pip { animation: none; opacity: 0.5; }
+/* Dead machinery stops. A wreck that keeps turning is not a wreck. */
+.art .glyph.gone .whirl, .art .glyph.gone .spark { animation: none; }
+/* What the diff did, marked on the thing it did it to: a new arrival rings
+   while it settles, wreckage sheds shards on their own way out. */
+.art .born {
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 1.6;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: bornring 2.8s linear infinite;
+  animation-delay: var(--d);
+}
+.art .shard {
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 1.6;
+  transform-box: fill-box;
+  animation: shardfly 3.2s ease-out infinite;
+  animation-delay: var(--d);
+}
+/* The pilot's move, when it is not the standing shot: the quiet aim line and
+   slow reticle of a tuning pass, the tow beam hauling a new arrival in, the
+   burst where a kill connected. */
+.art .aim { stroke: var(--lime); stroke-width: 1.6; opacity: 0.25; }
+.art .ret {
+  fill: none;
+  stroke: var(--lime);
+  stroke-width: 2;
+  opacity: 0.8;
+  filter: drop-shadow(0 0 6px var(--lime));
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: spin 40s linear infinite;
+}
+.art .beam {
+  stroke: var(--cyan);
+  stroke-width: 2;
+  stroke-dasharray: 5 11;
+  opacity: 0.6;
+  animation: march 1.4s linear infinite;
+}
+.art .hit {
+  stroke: var(--lime);
+  stroke-width: 2.4;
+  filter: drop-shadow(0 0 6px var(--lime));
+  animation: pip 0.8s ease-in-out infinite alternate;
+}
 .art .ship {
   fill: none;
   stroke: var(--lime);
@@ -1912,6 +2138,15 @@ html { scroll-padding-bottom: 6rem; }
 @keyframes drift { to { transform: translate(14px, -11px); } }
 @keyframes twinkle { to { opacity: 0.12; } }
 @keyframes march { to { stroke-dashoffset: -48; } }
+@keyframes pip { to { opacity: 0.25; } }
+@keyframes bornring {
+  0% { transform: scale(0.55); opacity: 0.9; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+@keyframes shardfly {
+  0% { transform: translate(0, 0); opacity: 0.9; }
+  100% { transform: translate(var(--tx), var(--ty)); opacity: 0; }
+}
 
 /* --- what the book had to write down --------------------------------------
    The loud cels. A rule bent in writing, a rule changed outright, or a commit

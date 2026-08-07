@@ -602,11 +602,15 @@ html { scroll-padding-bottom: 6rem; }
   color: var(--dim);
 }
 
-/* The commit, drawn: one rock per sector it touched, sized by how much of that
-   sector moved, coloured by which part of the cabinet it was, dashed if it left
-   the repository altogether. The ship is the pilot, taking a shot at the
-   biggest thing they moved. None of it is random — tools/chronicle.sh seeds it
-   with the commit hash, so a version looks the same in every clone forever. */
+/* The commit, drawn: one shape per sector it touched, drawn as the thing it
+   is — a trap is a mine, the rules are a gear, the song is a note, a panel is
+   a panel — sized by how much of that sector moved and coloured by which part
+   of the cabinet it was. The diff picks the pilot's move: wreckage is shot
+   down and sheds shards, a new arrival rides in on a tow beam and rings while
+   it settles, a tuning pass gets a reticle where a shot would be, and
+   anything else is the standing order — fire at the biggest thing you moved.
+   None of it is random — tools/chronicle.sh seeds it with the commit hash, so
+   a version looks the same in every clone forever. */
 /* Seven columns rather than twelve: the field is drawn on a 1400x640 board, so
    at full width it turns into a wall of empty space with three rocks in it.
    Beside the margin it is a picture. With nothing in the margin it takes the
@@ -655,6 +659,79 @@ html { scroll-padding-bottom: 6rem; }
   filter: drop-shadow(0 0 6px var(--c));
 }
 .art .rock.gone { fill: none; stroke-dasharray: 5 8; opacity: 0.4; filter: none; }
+/* The rest of the field's vocabulary. A glyph is a sector drawn as what it
+   is; its stroke arrives pre-divided by the group's scale so every silhouette
+   carries the same line the rocks do. "solid" blots out the stars behind a
+   body, "pip" is the light a thing keeps on, "whirl" turns because a gear
+   that does not is a decal. */
+.art .glyph {
+  fill: none;
+  stroke: var(--c);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px var(--c));
+}
+.art .glyph .solid { fill: rgba(7, 3, 15, 0.5); }
+.art .glyph .pip { fill: var(--c); stroke: none; animation: pip 1.6s ease-in-out infinite alternate; }
+.art .glyph .spark { animation: pip 0.9s ease-in-out infinite alternate; }
+.art .glyph .scan { opacity: 0.55; }
+.art .glyph .whirl {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: spin 26s linear infinite;
+}
+.art .glyph.gone { opacity: 0.4; filter: none; }
+.art .glyph.gone .solid { fill: none; }
+.art .glyph.gone .pip { animation: none; opacity: 0.5; }
+/* Dead machinery stops. A wreck that keeps turning is not a wreck. */
+.art .glyph.gone .whirl, .art .glyph.gone .spark { animation: none; }
+/* What the diff did, marked on the thing it did it to: a new arrival rings
+   while it settles, wreckage sheds shards on their own way out. */
+.art .born {
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 1.6;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: bornring 2.8s linear infinite;
+  animation-delay: var(--d);
+}
+.art .shard {
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 1.6;
+  transform-box: fill-box;
+  animation: shardfly 3.2s ease-out infinite;
+  animation-delay: var(--d);
+}
+/* The pilot's move, when it is not the standing shot: the quiet aim line and
+   slow reticle of a tuning pass, the tow beam hauling a new arrival in, the
+   burst where a kill connected. */
+.art .aim { stroke: var(--lime); stroke-width: 1.6; opacity: 0.25; }
+.art .ret {
+  fill: none;
+  stroke: var(--lime);
+  stroke-width: 2;
+  opacity: 0.8;
+  filter: drop-shadow(0 0 6px var(--lime));
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: spin 40s linear infinite;
+}
+.art .beam {
+  stroke: var(--cyan);
+  stroke-width: 2;
+  stroke-dasharray: 5 11;
+  opacity: 0.6;
+  animation: march 1.4s linear infinite;
+}
+.art .hit {
+  stroke: var(--lime);
+  stroke-width: 2.4;
+  filter: drop-shadow(0 0 6px var(--lime));
+  animation: pip 0.8s ease-in-out infinite alternate;
+}
 .art .ship {
   fill: none;
   stroke: var(--lime);
@@ -683,6 +760,15 @@ html { scroll-padding-bottom: 6rem; }
 @keyframes drift { to { transform: translate(14px, -11px); } }
 @keyframes twinkle { to { opacity: 0.12; } }
 @keyframes march { to { stroke-dashoffset: -48; } }
+@keyframes pip { to { opacity: 0.25; } }
+@keyframes bornring {
+  0% { transform: scale(0.55); opacity: 0.9; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+@keyframes shardfly {
+  0% { transform: translate(0, 0); opacity: 0.9; }
+  100% { transform: translate(var(--tx), var(--ty)); opacity: 0; }
+}
 
 /* --- what the book had to write down --------------------------------------
    The loud cels. A rule bent in writing, a rule changed outright, or a commit
