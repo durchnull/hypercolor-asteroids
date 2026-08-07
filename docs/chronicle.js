@@ -6,16 +6,16 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 30,
-    latest: { v: 30, pilot: "David Friedrich", date: "07 August 2026", line: "Something out there behaves differently now and will not say so. The difficulty came along for the ride.", plate: "e799c360.jpg", alt: "Something out there behaves differently now and will not say so. The difficulty came along for the ride." },
+    versions: 31,
+    latest: { v: 31, pilot: "David Friedrich", date: "07 August 2026", line: "The rules of the field changed while nobody was flying.", plate: "5557764e.jpg", alt: "The rules of the field changed while nobody was flying." },
     plates: [
+      { v: 31, file: "5557764e.jpg", alt: "The rules of the field changed while nobody was flying.", line: "The rules of the field changed while nobody was flying." },
       { v: 30, file: "e799c360.jpg", alt: "Something out there behaves differently now and will not say so. The difficulty came along for the ride.", line: "Something out there behaves differently now and will not say so. The difficulty came along for the ride." },
       { v: 29, file: "7164cd03.jpg", alt: "A rule was taken out, looked at, and put back differently.", line: "A rule was taken out, looked at, and put back differently." },
       { v: 28, file: "34959e88.jpg", alt: "A rule was taken out, looked at, and put back differently. The colours moved as well.", line: "A rule was taken out, looked at, and put back differently. The colours moved as well." },
-      { v: 27, file: "d3d78842.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
     ],
     roster: {
-      "David Friedrich": 30,
+      "David Friedrich": 31,
     }
   };
   A.BOARD = [
