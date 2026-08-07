@@ -23,8 +23,16 @@
 //     minWave: 4,                // earliest wave it may fire on
 //     weight: 2,                 // relative likelihood against the others
 //     cooldown: 3,               // waves before it may repeat
+//     icon: "M12 2.2v5.2 …",     // your glyph, in a 24x24 box, strokes only
+//     holds: 5,                  // seconds the glyph stays up, at least
+//     while() { ... },           // ... and true keeps it up past that
 //     fire(tick) { ... },        // do your worst
 //   });
+//
+// The banner says your name once and gets out of the way; the glyph goes to
+// the foot of the screen and stays there for as long as the ambush is really
+// happening. Draw one — an event without an icon gets a warning diamond and
+// looks like every other event without an icon. See ui/mark.js.
 //
 // `by: A.HOUSE` means the event belongs to nobody and fires for everyone,
 // author included. Use it when you want a thing in the game more than you want
@@ -84,6 +92,87 @@
       .sort((a, b) => a.name.localeCompare(b.name));
   };
 
+  // ---- what is happening right now -----------------------------------------
+  //
+  // An ambush outlives its own announcement. The banner is gone in two seconds
+  // and the walls are still closing, so a fired event stays *live* afterwards
+  // and ui/mark.js draws its glyph at the foot of the screen for as long as
+  // that lasts. `holds` is the floor in seconds, `while()` keeps it up past
+  // the floor for as long as the thing is still in the field, and HOLD_MAX is
+  // there because nothing gets to sit down there forever.
+
+  const HOLD = 6;        // seconds a fired event holds the foot of the screen
+  const HOLD_MAX = 30;   // and the longest a while() may keep it there
+  const LOG_MAX = 12;    // how far back the corner remembers
+
+  const live = [];
+  const log = [];
+
+  /** What is being done to the pilot right now, oldest first. For the mark. */
+  A.liveEvents = () => live;
+
+  /**
+   * And what was done to them earlier in this game, oldest first. A mark that
+   * has burned down does not vanish — it steps into the corner and stays for
+   * the rest of the run, so the answer to "what has this game thrown at me"
+   * is on the screen rather than in anybody's memory.
+   */
+  A.eventLog = () => log;
+
+  /** Whether an event is the flying pilot's own trap, come back around. */
+  const own = (e) => e.by !== A.HOUSE && e.by === A.activePilot();
+
+  // A colour per event, taken off its id, so two ambushes on screen at once
+  // are two colours as well as two shapes. Nobody picks it, nobody collides.
+  function tintOf(id) {
+    let n = 0;
+    for (let i = 0; i < id.length; i++) n = (n * 31 + id.charCodeAt(i)) % 3600;
+    return n / 10;
+  }
+
+  function light(e) {
+    live.push({
+      e,
+      name: e.name || "INCOMING",
+      icon: e.icon || null,
+      hue: tintOf(e.id),
+      own: own(e),
+      hold: e.holds || HOLD,
+      life: e.holds || HOLD,
+      age: 0,
+      fade: 0,
+    });
+  }
+
+  // Same contract as fire(): a bad event is a bug in that event, not a reason
+  // for the frame to stop. A while() that throws is simply over.
+  function stillGoing(l) {
+    if (l.age >= HOLD_MAX || typeof l.e.while !== "function") return false;
+    try {
+      return !!l.e.while();
+    } catch (err) {
+      console.error("ASTEROIDS: event " + l.e.id + " (" + l.e.by + ") threw in while()", err);
+      return false;
+    }
+  }
+
+  function burn(tick) {
+    for (let i = 0; i < live.length; i++) {
+      const l = live[i];
+      l.age += tick.dt;
+      l.life -= tick.dt;
+      const held = l.life > 0 || stillGoing(l);
+      l.fade = held ? Math.min(1, l.fade + tick.dt * 5) : l.fade - tick.dt * 2.4;
+      if (held || l.fade > 0) continue;
+
+      // over: the same object walks into the corner, carrying everything the
+      // mark knows about it, and the oldest one there falls off the end
+      log.push(l);
+      if (log.length > LOG_MAX) log.shift();
+      live.splice(i--, 1);
+    }
+  }
+
   // ---- the director --------------------------------------------------------
 
   const SETTLE = 4;          // seconds into a wave before anything may happen
@@ -129,8 +218,7 @@
   function announce(e) {
     // Your own trap, coming back at you. Say so — the tally is a punishment,
     // and a punishment nobody notices is only a bug.
-    const own = e.by !== A.HOUSE && e.by === A.activePilot();
-    A.showBanner(e.name || "INCOMING", own ? "YOURS. YOU EARNED THIS ONE" : e.blurb || null, 1.8);
+    A.showBanner(e.name || "INCOMING", own(e) ? "YOURS. YOU EARNED THIS ONE" : e.blurb || null, 1.8);
     A.screenFlash(A.hue + 200, 0.34);
     A.shakeBy(10);
     A.blip(180, 0.4, "sawtooth", 0.16);
@@ -140,10 +228,25 @@
     timer = gap();
     firedThisWave = 0;
     wave = A.game.level;
+
+    // The game just ended: whatever was still running is over, and joins the
+    // rest of it in the corner, which is the last thing anybody reads. A new
+    // game and the menu both start with an empty corner.
+    if (mode === "over") {
+      log.push(...live);
+      while (log.length > LOG_MAX) log.shift();
+    } else {
+      log.length = 0;
+    }
+    live.length = 0;
+
     if (mode === "play") lastFiredOn.clear();
   }
 
   function resolve(tick) {
+    // the marks burn down on their own clock, whatever the director is doing
+    burn(tick);
+
     // a new wave: the clock and the quota start again
     if (A.game.level !== wave) {
       wave = A.game.level;
@@ -166,6 +269,7 @@
     lastFiredOn.set(e.id, A.game.level);
     firedThisWave++;
     announce(e);
+    light(e);
     try {
       e.fire(tick);
     } catch (err) {

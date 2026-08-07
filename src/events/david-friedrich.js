@@ -20,6 +20,11 @@
       minWave: 3,
       weight: 2,
       cooldown: 3,
+      // two walls and the direction they are going
+      icon: `M3.6 3.4v17.2 M20.4 3.4v17.2
+             M6.6 12h4 M8.7 10.2L10.5 12L8.7 13.8
+             M17.4 12h-4 M15.3 10.2L13.5 12L15.3 13.8`,
+      holds: 9,
       // Rock down both sides at once, leaving a corridor up the middle. It is
       // survivable the whole time. It just stops looking that way.
       fire() {
@@ -47,15 +52,27 @@
       minWave: 5,
       weight: 1,
       cooldown: 4,
+      // one ship, and a bigger one on the same heading behind it
+      icon: `M15.6 3.4l2.9 6.3-2.9-1.6-2.9 1.6z
+             M9 11.4l4.3 9.6-4.3-2.4-4.3 2.4z`,
+      holds: 4,
       // The smuggler run, except this time it is being chased, and whatever is
       // chasing it arrives on the same heading a second and a half later.
       fire() {
         A.spawnFalcon();
+        this.smuggler = A.falcon;
         setTimeout(() => {
           if (!A.isRunning()) return;
           A.spawnSquid();
+          this.tail = A.squids[A.squids.length - 1];
           A.boom(2);
         }, 1500);
+      },
+      // The mark stays up while either of them is still out there — the run is
+      // not over until the thing that followed it in is dealt with.
+      while() {
+        return (!!this.smuggler && A.falcon === this.smuggler) ||
+          (!!this.tail && A.squids.includes(this.tail));
       },
     },
   ]);

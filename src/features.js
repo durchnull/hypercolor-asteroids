@@ -61,6 +61,7 @@ ASTEROIDS.MODULES = [
   "./ui/clicks.js",
   "./ui/debrief.js",
   "./ui/hud.js",
+  "./ui/mark.js",
   "./ui/profile.js",
   "./ui/soundtrack.js",
 

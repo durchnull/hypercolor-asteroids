@@ -25,10 +25,25 @@
       minWave: 4,
       weight: 2,
       cooldown: 3,
+      // three arrows converging on something in the middle
+      icon: `M12 2.2v5.2 M10.1 5.4L12 7.3L13.9 5.4
+             M4.4 19.4L8.3 15.5 M8.3 15.5H5.6 M8.3 15.5v2.7
+             M19.6 19.4L15.7 15.5 M15.7 15.5h2.7 M15.7 15.5v2.7
+             M14.2 12a2.2 2.2 0 1 1-4.4 0 2.2 2.2 0 1 1 4.4 0`,
+      holds: 4,
       fire() {
-        for (let i = 0; i < 3; i++) A.spawnSquid();
+        this.pack = [];
+        for (let i = 0; i < 3; i++) {
+          A.spawnSquid();
+          this.pack.push(A.squids[A.squids.length - 1]);
+        }
         A.aberrate(0.8);
         A.boom(2);
+      },
+      // The mark stays up while its own three are still in the water — these
+      // three by identity, not "are there krakens", which the wave answers.
+      while() {
+        return !!this.pack && this.pack.some((s) => A.squids.includes(s));
       },
     },
 
@@ -40,6 +55,12 @@
       minWave: 2,
       weight: 3,
       cooldown: 2,
+      // a ring of rock with one hole in it, closing on something
+      icon: `M12 3l1.5 1.5-1.5 1.5-1.5-1.5z M18.5 6.7l1.5 1.5-1.5 1.5-1.5-1.5z
+             M18.5 14.3l1.5 1.5-1.5 1.5-1.5-1.5z M12 18l1.5 1.5-1.5 1.5-1.5-1.5z
+             M5.5 14.3l1.5 1.5-1.5 1.5-1.5-1.5z
+             M13.7 12a1.7 1.7 0 1 1-3.4 0 1.7 1.7 0 1 1 3.4 0`,
+      holds: 8,
       // A ring of rock around whoever is furthest from help, all of it aimed
       // inward. There is a gap; there is always a gap. Finding it is the game.
       fire() {
@@ -74,11 +95,18 @@
       minWave: 3,
       weight: 2,
       cooldown: 3,
+      // two gates, and a way through them you did not ask for
+      icon: `M7 4.6a7 8.5 0 0 0 0 14.8 M17 4.6a7 8.5 0 0 1 0 14.8
+             M7.6 12h8.8 M14.4 9.9L16.5 12L14.4 14.1`,
+      holds: 4,
       fire() {
         A.spawnPortals();
+        this.gate = A.portals;
         A.spawnSquid();
         A.aberrate(1.1);
       },
+      // as long as the pair it opened is the pair still standing there
+      while() { return !!this.gate && A.portals === this.gate; },
     },
 
     {
@@ -89,6 +117,11 @@
       minWave: 2,
       weight: 3,
       cooldown: 2,
+      // three streaks, all the same way, each with something at the front
+      icon: `M3.2 4.4L8.6 9.8 M11.1 11a1.3 1.3 0 1 1-2.6 0 1.3 1.3 0 1 1 2.6 0
+             M9.4 3.2L14.8 8.6 M17.3 9.8a1.3 1.3 0 1 1-2.6 0 1.3 1.3 0 1 1 2.6 0
+             M5.6 12.4L11 17.8 M13.5 19a1.3 1.3 0 1 1-2.6 0 1.3 1.3 0 1 1 2.6 0`,
+      holds: 7,
       // Everything on one heading, so it is survivable if you read it early
       // and lethal if you keep flying the way you were.
       fire() {
