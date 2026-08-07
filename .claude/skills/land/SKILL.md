@@ -1,10 +1,10 @@
 ---
 name: land
-description: The commit ritual for this cabinet - run the referee, actually play the build, write a subject line from the next pilot's seat and a Chronicle line for the book, then commit. Use whenever work is finished and ready to become a version, or when the user says land it, ship it, or commit.
+description: The commit ritual for this cabinet - run the referee, hand the build to the pilot to play, write a subject line from the next pilot's seat and a Chronicle line for the book, then commit. Use whenever work is finished and ready to become a version, or when the user says land it, ship it, or commit.
 model: opus
 effort: high
 argument-hint: "[optional: the subject line you want, or the Chronicle line to put on the record]"
-allowed-tools: Bash, Read, Edit, Write, Grep, Glob, mcp__playwright__browser_navigate, mcp__playwright__browser_press_key, mcp__playwright__browser_click, mcp__playwright__browser_evaluate, mcp__playwright__browser_console_messages, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_resize, mcp__playwright__browser_close
+allowed-tools: Bash, Read, Edit, Write, Grep, Glob
 ---
 
 # Land
@@ -26,17 +26,27 @@ confirm, write the override and land it — that is what budgets are for.
 Never suggest `--no-verify`. If you find yourself wanting to, the answer is
 either a smaller commit or an override line.
 
-## 2. Play it
+## 2. Hand it to the pilot
 
-Open the game and check the thing you built actually happens:
+GR1 is a promise to someone who is not in the room, and the referee cannot keep
+it for you — it reads the code, it does not run the game. Somebody has to press
+ENTER, and that somebody is the pilot, not you.
+
+Say what you changed and what to look for, then wait:
 
 ```sh
 python3 -m http.server 8000    # then open http://localhost:8000
 ```
 
-GR1 is a promise to someone who is not in the room. Do not skip this because
-the code looks right — check the console is clean, the field guide shows your
-entry, and both seats still work.
+- the thing you built actually happens
+- the console is clean
+- the field guide shows your entry
+- both seats still work
+
+Do not drive a browser, and never report a build as played. "The code looks
+right" is not a playtest and saying so is the whole failure GR1 exists to
+prevent. If the pilot waves it through unplayed that is their call — land it,
+and do not pretend in the commit message that it was checked.
 
 ## 3. Write it for the next pilot
 
