@@ -13,9 +13,16 @@ them all.
 
 | # | pilot | score | wave | time | accuracy | the flight in one line |
 |---|-------|-------|------|------|----------|------------------------|
+| 1 | David Friedrich | 16530 | 4 | 4:42 | 17% | Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end. |
 
 ## THE FLIGHT LOG
 
 Newest first. One line per tape, so the same evening is readable as an evening.
 
 <!-- log -->
+**2026-08-07 · David Friedrich · 16530 · wave 4 · 4:42** — 1024 shots for 175
+rocks (19 large, 49 medium, 107 small), 17 percent accuracy, best flurry of 18.
+Went after the kraken instead: 33 hits, 11 killed. Seven grapple throws, 29.0
+klicks flown, topping out at 397. Three deaths, no nukes, and the bomb never
+left the rack. 270 short of their own best.
+<!-- crc a6bfaee1 -->
