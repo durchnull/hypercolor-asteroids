@@ -1,9 +1,9 @@
 // The black box. Every flight is taped, and the tape survives the ship.
 //
 // While the game runs this watches everything worth counting — shots, rock
-// breaks, deaths, close shaves, top speed — and when the last ship dies it
-// seals the lot into a tape: a short readable header over a base64 body with
-// a checksum. The debrief panel (ui/debrief.js) puts it on the game-over
+// breaks, deaths, close shaves, top speed, and every event another pilot's
+// file dropped on the flight — and when the last ship dies it seals the lot
+// into a tape: a short readable header over a base64 body with a checksum. The debrief panel (ui/debrief.js) puts it on the game-over
 // screen with a copy button; tools/blackbox.sh reads it back on the other
 // side. The seal is FNV-1a over the exact JSON bytes, so a tape edited by
 // hand stops being a tape.
@@ -27,7 +27,23 @@
   let taping = false;
   let tape = null;            // the sealed dump, once the flight is over
 
-  const flight = { time: 0, shaves: 0, seats: {} };
+  const flight = { time: 0, shaves: 0, seats: {}, events: [] };
+
+  // The pilot-vs-pilot half of the flight: every event that fired, whose it
+  // was, which wave it came on, and how many ships went down while it was
+  // still in the field. The runner keeps one live entry per firing
+  // (game/events.js), so entry identity is firing identity - the same trap
+  // two waves apart is two rows on the tape.
+  const courted = new Map();
+
+  function court() {
+    for (const l of (A.liveEvents ? A.liveEvents() : [])) {
+      if (courted.has(l)) continue;
+      const r = { id: l.e.id, by: l.e.by, wave: A.game.level, deaths: 0 };
+      courted.set(l, r);
+      flight.events.push(r);
+    }
+  }
 
   function seat(p) {
     if (!p) return null;
@@ -80,7 +96,17 @@
 
     const killShip = A.killShip;
     A.killShip = function (p) {
-      if (taping) { const s = seat(p); if (s) s.deaths++; }
+      if (taping) {
+        const s = seat(p);
+        if (s) s.deaths++;
+        // an event that fires and kills in the same frame is courted here,
+        // before update() has had a look at it
+        court();
+        for (const l of (A.liveEvents ? A.liveEvents() : [])) {
+          const r = courted.get(l);
+          if (r) r.deaths++;
+        }
+      }
       return killShip(p);
     };
 
@@ -118,6 +144,7 @@
     if (!taping || !tick.running) return;
     // wall time while running: slow-mo stretches the frame, not the flight
     flight.time += tick.raw;
+    court();
 
     for (const p of A.flyingShips()) {
       const s = seat(p);
@@ -148,6 +175,8 @@
     flight.time = 0;
     flight.shaves = 0;
     flight.seats = {};
+    flight.events = [];
+    courted.clear();
   }
 
   // ---- sealing the tape ---------------------------------------------------
@@ -196,6 +225,10 @@
       time: Math.round(flight.time * 10) / 10,
       shaves: flight.shaves,
       seats,
+      // The other pilots' half of the flight, in firing order. Additive: a
+      // tape sealed before this existed simply has no events field, and the
+      // reader says so rather than guessing.
+      events: flight.events,
     };
 
     const json = JSON.stringify(record);
