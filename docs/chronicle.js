@@ -6,14 +6,17 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 26,
-    latest: { v: 26, pilot: "David Friedrich", date: "07 August 2026", line: "The bookkeeping of the cabinet moved a foot to the left.", plate: "2c4f2c36.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left." },
+    versions: 27,
+    latest: { v: 27, pilot: "David Friedrich", date: "07 August 2026", line: "The bookkeeping of the cabinet moved a foot to the left.", plate: "d3d78842.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left." },
     plates: [
+      { v: 27, file: "d3d78842.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
       { v: 26, file: "2c4f2c36.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
       { v: 25, file: "e4fa7990.jpg", alt: "The rules of the field changed while nobody was flying.", line: "The rules of the field changed while nobody was flying." },
       { v: 24, file: "b0ffdf83.jpg", alt: "The rules of the field changed while nobody was flying.", line: "The rules of the field changed while nobody was flying." },
-      { v: 23, file: "5e29b1c9.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
-    ]
+    ],
+    roster: {
+      "David Friedrich": 27,
+    }
   };
   A.BOARD = [
     { rank: "1", pilot: "David Friedrich", score: "16530", wave: "4", time: "4:42", hits: "17%", line: "Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end." },

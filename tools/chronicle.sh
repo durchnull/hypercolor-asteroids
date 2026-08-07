@@ -3096,6 +3096,7 @@ $1 == "RANK" { rc++; for (k = 2; k <= 8; k++) R[rc, k] = $k; next }
 NF >= 3 {
   # a version, newest first, so the number counts down from the newest.
   # The last field of a git record carries the newline that ends it.
+  PC[trim($2)]++
   if (v < 1) next
   VW[v] = trim($2); VD[v] = trim($3); VT[v] = ($1 in tag) ? tag[$1] : ""
   VP[v] = ($1 in art) ? art[$1] : "";  VA[v] = ($1 in art) ? alt[$1] : ""
@@ -3128,7 +3129,13 @@ END {
     printf "      { v: %d, file: \"%s\", alt: \"%s\", line: \"%s\" },\n", \
            v, js(VP[v]), js(VA[v]), js(VT[v])
   }
-  print "    ]"
+  print "    ],"
+  # The one service-record fact a page cannot count for itself: versions
+  # landed per pilot, counted exactly the way the cover counts them. Traps
+  # and board flights the splash already knows (the registry, A.BOARD).
+  print "    roster: {"
+  for (p in PC) printf "      \"%s\": %d,\n", js(p), PC[p]
+  print "    }"
   print "  };"
   # The board as the file has it - score order, the words included. A tape is
   # the only way onto that table and nothing here is going to be a second way.
