@@ -410,9 +410,46 @@ th { color: var(--cyan); font-weight: normal; letter-spacing: .12em; text-transf
 .flip .out  { margin-left: auto; color: var(--lime); }
 .flip .out:hover { color: var(--magenta); }
 
+/* The switch for the room, which docs/chronicle-song.js builds for itself on
+   every page of this book. The chapters get these rules out of chronicle.css;
+   the notes do not load that file, and a button with no clothes on in the
+   corner of the architecture reads as something broken rather than something
+   offered. Same shape, same corner, same four bars. */
+.song {
+  position: fixed; z-index: 6;
+  top: clamp(.4rem, 1.5vw, .9rem); right: clamp(.4rem, 1.5vw, .9rem);
+  display: flex; align-items: center; gap: .45rem;
+  padding: .36rem .62rem;
+  font-family: inherit; font-size: .48rem;
+  letter-spacing: .26em; text-transform: uppercase;
+  color: var(--dim);
+  background: rgba(7, 3, 15, .72);
+  border: 1px solid rgba(33, 243, 255, .24);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+.song:hover { color: var(--ink); border-color: var(--cyan); }
+.song.on {
+  color: var(--cyan);
+  border-color: rgba(33, 243, 255, .65);
+  box-shadow: 0 0 18px rgba(33, 243, 255, .2);
+}
+.eq { display: flex; align-items: flex-end; gap: 2px; height: .68rem; }
+.eq i { width: 2px; height: 20%; background: currentColor; }
+.song.on .eq i { animation: eq 2.1s ease-in-out infinite; }
+.song.on .eq i:nth-child(2) { animation-duration: 3.4s; animation-delay: -.9s; }
+.song.on .eq i:nth-child(3) { animation-duration: 2.7s; animation-delay: -1.6s; }
+.song.on .eq i:nth-child(4) { animation-duration: 4.1s; animation-delay: -.4s; }
+@keyframes eq { 0%, 100% { height: 20%; } 50% { height: 100%; } }
+
 @media (max-width: 34rem) {
   body { font-size: 14px; padding: 0 .9rem 4rem; }
   .flip .out { margin-left: 0; }
+  .song .lab { display: none; }
+  .song { padding: .4rem .5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .song.on .eq i { animation: none; }
 }
 CSS
 }
@@ -451,6 +488,12 @@ while IFS= read -r f; do
     printf '<link rel="stylesheet" href="../styles/tokens.css">\n'
     printf '<link rel="stylesheet" href="../styles/crt.css">\n'
     printf '<link rel="stylesheet" href="notes.css">\n'
+    # The same room the chapters are read in, written by tools/chronicle.sh and
+    # on unless the reader has said otherwise. The notes are the part of this
+    # book somebody reads standing up, and walking out of a chapter into the
+    # architecture should not be walking out of the building — the piece keeps
+    # its place across the door either way.
+    printf '<script src="chronicle-song.js" defer></script>\n'
     printf '</head><body class="notes">\n'
     printf '<div class="crt vignette"></div>\n'
     printf '<div class="crt scanlines"></div>\n'

@@ -49,6 +49,12 @@
 # picture in each, because it was only ever painted once. A pilot with no face
 # reads as a name, exactly as everybody did before there were any.
 #
+# The cabinet reads the book too. docs/chronicle.js is the last thing written
+# here: the newest chapter, the last few plates and the top of the board, in
+# the one shape a page can read without fetching anything (GR2). The splash
+# screen draws its doorway out of that file and does without it when a clone
+# has never run this tool, exactly as it does without the faces.
+#
 #   tools/chronicle.sh                rewrite docs/index.html
 #   tools/chronicle.sh --version      the version on the cabinet now
 #   tools/chronicle.sh --next         the version the next commit becomes, or
@@ -212,6 +218,7 @@ LIB='
 function is_game(p) { return (p == "index.html" || p ~ /^src\// || p ~ /^styles\//) }
 function is_book(p) {
   return (p == "docs/index.html" || p == "docs/chronicle.css" ||
+          p == "docs/chronicle.js" || p == "docs/chronicle-song.js" ||
           p == "docs/taglines.tsv" || p ~ /^docs\/v[0-9]+\.html$/ ||
           p ~ /^docs\/art\// || p ~ /^docs\/faces\//)
 }
@@ -449,6 +456,7 @@ function ico(n,   p) {
   else if (n == "hourglass") p = "<path d=\"M6 3h12M6 21h12M7.5 3v3.5L12 12l4.5-5.5V3M7.5 21v-3.5L12 12l4.5 5.5V21\"/>"
   else if (n == "coin")      p = "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 6.5v11M9.5 9.5h5M9.5 14.5h5\"/>"
   else if (n == "frame")     p = "<rect x=\"3\" y=\"4.5\" width=\"18\" height=\"15\" rx=\"1.5\"/><path d=\"M3 15.5l4.5-4.5 3.5 3.5 3-3 7 7\"/><circle cx=\"8.5\" cy=\"9\" r=\"1.4\"/>"
+  else if (n == "grid")      p = "<rect x=\"3.5\" y=\"3.5\" width=\"7\" height=\"7\"/><rect x=\"13.5\" y=\"3.5\" width=\"7\" height=\"7\"/><rect x=\"3.5\" y=\"13.5\" width=\"7\" height=\"7\"/><rect x=\"13.5\" y=\"13.5\" width=\"7\" height=\"7\"/>"
   else return ""
   return "<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\">" p "</svg>"
 }
@@ -652,6 +660,10 @@ function head(f, ttl, cls,   b) {
   print "<link rel=\"stylesheet\" href=\"../styles/tokens.css\">" > f
   print "<link rel=\"stylesheet\" href=\"../styles/crt.css\">" > f
   print "<link rel=\"stylesheet\" href=\"chronicle.css\">" > f
+  # The room it is read in, off until somebody asks for it. Deferred, and it
+  # builds its own switch, so a page that never loads it is a page with no
+  # promise of sound on it.
+  print "<script src=\"chronicle-song.js\" defer></script>" > f
   b = "</head><body"
   if (cls != "") b = b " class=\"" cls "\""
   print b ">" > f
@@ -678,14 +690,20 @@ END {
              (cheat[p] ? "<b>" : ""), cell, (cheat[p] ? "</b>" : ""))
   }
 
-  # The strip that sits at the foot of every page: the whole history at a
-  # glance, oldest on the left, with both kinds of trouble already marked. A
-  # reader can see where the book gets loud before they get there.
+  # The rail that sits in the dock at the foot of every chapter: the whole
+  # history at a glance, oldest on the left, each version wearing the plate its
+  # own page opens with - so a reader recognises a chapter they have already
+  # read before they have read its number. Both kinds of trouble are marked, so
+  # they can see where the book gets loud before they get there. A version with
+  # no plate keeps the halftone the css gives it and reads as a panel somebody
+  # meant, the same way its splash does.
   for (v = 1; v <= total; v++) {
     nth[VW[v]]++
     NT[v] = nth[VW[v]]
     TICK[v] = "<a class=\"tick" (VU[v] != "" ? " off" : (VO[v] != "" ? " bent" : "")) \
-              "\" href=\"v" v ".html\" data-t=\"v" v " &middot; " att(shout(v)) "\">" v "</a>"
+              "\" href=\"v" v ".html\" title=\"v" v " &middot; " att(shout(v)) "\">" \
+              (VP[v] != "" ? "<img src=\"art/" VP[v] "\" alt=\"\" loading=\"lazy\" decoding=\"async\">" : "") \
+              "<b>" v "</b></a>"
   }
 
   # ---- the cover -----------------------------------------------------------
@@ -744,14 +762,13 @@ END {
     kept = (VU[v] != "" || VO[v] != "" || VR[v] != "")
     printf "<main class=\"ch%s%s%s\">\n", (kept ? " has-record" : ""), \
            ((v in IB) ? " has-aside" : ""), (IBN[v] >= 3 ? " long-aside" : "") > f
-    printf "<header class=\"cel bar\"><span class=\"badge\"><b>%s</b><i>chapter</i></span>", roman(v) > f
-    printf "<span class=\"ver\">v%s</span>", v > f
-    printf "<span class=\"who\">%s%s</span><span class=\"when\">%s &middot; %s</span></header>\n", \
-           face(VW[v]), esc(VW[v]), esc(VN[v]), VC[v] > f
 
     # The splash. One version is one sentence, and this is it, at the size that
     # sentence deserves - with the plate behind it if this chapter has one, and
     # a field of halftone dots if it does not. Nothing below changes either way.
+    # The credits ride on it rather than on a bar of their own: a chapter opens
+    # on a picture, and who flew it and when belongs in the corner of that
+    # picture the way a comic signs its first panel.
     printf "<section class=\"cel splash%s\">", (VP[v] != "" ? " plated" : "") > f
     if (VP[v] != "")
       printf "<img class=\"plate-img\" src=\"art/%s\" alt=\"%s\" loading=\"lazy\" decoding=\"async\">", \
@@ -759,6 +776,10 @@ END {
     print "<span class=\"dots\" aria-hidden=\"true\"></span>" > f
     printf "<div class=\"say\"><p class=\"kicker\">%s what changed</p><h1 class=\"shout\">%s</h1></div>", \
            ico("bolt"), esc(shout(v)) > f
+    printf "<p class=\"credits\"><span class=\"badge\"><b>%s</b><i>chapter</i></span>", roman(v) > f
+    printf "<span class=\"ver\">v%s</span>", v > f
+    printf "<span class=\"who\">%s%s</span><span class=\"when\">%s &middot; %s</span></p>", \
+           face(VW[v]), esc(VW[v]), esc(VN[v]), VC[v] > f
     if (VP[v] != "")
       printf "<a class=\"plate-full\" href=\"art/%s\">%s painted for this chapter</a>", VP[v], ico("frame") > f
     print "</section>" > f
@@ -833,33 +854,62 @@ END {
     # The one line that stays literal: it is meant to be pasted into a terminal.
     printf "<p class=\"cel play\">%s Drop a coin in this one: <code>git checkout %s</code></p>\n", \
            ico("coin"), substr(VH[v], 1, 8) > f
-    print "<nav class=\"flip\">" > f
-    if (v > 1) printf "<a class=\"prev\" rel=\"prev\" href=\"v%d.html\">&#9664; v%d</a>\n", v - 1, v - 1 > f
-    else       print "<span class=\"prev none\">&#9664; the first</span>" > f
-    print "<a class=\"up\" href=\"index.html\">CONTENTS</a>" > f
-    if (v < total) printf "<a class=\"next\" rel=\"next\" href=\"v%d.html\">v%d &#9654;</a>\n", v + 1, v + 1 > f
-    else           print "<span class=\"next none\">on the cabinet &#9654;</span>" > f
-    print "</nav>" > f
-    print "<nav class=\"strip\" aria-label=\"every version\">" > f
+    print "</main>" > f
+    # The dock. Everything a reader might want next, parked at the foot of the
+    # window rather than at the foot of the page: somebody who decides halfway
+    # down that they have had enough of this chapter should not have to scroll
+    # to the end to say so. Back and next are the size of a thing you press;
+    # between them is every chapter there has ever been, and when there are
+    # more of those than there is window, the middle scrolls and the two
+    # buttons do not move.
+    print "<nav class=\"dock\" aria-label=\"turn the page\">" > f
+    if (v > 1)
+      printf "<a class=\"turn prev\" rel=\"prev\" href=\"v%d.html\" title=\"v%d &middot; %s\"><span class=\"arw\">&#9664;</span><span class=\"lab\"><i>back</i><b>v%d</b></span></a>\n", \
+             v - 1, v - 1, att(shout(v - 1)), v - 1 > f
+    else
+      print "<span class=\"turn prev none\"><span class=\"arw\">&#9664;</span><span class=\"lab\"><i>back</i><b>the first</b></span></span>" > f
+    printf "<a class=\"up\" href=\"index.html\" title=\"the contents\">%s<i>all</i></a>\n", ico("grid") > f
+    print "<div class=\"rail\">" > f
     for (k = 1; k <= total; k++) {
       t = TICK[k]
-      if (k == v) sub(/class="tick/, "class=\"tick here", t)
+      if (k == v) {
+        sub(/class="tick/, "class=\"tick here", t)
+        sub(/<a /, "<a aria-current=\"page\" ", t)
+      }
       print t > f
     }
+    print "</div>" > f
+    if (v < total)
+      printf "<a class=\"turn next\" rel=\"next\" href=\"v%d.html\" title=\"v%d &middot; %s\"><span class=\"lab\"><i>next</i><b>v%d</b></span><span class=\"arw\">&#9654;</span></a>\n", \
+             v + 1, v + 1, att(shout(v + 1)), v + 1 > f
+    else
+      print "<span class=\"turn next none\"><span class=\"lab\"><i>next</i><b>on the cabinet</b></span><span class=\"arw\">&#9654;</span></span>" > f
     print "</nav>" > f
-    print "</main>" > f
     # The arrow keys, because a book of pages that only turn by mouse is a
     # worse book, and because this cabinet is played on a keyboard. And the
     # cels, which land one at a time as you scroll onto them and count their
     # numbers up when they do. Everything the script does is decoration: with
     # it switched off the page is the same page, already right, just still.
     print "<script>" > f
+    # A page turn is the wrong thing to do while the plate is up in front of
+    # the page, so while it is up the keyboard belongs to it and Escape puts
+    # it away rather than leaving the chapter.
     print "addEventListener(\"keydown\", function (e) {" > f
+    print "  if (document.documentElement.classList.contains(\"lit-open\")) {" > f
+    print "    if (e.key === \"Escape\") drop()" > f
+    print "    return" > f
+    print "  }" > f
     print "  var to = { ArrowLeft: \".prev\", ArrowRight: \".next\", Escape: \".up\" }[e.key]" > f
-    print "  var a = to ? document.querySelector(\"nav.flip \" + to) : null" > f
+    print "  var a = to ? document.querySelector(\".dock \" + to) : null" > f
     print "  if (a && a.href) location.href = a.href" > f
     print "})" > f
     print "document.documentElement.className = \"js\"" > f
+    # The rail opens on the chapter you are reading rather than on the first
+    # one ever landed. Only the rail scrolls, and only sideways, so a reader
+    # who never looks down there does not notice this happening.
+    print "var rail = document.querySelector(\".rail\")" > f
+    print "var here = rail && rail.querySelector(\".here\")" > f
+    print "if (here) rail.scrollLeft = here.offsetLeft - (rail.clientWidth - here.offsetWidth) / 2" > f
     print "var cels = document.querySelectorAll(\".cel\")" > f
     print "function land(cel) {" > f
     print "  cel.classList.add(\"in\")" > f
@@ -887,6 +937,89 @@ END {
     print "  }, { rootMargin: \"0px 0px -6% 0px\" })" > f
     print "  for (var j = 0; j < cels.length; j++) io.observe(cels[j])" > f
     print "}" > f
+    # The plate in full. The splash already has the picture in it, cropped to
+    # the panel by object-fit, so opening it is not a new picture arriving -
+    # it is the same one leaving the panel. Everything below is the arithmetic
+    # for that: where the crop sits on the screen, and how much bigger the
+    # whole plate is than the part of it you were already looking at.
+    print "var pf = document.querySelector(\".plate-full\")" > f
+    print "var pb = document.querySelector(\".plate-img\")" > f
+    print "var sp = document.querySelector(\".splash\")" > f
+    print "var lit = null, flight = null" > f
+    print "function lift(e) {" > f
+    # A middle click or a held modifier still means what it has always meant:
+    # the href is a real file and somebody may want it in its own tab.
+    print "  if (lit || e.button > 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return" > f
+    print "  e.preventDefault()" > f
+    print "  lit = document.createElement(\"div\")" > f
+    print "  lit.className = \"lit\"" > f
+    print "  lit.setAttribute(\"role\", \"dialog\")" > f
+    print "  lit.setAttribute(\"aria-modal\", \"true\")" > f
+    print "  lit.setAttribute(\"aria-label\", \"the plate painted for this chapter\")" > f
+    print "  var img = lit.appendChild(document.createElement(\"img\"))" > f
+    print "  var cap = lit.appendChild(document.createElement(\"p\"))" > f
+    print "  var x = lit.appendChild(document.createElement(\"button\"))" > f
+    print "  img.alt = pb ? pb.alt : \"\"" > f
+    print "  img.src = pf.getAttribute(\"href\")" > f
+    print "  cap.className = \"lit-cap\"" > f
+    print "  cap.textContent = img.alt" > f
+    print "  x.className = \"lit-x\"" > f
+    print "  x.type = \"button\"" > f
+    print "  x.textContent = \"×\"" > f
+    print "  x.setAttribute(\"aria-label\", \"close\")" > f
+    print "  x.title = \"close (esc)\"" > f
+    print "  document.body.appendChild(lit)" > f
+    print "  document.documentElement.classList.add(\"lit-open\")" > f
+    print "  x.focus()" > f
+    print "  lit.addEventListener(\"click\", drop)" > f
+    print "  if (img.complete && img.naturalWidth) fly(img)" > f
+    print "  else img.addEventListener(\"load\", function () { fly(img) })" > f
+    print "}" > f
+    # One scale for both axes, so nothing stretches on the way out, and a clip
+    # that starts at the edges of the panel, so for the first frame the plate is
+    # exactly the crop that was already there and nothing appears outside a
+    # panel it has not left yet.
+    print "function fly(img) {" > f
+    # the browser has to have seen it arrive dark before it will bother
+    # animating it lighting up
+    print "  void lit.offsetWidth" > f
+    print "  lit.classList.add(\"on\")" > f
+    print "  if (!img.animate || !pb || !sp) return" > f
+    print "  if (matchMedia(\"(prefers-reduced-motion: reduce)\").matches) return" > f
+    print "  var b = pb.getBoundingClientRect(), p = sp.getBoundingClientRect()" > f
+    print "  var f = img.getBoundingClientRect()" > f
+    print "  if (!f.width || !img.naturalWidth) return" > f
+    print "  var cx = b.left + b.width / 2, cy = b.top + b.height / 2" > f
+    print "  var cover = Math.max(b.width / img.naturalWidth, b.height / img.naturalHeight)" > f
+    print "  var s = img.naturalWidth * cover / f.width" > f
+    print "  var edge = function (n) { return Math.max(0, n).toFixed(1) + \"px\" }" > f
+    print "  flight = img.animate([{" > f
+    print "    transform: \"translate(\" + (cx - f.left - f.width / 2) + \"px,\" +" > f
+    print "               (cy - f.top - f.height / 2) + \"px) scale(\" + s + \")\"," > f
+    print "    clipPath: \"inset(\" + edge(f.height / 2 + (p.top - cy) / s) + \" \" +" > f
+    print "              edge(f.width / 2 - (p.right - cx) / s) + \" \" +" > f
+    print "              edge(f.height / 2 - (p.bottom - cy) / s) + \" \" +" > f
+    print "              edge(f.width / 2 + (p.left - cx) / s) + \")\"" > f
+    print "  }, {" > f
+    print "    transform: \"none\", clipPath: \"inset(0px 0px 0px 0px)\"" > f
+    print "  }], { duration: 560, easing: \"cubic-bezier(0.4, 0, 0.15, 1)\" })" > f
+    print "}" > f
+    # Put away the same way it arrived, backwards, because a plate that drops
+    # back into its own panel tells you where it came from.
+    print "function drop() {" > f
+    print "  if (!lit) return" > f
+    print "  var gone = lit" > f
+    print "  lit = null" > f
+    print "  gone.classList.remove(\"on\")" > f
+    print "  document.documentElement.classList.remove(\"lit-open\")" > f
+    print "  pf.focus()" > f
+    print "  if (flight && flight.playState !== \"idle\") {" > f
+    print "    flight.reverse()" > f
+    print "    flight.onfinish = function () { gone.parentNode && gone.parentNode.removeChild(gone) }" > f
+    print "  } else setTimeout(function () { gone.parentNode && gone.parentNode.removeChild(gone) }, 420)" > f
+    print "  flight = null" > f
+    print "}" > f
+    print "if (pf) pf.addEventListener(\"click\", lift)" > f
     print "</script>" > f
     print "</body></html>" > f
     close(f)
@@ -1096,7 +1229,11 @@ h1 {
    Everything sits on the same twelve columns, so the cels line up without
    anybody having to place them, and a cel with no neighbour this week takes
    the width its neighbour is not using. */
-body.page { padding: 0 0 clamp(2rem, 6vh, 4rem); }
+/* The dock is fixed to the foot of the window, so the page ends above it
+   rather than under it: the last cel of a chapter is as readable as the
+   first. */
+body.page { padding: 0 0 clamp(6.5rem, 4rem + 6vh, 8.5rem); }
+html { scroll-padding-bottom: 6rem; }
 .page main {
   max-width: 82rem;
   margin: 0 auto;
@@ -1166,13 +1303,21 @@ body.page { padding: 0 0 clamp(2rem, 6vh, 4rem); }
 }
 .tab .ic { width: 0.85rem; height: 0.85rem; }
 
-/* Who flew it and when, across the top, where a comic prints its credits. */
-.bar {
+/* Who flew it and when, signed into the bottom corner of the splash — where a
+   comic signs a panel, and the one corner the sentence never reaches, because
+   the sentence is capped at 17ch and pinned to the left. Stacked, so it reads
+   down the corner as four short facts rather than across it as one long line
+   arguing with the sentence for the same inch. */
+.credits {
+  position: absolute;
+  z-index: 2;
+  right: clamp(1.2rem, 3.6vw, 2.6rem);
+  bottom: clamp(1.2rem, 3.6vw, 2.6rem);
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem 1.2rem;
-  padding: 0.65rem 1rem;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  text-align: right;
 }
 .badge { display: flex; align-items: baseline; gap: 0.5rem; }
 .badge b {
@@ -1196,25 +1341,24 @@ body.page { padding: 0 0 clamp(2rem, 6vh, 4rem); }
   letter-spacing: 0.2em;
   color: var(--cyan);
 }
-.bar .who {
-  margin-left: auto;
+.credits .who {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.5rem;
   font-size: 0.6rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--cyan);
 }
-/* Whoever flew it, at the top of their own chapter, where there is room for
-   them to be slightly more than a line of text. */
-.bar .who .face {
-  width: 3.4rem;
-  height: 3.4rem;
+/* Whoever flew it, on their own chapter's splash — smaller than it was on a
+   bar of its own, because the sentence underneath is the loud thing here. */
+.credits .who .face {
+  width: 2.3rem;
+  height: 2.3rem;
   border-color: rgba(33, 243, 255, 0.55);
   box-shadow: 0 0 12px rgba(33, 243, 255, 0.35);
 }
-.bar .when {
+.credits .when {
   font-size: 0.56rem;
   letter-spacing: 0.14em;
   color: var(--dim);
@@ -1325,6 +1469,93 @@ body.page { padding: 0 0 clamp(2rem, 6vh, 4rem); }
   text-decoration: none;
 }
 .plate-full:hover { border-color: var(--cyan); box-shadow: 0 0 16px rgba(33, 243, 255, 0.3); }
+/* with the script running the link does not go anywhere, so it says so */
+.js .plate-full { cursor: zoom-in; }
+
+/* --- the plate, in full ---------------------------------------------------
+   The link under the splash still points at the picture, and with the script
+   off the browser does the old obvious thing with it. With the script on the
+   chapter stays where it is and the plate climbs out of the panel it was
+   behind instead — uncropped, over the page it belongs to, and gone again on
+   a click, on Escape, or on the button in the corner. */
+.lit {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.7rem, 2vh, 1.2rem);
+  padding: clamp(1rem, 4vw, 3rem);
+  cursor: zoom-out;
+  background: radial-gradient(120% 90% at 50% 45%, rgba(20, 4, 40, 0.86), rgba(3, 1, 8, 0.97));
+  opacity: 0;
+  transition: opacity 420ms ease;
+}
+.lit.on { opacity: 1; }
+/* the book is a CRT, and a picture held up in front of it is behind the same
+   glass as everything else on the page */
+.lit::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.32) 0 1px, transparent 1px 3px);
+}
+.lit img {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border: 1px solid rgba(255, 62, 200, 0.45);
+  box-shadow: 0 0 70px rgba(160, 75, 255, 0.35);
+  /* the same glass the plate wears in the panel it came out of */
+  filter: saturate(1.18) contrast(1.06);
+}
+.lit-cap {
+  position: relative;
+  max-width: 46rem;
+  text-align: center;
+  color: var(--dim);
+  font-size: 0.62rem;
+  line-height: 1.8;
+  letter-spacing: 0.14em;
+  text-wrap: balance;
+}
+.lit-cap:empty { display: none; }
+/* the caption and the way out arrive after the plate has landed, so the first
+   half-second is the picture and nothing else */
+.lit-cap, .lit-x {
+  opacity: 0;
+  transform: translateY(0.4rem);
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+.lit.on .lit-cap, .lit.on .lit-x {
+  opacity: 1;
+  transform: none;
+  transition-delay: 300ms;
+}
+.lit-x {
+  position: absolute;
+  top: clamp(0.6rem, 2vw, 1.3rem);
+  right: clamp(0.6rem, 2vw, 1.3rem);
+  width: 2.1rem;
+  height: 2.1rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: rgba(7, 3, 15, 0.75);
+  border: 1px solid rgba(33, 243, 255, 0.45);
+  color: var(--cyan);
+  font: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.lit-x:hover { border-color: var(--cyan); box-shadow: 0 0 16px rgba(33, 243, 255, 0.3); }
+/* the page underneath does not scroll while the plate is up, or the zoom it
+   flies back into would have moved by the time it got there */
+.lit-open, .lit-open body { overflow: hidden; }
 
 /* --- the narration --------------------------------------------------------
    The pilot's own sentence about what they did, in what a comic would call a
@@ -1565,69 +1796,142 @@ body.page { padding: 0 0 clamp(2rem, 6vh, 4rem); }
   50% { box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.7), 0 0 40px rgba(255, 62, 200, 0.45); }
 }
 
-/* Forward, back, and out. The arrow keys do the same thing — see the script
-   at the foot of every page. */
-.flip {
-  grid-column: span 12;
-  display: flex;
-  gap: 1rem;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-top: 0.5rem;
-  padding-top: 0.6rem;
-  border-top: 1px dashed rgba(160, 75, 255, 0.3);
-  font-size: 0.66rem;
-  letter-spacing: 0.18em;
+/* --- the dock ---------------------------------------------------------------
+   Forward, back, and out — bolted to the bottom of the window instead of the
+   bottom of the page, because a reader halfway down a chapter is exactly the
+   reader most likely to want the next one. The arrow keys do the same thing;
+   see the script at the foot of every page. */
+.dock {
+  position: fixed;
+  z-index: 5;
+  inset: auto 0 0 0;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: clamp(0.3rem, 1vw, 0.75rem);
+  padding: 0.45rem clamp(0.45rem, 1.8vw, 1.2rem);
+  background: linear-gradient(to top, rgba(7, 3, 15, 0.98), rgba(9, 4, 20, 0.9));
+  border-top: 1px solid rgba(160, 75, 255, 0.5);
+  box-shadow: 0 -12px 34px rgba(7, 3, 15, 0.85);
+  backdrop-filter: blur(6px);
 }
-.flip a { color: var(--lime); text-decoration: none; text-shadow: 0 0 10px currentColor; }
-.flip a:hover { color: var(--ink); }
-.flip .up { color: var(--dim); text-shadow: none; letter-spacing: 0.3em; }
-.flip .none { color: rgba(154, 134, 189, 0.4); }
 
-/* Every version there has ever been, oldest first, always in reach. The two
-   kinds of trouble are marked, so a reader can see where the book gets loud
-   before they get there. */
-.strip { grid-column: span 12; position: relative; display: flex; flex-wrap: wrap; gap: 3px; }
+/* The two a reader actually wants, at the size of something you press. */
+.turn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid rgba(182, 255, 61, 0.45);
+  background: rgba(182, 255, 61, 0.06);
+  color: var(--lime);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.turn:hover {
+  color: var(--ink);
+  border-color: var(--lime);
+  background: rgba(182, 255, 61, 0.16);
+  box-shadow: 0 0 18px rgba(182, 255, 61, 0.25);
+}
+.turn .arw { font-size: 1.1rem; line-height: 1; text-shadow: 0 0 12px currentColor; }
+.turn .lab { display: grid; gap: 0.1rem; text-align: left; }
+.turn.next .lab { text-align: right; }
+.turn .lab i {
+  font-style: normal;
+  font-size: 0.46rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.turn .lab b { font-size: 0.78rem; font-weight: 500; letter-spacing: 0.1em; }
+/* The first chapter and the one on the cabinet each have one edge with nothing
+   past it. The button stays where it was, unlit, so the row does not shuffle. */
+.turn.none {
+  border-color: rgba(154, 134, 189, 0.22);
+  background: none;
+  color: rgba(154, 134, 189, 0.45);
+}
+.turn.none .lab b { font-size: 0.6rem; letter-spacing: 0.16em; }
+.up {
+  display: grid;
+  place-items: center;
+  gap: 0.14rem;
+  padding: 0 0.6rem;
+  border: 1px solid rgba(160, 75, 255, 0.4);
+  color: var(--violet);
+  text-decoration: none;
+}
+.up .ic { width: 0.95rem; height: 0.95rem; }
+.up i { font-style: normal; font-size: 0.44rem; letter-spacing: 0.22em; text-transform: uppercase; }
+.up:hover { color: var(--ink); border-color: var(--cyan); }
+
+/* Every version there has ever been, oldest first, always in reach, each one
+   wearing the plate its own chapter opens with. Both kinds of trouble are
+   marked, so a reader can see where the book gets loud before they get there.
+   More chapters than window and this scrolls sideways — which it will, and
+   which is why it is the only part of the dock allowed to move. */
+.rail {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  justify-content: safe center;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(160, 75, 255, 0.5) transparent;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 1.2rem, #000 calc(100% - 1.2rem), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 1.2rem, #000 calc(100% - 1.2rem), transparent);
+}
+.rail::-webkit-scrollbar { height: 3px; }
+.rail::-webkit-scrollbar-thumb { background: rgba(160, 75, 255, 0.5); }
 .tick {
-  min-width: 1.5rem;
-  padding: 0.16rem 0.28rem;
-  border: 1px solid rgba(160, 75, 255, 0.28);
-  font-size: 0.54rem;
-  text-align: center;
+  position: relative;
+  flex: none;
+  display: block;
+  width: clamp(2.6rem, 4.4vw, 3.3rem);
+  height: 2.4rem;
+  overflow: hidden;
+  border: 1px solid rgba(160, 75, 255, 0.3);
+  /* the halftone a chapter with no plate falls back to, under the plate a
+     chapter with one covers it with */
+  background: radial-gradient(rgba(255, 62, 200, 0.5) 1px, transparent 1.2px) 0 0 / 6px 6px, #0b0418;
   color: var(--dim);
   text-decoration: none;
+}
+.tick img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.72;
+  /* a plate is a square and a thumbnail is not, so it arrives cropped and
+     often cropped to the darkest part of itself - lifted here, because a
+     thumbnail nobody can make out is a blank tile with extra steps */
+  filter: saturate(1.25) contrast(1.05) brightness(1.25);
+  transition: opacity 0.15s, transform 0.35s;
+}
+.tick b {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 0.06rem 0;
+  background: linear-gradient(to top, rgba(5, 1, 12, 0.92), rgba(5, 1, 12, 0));
+  font-size: 0.54rem;
+  font-weight: 500;
+  text-align: center;
+  letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
 }
-.tick:hover { color: var(--ink); border-color: var(--cyan); }
+.tick:hover { border-color: var(--cyan); color: var(--ink); }
+.tick:hover img { opacity: 0.95; transform: scale(1.08); }
 .tick.bent { border-color: rgba(255, 176, 32, 0.6); color: var(--amber); }
-.tick.off {
-  border-color: var(--magenta);
-  color: var(--magenta);
-  background: rgba(255, 62, 200, 0.12);
-}
-.tick.here { background: var(--cyan); border-color: var(--cyan); color: var(--void); }
-/* The preview, parked at the left of the strip rather than over the tick, so
-   that the first version and the last one both get a whole one. */
-.tick::after {
-  content: attr(data-t);
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(100% + 5px);
-  padding: 0.42rem 0.7rem;
-  background: rgba(12, 5, 24, 0.96);
-  border: 1px solid var(--cyan);
-  box-shadow: 0 0 20px rgba(33, 243, 255, 0.2);
-  color: var(--ink);
-  font-size: 0.6rem;
-  line-height: 1.5;
-  letter-spacing: 0.04em;
-  text-align: left;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.12s;
-}
-.tick:hover::after, .tick:focus::after { opacity: 1; }
+.tick.off { border-color: var(--magenta); color: var(--magenta); }
+.tick.here { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan), 0 0 16px rgba(33, 243, 255, 0.3); }
+.tick.here img { opacity: 0.9; }
+.tick.here b { background: var(--cyan); color: var(--void); }
 
 /* A version whose pilot wrote no Chronicle line reads as a gap in the record,
    and looks like one, so the next person can see what a missing chapter costs. */
@@ -1711,27 +2015,961 @@ body.page { padding: 0 0 clamp(2rem, 6vh, 4rem); }
   user-select: all;
 }
 
+/* --- the room ---------------------------------------------------------------
+   The book has a soundtrack and it is on. docs/chronicle-song.js builds this
+   switch itself rather than finding it printed in the page, so a reader with
+   the script off is never offered a sound that cannot arrive — same bargain as
+   everything else the script does. Top right, out of the way of the dock, and
+   small enough that a reader who does not want it never thinks about it. */
+.song {
+  position: fixed;
+  z-index: 6;
+  top: clamp(0.4rem, 1.5vw, 0.9rem);
+  right: clamp(0.4rem, 1.5vw, 0.9rem);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.36rem 0.62rem;
+  font-family: inherit;
+  font-size: 0.48rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--dim);
+  background: rgba(7, 3, 15, 0.72);
+  border: 1px solid rgba(33, 243, 255, 0.24);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+.song:hover { color: var(--ink); border-color: var(--cyan); }
+.song.on {
+  color: var(--cyan);
+  border-color: rgba(33, 243, 255, 0.65);
+  box-shadow: 0 0 18px rgba(33, 243, 255, 0.2);
+}
+/* Four bars, flat while it is silent, because a meter that moves with nothing
+   coming out of the speakers is the kind of decoration this book does not do. */
+.eq { display: flex; align-items: flex-end; gap: 2px; height: 0.68rem; }
+.eq i { width: 2px; height: 20%; background: currentColor; }
+.song.on .eq i { animation: eq 2.1s ease-in-out infinite; }
+.song.on .eq i:nth-child(2) { animation-duration: 3.4s; animation-delay: -0.9s; }
+.song.on .eq i:nth-child(3) { animation-duration: 2.7s; animation-delay: -1.6s; }
+.song.on .eq i:nth-child(4) { animation-duration: 4.1s; animation-delay: -0.4s; }
+@keyframes eq {
+  0%, 100% { height: 20%; }
+  50% { height: 100%; }
+}
+
 /* Below the width where two cels side by side stop being two cels and start
    being two columns of four words, there is one column. */
 @media (max-width: 62rem) {
   .told, .figures, .frame, .margin { grid-column: span 12; }
   .shout { max-width: none; }
+  /* the sentence takes the whole width down here, so the corner it was
+     keeping clear is gone: the credits fall back under it, still to the right */
+  .credits {
+    position: static;
+    margin-top: 0.9rem;
+  }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+/* Narrow enough that the words on the two buttons are competing with the
+   thumbnails for the same inch, and the arrows say it on their own. */
+@media (max-width: 46rem) {
+  .turn { padding: 0.3rem 0.5rem; }
+  .turn .lab i { display: none; }
+  .turn .lab b { font-size: 0.66rem; }
+  .turn.none .lab { display: none; }
+  .up i { display: none; }
+  .up { padding: 0 0.45rem; }
+}
 @media (max-width: 34rem) {
+  /* the bars say it on their own, the same way the arrows do */
+  .song .lab { display: none; }
+  .song { padding: 0.4rem 0.5rem; }
   .roster table { font-size: 0.62rem; }
   .cv a { grid-template-columns: 2.9rem 1fr; }
   .cv i { display: none; }
   .ci { padding-left: 0.3rem; }
-  .bar .who { margin-left: 0; }
+  /* four stacked lines is a lot of corner on a phone; tightened up they are
+     still four lines somebody can read at a glance */
+  .credits { gap: 0.28rem; }
   .stats { grid-template-columns: 1fr 1fr; }
   .stats span { font-size: 0.44rem; }
+  .turn .lab { display: none; }
+  .tick { width: 2.6rem; height: 2.1rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   h1, .shout, .roster, .art *, .dots, .plate-img, .loud, .loud::before { animation: none; }
   .js .cel { opacity: 1; transform: none; transition: none; }
+  /* the plate still opens, it just does not fly there */
+  .lit { transition: none; }
+  /* the sound plays, the meter holds still - it was only ever saying so */
+  .song.on .eq i { animation: none; height: 60%; }
 }
 CSS
 
-printf 'chronicle: %s version%s, a page each, and the cover at docs/index.html\n' \
+# --- the room it is read in --------------------------------------------------
+#
+# The book's soundtrack, written the way everything else here is written: no
+# audio file, no fetch, no dependency (GR2), just oscillators and a noise
+# buffer. It is off until a reader asks for it and it says so in the file
+# itself. Emitted from here rather than kept beside the pages for the same
+# reason docs/chronicle.css is: the book is generated, all of it, so a clone
+# that runs this tool has the whole book and not most of one.
+cat > docs/chronicle-song.js <<'JS'
+/* THE ROOM THE BOOK IS READ IN.
+   Generated by tools/chronicle.sh. Editing it by hand lasts until the next
+   commit; the copy that matters is the heredoc in that script.
+
+   The cabinet is loud. The book is not, so this is not the cabinet's band
+   playing quieter — it is the other end of the same evening: one chord every
+   eight seconds, a heartbeat you only notice when it stops, and an arpeggio
+   several rooms away. Fifty-six beats a minute, which is slower than reading.
+
+   Three things about it are deliberate and one of them is the whole point.
+
+   It comes up on, and it does not start over. The room is playing unless the
+   reader says otherwise, and the switch remembers an off for as long as they
+   want one. What it will not do is make a noise on a page nobody has touched
+   yet — that is the browser's rule and it is a good one — so the switch comes
+   up lit and the room waits for the next click or arrow key, which on this
+   book is the same keystroke that turned the page. And turning a page is not
+   stopping the music: the step the piece had got to rides along in the tab's
+   own storage with the time it was true at, so the next chapter comes in
+   where the piece would be by now rather than at the top of it.
+
+   It is written, not stored. Same reason as everything else here (GR2): no
+   audio file, no fetch, no dependency — an oscillator, a filter, and a noise
+   buffer folded into a reverb. The whole soundtrack is this file, and this
+   file opens from a USB stick in ten years.
+
+   It costs nothing to leave on. Nothing here runs per frame. A timer wakes up
+   four times a second, schedules the next second and a half into the audio
+   clock, and goes back to sleep; the browser's audio thread does the rest at
+   its own pace. A page with the sound on scrolls exactly as fast as one
+   without it.
+
+   Each chapter gets its own key and its own progression, off its own number,
+   so v3 always sounds like v3 — and where the reader arrives from somewhere
+   else in the book, the harmony changes under a piece that keeps its place.
+   The chapter's own offset into the progression is only where it begins when
+   nobody arrived from anywhere: the first page of a sitting. */
+
+(function () {
+  "use strict";
+
+  var Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return;
+
+  // ---- the tempo ----------------------------------------------------------
+  // A step is an eighth note and it is the smallest thing in here, which at
+  // this tempo is over half a second. Everything else is counted in steps.
+
+  var BPM = 56;
+  var STEP = 30 / BPM;          // 0.536s
+  var BAR = STEP * 8;
+  var CHORD = BAR * 2;          // one chord is two bars, and it feels like it
+  var CYCLE = 64;               // steps in the whole progression: 34 seconds
+  var LEVEL = 0.34;             // the ceiling, reached over four seconds
+
+  // ---- which chapter ------------------------------------------------------
+  // The cover is chapter zero and gets A minor, which is the house key.
+
+  var m = /v(\d+)\.html/.exec(location.pathname);
+  var CH = m ? +m[1] : 0;
+
+  // Deterministic per page: the same chapter makes the same choices in the
+  // same order forever, so a reader who comes back recognises the room.
+  function seeded(a) {
+    return function () {
+      a |= 0; a = a + 0x6d2b79f5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  var rnd = seeded(CH * 2654435761 + 7);
+
+  // ---- the harmony --------------------------------------------------------
+  // Roots are MIDI, same as src/audio/themes.js, and picked so no two chapters
+  // in a row share one. A chord is an offset from the key and a voicing; the
+  // offsets above a tritone drop an octave, which is what keeps the pad from
+  // leaping about between chords.
+
+  var KEYS = [45, 40, 47, 42, 38, 44, 41, 36, 46, 43];
+  var VOICES = {
+    min9: [0, 3, 7, 14],
+    min7: [0, 3, 7, 10],
+    maj7: [0, 4, 7, 11],
+    maj9: [0, 4, 7, 14],
+    sus2: [0, 2, 7, 12],
+    sus4: [0, 5, 7, 12]
+  };
+  var PROGS = [
+    [[0, "min9"], [8, "maj7"], [3, "maj9"], [10, "sus2"]],   // i VI III VII
+    [[0, "min7"], [10, "sus2"], [8, "maj9"], [10, "maj7"]],  // i VII VI VII
+    [[0, "min9"], [5, "min7"], [8, "maj7"], [7, "sus4"]],    // i iv VI v
+    [[8, "maj9"], [10, "sus2"], [0, "min9"], [0, "min7"]],   // VI VII i i
+    [[0, "min7"], [3, "maj9"], [8, "maj7"], [5, "min7"]]     // i III VI iv
+  ];
+  // Where in the two bars the arpeggio lands. Never on every beat: the gaps
+  // are the atmosphere and the notes are only there to prove there is a key.
+  var ARPS = [
+    [0, 3, 6, 10, 13],
+    [2, 5, 8, 11, 14],
+    [0, 4, 7, 12],
+    [1, 3, 8, 10, 15]
+  ];
+
+  var key = KEYS[CH % KEYS.length];
+  var prog = PROGS[CH % PROGS.length];
+  var arps = ARPS[CH % ARPS.length];
+
+  function mtof(n) { return 440 * Math.pow(2, (n - 69) / 12); }
+  function chord(i) {
+    var c = prog[i % 4], off = c[0];
+    if (off > 6) off -= 12;
+    return { root: key + off, voice: VOICES[c[1]] };
+  }
+  // The bass note is the chord's, folded into one octave and kept there. Off a
+  // low enough key the arithmetic otherwise arrives at thirty-six hertz, which
+  // is not a note on a laptop, it is a hum on somebody's desk.
+  function low(root) {
+    var n = root - 12;
+    while (n < 31) n += 12;
+    while (n > 42) n -= 12;
+    return n;
+  }
+
+  // ---- the rig ------------------------------------------------------------
+  // Built once, the first time somebody asks for sound, and kept. Four places
+  // to send a voice: dry, the plate reverb, the echo, and the chorus the pad
+  // alone goes through.
+
+  var ctx = null, out = null, dry = null, send = null, echo = null, wide = null;
+  var noise = null, timer = null, air = null;
+  var playing = false, at = 0, step = (CH % 4) * 16, noted = -9;
+
+  function build() {
+    ctx = new Ctx();
+
+    // A gentle ceiling rather than a loud mix. Nothing in here should ever be
+    // the loudest thing on somebody's desk.
+    var lid = ctx.createDynamicsCompressor();
+    lid.threshold.value = -20;
+    lid.knee.value = 26;
+    lid.ratio.value = 4;
+    lid.attack.value = 0.02;
+    lid.release.value = 0.45;
+    lid.connect(ctx.destination);
+
+    out = ctx.createGain();
+    out.gain.value = 0;
+    out.connect(lid);
+
+    dry = ctx.createGain();
+    dry.gain.value = 0.9;
+    dry.connect(out);
+
+    // The plate. Noise under an exponential decay, run through a one-pole
+    // lowpass on the way into the buffer so the tail is dark rather than
+    // fizzy — a bright reverb on a page of text reads as a fault.
+    var verb = ctx.createConvolver();
+    verb.buffer = plate(3.8);
+    var vLo = ctx.createBiquadFilter();
+    vLo.type = "lowpass";
+    vLo.frequency.value = 2600;
+    send = ctx.createGain();
+    send.gain.value = 0.5;
+    send.connect(verb);
+    verb.connect(vLo);
+    vLo.connect(out);
+
+    // A dotted eighth, which at this tempo is four fifths of a second, damped
+    // a little more on every pass so it walks away rather than stops.
+    var d = ctx.createDelay(2);
+    d.delayTime.value = STEP * 1.5;
+    var fb = ctx.createGain();
+    fb.gain.value = 0.42;
+    var dLo = ctx.createBiquadFilter();
+    dLo.type = "lowpass";
+    dLo.frequency.value = 2000;
+    echo = ctx.createGain();
+    echo.gain.value = 0.34;
+    echo.connect(d);
+    d.connect(dLo);
+    dLo.connect(fb);
+    fb.connect(d);
+    dLo.connect(out);
+    dLo.connect(send);
+
+    wide = chorus();
+    noise = hiss(3);
+    room();
+  }
+
+  // The impulse: two channels of noise, decaying, slightly different, with a
+  // few milliseconds of nothing at the front so the reverb arrives after the
+  // note rather than with it.
+  function plate(secs) {
+    var n = Math.floor(ctx.sampleRate * secs);
+    var pre = Math.floor(ctx.sampleRate * 0.03);
+    var buf = ctx.createBuffer(2, n, ctx.sampleRate);
+    for (var c = 0; c < 2; c++) {
+      var d = buf.getChannelData(c), last = 0;
+      for (var i = pre; i < n; i++) {
+        var k = (i - pre) / (n - pre);
+        last += 0.22 * ((Math.random() * 2 - 1) - last);
+        d[i] = last * Math.pow(1 - k, 3.4);
+      }
+    }
+    return buf;
+  }
+
+  function hiss(secs) {
+    var n = Math.floor(ctx.sampleRate * secs);
+    var buf = ctx.createBuffer(2, n, ctx.sampleRate);
+    for (var c = 0; c < 2; c++) {
+      var d = buf.getChannelData(c);
+      for (var i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    }
+    return buf;
+  }
+
+  // Two short modulated delays, one per ear, which is the cheapest way there
+  // is to make four sawtooths sound like they are in a room together.
+  function chorus() {
+    var input = ctx.createGain();
+    input.connect(dry);
+    for (var i = 0; i < 2; i++) {
+      var d = ctx.createDelay(0.1);
+      d.delayTime.value = 0.013 + i * 0.008;
+      var lfo = ctx.createOscillator();
+      lfo.type = "sine";
+      lfo.frequency.value = 0.11 + i * 0.06;
+      var amt = ctx.createGain();
+      amt.gain.value = 0.0035;
+      lfo.connect(amt);
+      amt.connect(d.delayTime);
+      lfo.start();
+      input.connect(d);
+      d.connect(pan(i ? 0.55 : -0.55)).connect(out);
+    }
+    return input;
+  }
+
+  function pan(x) {
+    if (!ctx.createStereoPanner) return ctx.createGain();
+    var p = ctx.createStereoPanner();
+    p.pan.value = x;
+    return p;
+  }
+
+  // The floor under everything: tape hiss that swells on its own clock, and a
+  // low wind that has no clock at all. Started once and never stopped — it is
+  // what makes the gaps between the chords sound like a place.
+  function room() {
+    var h = ctx.createBufferSource();
+    h.buffer = noise;
+    h.loop = true;
+    var bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = 1500;
+    bp.Q.value = 0.4;
+    var hg = ctx.createGain();
+    hg.gain.value = 0.02;
+    var swell = ctx.createOscillator();
+    swell.frequency.value = 0.043;
+    var sa = ctx.createGain();
+    sa.gain.value = 0.013;
+    swell.connect(sa);
+    sa.connect(hg.gain);
+    swell.start();
+    h.connect(bp);
+    bp.connect(hg);
+    hg.connect(out);
+    h.start();
+
+    var w = ctx.createBufferSource();
+    w.buffer = noise;
+    w.loop = true;
+    w.playbackRate.value = 0.7;
+    var lo = ctx.createBiquadFilter();
+    lo.type = "lowpass";
+    lo.frequency.value = 240;
+    lo.Q.value = 1.4;
+    var drift = ctx.createOscillator();
+    drift.frequency.value = 0.017;
+    var da = ctx.createGain();
+    da.gain.value = 90;
+    drift.connect(da);
+    da.connect(lo.frequency);
+    drift.start();
+    var wg = ctx.createGain();
+    wg.gain.value = 0.055;
+    w.connect(lo);
+    lo.connect(wg);
+    wg.connect(out);
+    wg.connect(send);
+    w.start();
+    air = h;
+  }
+
+  // ---- the voices ---------------------------------------------------------
+
+  // Two sawtooths seven cents apart, opened and closed again over the length
+  // of the chord. The filter is doing most of the work; the notes are only
+  // there to tell it which chord it is being atmospheric about.
+  function pad(t, f, dur, amp) {
+    var g = ctx.createGain();
+    var lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.Q.value = 0.9;
+    lp.frequency.setValueAtTime(340, t);
+    lp.frequency.linearRampToValueAtTime(1500, t + dur * 0.55);
+    lp.frequency.linearRampToValueAtTime(480, t + dur + 3);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(amp, t + 2.4);
+    g.gain.setValueAtTime(amp, t + dur);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 3.2);
+    for (var i = 0; i < 2; i++) {
+      var o = ctx.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.value = f;
+      o.detune.value = i ? 7 : -7;
+      o.connect(lp);
+      o.start(t);
+      o.stop(t + dur + 3.4);
+    }
+    lp.connect(g);
+    g.connect(wide);
+    g.connect(send);
+  }
+
+  // One note, held under the whole chord, with a second an octave up quiet
+  // enough that it only tells you which note it was.
+  function bass(t, f, dur) {
+    var g = ctx.createGain();
+    var lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 300;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.3, t + 0.9);
+    g.gain.setValueAtTime(0.3, t + dur - 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 1.4);
+    var a = ctx.createOscillator();
+    a.type = "triangle";
+    a.frequency.value = f;
+    var b = ctx.createOscillator();
+    b.type = "sine";
+    b.frequency.value = f * 2;
+    var bg = ctx.createGain();
+    bg.gain.value = 0.22;
+    a.connect(lp);
+    b.connect(bg);
+    bg.connect(lp);
+    lp.connect(g);
+    g.connect(dry);
+    a.start(t); a.stop(t + dur + 1.6);
+    b.start(t); b.stop(t + dur + 1.6);
+  }
+
+  // The arpeggio, several rooms away: a square through a filter that shuts
+  // behind it, most of it arriving as echo rather than as note.
+  function pluck(t, f, amp) {
+    var g = ctx.createGain();
+    var lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.Q.value = 7;
+    lp.frequency.setValueAtTime(Math.min(9000, f * 7), t);
+    lp.frequency.exponentialRampToValueAtTime(Math.max(220, f * 1.1), t + 0.5);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(amp, t + 0.014);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+    var o = ctx.createOscillator();
+    o.type = "square";
+    o.frequency.value = f;
+    o.connect(lp);
+    lp.connect(g);
+    g.connect(dry);
+    g.connect(echo);
+    g.connect(send);
+    o.start(t);
+    o.stop(t + 1.3);
+  }
+
+  // A sine and its third partial, high up, all tail. This is the one thing in
+  // the piece that is allowed to sound like a melody, and it gets four notes a
+  // minute to do it in.
+  function bell(t, f, amp) {
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(amp, t + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 4.2);
+    var a = ctx.createOscillator();
+    a.frequency.value = f;
+    var b = ctx.createOscillator();
+    b.frequency.value = f * 3.01;
+    var bg = ctx.createGain();
+    bg.gain.value = 0.16;
+    a.connect(g);
+    b.connect(bg);
+    bg.connect(g);
+    g.connect(dry);
+    g.connect(send);
+    g.connect(echo);
+    a.start(t); a.stop(t + 4.4);
+    b.start(t); b.stop(t + 4.4);
+  }
+
+  // The heartbeat. Not a drum — nothing here keeps time for anybody — just a
+  // low thump under the bar so the room has a pulse to it.
+  function pulse(t, amp) {
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(amp, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
+    var o = ctx.createOscillator();
+    o.frequency.setValueAtTime(82, t);
+    o.frequency.exponentialRampToValueAtTime(38, t + 0.18);
+    o.connect(g);
+    g.connect(dry);
+    o.start(t);
+    o.stop(t + 0.9);
+  }
+
+  // Noise climbing a filter into the turn of the progression. The one gesture
+  // in here that a synthwave record would recognise.
+  function sweep(t, dur) {
+    var s = ctx.createBufferSource();
+    s.buffer = noise;
+    s.loop = true;
+    var bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.Q.value = 1.6;
+    bp.frequency.setValueAtTime(300, t);
+    bp.frequency.exponentialRampToValueAtTime(4200, t + dur);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.05, t + dur * 0.8);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.6);
+    s.connect(bp);
+    bp.connect(g);
+    g.connect(dry);
+    g.connect(send);
+    s.start(t);
+    s.stop(t + dur + 0.7);
+  }
+
+  // ---- the arrangement ----------------------------------------------------
+  // Four chords, and then the same four chords again with something different
+  // switched on. A cycle is thirty-four seconds, so a reader who stays for one
+  // chapter hears three or four of them and never quite the same one twice.
+
+  function plan(i, t) {
+    var n = ((i % CYCLE) + CYCLE) % CYCLE;
+    var cyc = Math.floor(i / CYCLE);
+    var pos = n % 16;
+    var c = chord(Math.floor(n / 16));
+    var lift = cyc % 4 === 3 ? 12 : 0;   // every fourth time round, up an octave
+    var thin = cyc % 4 === 0;            // and every fourth time round, it steps back
+
+    if (pos === 0) {
+      for (var v = 0; v < c.voice.length; v++)
+        pad(t, mtof(c.root + 12 + lift + c.voice[v]), CHORD, 0.055);
+      bass(t, mtof(low(c.root)), CHORD);
+    }
+    if (!thin && (pos === 0 || pos === 8)) pulse(t, pos ? 0.1 : 0.16);
+    // Stepping back is not stopping: the arpeggio keeps its first note of each
+    // chord, so the thin cycles still have somewhere to be rather than sounding
+    // like the sound came off.
+    for (var a = 0; a < arps.length; a++)
+      if (arps[a] === pos && (!thin || a === 0)) {
+        var deg = c.voice[(a + cyc) % c.voice.length];
+        pluck(t, mtof(c.root + 24 + deg + (rnd() < 0.22 ? 12 : 0)), 0.075);
+      }
+    if (cyc > 0 && pos === 12 && rnd() < 0.4)
+      bell(t, mtof(c.root + 36 + c.voice[Math.floor(rnd() * 4)]), 0.05);
+    if (cyc % 2 === 1 && n === 60) sweep(t, 2.1);
+  }
+
+  // Wake up four times a second, fill the next second and a half of the audio
+  // clock, go back to sleep. Everything above happens on that thread, not this
+  // one, which is why a page with the sound on scrolls like a page without it.
+  function tick() {
+    var now = ctx.currentTime;
+    // A tab nobody is looking at gets its timers throttled to one a minute,
+    // and comes back owing the audio clock a minute of music. Scheduling that
+    // in the past means playing it all at once, so the piece skips the wait
+    // instead and comes back in phase, in the middle of wherever it got to.
+    if (at < now) {
+      var skip = Math.ceil((now - at) / STEP);
+      step += skip;
+      at += skip * STEP;
+    }
+    var horizon = now + 1.6;
+    while (at < horizon) {
+      plan(step, at);
+      step++;
+      at += STEP;
+    }
+    // The next page needs to know where this one got to. Storage does not
+    // need telling four times a second to answer that; twice every three
+    // seconds is closer than a page turn will ever notice.
+    if (now - noted > 1.5) { noted = now; keep(); }
+  }
+
+  // ---- on and off ---------------------------------------------------------
+
+  var KEY = "hypercolor.room";
+  function remember(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+  function remembered() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+
+  // Where the piece got to, and when that was true. It goes in the tab's own
+  // storage and not the browser's, because this is one sitting rather than a
+  // habit, and a second window is a second room. What comes back is not the
+  // step it left off on but the step it would be on now — the room keeps
+  // playing while the page loads, the same way it keeps playing while a
+  // chapter is read. Past ten minutes of nothing that stops being true and
+  // the chapter starts where its own number says.
+  var POS = "hypercolor.room.at";
+  var CARRY = 600;
+
+  function keep() {
+    if (!timer) return;   // nothing is running, so there is no middle to be in
+    // step and at are the front of the scheduling horizon, up to a second and
+    // a half ahead of anything anybody can hear. What gets written down is
+    // where the piece is, not where the scheduler has run on to.
+    var here = step - (at - ctx.currentTime) / STEP;
+    try { sessionStorage.setItem(POS, Math.round(here) + " " + Date.now()); } catch (e) {}
+  }
+
+  function carried() {
+    var s;
+    try { s = sessionStorage.getItem(POS); } catch (e) { return null; }
+    if (!s) return null;
+    var p = s.split(" "), n = +p[0], gap = (Date.now() - +p[1]) / 1000;
+    if (!isFinite(n) || !isFinite(gap) || gap < 0 || gap > CARRY) return null;
+    return Math.round(n + gap / STEP);
+  }
+
+  function on() {
+    if (!ctx) build();
+    playing = true;
+    mark();
+    remember("on");
+    var p = ctx.resume();
+    if (p && p.then) p.then(armed, armed); else armed();
+  }
+
+  // A page reached by clicking a link has no permission to make a noise yet,
+  // however clearly the reader said so on the page before. So if the context
+  // will not start, wait for the next thing they do — a click, or the arrow
+  // key that turns the page — and start then. Nothing is asked of them twice.
+  function armed() {
+    if (!playing || !ctx) return;
+    if (ctx.state !== "running") { wait(); return; }
+    if (timer) return;
+    // Asked here rather than at load, because between the two the reader may
+    // have taken a while to touch anything, and the room did not wait.
+    var pick = carried();
+    if (pick !== null) step = pick;
+    var t = ctx.currentTime;
+    at = t + 0.15;
+    out.gain.cancelScheduledValues(t);
+    out.gain.setValueAtTime(out.gain.value, t);
+    out.gain.linearRampToValueAtTime(LEVEL, t + 2.4);
+    // The pad takes two and a half seconds to arrive and a reader who has just
+    // pressed a button deserves an answer sooner than that, so the room says
+    // one note back. It is in the key it is about to be in, which is the only
+    // reason it is a note and not a beep.
+    var c = chord(Math.floor((((step % CYCLE) + CYCLE) % CYCLE) / 16));
+    bell(at, mtof(c.root + 36 + c.voice[0]), 0.045);
+    tick();
+    timer = setInterval(tick, 250);
+  }
+
+  function wait() {
+    var go = function () {
+      removeEventListener("pointerdown", go);
+      removeEventListener("keydown", go);
+      if (playing) on();
+    };
+    addEventListener("pointerdown", go);
+    addEventListener("keydown", go);
+  }
+
+  function off() {
+    playing = false;
+    remember("off");
+    mark();
+    if (!ctx) return;
+    keep();               // where it stopped, while there is still a timer to ask
+    var t = ctx.currentTime;
+    out.gain.cancelScheduledValues(t);
+    out.gain.setValueAtTime(out.gain.value, t);
+    out.gain.linearRampToValueAtTime(0, t + 1.2);
+    clearInterval(timer);
+    timer = null;
+    setTimeout(function () { if (!playing && ctx) ctx.suspend(); }, 1500);
+  }
+
+  // ---- the switch ---------------------------------------------------------
+  // Built by the script rather than printed into the page, because a button
+  // that promises sound to a reader with the script switched off is a lie. S
+  // does the same thing, since this cabinet is played on a keyboard.
+
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "song";
+  btn.innerHTML = '<span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>' +
+                  '<span class="lab">sound</span>';
+
+  function mark() {
+    btn.classList.toggle("on", playing);
+    btn.setAttribute("aria-pressed", playing ? "true" : "false");
+    btn.title = (playing ? "quiet, then (s)" : "the room this is read in (s)");
+  }
+
+  btn.addEventListener("click", function () { playing ? off() : on(); });
+  addEventListener("keydown", function (e) {
+    if (e.key !== "s" && e.key !== "S") return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    playing ? off() : on();
+  });
+
+  // Back through the history to a page the browser kept whole: the graph came
+  // back suspended, and the reader already said yes to all of this.
+  addEventListener("pageshow", function (e) {
+    if (e.persisted && playing) armed();
+  });
+
+  // The last word on where the piece was, written on the way out of the page
+  // rather than a second and a half before it. pagehide and not unload: it is
+  // the one the browser still fires when the page goes into the back-forward
+  // cache, which is most of the turning of these pages.
+  addEventListener("pagehide", keep);
+
+  // ---- the furniture ------------------------------------------------------
+  // The room answers a hand as well as a clock.
+  //
+  // Same argument the cabinet makes on its splash screen (src/ui/clicks.js): a
+  // page you can point at things on should say something when you do, and a
+  // book of ten chapters with a rail of plates along the foot of every one of
+  // them is a page you point at a lot. Two differences, both of them because
+  // this is a book rather than an arcade machine.
+  //
+  // It is quieter than anything else in here by a wide margin, and it is
+  // tuned to whatever chord is currently hanging in the air rather than to a
+  // key of its own — the note under your cursor is a degree of the chord the
+  // pad is already holding, so pointing at things cannot put a wrong note in
+  // the room however fast you do it.
+  //
+  // And it follows the one switch there is. Somebody who turned the room off
+  // did not turn it off in order to be clicked at instead.
+
+  // A degree of the chord in the air at this moment.
+  function furniture(deg, lift) {
+    var c = chord(Math.floor(((((step % CYCLE) + CYCLE) % CYCLE)) / 16));
+    var v = c.voice;
+    return mtof(c.root + lift + v[((deg % v.length) + v.length) % v.length]);
+  }
+
+  // Under the cursor: a fingertip on the rim of a glass, most of it arriving
+  // as room rather than as note.
+  function tap(f) {
+    var t = ctx.currentTime;
+    var g = ctx.createGain();
+    var o = ctx.createOscillator();
+    o.type = "sine";
+    o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.03, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+    o.connect(g);
+    g.connect(dry);
+    g.connect(send);
+    o.start(t);
+    o.stop(t + 0.28);
+  }
+
+  // Everything a reader can arrive at, by shape rather than by name, so a page
+  // that grows a control next year gets this without being told.
+  var LIVE = "a[href], button";
+  var lastEl = null, lastAt = 0;
+
+  function awake() { return playing && ctx && ctx.state === "running"; }
+
+  // Where a thing sits, as a degree: its place among its own kind. The rail of
+  // plates at the foot of a chapter is the whole history in a row, so running
+  // a cursor along it arpeggiates the chord — which is the one bit of this
+  // anybody is ever going to do on purpose.
+  function degreeOf(el) {
+    var kin = el.parentElement ? el.parentElement.children : [];
+    for (var i = 0; i < kin.length; i++) if (kin[i] === el) return i;
+    return 0;
+  }
+
+  function reach(e) {
+    var el = e.target && e.target.closest ? e.target.closest(LIVE) : null;
+    return el && !el.classList.contains("song") ? el : null;
+  }
+
+  addEventListener("pointerover", function (e) {
+    if (e.pointerType === "touch" || !awake()) return;
+    var el = reach(e);
+    if (!el || el === lastEl) return;
+    var now = ctx.currentTime;
+    if (now - lastAt < 0.045) return;      // a fast sweep is a run, not a buzz
+    lastEl = el;
+    lastAt = now;
+    tap(furniture(degreeOf(el), 24));
+  }, true);
+
+  // The same tick for a keyboard. This book is turned with the arrow keys and
+  // read by people who tab through it.
+  addEventListener("focusin", function (e) {
+    if (!awake()) return;
+    var el = reach(e);
+    if (!el) return;
+    lastEl = el;
+    tap(furniture(degreeOf(el), 24));
+  }, true);
+
+  addEventListener("pointerdown", function (e) {
+    if (!awake()) return;
+    var el = reach(e);
+    if (!el) return;
+    lastEl = null;                          // coming back over it should answer again
+    pluck(ctx.currentTime, furniture(degreeOf(el), 12), 0.05);
+    // Turning a page moves air. It is the same sweep the piece uses to get
+    // itself round the turn of the progression, which is the joke.
+    if (el.classList.contains("turn")) sweep(ctx.currentTime, 0.45);
+  }, true);
+
+  mark();
+  document.body.appendChild(btn);
+  // On unless somebody said otherwise, and a reader who said yes on the last
+  // page has said yes. The browser does not agree — a page arrived at by
+  // clicking a link may not make a noise until something is done on it — and
+  // asking anyway only earns a console full of it saying so. So the switch
+  // comes up lit and the room waits for the next thing they do, which on this
+  // book is usually the arrow key.
+  if (remembered() !== "off") {
+    playing = true;
+    mark();
+    wait();
+  }
+})();
+JS
+
+# --- the sidecar ------------------------------------------------------------
+#
+# The book is a book, and the splash screen is a doorway to it. A doorway with
+# a picture in it is worth walking through, so this writes what the cabinet
+# needs to draw one: the last few painted plates, the newest chapter, and the
+# top of the board.
+#
+# It is a script rather than data because there is no fetch in this project and
+# there is not going to be (GR2), which is the same reason docs/faces/faces.js
+# is a script. Same contract as that file, too: the game asks for it, does
+# without it if it is not there, and never lists it in the manifest. A clone
+# that has never run this tool gets the splash it always had.
+#
+# Everything in it is already committed somewhere else - the history, the
+# taglines, the plates, the board. Nothing is invented here and nothing is
+# authoritative here; it is the same facts, in the one shape a page can read.
+
+# The board out of docs/RANKINGS.md, folded into the same stream as everything
+# else. Row order is the file's, which is score order, which is the whole point
+# of that table. The columns are read by position because the header names them
+# and the header is the first row we skip.
+board() {
+  [ -f docs/RANKINGS.md ] || return 0
+  awk -F'|' '
+    function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
+    /^##[ \t]/ { inboard = (index($0, "THE BOARD") > 0); next }
+    !inboard || $0 !~ /^\|/ { next }
+    { rows++ }
+    rows <= 2 { next }                                  # the header, then its rule
+    {
+      printf "\036RANK\037%s\037%s\037%s\037%s\037%s\037%s\037%s",
+             trim($2), trim($3), trim($4), trim($5), trim($6), trim($7), trim($8)
+    }
+  ' docs/RANKINGS.md
+}
+
+{ taglines; plates; board
+  git log --format='%x1e%H%x1f%an%x1f%ad' --date=format:'%d %B %Y' \
+          --no-merges --full-history HEAD -- $GAME 2>/dev/null
+} | awk -v RS='\036' -v FS='\037' -v total="$TOTAL" '
+# JS string literals, a character at a time. gsub would do it in two lines and
+# get the backslashes wrong on some awk somewhere; this cannot.
+function js(s,   i, c, o) {
+  o = ""
+  for (i = 1; i <= length(s); i++) {
+    c = substr(s, i, 1)
+    if (c == "\\")      o = o "\\\\"
+    else if (c == "\"") o = o "\\\""
+    else if (c == "\r" || c == "\n") o = o " "
+    else o = o c
+  }
+  return o
+}
+function trim(s) { sub(/^[ \t\r\n]+/, "", s); sub(/[ \t\r\n]+$/, "", s); return s }
+BEGIN { v = total + 0 }
+$1 == "TAG"  { tag[$2] = $3; next }
+$1 == "ART"  { art[$2] = $3; alt[$2] = $4; next }
+$1 == "RANK" { rc++; for (k = 2; k <= 8; k++) R[rc, k] = $k; next }
+NF >= 3 {
+  # a version, newest first, so the number counts down from the newest.
+  # The last field of a git record carries the newline that ends it.
+  if (v < 1) next
+  VW[v] = trim($2); VD[v] = trim($3); VT[v] = ($1 in tag) ? tag[$1] : ""
+  VP[v] = ($1 in art) ? art[$1] : "";  VA[v] = ($1 in art) ? alt[$1] : ""
+  v--
+  next
+}
+END {
+  print "// Generated by tools/chronicle.sh from the history, docs/taglines.tsv,"
+  print "// docs/art/index.tsv and docs/RANKINGS.md - the splash screen'"'"'s window"
+  print "// into the book. src/ui/book.js and src/ui/board.js load this if it is"
+  print "// there and do without it if it is not, so it is never in the manifest"
+  print "// and never has to exist. Do not edit: every rebuild writes it fresh."
+  print "(function (A) {"
+  print "  \"use strict\";"
+  print "  A.CHRONICLE = {"
+  printf "    versions: %d,\n", total
+  if (total >= 1) {
+    printf "    latest: { v: %d, pilot: \"%s\", date: \"%s\", line: \"%s\"", \
+           total, js(VW[total]), js(VD[total]), js(VT[total])
+    if (VP[total] != "") printf ", plate: \"%s\", alt: \"%s\"", js(VP[total]), js(VA[total])
+    print " },"
+  }
+  # The plates, newest first, however few of them there are. Four is what the
+  # panel has room for; a cabinet with one plate shows one and looks fine.
+  print "    plates: ["
+  n = 0
+  for (v = total; v >= 1 && n < 4; v--) {
+    if (VP[v] == "") continue
+    n++
+    printf "      { v: %d, file: \"%s\", alt: \"%s\", line: \"%s\" },\n", \
+           v, js(VP[v]), js(VA[v]), js(VT[v])
+  }
+  print "    ]"
+  print "  };"
+  # The board as the file has it - score order, the words included. A tape is
+  # the only way onto that table and nothing here is going to be a second way.
+  print "  A.BOARD = ["
+  for (k = 1; k <= rc; k++) {
+    printf "    { rank: \"%s\", pilot: \"%s\", score: \"%s\", wave: \"%s\", time: \"%s\", hits: \"%s\", line: \"%s\" },\n", \
+           js(R[k, 2]), js(R[k, 3]), js(R[k, 4]), js(R[k, 5]), js(R[k, 6]), js(R[k, 7]), js(R[k, 8])
+  }
+  print "  ];"
+  print "})(ASTEROIDS);"
+}' > docs/chronicle.js
+
+printf 'chronicle: %s version%s, a page each, the cover at docs/index.html,\n' \
   "$TOTAL" "$([ "$TOTAL" = 1 ] || echo s)"
+printf '           docs/chronicle.js for the splash screen to read, and\n'
+printf '           docs/chronicle-song.js for the room it is read in.\n'

@@ -200,7 +200,11 @@ h1 {
    Everything sits on the same twelve columns, so the cels line up without
    anybody having to place them, and a cel with no neighbour this week takes
    the width its neighbour is not using. */
-body.page { padding: 0 0 clamp(2rem, 6vh, 4rem); }
+/* The dock is fixed to the foot of the window, so the page ends above it
+   rather than under it: the last cel of a chapter is as readable as the
+   first. */
+body.page { padding: 0 0 clamp(6.5rem, 4rem + 6vh, 8.5rem); }
+html { scroll-padding-bottom: 6rem; }
 .page main {
   max-width: 82rem;
   margin: 0 auto;
@@ -270,13 +274,21 @@ body.page { padding: 0 0 clamp(2rem, 6vh, 4rem); }
 }
 .tab .ic { width: 0.85rem; height: 0.85rem; }
 
-/* Who flew it and when, across the top, where a comic prints its credits. */
-.bar {
+/* Who flew it and when, signed into the bottom corner of the splash — where a
+   comic signs a panel, and the one corner the sentence never reaches, because
+   the sentence is capped at 17ch and pinned to the left. Stacked, so it reads
+   down the corner as four short facts rather than across it as one long line
+   arguing with the sentence for the same inch. */
+.credits {
+  position: absolute;
+  z-index: 2;
+  right: clamp(1.2rem, 3.6vw, 2.6rem);
+  bottom: clamp(1.2rem, 3.6vw, 2.6rem);
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem 1.2rem;
-  padding: 0.65rem 1rem;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  text-align: right;
 }
 .badge { display: flex; align-items: baseline; gap: 0.5rem; }
 .badge b {
@@ -300,25 +312,24 @@ body.page { padding: 0 0 clamp(2rem, 6vh, 4rem); }
   letter-spacing: 0.2em;
   color: var(--cyan);
 }
-.bar .who {
-  margin-left: auto;
+.credits .who {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.5rem;
   font-size: 0.6rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--cyan);
 }
-/* Whoever flew it, at the top of their own chapter, where there is room for
-   them to be slightly more than a line of text. */
-.bar .who .face {
-  width: 3.4rem;
-  height: 3.4rem;
+/* Whoever flew it, on their own chapter's splash — smaller than it was on a
+   bar of its own, because the sentence underneath is the loud thing here. */
+.credits .who .face {
+  width: 2.3rem;
+  height: 2.3rem;
   border-color: rgba(33, 243, 255, 0.55);
   box-shadow: 0 0 12px rgba(33, 243, 255, 0.35);
 }
-.bar .when {
+.credits .when {
   font-size: 0.56rem;
   letter-spacing: 0.14em;
   color: var(--dim);
@@ -429,6 +440,93 @@ body.page { padding: 0 0 clamp(2rem, 6vh, 4rem); }
   text-decoration: none;
 }
 .plate-full:hover { border-color: var(--cyan); box-shadow: 0 0 16px rgba(33, 243, 255, 0.3); }
+/* with the script running the link does not go anywhere, so it says so */
+.js .plate-full { cursor: zoom-in; }
+
+/* --- the plate, in full ---------------------------------------------------
+   The link under the splash still points at the picture, and with the script
+   off the browser does the old obvious thing with it. With the script on the
+   chapter stays where it is and the plate climbs out of the panel it was
+   behind instead — uncropped, over the page it belongs to, and gone again on
+   a click, on Escape, or on the button in the corner. */
+.lit {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.7rem, 2vh, 1.2rem);
+  padding: clamp(1rem, 4vw, 3rem);
+  cursor: zoom-out;
+  background: radial-gradient(120% 90% at 50% 45%, rgba(20, 4, 40, 0.86), rgba(3, 1, 8, 0.97));
+  opacity: 0;
+  transition: opacity 420ms ease;
+}
+.lit.on { opacity: 1; }
+/* the book is a CRT, and a picture held up in front of it is behind the same
+   glass as everything else on the page */
+.lit::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.32) 0 1px, transparent 1px 3px);
+}
+.lit img {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border: 1px solid rgba(255, 62, 200, 0.45);
+  box-shadow: 0 0 70px rgba(160, 75, 255, 0.35);
+  /* the same glass the plate wears in the panel it came out of */
+  filter: saturate(1.18) contrast(1.06);
+}
+.lit-cap {
+  position: relative;
+  max-width: 46rem;
+  text-align: center;
+  color: var(--dim);
+  font-size: 0.62rem;
+  line-height: 1.8;
+  letter-spacing: 0.14em;
+  text-wrap: balance;
+}
+.lit-cap:empty { display: none; }
+/* the caption and the way out arrive after the plate has landed, so the first
+   half-second is the picture and nothing else */
+.lit-cap, .lit-x {
+  opacity: 0;
+  transform: translateY(0.4rem);
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+.lit.on .lit-cap, .lit.on .lit-x {
+  opacity: 1;
+  transform: none;
+  transition-delay: 300ms;
+}
+.lit-x {
+  position: absolute;
+  top: clamp(0.6rem, 2vw, 1.3rem);
+  right: clamp(0.6rem, 2vw, 1.3rem);
+  width: 2.1rem;
+  height: 2.1rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: rgba(7, 3, 15, 0.75);
+  border: 1px solid rgba(33, 243, 255, 0.45);
+  color: var(--cyan);
+  font: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.lit-x:hover { border-color: var(--cyan); box-shadow: 0 0 16px rgba(33, 243, 255, 0.3); }
+/* the page underneath does not scroll while the plate is up, or the zoom it
+   flies back into would have moved by the time it got there */
+.lit-open, .lit-open body { overflow: hidden; }
 
 /* --- the narration --------------------------------------------------------
    The pilot's own sentence about what they did, in what a comic would call a
@@ -669,69 +767,142 @@ body.page { padding: 0 0 clamp(2rem, 6vh, 4rem); }
   50% { box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.7), 0 0 40px rgba(255, 62, 200, 0.45); }
 }
 
-/* Forward, back, and out. The arrow keys do the same thing — see the script
-   at the foot of every page. */
-.flip {
-  grid-column: span 12;
-  display: flex;
-  gap: 1rem;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-top: 0.5rem;
-  padding-top: 0.6rem;
-  border-top: 1px dashed rgba(160, 75, 255, 0.3);
-  font-size: 0.66rem;
-  letter-spacing: 0.18em;
+/* --- the dock ---------------------------------------------------------------
+   Forward, back, and out — bolted to the bottom of the window instead of the
+   bottom of the page, because a reader halfway down a chapter is exactly the
+   reader most likely to want the next one. The arrow keys do the same thing;
+   see the script at the foot of every page. */
+.dock {
+  position: fixed;
+  z-index: 5;
+  inset: auto 0 0 0;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: clamp(0.3rem, 1vw, 0.75rem);
+  padding: 0.45rem clamp(0.45rem, 1.8vw, 1.2rem);
+  background: linear-gradient(to top, rgba(7, 3, 15, 0.98), rgba(9, 4, 20, 0.9));
+  border-top: 1px solid rgba(160, 75, 255, 0.5);
+  box-shadow: 0 -12px 34px rgba(7, 3, 15, 0.85);
+  backdrop-filter: blur(6px);
 }
-.flip a { color: var(--lime); text-decoration: none; text-shadow: 0 0 10px currentColor; }
-.flip a:hover { color: var(--ink); }
-.flip .up { color: var(--dim); text-shadow: none; letter-spacing: 0.3em; }
-.flip .none { color: rgba(154, 134, 189, 0.4); }
 
-/* Every version there has ever been, oldest first, always in reach. The two
-   kinds of trouble are marked, so a reader can see where the book gets loud
-   before they get there. */
-.strip { grid-column: span 12; position: relative; display: flex; flex-wrap: wrap; gap: 3px; }
+/* The two a reader actually wants, at the size of something you press. */
+.turn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid rgba(182, 255, 61, 0.45);
+  background: rgba(182, 255, 61, 0.06);
+  color: var(--lime);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.turn:hover {
+  color: var(--ink);
+  border-color: var(--lime);
+  background: rgba(182, 255, 61, 0.16);
+  box-shadow: 0 0 18px rgba(182, 255, 61, 0.25);
+}
+.turn .arw { font-size: 1.1rem; line-height: 1; text-shadow: 0 0 12px currentColor; }
+.turn .lab { display: grid; gap: 0.1rem; text-align: left; }
+.turn.next .lab { text-align: right; }
+.turn .lab i {
+  font-style: normal;
+  font-size: 0.46rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.turn .lab b { font-size: 0.78rem; font-weight: 500; letter-spacing: 0.1em; }
+/* The first chapter and the one on the cabinet each have one edge with nothing
+   past it. The button stays where it was, unlit, so the row does not shuffle. */
+.turn.none {
+  border-color: rgba(154, 134, 189, 0.22);
+  background: none;
+  color: rgba(154, 134, 189, 0.45);
+}
+.turn.none .lab b { font-size: 0.6rem; letter-spacing: 0.16em; }
+.up {
+  display: grid;
+  place-items: center;
+  gap: 0.14rem;
+  padding: 0 0.6rem;
+  border: 1px solid rgba(160, 75, 255, 0.4);
+  color: var(--violet);
+  text-decoration: none;
+}
+.up .ic { width: 0.95rem; height: 0.95rem; }
+.up i { font-style: normal; font-size: 0.44rem; letter-spacing: 0.22em; text-transform: uppercase; }
+.up:hover { color: var(--ink); border-color: var(--cyan); }
+
+/* Every version there has ever been, oldest first, always in reach, each one
+   wearing the plate its own chapter opens with. Both kinds of trouble are
+   marked, so a reader can see where the book gets loud before they get there.
+   More chapters than window and this scrolls sideways — which it will, and
+   which is why it is the only part of the dock allowed to move. */
+.rail {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  justify-content: safe center;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(160, 75, 255, 0.5) transparent;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 1.2rem, #000 calc(100% - 1.2rem), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 1.2rem, #000 calc(100% - 1.2rem), transparent);
+}
+.rail::-webkit-scrollbar { height: 3px; }
+.rail::-webkit-scrollbar-thumb { background: rgba(160, 75, 255, 0.5); }
 .tick {
-  min-width: 1.5rem;
-  padding: 0.16rem 0.28rem;
-  border: 1px solid rgba(160, 75, 255, 0.28);
-  font-size: 0.54rem;
-  text-align: center;
+  position: relative;
+  flex: none;
+  display: block;
+  width: clamp(2.6rem, 4.4vw, 3.3rem);
+  height: 2.4rem;
+  overflow: hidden;
+  border: 1px solid rgba(160, 75, 255, 0.3);
+  /* the halftone a chapter with no plate falls back to, under the plate a
+     chapter with one covers it with */
+  background: radial-gradient(rgba(255, 62, 200, 0.5) 1px, transparent 1.2px) 0 0 / 6px 6px, #0b0418;
   color: var(--dim);
   text-decoration: none;
+}
+.tick img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.72;
+  /* a plate is a square and a thumbnail is not, so it arrives cropped and
+     often cropped to the darkest part of itself - lifted here, because a
+     thumbnail nobody can make out is a blank tile with extra steps */
+  filter: saturate(1.25) contrast(1.05) brightness(1.25);
+  transition: opacity 0.15s, transform 0.35s;
+}
+.tick b {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 0.06rem 0;
+  background: linear-gradient(to top, rgba(5, 1, 12, 0.92), rgba(5, 1, 12, 0));
+  font-size: 0.54rem;
+  font-weight: 500;
+  text-align: center;
+  letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
 }
-.tick:hover { color: var(--ink); border-color: var(--cyan); }
+.tick:hover { border-color: var(--cyan); color: var(--ink); }
+.tick:hover img { opacity: 0.95; transform: scale(1.08); }
 .tick.bent { border-color: rgba(255, 176, 32, 0.6); color: var(--amber); }
-.tick.off {
-  border-color: var(--magenta);
-  color: var(--magenta);
-  background: rgba(255, 62, 200, 0.12);
-}
-.tick.here { background: var(--cyan); border-color: var(--cyan); color: var(--void); }
-/* The preview, parked at the left of the strip rather than over the tick, so
-   that the first version and the last one both get a whole one. */
-.tick::after {
-  content: attr(data-t);
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(100% + 5px);
-  padding: 0.42rem 0.7rem;
-  background: rgba(12, 5, 24, 0.96);
-  border: 1px solid var(--cyan);
-  box-shadow: 0 0 20px rgba(33, 243, 255, 0.2);
-  color: var(--ink);
-  font-size: 0.6rem;
-  line-height: 1.5;
-  letter-spacing: 0.04em;
-  text-align: left;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.12s;
-}
-.tick:hover::after, .tick:focus::after { opacity: 1; }
+.tick.off { border-color: var(--magenta); color: var(--magenta); }
+.tick.here { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan), 0 0 16px rgba(33, 243, 255, 0.3); }
+.tick.here img { opacity: 0.9; }
+.tick.here b { background: var(--cyan); color: var(--void); }
 
 /* A version whose pilot wrote no Chronicle line reads as a gap in the record,
    and looks like one, so the next person can see what a missing chapter costs. */
@@ -815,23 +986,94 @@ body.page { padding: 0 0 clamp(2rem, 6vh, 4rem); }
   user-select: all;
 }
 
+/* --- the room ---------------------------------------------------------------
+   The book has a soundtrack and it is on. docs/chronicle-song.js builds this
+   switch itself rather than finding it printed in the page, so a reader with
+   the script off is never offered a sound that cannot arrive — same bargain as
+   everything else the script does. Top right, out of the way of the dock, and
+   small enough that a reader who does not want it never thinks about it. */
+.song {
+  position: fixed;
+  z-index: 6;
+  top: clamp(0.4rem, 1.5vw, 0.9rem);
+  right: clamp(0.4rem, 1.5vw, 0.9rem);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.36rem 0.62rem;
+  font-family: inherit;
+  font-size: 0.48rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--dim);
+  background: rgba(7, 3, 15, 0.72);
+  border: 1px solid rgba(33, 243, 255, 0.24);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+.song:hover { color: var(--ink); border-color: var(--cyan); }
+.song.on {
+  color: var(--cyan);
+  border-color: rgba(33, 243, 255, 0.65);
+  box-shadow: 0 0 18px rgba(33, 243, 255, 0.2);
+}
+/* Four bars, flat while it is silent, because a meter that moves with nothing
+   coming out of the speakers is the kind of decoration this book does not do. */
+.eq { display: flex; align-items: flex-end; gap: 2px; height: 0.68rem; }
+.eq i { width: 2px; height: 20%; background: currentColor; }
+.song.on .eq i { animation: eq 2.1s ease-in-out infinite; }
+.song.on .eq i:nth-child(2) { animation-duration: 3.4s; animation-delay: -0.9s; }
+.song.on .eq i:nth-child(3) { animation-duration: 2.7s; animation-delay: -1.6s; }
+.song.on .eq i:nth-child(4) { animation-duration: 4.1s; animation-delay: -0.4s; }
+@keyframes eq {
+  0%, 100% { height: 20%; }
+  50% { height: 100%; }
+}
+
 /* Below the width where two cels side by side stop being two cels and start
    being two columns of four words, there is one column. */
 @media (max-width: 62rem) {
   .told, .figures, .frame, .margin { grid-column: span 12; }
   .shout { max-width: none; }
+  /* the sentence takes the whole width down here, so the corner it was
+     keeping clear is gone: the credits fall back under it, still to the right */
+  .credits {
+    position: static;
+    margin-top: 0.9rem;
+  }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+/* Narrow enough that the words on the two buttons are competing with the
+   thumbnails for the same inch, and the arrows say it on their own. */
+@media (max-width: 46rem) {
+  .turn { padding: 0.3rem 0.5rem; }
+  .turn .lab i { display: none; }
+  .turn .lab b { font-size: 0.66rem; }
+  .turn.none .lab { display: none; }
+  .up i { display: none; }
+  .up { padding: 0 0.45rem; }
+}
 @media (max-width: 34rem) {
+  /* the bars say it on their own, the same way the arrows do */
+  .song .lab { display: none; }
+  .song { padding: 0.4rem 0.5rem; }
   .roster table { font-size: 0.62rem; }
   .cv a { grid-template-columns: 2.9rem 1fr; }
   .cv i { display: none; }
   .ci { padding-left: 0.3rem; }
-  .bar .who { margin-left: 0; }
+  /* four stacked lines is a lot of corner on a phone; tightened up they are
+     still four lines somebody can read at a glance */
+  .credits { gap: 0.28rem; }
   .stats { grid-template-columns: 1fr 1fr; }
   .stats span { font-size: 0.44rem; }
+  .turn .lab { display: none; }
+  .tick { width: 2.6rem; height: 2.1rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   h1, .shout, .roster, .art *, .dots, .plate-img, .loud, .loud::before { animation: none; }
   .js .cel { opacity: 1; transform: none; transition: none; }
+  /* the plate still opens, it just does not fly there */
+  .lit { transition: none; }
+  /* the sound plays, the meter holds still - it was only ever saying so */
+  .song.on .eq i { animation: none; height: 60%; }
 }
