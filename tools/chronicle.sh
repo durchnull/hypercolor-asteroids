@@ -236,6 +236,7 @@ function is_book(p) {
   return (p == "docs/index.html" || p == "docs/chronicle.css" ||
           p == "docs/chronicle.js" || p == "docs/chronicle-song.js" ||
           p == "docs/rail.js" || p == "docs/taglines.tsv" ||
+          p == "docs/favicon.svg" ||
           p ~ /^docs\/v[0-9]+\.html$/ ||
           p ~ /^docs\/art\// || p ~ /^docs\/faces\//)
 }
@@ -404,8 +405,64 @@ mkdir -p docs
 # comes back and a chapter for a version that no longer exists does not.
 rm -f docs/v[0-9]*.html
 
+# The tab wears the signet, and the drawing is not copied here: the rock, its
+# box, the three lobes and the flat hues are read off src/ui/logo.js - the one
+# file the mark belongs to - and printed as the same standalone SVG pin()
+# builds for the game's own tab. If the logo ever stops yielding all of it,
+# the book builds with no tab icon rather than a wrong one, and head() leaves
+# the link out.
+FAV=""
+if [ -f src/ui/logo.js ]; then
+  awk '
+    # the rock spans concatenated string literals; collect until the path closes
+    /const ROCK/ { grab = 1 }
+    grab {
+      line = $0
+      while (match(line, /"[^"]*"/)) {
+        rock = rock substr(line, RSTART + 1, RLENGTH - 2)
+        line = substr(line, RSTART + RLENGTH)
+      }
+      if (rock ~ /z$/) grab = 0
+    }
+    /const BOX/ { if (match($0, /"[^"]*"/)) box = substr($0, RSTART + 1, RLENGTH - 2) }
+    /const LOBES/ {
+      line = $0
+      while (match(line, /-?[0-9][0-9.]*/)) {
+        num[++nn] = substr(line, RSTART, RLENGTH)
+        line = substr(line, RSTART + RLENGTH)
+      }
+    }
+    /const FLAT/ {
+      line = $0
+      while (match(line, /#[0-9a-fA-F]+/)) {
+        flat[++nf] = substr(line, RSTART, RLENGTH)
+        line = substr(line, RSTART + RLENGTH)
+      }
+    }
+    # the void behind it, from the one rect pin() paints
+    /<rect/ { if (match($0, /fill="#[0-9a-fA-F]+"/)) void = substr($0, RSTART + 6, RLENGTH - 7) }
+    function pass(w, o,   i, out) {
+      for (i = 1; i <= 3; i++) {
+        out = out "<path d=\"" rock "\" stroke=\"" flat[i] "\" stroke-width=\"" w "\""
+        if (o < 1) out = out " opacity=\"" o "\""
+        out = out " transform=\"translate(" num[2 * i - 1] " " num[2 * i] ")\"/>"
+      }
+      return out
+    }
+    END {
+      if (rock !~ /^M/ || split(box, b, " ") != 4 || nn != 6 || nf != 4 || void == "") exit
+      out = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"" box "\" fill=\"none\" stroke-linejoin=\"round\">"
+      out = out "<rect x=\"" b[1] "\" y=\"" b[2] "\" width=\"" b[3] "\" height=\"" b[4] "\" fill=\"" void "\"/>"
+      out = out pass(6, 0.35) pass(2.4, 1)
+      out = out "<path d=\"" rock "\" stroke=\"" flat[4] "\" stroke-width=\"1.9\"/></svg>"
+      print out
+    }
+  ' src/ui/logo.js > docs/favicon.svg
+  if [ -s docs/favicon.svg ]; then FAV=1; else rm -f docs/favicon.svg; fi
+fi
+
 { taglines; owners; plates; faces; history '%d %B %Y|%H:%M'; } \
-  | awk -v RS='\036' -v FS='\037' -v total="$TOTAL" -v rules="$RULES" "$LIB"'
+  | awk -v RS='\036' -v FS='\037' -v total="$TOTAL" -v rules="$RULES" -v fav="$FAV" "$LIB"'
 function esc(s) { gsub(/&/,"\\&amp;",s); gsub(/</,"\\&lt;",s); gsub(/>/,"\\&gt;",s); return s }
 function att(s) { s = esc(s); gsub(/"/, "\\&quot;", s); return s }
 # JS string literals, a character at a time - the same function the digest at
@@ -979,6 +1036,9 @@ function head(f, ttl, cls,   b) {
   print "<html lang=\"en\"><head><meta charset=\"utf-8\">" > f
   print "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" > f
   print "<title>" ttl "</title>" > f
+  # the signet, when the build had one to read off the logo (see the favicon
+  # block above the awk)
+  if (fav != "") print "<link rel=\"icon\" href=\"favicon.svg\" type=\"image/svg+xml\">" > f
   print "<link rel=\"stylesheet\" href=\"../styles/tokens.css\">" > f
   print "<link rel=\"stylesheet\" href=\"../styles/crt.css\">" > f
   print "<link rel=\"stylesheet\" href=\"chronicle.css\">" > f

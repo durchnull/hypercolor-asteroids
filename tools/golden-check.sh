@@ -184,6 +184,7 @@ is_generated() {
     docs/chronicle.js) return 0 ;;      # the same book, in the shape the splash reads
     docs/chronicle-song.js) return 0 ;; # the room the book is read in, same machine
     docs/rail.js) return 0 ;;           # the dock every chapter shares, same machine
+    docs/favicon.svg) return 0 ;;       # the signet on the tab, read off the logo
     docs/v[0-9]*.html) return 0 ;;      # one page per version, same machine
     docs/art/*) return 0 ;;             # the plates, painted once and kept
     docs/faces/*) return 0 ;;           # the pilots, painted once and never again

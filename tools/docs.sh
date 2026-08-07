@@ -490,6 +490,12 @@ while IFS= read -r f; do
     printf '<link rel="stylesheet" href="../styles/tokens.css">\n'
     printf '<link rel="stylesheet" href="../styles/crt.css">\n'
     printf '<link rel="stylesheet" href="notes.css">\n'
+    # The tab icon is the book's, written by tools/chronicle.sh out of the
+    # game's own logo. The notes wear it when it is there and read the same
+    # when it is not, like the faces.
+    if [ -f "$OUT/favicon.svg" ]; then
+      printf '<link rel="icon" href="favicon.svg" type="image/svg+xml">\n'
+    fi
     # The same room the chapters are read in, written by tools/chronicle.sh and
     # on unless the reader has said otherwise. The notes are the part of this
     # book somebody reads standing up, and walking out of a chapter into the
