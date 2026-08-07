@@ -75,21 +75,12 @@
   // already be on screen by then, so ask it to say the numbers again.
   A.sidecar("docs/chronicle.js", () => { if (A.renderPilot) A.renderPilot(); });
 
+  // No guide tile: the record reveals itself where it lives — on the hull
+  // and on the pilot card — and the field guide briefs the flight, not the
+  // hangar (see src/ui/fieldguide.js for what earns a row).
   A.register({
     id: "service",
-    order: { draw: 61, guide: 93 },   // paint goes on right after the hull
+    order: { draw: 61 },   // paint goes on right after the hull
     draw,
-    guide: {
-      name: "SERVICE RECORD",
-      meta: "earned",
-      tint: "var(--cyan)",
-      icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
-        stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-        stroke-linejoin="round">
-        <path d="M8 10l9-5 9 5M8 17l9-5 9 5M8 24l9-5 9 5"/></svg>`,
-      desc: `Versions landed, traps laid, flights on the board &mdash; counted
-        off the record by machines, worn on the hull as paint. Nobody assigns
-        any of it, and the paint buys nothing but the look.`,
-    },
   });
 })(ASTEROIDS);

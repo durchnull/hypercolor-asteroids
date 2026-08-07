@@ -254,23 +254,12 @@
 
   A.blackboxTape = () => tape;
 
+  // No guide tile: the tape announces itself on the game-over screen, which
+  // is the only moment it matters. The field guide briefs the flight ahead
+  // (see src/ui/fieldguide.js for what earns a row).
   A.register({
     id: "blackbox",
-    order: { reset: 60, update: 60, guide: 90 },
+    order: { reset: 60, update: 60 },
     reset, update,
-    guide: {
-      name: "BLACK BOX",
-      meta: "GAME OVER",
-      tint: "var(--lime)",
-      icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
-        <rect x="5" y="9" width="24" height="16" rx="2"/>
-        <circle cx="12" cy="17" r="3"/>
-        <circle cx="22" cy="17" r="3"/>
-        <path d="M12 17 H22" opacity="0.65"/>
-        <path d="M9 25 L7 29 M25 25 L27 29" stroke-linecap="round" opacity="0.65"/>
-      </svg>`,
-      desc: `Every flight is taped. When the last ship dies, copy the wreckage
-        and take it to claude to get on the record.`,
-    },
   });
 })(ASTEROIDS);
