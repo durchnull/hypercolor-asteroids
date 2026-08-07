@@ -482,10 +482,10 @@ while IFS= read -r f; do
     printf '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">\n'
     printf '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
     # The README calls itself after the game, so it would otherwise say it twice.
-    if [ "$t" = "ASTEROIDS // HYPERCOLOR" ]; then
+    if [ "$t" = "HYPERCOLOR ASTEROIDS" ]; then
       printf '<title>%s</title>\n' "$t"
     else
-      printf '<title>%s &mdash; ASTEROIDS // HYPERCOLOR</title>\n' "$t"
+      printf '<title>%s &mdash; HYPERCOLOR ASTEROIDS</title>\n' "$t"
     fi
     printf '<link rel="stylesheet" href="../styles/tokens.css">\n'
     printf '<link rel="stylesheet" href="../styles/crt.css">\n'

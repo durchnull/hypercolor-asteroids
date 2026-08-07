@@ -6,13 +6,13 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 13,
-    latest: { v: 13, pilot: "David Friedrich", date: "07 August 2026", line: "The sign in the corner stopped lying about the room behind it.", plate: "8d96e74c.jpg", alt: "The sign in the corner stopped lying about the room behind it." },
+    versions: 17,
+    latest: { v: 17, pilot: "David Friedrich", date: "07 August 2026", line: "The cabinet put its name up. A rock three colours out of true is holding it.", plate: "e055287b.jpg", alt: "The HUD is more forthcoming than it used to be. The picture followed." },
     plates: [
-      { v: 13, file: "8d96e74c.jpg", alt: "The sign in the corner stopped lying about the room behind it.", line: "The sign in the corner stopped lying about the room behind it." },
-      { v: 12, file: "bb0fc33f.jpg", alt: "David Friedrich taught the ambushes to sign their work.", line: "David Friedrich taught the ambushes to sign their work." },
-      { v: 11, file: "fd19f663.jpg", alt: "The cabinet learned a new noise. The panels caught up.", line: "The cabinet learned a new noise. The panels caught up." },
-      { v: 10, file: "12b58215.jpg", alt: "A rule was taken out, looked at, and put back differently.", line: "A rule was taken out, looked at, and put back differently." },
+      { v: 17, file: "e055287b.jpg", alt: "The HUD is more forthcoming than it used to be. The picture followed.", line: "The cabinet put its name up. A rock three colours out of true is holding it." },
+      { v: 16, file: "9538f273.jpg", alt: "The instrument panel developed an opinion. It looks different, too.", line: "The instrument panel developed an opinion. It looks different, too." },
+      { v: 15, file: "f6412bc2.jpg", alt: "The splash screen stopped describing the ship and showed it.", line: "The splash screen stopped describing the ship and showed it." },
+      { v: 14, file: "6a386812.jpg", alt: "The instrument panel developed an opinion. It brought company.", line: "The instrument panel developed an opinion. It brought company." },
     ]
   };
   A.BOARD = [

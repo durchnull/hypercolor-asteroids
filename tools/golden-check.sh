@@ -1,6 +1,6 @@
 #!/bin/sh
 # ---------------------------------------------------------------------------
-# golden-check.sh - the referee for ASTEROIDS // HYPERCOLOR.
+# golden-check.sh - the referee for HYPERCOLOR ASTEROIDS.
 #
 # Checks the current change against GOLDEN_RULES.md. In the spirit of the game
 # itself there are no dependencies: sh, git, grep, sed, awk, and node if you

@@ -56,7 +56,7 @@ ensure_file() {
   cat > "$FILE" <<'HEAD'
 # THE TAGLINES
 #
-# One line per version of ASTEROIDS // HYPERCOLOR, saying what happened to the
+# One line per version of HYPERCOLOR ASTEROIDS, saying what happened to the
 # game. Appended by tools/tagline.sh when a version lands, read by
 # tools/chronicle.sh into the book, and never rewritten: once a line is in
 # here it is the record, even after the script that first wrote it changes its

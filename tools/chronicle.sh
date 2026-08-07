@@ -708,10 +708,10 @@ END {
 
   # ---- the cover -----------------------------------------------------------
   cover = "docs/index.html"
-  head(cover, "ASTEROIDS // HYPERCOLOR &mdash; the chronicle", "")
+  head(cover, "HYPERCOLOR ASTEROIDS &mdash; the chronicle", "")
   print "<main>" > cover
   print "<h1>THE CHRONICLE</h1>" > cover
-  print "<p class=\"sub\">Being a true and complete account of ASTEROIDS // HYPERCOLOR," > cover
+  print "<p class=\"sub\">Being a true and complete account of HYPERCOLOR ASTEROIDS," > cover
   print "in " total " version" (total == 1 ? "" : "s") ", as told by the pilots who flew it." > cover
   print "A version is a commit that changed the game and it gets a page to itself;" > cover
   print "everything else that happened is noted in passing, including every rule" > cover
@@ -754,7 +754,7 @@ END {
   # still one arrow key away.
   for (v = 1; v <= total; v++) {
     f = "docs/v" v ".html"
-    head(f, "v" v " &mdash; ASTEROIDS // HYPERCOLOR", "page")
+    head(f, "v" v " &mdash; HYPERCOLOR ASTEROIDS", "page")
     # Three facts the layout needs before it starts: whether the book had to
     # write anything down, whether anything happened alongside, and whether so
     # much happened alongside that it has outgrown the margin. Any of them

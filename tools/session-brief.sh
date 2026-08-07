@@ -16,7 +16,7 @@ TMP=$(mktemp) || exit 0
 trap 'rm -f "$TMP"' EXIT INT TERM
 
 {
-  printf 'ASTEROIDS // HYPERCOLOR - the cabinet right now (see CLAUDE.md, GOLDEN_RULES.md)\n\n'
+  printf 'HYPERCOLOR ASTEROIDS - the cabinet right now (see CLAUDE.md, GOLDEN_RULES.md)\n\n'
   printf 'On the cabinet: %s   pilot at the keyboard: %s\n\n' \
     "$(sh tools/chronicle.sh --version)" "$(git config user.name 2>/dev/null || echo 'UNSET - GR7 will block the commit')"
 

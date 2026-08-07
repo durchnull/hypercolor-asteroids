@@ -1,4 +1,4 @@
-# ASTEROIDS // HYPERCOLOR
+# HYPERCOLOR ASTEROIDS
 
 A neon vector arcade game in one open-and-play page — canvas graphics, Web
 Audio music, no build step, no dependencies, no network.
