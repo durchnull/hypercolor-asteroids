@@ -6,13 +6,13 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 24,
-    latest: { v: 24, pilot: "David Friedrich", date: "07 August 2026", line: "The rules of the field changed while nobody was flying.", plate: "b0ffdf83.jpg", alt: "The rules of the field changed while nobody was flying." },
+    versions: 25,
+    latest: { v: 25, pilot: "David Friedrich", date: "07 August 2026", line: "The rules of the field changed while nobody was flying.", plate: "e4fa7990.jpg", alt: "The rules of the field changed while nobody was flying." },
     plates: [
+      { v: 25, file: "e4fa7990.jpg", alt: "The rules of the field changed while nobody was flying.", line: "The rules of the field changed while nobody was flying." },
       { v: 24, file: "b0ffdf83.jpg", alt: "The rules of the field changed while nobody was flying.", line: "The rules of the field changed while nobody was flying." },
       { v: 23, file: "5e29b1c9.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
       { v: 22, file: "a90750c7.jpg", alt: "The screen mentions something it used to keep to itself.", line: "The screen mentions something it used to keep to itself." },
-      { v: 21, file: "c7f6ade1.jpg", alt: "The rules of the field changed while nobody was flying.", line: "The rules of the field changed while nobody was flying." },
     ]
   };
   A.BOARD = [

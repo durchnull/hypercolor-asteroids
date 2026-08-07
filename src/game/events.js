@@ -13,6 +13,12 @@
 // — and why laying a good one is the most direct way there is to ruin a
 // friend's run.
 //
+// The mirror of that rule: a named pilot with no trap in the game is not
+// ambushed at all. Nobody's first evening is spent as pure target — writing
+// your first event is the induction, and the room arms itself the moment it
+// lands. GUEST gets everything, which is the walk-up experience and is
+// deliberate. See unarmed() below for the one exception the ledger makes.
+//
 // Writing one:
 //
 //   A.defineEvent({
@@ -66,11 +72,28 @@
   };
 
   /**
+   * The field does not ambush the unarmed. A named pilot with no trap of
+   * their own in the game gets none fired at them: the first evening is for
+   * learning the field, and writing your first event is the induction that
+   * arms the room (GR11). GUEST keeps the everything-armed walk-up game, on
+   * purpose. The shelter is for the new, not the indebted - a pilot the
+   * ledger still charges (GR12) is ambushed whether they are armed or not,
+   * or deleting your own arsenal would be a way out of the tally.
+   */
+  function unarmed() {
+    const me = A.activePilot();
+    if (me === A.GUEST) return false;
+    if (A.pilotHeatBends && A.pilotHeatBends(me) > 0) return false;
+    return !events.some((e) => e.by !== A.HOUSE && e.by === me);
+  }
+
+  /**
    * How many events are pointed at whoever is flying right now. A count and
    * never a list: knowing there are six out there is the fun part, knowing
    * which six is the end of it.
    */
   A.armedCount = function armedCount() {
+    if (unarmed()) return 0;
     const me = A.activePilot();
     const mine = mineToo();
     return events.filter((e) => mine || e.by === A.HOUSE || e.by !== me).length;
@@ -268,6 +291,7 @@
     if (A.game.levelTimer > 0) return;        // between waves, let it breathe
     if (firedThisWave >= quota()) return;
     if (!A.flyingShips().length) return;      // nobody alive to ambush
+    if (unarmed()) return;                    // and the unarmed are not ambushed
 
     timer -= tick.dt;
     if (timer > 0) return;
@@ -302,7 +326,7 @@
         stroke="currentColor" stroke-width="1.6">
         <path d="M17 3v7M17 24v7M3 17h7M24 17h7M7 7l5 5M22 22l5 5M27 7l-5 5M12 22l-5 5"/>
         <circle cx="17" cy="17" r="4.5"/></svg>`,
-      desc: "The field has moods. Somebody wrote one of them for you, and it is not the one they get.",
+      desc: "The field has moods. Somebody wrote one of them for you, and it is not the one they get. A pilot with no trap laid is spared the lot &mdash; the room arms when you do.",
     },
   });
 })(ASTEROIDS);

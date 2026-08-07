@@ -80,6 +80,10 @@
           + ", which is past the point where your own events go on sparing you. "
           + "They are in the pile with everybody else's now. The field will also "
           + "come for you sooner than it does for the others."
+        : active !== A.GUEST && pilots.length > 0 && A.armedCount && A.armedCount() === 0
+        ? "&#9670; the field does not ambush the unarmed. None of the traps in "
+          + "this room fire at a pilot who has laid none &mdash; write your "
+          + "first event and the room arms itself. That is the induction."
         : locked
         ? "&#9670; your git identity, so this seat is yours. Your own events "
           + "stay quiet &mdash; you get to be surprised by everyone else's."
