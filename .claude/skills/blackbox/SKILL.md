@@ -59,10 +59,15 @@ is what makes the board worth reading.
    greps for. A two-seat tape lands once, under the tape's pilot, and the
    line mentions the wingmate.
 
-7. **Commit it** — `docs/RANKINGS.md` alone, nothing else that happens to be
-   dirty. A ranking does not change the game, so it gets no `Version:` line;
-   it gets a subject worth reading and a `Chronicle:` line like everything
-   else. Example:
+7. **Commit it, without asking.** Handing over the tape is the ask; a verified
+   flight that sits unstaged in somebody's working tree is not on the record,
+   and the pilot has already walked away. So finish the job: stage
+   `docs/RANKINGS.md` alone, nothing else that happens to be dirty, and commit
+   in the same breath as ranking. No confirmation round, no "shall I land
+   this?" — the only stops in this ritual are steps 2, 3 and 4, and a tape
+   that got past those is going on the board. A ranking does not change the
+   game, so it gets no `Version:` line; it gets a subject worth reading and a
+   `Chronicle:` line like everything else. Example:
 
    ```
    GUEST flies 4 minutes and the board notices
@@ -81,3 +86,5 @@ is what makes the board worth reading.
   somebody's flight to make room. The log keeps everything; the board keeps
   the best twenty and drops the rest by falling off, not by being erased.
 - Touch `src/` or `styles/` — reading a tape is repo work, not a version.
+- Stop at the edge of the commit to ask permission. Refusing a tape is a
+  decision; landing one that passed every check is just the rest of the job.
