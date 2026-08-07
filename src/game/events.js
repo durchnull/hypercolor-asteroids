@@ -21,7 +21,7 @@
 //     name: "PINCER",            // the banner the victim gets
 //     blurb: "From three sides", // the small line under it
 //     minWave: 4,                // earliest wave it may fire on
-//     weight: 2,                 // relative likelihood against the others
+//     weight: 2,                 // relative likelihood within your own arsenal
 //     cooldown: 3,               // waves before it may repeat
 //     icon: "M12 2.2v5.2 …",     // your glyph, in a 24x24 box, strokes only
 //     holds: 5,                  // seconds the glyph stays up, at least
@@ -205,14 +205,25 @@
   }
 
   function pick(pool) {
-    let total = 0;
-    for (const e of pool) total += e.weight || 1;
-    let n = Math.random() * total;
+    // Airtime is dealt per author first, then per event within the arsenal -
+    // a pilot who laid ten traps owns no more of anybody's evening than one
+    // who laid a single good one. `weight` ranks an author's own traps
+    // against each other; it buys nothing against the rest of the room.
+    const arsenals = new Map();
     for (const e of pool) {
+      if (!arsenals.has(e.by)) arsenals.set(e.by, []);
+      arsenals.get(e.by).push(e);
+    }
+    const authors = [...arsenals.values()];
+    const traps = authors[Math.floor(Math.random() * authors.length)];
+    let total = 0;
+    for (const e of traps) total += e.weight || 1;
+    let n = Math.random() * total;
+    for (const e of traps) {
       n -= e.weight || 1;
       if (n <= 0) return e;
     }
-    return pool[pool.length - 1];
+    return traps[traps.length - 1];
   }
 
   function announce(e) {

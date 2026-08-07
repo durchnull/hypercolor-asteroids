@@ -185,6 +185,11 @@
       v: 1,
       ts: new Date().toISOString(),
       pilot: A.activePilot(),
+      // The seat the cabinet was locked to, sealed beside the name that flew.
+      // A flight flown under a borrowed name carries the mismatch in its own
+      // tape, and tools/blackbox.sh says so out loud - GR12 says what such a
+      // run is worth. No seat lock, no claim: null, and the reader admits it.
+      whoami: A.LOCAL_PILOT || null,
       score,
       best: A.game.best,
       wave: A.game.level,
