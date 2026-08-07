@@ -61,29 +61,69 @@
   letter-spacing: 0.16em;
   color: var(--ink);
 }
+/* Two small numbers used to sit under a name in two shades of small: how many
+   traps this pilot has out, and how many rules they have bent. Both read as
+   "0.6rem, amber-ish" at a glance, which is no help at all when one of them is
+   a boast and the other is a sentence. So each gets a glyph, and the glyph is
+   the thing you actually read — teeth for a trap, a bent rule for a bend. */
 .pilotcard .pmeta {
+  display: flex;
+  align-items: center;
+  gap: 0.34rem;
   font-size: 0.6rem;
   letter-spacing: 0.1em;
   color: var(--amber);
   font-variant-numeric: tabular-nums;
 }
+.pilotcard .pmeta .ic { width: 0.78rem; height: 0.78rem; }
+/* A pilot with nothing out yet gets the outline of a trap and no glow: the
+   card says "no traps laid", and it should look like an empty rack. */
+.pilotcard .pmeta .cold { opacity: 0.5; filter: none; }
 .pilotcard:not(.on) .pmeta { color: var(--dim); }
 
-/* Only ever there for a pilot who has bent something. GR12. */
+/* Only ever there for a pilot who has bent something. GR12. Three is where
+   their own events stop sparing them, so three is where it stops being an
+   annotation and starts being lit. */
 .pilotcard .pbends {
+  display: flex;
+  align-items: center;
+  gap: 0.34rem;
   font-size: 0.56rem;
   letter-spacing: 0.1em;
   color: var(--magenta);
   font-variant-numeric: tabular-nums;
 }
+.pilotcard .pbends .ic { width: 0.72rem; height: 0.72rem; }
+.pilotcard .pbends.hot {
+  color: var(--magenta);
+  text-shadow: 0 0 9px currentColor;
+}
+.pilotcard .pbends.hot .ic { animation: bendpulse 2.4s ease-in-out infinite; }
+@keyframes bendpulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
 
 .pilotarmed {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
   margin-top: 0.55rem;
   font-size: 0.66rem;
   letter-spacing: 0.16em;
   color: var(--magenta);
   text-shadow: 0 0 10px currentColor;
   font-variant-numeric: tabular-nums;
+}
+.pilotarmed .ic { width: 0.85rem; height: 0.85rem; }
+/* Something out there is actually pointed at this seat. The crosshair closes
+   in and lets go, once every three seconds, which is the whole animation
+   budget this screen needed to stop being a list of facts. */
+.pilotarmed.live .ic { animation: aimlock 3s ease-in-out infinite; }
+@keyframes aimlock {
+  0%, 70%, 100% { transform: none; opacity: 1; }
+  80% { transform: scale(0.82) rotate(45deg); opacity: 0.75; }
+  90% { transform: scale(1.08) rotate(90deg); }
 }
 .pilotnote {
   margin-top: 0.35rem;
@@ -94,11 +134,16 @@
   text-wrap: pretty;
 }
 
-/* 1340 is where the whole splash stops fitting, and the prose is what goes
-   first — well before anything the pilot has to act on */
-@media (max-height: 1340px) {
+/* The note explains the one rule the whole cabinet turns on, and it used to be
+   the first thing dropped because the splash was one column and everything was
+   fighting for the fold. In a right-hand column with the seats under it there
+   is room for it on any screen worth reading it on. */
+@media (max-height: 700px) {
   .pilotnote { display: none; }
 }
 @media (max-height: 940px) {
   .pilotcard { padding: 0.4rem 0.55rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pilotcard .pbends.hot .ic, .pilotarmed.live .ic { animation: none; }
 }

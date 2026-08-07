@@ -53,7 +53,7 @@
     const bends = (name) => (A.pilotBends ? A.pilotBends(name) : 0);
 
     root.innerHTML = `
-      <h2>WHO IS FLYING</h2>
+      <h2>${A.ico("helmet")}WHO IS FLYING</h2>
       <div class="pilots">${(known ? shown : seats).map((p) => `
         <button type="button" class="pilotcard${p.name === active ? " on" : ""}"
                 data-pilot="${esc(p.name)}"${locked ? " disabled" : ""}>${
@@ -62,15 +62,17 @@
           : ""}
           <span class="pname">${esc(p.name)}</span>
           <span class="pmeta">${
-            p.events < 0 ? "every trap armed"
-            : p.events === 0 ? "no traps laid"
-            : plural(p.events, "trap", "traps") + " laid"
+            p.events < 0 ? A.ico("aim") + "every trap armed"
+            : p.events === 0 ? A.ico("trap", "cold") + "no traps laid"
+            : A.ico("trap") + plural(p.events, "trap", "traps") + " laid"
           }</span>${bends(p.name) ? `
-          <span class="pbends">${plural(bends(p.name), "bend", "bends")} on the ledger</span>`
+          <span class="pbends${bends(p.name) >= 3 ? " hot" : ""}">${A.ico("bend")}${
+            plural(bends(p.name), "bend", "bends")} on the ledger</span>`
           : ""}
         </button>`).join("")}
       </div>
-      <p class="pilotarmed">${plural(A.armedCount ? A.armedCount() : 0,
+      <p class="pilotarmed${A.armedCount && A.armedCount() ? " live" : ""}">${
+        A.ico("aim")}${plural(A.armedCount ? A.armedCount() : 0,
         "event is pointed at you", "events are pointed at you")}</p>
       <p class="pilotnote">${
         A.ownEventsArmed && A.ownEventsArmed()
@@ -103,12 +105,7 @@
   // The faces, asked for the same way the seat is and just as optionally: it
   // is a generated file that only exists once somebody has been painted, so a
   // miss is silent and a hit asks for a redraw of whatever is already on screen.
-  const f = document.createElement("script");
-  f.src = "docs/faces/faces.js";
-  f.async = false;
-  f.onerror = () => {};                      // nobody painted yet: names, then
-  f.onload = () => { if (A.renderPilot) A.renderPilot(); };
-  document.head.append(f);
+  A.sidecar("docs/faces/faces.js", () => A.renderPilot());
 
   A.register({
     id: "ui:profile",

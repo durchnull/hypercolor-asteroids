@@ -21,6 +21,65 @@
      the shade. */
 }
 .overlay[hidden] { display: none; }
+/* The splash is not a stack that scrolls, it is a screen with a dock. Three
+   rows: the title, the deck taking whatever height is left over, and the
+   instruction at the bottom — where it cannot be scrolled away from, on a
+   laptop or a phone or the television in the corner. Before this, a guide long
+   enough to need scrolling put PRESS ENTER below the fold, which is a poor
+   joke to play on somebody who has just been handed the keyboard.
+
+   `:not([hidden])` rather than a plain class, so the rule that hides an
+   overlay while a game is running still wins without needing to shout. */
+.splash:not([hidden]) {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-items: center;
+  /* both of these are undoing what the flex layout above set, and the first
+     one is load-bearing: `align-items: center` in a grid means an item is its
+     own natural height in the middle of its track, so the deck would grow past
+     the row instead of scrolling inside it, and the dock would be pushed off
+     the bottom of the screen it is supposed to be nailed to */
+  align-items: stretch;
+  align-content: stretch;
+  gap: 0.85rem;
+  padding: 1.4rem 1.5rem 0;
+  overflow: hidden;              /* the deck scrolls; the screen does not */
+}
+/* The deck: the field on the left, the people on the right, the book across
+   the foot of both. Two columns rather than one long stack, because reading
+   what is out there and deciding whose seat to take is one decision and it is
+   made in one glance. */
+.deck {
+  width: min(84rem, 96vw);
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  align-content: start;
+  /* a panel is as tall as what is in it. Without this the shortest one in a
+     column grows to fill its row and reads as a panel with something missing */
+  align-items: start;
+  gap: 0.85rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 0.4rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(160, 75, 255, 0.5) transparent;
+}
+.brief { grid-column: 1; grid-row: 1 / span 3; }
+.pilot { grid-column: 2; grid-row: 1; }
+.lobby { grid-column: 2; grid-row: 2; }
+.board { grid-column: 2; grid-row: 3; }
+.book  { grid-column: 1 / -1; grid-row: 4; }
+/* The dock. Never scrolls, never moves, and the dashed rule above it is still
+   where the reading stops and the pressing starts. */
+.splash .dock {
+  width: min(84rem, 96vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 0 1rem;
+  border-top: 1px dashed rgba(154, 134, 189, 0.3);
+}
 .overlay h1 {
   font-size: clamp(2rem, 7.5vw, 4.2rem);
   font-weight: 600;
@@ -40,16 +99,12 @@
   from { background-position: 0% 50%; }
   to { background-position: 300% 50%; }
 }
-/* Below the rack: keys, the door to the book, and the one thing you came here
-   to press. Nothing down here is a panel, on purpose — the dashed rule is
-   where the reading stops and the pressing starts. */
+/* In the dock: the two keys nobody thinks to mention, above the one thing you
+   came here to press. Nothing down here is a panel, on purpose. */
 .overlay .controls {
-  width: min(46rem, 92vw);
-  padding-top: 1.2rem;
-  border-top: 1px dashed rgba(154, 134, 189, 0.3);
   color: var(--dim);
   font-size: 0.8rem;
-  line-height: 2;
+  line-height: 1.9;
   letter-spacing: 0.12em;
 }
 .overlay .controls b {
@@ -57,36 +112,6 @@
   font-weight: 500;
   text-shadow: 0 0 8px currentColor;
 }
-/* The door to the book — drawn as a door, so it is plainly a way out of the
-   cabinet rather than another line of instructions. Quieter than PRESS ENTER
-   on purpose: the cabinet is what you came for, and the chronicle is what you
-   read afterwards. */
-.overlay .book { font-size: 0.66rem; letter-spacing: 0.16em; }
-.overlay .book a {
-  display: inline-block;
-  padding: 0.42rem 1rem;
-  border: 1px solid rgba(160, 75, 255, 0.45);
-  /* two layers, and the hover keeps both — a background that changes layer
-     count mid-transition snaps instead of fading */
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.015)),
-    rgba(160, 75, 255, 0.04);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  color: var(--violet);
-  text-decoration: none;
-  text-shadow: 0 0 10px currentColor;
-  transition: color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
-}
-.overlay .book a:hover {
-  color: var(--magenta);
-  border-color: rgba(255, 62, 200, 0.7);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03)),
-    rgba(160, 75, 255, 0.16);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24),
-              0 0 18px rgba(255, 62, 200, 0.18);
-}
-.overlay .book span { display: block; margin-top: 0.45rem; color: var(--dim); letter-spacing: 0.1em; }
 /* The loudest thing on the screen, and the last — everything above it is
    reading, this is the instruction. */
 .overlay .prompt {
@@ -107,16 +132,17 @@
 }
 .overlay .final .best { color: var(--dim); text-shadow: none; }
 
-/* The rack: field guide, pilot and seats are three instruments bolted to the
-   splash, and they share a chassis — plate, corner brackets, one header shape.
-   What tells them apart is `--accent`, and each panel keeps the colour it
-   already wore: magenta for the guide, cyan for the pilot, amber for the seats,
-   which is also the colour of the seat that is still open. They are a third of
-   the wheel apart on purpose — the rack drifts through the spectrum in step, so
-   whatever hue they are at, they are still that far apart. */
-.brief, .pilot, .lobby {
+/* The rack: five instruments bolted to the splash, sharing a chassis — plate,
+   corner brackets, one header shape. What tells them apart is `--accent`, and
+   each panel keeps the colour it already wore: magenta for the guide, cyan for
+   the pilot, amber for the seats, which is also the colour of the seat that is
+   still open. The two new ones take the two hues that were going spare — lime
+   for the board, because that is the colour this cabinet says yes in, and
+   violet for the book, because the book has been violet since it was one line
+   of text. Five hues evenly around the wheel, and the rack drifts through the
+   spectrum in step, so whatever hue they are at they are still that far apart. */
+.brief, .pilot, .lobby, .board, .book {
   position: relative;
-  width: min(46rem, 92vw);
   padding: 1.1rem 1.3rem 1.2rem;
   background: rgba(12, 5, 24, 0.66);
   border: 1px solid var(--accent-soft);
@@ -142,7 +168,9 @@
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .overlay:not([hidden]) .brief,
   .overlay:not([hidden]) .pilot,
-  .overlay:not([hidden]) .lobby {
+  .overlay:not([hidden]) .lobby,
+  .overlay:not([hidden]) .board,
+  .overlay:not([hidden]) .book {
     background:
       linear-gradient(148deg,
         rgba(255, 255, 255, 0.15),
@@ -155,39 +183,40 @@
     -webkit-backdrop-filter: blur(18px) saturate(1.8) brightness(1.45);
     backdrop-filter: blur(18px) saturate(1.8) brightness(1.45);
   }
-  /* The door to the book gets the same treatment for the same reason. */
-  .overlay:not([hidden]) .book a {
-    -webkit-backdrop-filter: blur(11px) saturate(1.5);
-    backdrop-filter: blur(11px) saturate(1.5);
-  }
 }
 .brief { --accent: var(--magenta); --accent-soft: rgba(255, 62, 200, 0.38); --accent-glow: rgba(255, 62, 200, 0.05); }
 .pilot { --accent: var(--cyan);    --accent-soft: rgba(33, 243, 255, 0.38); --accent-glow: rgba(33, 243, 255, 0.06); }
 .lobby { --accent: var(--amber);   --accent-soft: rgba(255, 176, 32, 0.38); --accent-glow: rgba(255, 176, 32, 0.05); }
+.board { --accent: var(--lime);    --accent-soft: rgba(182, 255, 61, 0.36); --accent-glow: rgba(182, 255, 61, 0.05); }
+.book  { --accent: var(--violet);  --accent-soft: rgba(160, 75, 255, 0.42); --accent-glow: rgba(160, 75, 255, 0.07); }
 
-/* the bracketed corners are the family mark — same shape on all three, so the
+/* the bracketed corners are the family mark — same shape on all five, so the
    rack reads as one rack before the colours say which panel is which */
 .brief::before, .brief::after,
 .pilot::before, .pilot::after,
-.lobby::before, .lobby::after {
+.lobby::before, .lobby::after,
+.board::before, .board::after,
+.book::before, .book::after {
   content: "";
   position: absolute;
   width: 13px;
   height: 13px;
   border: 1px solid var(--accent);
 }
-.brief::before, .pilot::before, .lobby::before {
+.brief::before, .pilot::before, .lobby::before, .board::before, .book::before {
   top: -1px; left: -1px;
   border-right: none;
   border-bottom: none;
 }
-.brief::after, .pilot::after, .lobby::after {
+.brief::after, .pilot::after, .lobby::after, .board::after, .book::after {
   bottom: -1px; right: -1px;
   border-left: none;
   border-top: none;
 }
-/* one header shape for all three: a lit indicator, the label, a rule under it */
-.brief h2, .pilot h2, .lobby h2 {
+/* one header shape for all five: the panel's own glyph, the label, a rule
+   under it. The glyph replaced a lit square, which said "this is a panel" —
+   true, and the pilot could see that. A trap says what kind. */
+.brief h2, .pilot h2, .lobby h2, .board h2, .book h2 {
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -200,20 +229,37 @@
   padding-bottom: 0.6rem;
   border-bottom: 1px dashed var(--accent-soft);
 }
-.brief h2::before, .pilot h2::before, .lobby h2::before {
-  content: "";
-  flex: none;
-  width: 0.42rem;
-  height: 0.42rem;
-  background: currentColor;
-  box-shadow: 0 0 8px currentColor;
+.brief h2 .ic, .pilot h2 .ic, .lobby h2 .ic, .board h2 .ic, .book h2 .ic {
+  width: 0.95rem;
+  height: 0.95rem;
 }
-/* Two columns, filled top-to-bottom — multi-column rather than grid so rows
-   pack tight instead of every row in a pair growing to the taller of the two,
-   and so the divider between them comes free. */
+/* The glyphs the panels are signposted with — one box, one weight, and the
+   colour of whatever they were dropped into, so they drift with the spectrum
+   like the rest of the rack. See src/ui/icons.js. */
+.ic {
+  flex: none;
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -0.14em;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+/* As many columns as the panel is wide enough to hold, and it decides that
+   itself: two hand-set columns were right while the guide was a narrow strip
+   down the middle of the screen, and on half a splash it is three without
+   anybody editing this line.
+   Still multi-column rather than a grid of cells, and the reason is visible
+   the moment you try the other one: the grapple takes nine lines to explain
+   and the asteroid takes two, so a row of grid cells is as tall as the worst
+   case and the panel fills up with holes. Columns flow, so entries pack. The
+   divider between them comes free, which was the other reason. */
 .brief ul {
   list-style: none;
-  columns: 2;
+  columns: 15rem;
   column-gap: 1.6rem;
   column-rule: 1px dashed rgba(160, 75, 255, 0.3);
 }
@@ -254,27 +300,51 @@
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
-/* one column again once a column would be too narrow to hold a description,
-   and the rest of the rack narrows with it so the stack stays one column wide */
-@media (max-width: 40rem) {
-  .brief, .pilot, .lobby, .overlay .controls { width: min(30rem, 92vw); }
-  .brief ul { columns: 1; }
+/* Below the width where two columns of panel stop being two columns and start
+   being two columns of four words, the deck is one column and the order on the
+   page is the order you need it in: who is flying, then the seats, then the
+   field, then the board, then the book. A phone is choosing a pilot, not
+   studying the ecology. */
+@media (max-width: 64rem) {
+  .deck {
+    grid-template-columns: minmax(0, 1fr);
+    width: min(34rem, 96vw);
+  }
+  .brief, .pilot, .lobby, .board, .book { grid-column: 1; grid-row: auto; }
+  .pilot { order: 1; }
+  .lobby { order: 2; }
+  .brief { order: 3; }
+  .board { order: 4; }
+  .book  { order: 5; }
+  .splash .dock { width: min(34rem, 96vw); }
 }
-/* The guide grew past half a dozen entries — go compact well before clipping.
-   PRESS ENTER is the thing that has to survive: on a laptop the whole splash
-   has to land above the fold, so the title gives up size and the descriptions
-   go, rather than the pilot scrolling to find the way in. */
+/* A short screen gets a tighter rack — smaller title, less padding, panels
+   closer together. It does not get less to read. That trade was made when the
+   splash was one column that had to fit above the fold or PRESS ENTER went
+   missing; the dock holds PRESS ENTER now whatever happens up here, and the
+   deck scrolls, so a laptop keeps the field guide it is entitled to. */
 @media (max-height: 940px) {
-  .overlay { gap: 0.9rem; padding: 1.25rem 1.5rem; }
+  .splash:not([hidden]) { gap: 0.6rem; padding: 1rem 1.25rem 0; }
   .overlay h1 { font-size: clamp(1.7rem, 5.2vw, 2.6rem); }
-  .overlay .controls { padding-top: 0.75rem; line-height: 1.7; }
-  .overlay .book span { margin-top: 0.3rem; }
-  .brief, .pilot, .lobby { padding: 0.85rem 1rem; }
-  .brief h2, .pilot h2, .lobby h2 { margin-bottom: 0.6rem; padding-bottom: 0.45rem; }
+  .overlay .controls { line-height: 1.6; }
+  .splash .dock { padding: 0.6rem 0 0.75rem; }
+  .deck { gap: 0.6rem; }
+  .brief, .pilot, .lobby, .board, .book { padding: 0.85rem 1rem; }
+  .brief h2, .pilot h2, .lobby h2, .board h2, .book h2 {
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.45rem;
+  }
   .brief li { padding-bottom: 0.45rem; }
-  .brief .desc { display: none; }
+}
+/* The sound toggle is nailed to the bottom right corner of the screen and has
+   been since before there was a dock down there. On a narrow one the
+   instruction runs straight underneath it, so the dock gets a deeper hem —
+   moving somebody's button because your panel arrived is the wrong way round. */
+@media (max-width: 30rem) {
+  .splash .dock { padding-bottom: 3.1rem; }
+  .overlay .prompt { font-size: 0.92rem; letter-spacing: 0.22em; margin-right: -0.22em; }
 }
 @media (prefers-reduced-motion: reduce) {
   .overlay .prompt, .overlay h1, .brief li,
-  .brief, .pilot, .lobby { animation: none; }
+  .brief, .pilot, .lobby, .board, .book { animation: none; }
 }

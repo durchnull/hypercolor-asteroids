@@ -10,6 +10,8 @@
 <link rel="stylesheet" href="styles/overlay.css">
 <link rel="stylesheet" href="styles/lobby.css">
 <link rel="stylesheet" href="styles/pilot.css">
+<link rel="stylesheet" href="styles/board.css">
+<link rel="stylesheet" href="styles/book.css">
 <link rel="stylesheet" href="styles/face.css">
 <link rel="stylesheet" href="styles/touch.css">
 <link rel="stylesheet" href="styles/debrief.css">
@@ -28,37 +30,44 @@
 
 <div class="hud" id="hud"></div>
 
-<div class="overlay" id="start">
+<!-- The splash reads left to right: the field on one side, the people on the
+     other, and the way out of the cabinet underneath both. The deck is what
+     scrolls; the dock never does, because the one thing on this screen you
+     have to be able to find is the instruction to start. -->
+<div class="overlay splash" id="start">
   <h1>ASTEROIDS</h1>
 
-  <section class="brief" aria-label="Field guide">
-    <h2>FIELD GUIDE</h2>
-    <ul id="guide"></ul>
-  </section>
+  <div class="deck">
+    <section class="brief" aria-label="Field guide">
+      <h2 data-ico="radar">FIELD GUIDE</h2>
+      <ul id="guide"></ul>
+    </section>
 
-  <section class="pilot" id="pilot" aria-label="Pilot profile"></section>
+    <section class="pilot" id="pilot" aria-label="Pilot profile"></section>
 
-  <section class="lobby" aria-label="Seats">
-    <h2>SEATS &mdash; JOIN ANY TIME</h2>
-    <div class="seats" id="seats"></div>
-    <p class="lobbynote">
-      Two pilots, one screen. Player two can drop in mid-wave, and anyone who
-      runs out of lives can buy back in &mdash; joining is never refused.
-    </p>
-  </section>
+    <section class="lobby" aria-label="Seats">
+      <h2 data-ico="stick">SEATS &mdash; JOIN ANY TIME</h2>
+      <div class="seats" id="seats"></div>
+      <p class="lobbynote">
+        Two pilots, one screen. Player two can drop in mid-wave, and anyone who
+        runs out of lives can buy back in &mdash; joining is never refused.
+      </p>
+    </section>
 
-  <div class="controls">
-    <b>P</b> pause &nbsp; <b>M</b> sound
+    <!-- The board, and the way out of the cabinet into the book. Both are
+         filled in by the module that owns them, out of docs/chronicle.js if
+         this clone has ever built it. See src/ui/board.js, src/ui/book.js. -->
+    <section class="board" id="board" aria-label="The flight records"></section>
+
+    <section class="book" id="book" aria-label="The chronicle"></section>
   </div>
 
-  <!-- The way out of the cabinet and into the book. Everything you are about
-       to find out by playing, somebody already wrote a page about. -->
-  <p class="book">
-    <a href="docs/index.html">&#9654; THE CHRONICLE</a>
-    <span>every version that has ever been on this cabinet, a page each</span>
-  </p>
-
-  <div class="prompt" id="startPrompt">PRESS ENTER TO START</div>
+  <div class="dock">
+    <div class="controls">
+      <b>P</b> pause &nbsp; <b>M</b> sound
+    </div>
+    <div class="prompt" id="startPrompt">PRESS ENTER TO START</div>
+  </div>
 </div>
 
 <div class="overlay" id="over" hidden>

@@ -1,0 +1,186 @@
+/* The doorway to the chronicle. Plates on the left at a size worth painting
+   for, the sentence and the newest chapter on the right. Contents come from
+   docs/chronicle.js by way of src/ui/book.js; the panel around them is part of
+   the rack, and overlay.css draws that. */
+
+.book .bcount {
+  margin-left: auto;
+  color: var(--dim);
+  letter-spacing: 0.18em;
+  text-shadow: none;
+}
+.bwrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+/* Nobody has run the book-writer here, so there are no plates and there is no
+   left half — the sentence gets the whole panel rather than half of it and an
+   empty space where the pictures would have been. */
+.bwrap.bare { grid-template-columns: minmax(0, 1fr); }
+
+/* A strip, and the newest plate is the wide one. One row rather than a hero
+   with thumbnails underneath: the panel sits across the foot of the splash and
+   has width to spend and no height at all, and four pictures in a row is a
+   shelf of paintings, which is the right thing for a book to have.
+   A cabinet with one plate gets one plate the width of the strip, which is the
+   correct amount of ceremony for the only picture anybody has painted. */
+.plates {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0.4rem;
+  height: 9.5rem;
+}
+.plate {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid rgba(160, 75, 255, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  text-decoration: none;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+}
+.plate.lead { grid-column: span 2; }
+.plate img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* the book is a CRT and the plates did not come off one — the same trade the
+     chapters make, so a plate looks like it belongs to this cabinet */
+  filter: saturate(1.15) contrast(1.05) brightness(0.92);
+  transition: filter 0.18s, transform 0.4s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.plate:hover {
+  border-color: var(--magenta);
+  box-shadow: 0 0 20px rgba(255, 62, 200, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.plate:hover img { filter: saturate(1.3) contrast(1.08) brightness(1.05); transform: scale(1.04); }
+.plate .pv {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding: 0.16rem 0.44rem;
+  background: rgba(7, 3, 15, 0.8);
+  border-top: 1px solid rgba(160, 75, 255, 0.4);
+  border-right: 1px solid rgba(160, 75, 255, 0.4);
+  color: var(--violet);
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  text-shadow: 0 0 8px currentColor;
+}
+.plate.lead .pv { font-size: 0.66rem; color: var(--lime); border-color: rgba(182, 255, 61, 0.4); }
+
+.btext { display: grid; gap: 0.6rem; align-content: start; }
+.bteaser {
+  font-size: 0.68rem;
+  line-height: 1.65;
+  letter-spacing: 0.05em;
+  color: var(--dim);
+  text-wrap: pretty;
+}
+
+/* The newest chapter, in miniature: the version, the line somebody wrote about
+   it, and who flew it. It is a link because everything about it says it is one
+   — this is the row somebody actually clicks. */
+.latest {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid rgba(160, 75, 255, 0.35);
+  background:
+    linear-gradient(158deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.012) 58%),
+    rgba(12, 5, 24, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13);
+  text-decoration: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.latest:hover {
+  border-color: var(--magenta);
+  box-shadow: 0 0 18px rgba(255, 62, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.latest .lv {
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  color: var(--lime);
+  text-shadow: 0 0 10px currentColor;
+  font-variant-numeric: tabular-nums;
+}
+.lbody { display: grid; gap: 0.14rem; min-width: 0; }
+.lline {
+  font-size: 0.64rem;
+  line-height: 1.45;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  /* two lines of a tagline is a teaser; four is the chapter, and the chapter
+     is one click away */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.lwho { font-size: 0.56rem; letter-spacing: 0.12em; color: var(--dim); }
+.latest .lgo { color: var(--violet); display: flex; }
+.latest:hover .lgo { color: var(--magenta); }
+
+/* The door itself, drawn as a door, so it is plainly a way out of the cabinet
+   rather than another line of instructions. Quieter than PRESS ENTER on
+   purpose: the cabinet is what you came for and the book is what you read
+   afterwards. */
+.bdoor { display: flex; }
+.bdoor a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 1rem;
+  border: 1px solid rgba(160, 75, 255, 0.45);
+  /* two layers, and the hover keeps both — a background that changes layer
+     count mid-transition snaps instead of fading */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.015)),
+    rgba(160, 75, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  color: var(--violet);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-decoration: none;
+  text-shadow: 0 0 10px currentColor;
+  transition: color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.bdoor a:hover {
+  color: var(--magenta);
+  border-color: rgba(255, 62, 200, 0.7);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03)),
+    rgba(160, 75, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 0 18px rgba(255, 62, 200, 0.18);
+}
+/* The icon is inside the anchor, so it is the anchor's colour already — this
+   only stops it inheriting the 1em of a very small font. */
+.bdoor .ic { width: 0.85rem; height: 0.85rem; }
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  /* No blur on these two. The panel they sit in has a backdrop-filter, which
+     makes it a backdrop root, so a nested one would only sample the frost it
+     is already standing on. Same bargain the seat cards strike. */
+  .overlay:not([hidden]) .bdoor a { background-color: rgba(160, 75, 255, 0.08); }
+}
+
+@media (max-width: 64rem) {
+  .bwrap { grid-template-columns: minmax(0, 1fr); }
+}
+/* A short screen gets a shorter shelf. It keeps the pictures, which are the
+   reason this panel is bigger than a line of text in the first place. */
+@media (max-height: 940px) {
+  .plates { height: 7rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plate, .plate img, .latest { transition: none; }
+  .plate:hover img { transform: none; }
+}
