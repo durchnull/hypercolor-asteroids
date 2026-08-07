@@ -293,4 +293,217 @@
     squidSound.o.frequency.value = pitch;
     squidSound.lfo.frequency.value = wobble;
   };
+
+  // --- the panels -----------------------------------------------------------
+  //
+  // Everything above this line is the field. This is the furniture: the small
+  // answer a panel gives when you point at it, and the firmer one it gives
+  // when you choose it. A screen you sweep a mouse across should sound like an
+  // instrument being brushed rather than like a game being played, so these
+  // are the quietest things in this file by a factor of ten and the shortest
+  // by a factor of three.
+  //
+  // They are also in tonight's key. There is a band on this cabinet already
+  // (src/audio/themes.js) and a menu beeping in C over a song in E is the
+  // sound of two rooms, so every note below is a step of the vamp's own scale.
+  // src/ui/clicks.js decides which panel gets which step; this file only knows
+  // what a step sounds like.
+
+  // Minor pentatonic, an octave and a half of it. A list of any length walks
+  // somewhere musical rather than running out of notes and going shrill.
+  const STEPS = [0, 3, 5, 7, 10, 12, 15, 17, 19, 22];
+
+  /** The note a step lands on: `lift` semitones above the tonight's tonic. */
+  A.uiNote = function uiNote(step, lift) {
+    const vamp = A.theme && A.theme.menu && A.theme.menu[0];
+    const root = (vamp && vamp.roots && vamp.roots[0]) || 40;
+    const i = (((step | 0) % STEPS.length) + STEPS.length) % STEPS.length;
+    return root + lift + STEPS[i];
+  };
+
+  // Panel sounds are mono by default and this is where the width comes from:
+  // consecutive steps lean alternately left and right, so a hand moving down a
+  // list moves across the desk too.
+  function panned(x) {
+    if (!A.audio.createStereoPanner) return A.master;
+    const p = A.audio.createStereoPanner();
+    p.pan.value = x;
+    p.connect(A.master);
+    return p;
+  }
+
+  // Three hundredths of a second of filtered noise. Every panel sound starts
+  // with one, because contact is what the ear actually reads — the note after
+  // it is only there to say which panel was touched.
+  function contact(t, level, from, to, dur, dest) {
+    const n = A.noiseSource();
+    const hp = A.audio.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.setValueAtTime(from, t);
+    hp.frequency.exponentialRampToValueAtTime(to, t + dur);
+    const g = A.audio.createGain();
+    g.gain.setValueAtTime(level, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    n.connect(hp).connect(g).connect(dest);
+    n.start(t);
+    n.stop(t + dur + 0.01);
+  }
+
+  /** Under the cursor: a fingertip on glass, and barely that. */
+  A.uiHover = function uiHover(step, lift) {
+    if (!A.audio || A.muted) return;
+    const audio = A.audio;
+    const t = audio.currentTime;
+    const dest = panned(step % 2 ? 0.22 : -0.22);
+    const f = A.midi(A.uiNote(step, lift === undefined ? 24 : lift));
+
+    contact(t, 0.05, 5200, 2600, 0.02, dest);
+
+    const o = audio.createOscillator();
+    const bp = audio.createBiquadFilter();
+    const g = audio.createGain();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(f, t);
+    bp.type = "bandpass";
+    bp.Q.value = 2.4;
+    bp.frequency.setValueAtTime(f * 1.6, t);
+    bp.frequency.exponentialRampToValueAtTime(f * 0.9, t + 0.09);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.06, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+    o.connect(bp).connect(g).connect(dest);
+    o.start(t);
+    o.stop(t + 0.11);
+  };
+
+  /** Chosen: the same note with a body under it and a fifth on top. */
+  A.uiClick = function uiClick(step, lift) {
+    if (!A.audio || A.muted) return;
+    const audio = A.audio;
+    const t = audio.currentTime;
+    const f = A.midi(A.uiNote(step, lift === undefined ? 12 : lift));
+
+    contact(t, 0.14, 4200, 900, 0.035, A.master);
+
+    // the body: a square shutting behind itself, which is what a switch is
+    const o = audio.createOscillator();
+    const lp = audio.createBiquadFilter();
+    const g = audio.createGain();
+    o.type = "square";
+    o.frequency.setValueAtTime(f * 1.02, t);
+    o.frequency.exponentialRampToValueAtTime(f, t + 0.05);
+    lp.type = "lowpass";
+    lp.Q.value = 1.6;
+    lp.frequency.setValueAtTime(f * 7, t);
+    lp.frequency.exponentialRampToValueAtTime(f * 1.4, t + 0.14);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.09, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(lp).connect(g).connect(A.master);
+    o.start(t);
+    o.stop(t + 0.17);
+
+    // the ring: a fifth above, arriving a frame late, all tail
+    const r = audio.createOscillator();
+    const rg = audio.createGain();
+    r.type = "sine";
+    r.frequency.setValueAtTime(f * 3, t);
+    rg.gain.setValueAtTime(0.0001, t);
+    rg.gain.exponentialRampToValueAtTime(0.035, t + 0.02);
+    rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
+    r.connect(rg).connect(A.master);
+    r.start(t + 0.012);
+    r.stop(t + 0.36);
+
+    // and a thump, so pressing something has a floor under it
+    const sub = audio.createOscillator();
+    const sg = audio.createGain();
+    sub.type = "sine";
+    sub.frequency.setValueAtTime(190, t);
+    sub.frequency.exponentialRampToValueAtTime(64, t + 0.1);
+    sg.gain.setValueAtTime(0.12, t);
+    sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+    sub.connect(sg).connect(A.master);
+    sub.start(t);
+    sub.stop(t + 0.14);
+  };
+
+  /** Taking a seat: three notes up the same scale, and the cabinet has you. */
+  A.uiPick = function uiPick(step) {
+    if (!A.audio || A.muted) return;
+    const audio = A.audio;
+    const t0 = audio.currentTime;
+    contact(t0, 0.12, 4200, 1100, 0.03, A.master);
+    [0, 2, 4].forEach((up, i) => {
+      const t = t0 + i * 0.055;
+      const f = A.midi(A.uiNote(step + up, 24));
+      const o = audio.createOscillator();
+      const g = audio.createGain();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(f, t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.075 - i * 0.01, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + (i === 2 ? 0.5 : 0.14));
+      o.connect(g).connect(A.master);
+      o.start(t);
+      o.stop(t + (i === 2 ? 0.52 : 0.16));
+    });
+  };
+
+  /** Pressing something that is not going to move: a flat, honest no. */
+  A.uiDeny = function uiDeny() {
+    if (!A.audio || A.muted) return;
+    const audio = A.audio;
+    const t = audio.currentTime;
+    contact(t, 0.07, 1800, 400, 0.04, A.master);
+    [96, 101].forEach((f, i) => {
+      const o = audio.createOscillator();
+      const lp = audio.createBiquadFilter();
+      const g = audio.createGain();
+      o.type = "square";
+      o.frequency.setValueAtTime(f, t);
+      lp.type = "lowpass";
+      lp.frequency.value = 420;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.085 - i * 0.035, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+      o.connect(lp).connect(g).connect(A.master);
+      o.start(t);
+      o.stop(t + 0.15);
+    });
+  };
+
+  /** Leaving the cabinet for the book: air moving, and one note going with it. */
+  A.uiDoor = function uiDoor(step) {
+    if (!A.audio || A.muted) return;
+    const audio = A.audio;
+    const t = audio.currentTime;
+
+    const n = A.noiseSource();
+    const bp = audio.createBiquadFilter();
+    const g = audio.createGain();
+    bp.type = "bandpass";
+    bp.Q.value = 1.3;
+    bp.frequency.setValueAtTime(340, t);
+    bp.frequency.exponentialRampToValueAtTime(3600, t + 0.26);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.16, t + 0.16);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
+    n.connect(bp).connect(g).connect(A.master);
+    n.start(t);
+    n.stop(t + 0.36);
+
+    [[0, 0], [4, 0.07]].forEach(([up, at]) => {
+      const o = audio.createOscillator();
+      const og = audio.createGain();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(A.midi(A.uiNote(step + up, 24)), t + at);
+      og.gain.setValueAtTime(0.0001, t + at);
+      og.gain.exponentialRampToValueAtTime(0.08, t + at + 0.01);
+      og.gain.exponentialRampToValueAtTime(0.0001, t + at + 0.42);
+      o.connect(og).connect(A.master);
+      o.start(t + at);
+      o.stop(t + at + 0.44);
+    });
+  };
 })(ASTEROIDS);

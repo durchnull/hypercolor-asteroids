@@ -277,7 +277,15 @@
 .brief .icon svg {
   display: block;
   filter: drop-shadow(0 0 5px currentColor);
+  transition: filter 0.14s ease;
 }
+/* The rows answer a cursor out loud now (src/ui/clicks.js), and a row that
+   makes a noise without doing anything reads as a fault in the sound rather
+   than a feature of the panel. The acknowledgement is deliberately the
+   smallest one available: `rise` finishes on `transform: none` and holds it,
+   so anything that moved the row would fight the animation and lose. */
+.brief li:hover .icon svg { filter: drop-shadow(0 0 10px currentColor); }
+.brief li:hover .name { color: var(--accent); }
 .brief .name {
   font-size: 0.73rem;
   letter-spacing: 0.18em;

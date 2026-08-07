@@ -58,6 +58,7 @@ ASTEROIDS.MODULES = [
   "./game/waves.js",
   "./ui/board.js",
   "./ui/book.js",
+  "./ui/clicks.js",
   "./ui/debrief.js",
   "./ui/hud.js",
   "./ui/profile.js",
