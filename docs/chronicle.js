@@ -6,13 +6,13 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 11,
-    latest: { v: 11, pilot: "David Friedrich", date: "07 August 2026", line: "The cabinet learned a new noise. The panels caught up.", plate: "fd19f663.jpg", alt: "The cabinet learned a new noise. The panels caught up." },
+    versions: 12,
+    latest: { v: 12, pilot: "David Friedrich", date: "07 August 2026", line: "David Friedrich taught the ambushes to sign their work.", plate: "bb0fc33f.jpg", alt: "David Friedrich taught the ambushes to sign their work." },
     plates: [
+      { v: 12, file: "bb0fc33f.jpg", alt: "David Friedrich taught the ambushes to sign their work.", line: "David Friedrich taught the ambushes to sign their work." },
       { v: 11, file: "fd19f663.jpg", alt: "The cabinet learned a new noise. The panels caught up.", line: "The cabinet learned a new noise. The panels caught up." },
       { v: 10, file: "12b58215.jpg", alt: "A rule was taken out, looked at, and put back differently.", line: "A rule was taken out, looked at, and put back differently." },
       { v: 9, file: "d6cccea7.jpg", alt: "The spectrum drifted somewhere else. The HUD says so, too.", line: "The splash screen grew a second column and a floor. PRESS ENTER stopped moving." },
-      { v: 8, file: "b1dabac1.jpg", alt: "The soundtrack picked up a habit. The panels caught up.", line: "The soundtrack picked up a habit. The panels caught up." },
     ]
   };
   A.BOARD = [
