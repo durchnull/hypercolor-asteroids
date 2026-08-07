@@ -440,6 +440,8 @@ th { color: var(--cyan); font-weight: normal; letter-spacing: .12em; text-transf
 .song.on .eq i:nth-child(2) { animation-duration: 3.4s; animation-delay: -.9s; }
 .song.on .eq i:nth-child(3) { animation-duration: 2.7s; animation-delay: -1.6s; }
 .song.on .eq i:nth-child(4) { animation-duration: 4.1s; animation-delay: -.4s; }
+/* lit, but the browser has not let the room in yet - see chronicle-song.js */
+.song.on.waiting .eq i { animation: none; height: 20%; }
 @keyframes eq { 0%, 100% { height: 20%; } 50% { height: 100%; } }
 
 @media (max-width: 34rem) {

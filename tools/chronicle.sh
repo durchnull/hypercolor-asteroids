@@ -2054,6 +2054,10 @@ html { scroll-padding-bottom: 6rem; }
 .song.on .eq i:nth-child(2) { animation-duration: 3.4s; animation-delay: -0.9s; }
 .song.on .eq i:nth-child(3) { animation-duration: 2.7s; animation-delay: -1.6s; }
 .song.on .eq i:nth-child(4) { animation-duration: 4.1s; animation-delay: -0.4s; }
+/* Lit, and waiting for the browser to allow a noise at all. Three classes on
+   purpose: this outranks the reduced-motion rule below, which parks the bars
+   at the height that means sound is coming out. */
+.song.on.waiting .eq i { animation: none; height: 20%; }
 @keyframes eq {
   0%, 100% { height: 20%; }
   50% { height: 100%; }
@@ -2250,8 +2254,15 @@ cat > docs/chronicle-song.js <<'JS'
   var noise = null, timer = null, air = null;
   var playing = false, at = 0, step = (CH % 4) * 16, noted = -9;
 
+  // A context made at the foot of this file to ask the browser a question, and
+  // kept in case the answer was no. Nothing is built on it until it can run —
+  // every oscillator started on a context the browser has parked is another
+  // line of it saying so in the reader's console, and no music either way.
+  var spare = null;
+
   function build() {
-    ctx = new Ctx();
+    ctx = spare || new Ctx();
+    spare = null;
 
     // A gentle ceiling rather than a loud mix. Nothing in here should ever be
     // the loudest thing on somebody's desk.
@@ -2687,6 +2698,7 @@ cat > docs/chronicle-song.js <<'JS'
     bell(at, mtof(c.root + 36 + c.voice[0]), 0.045);
     tick();
     timer = setInterval(tick, 250);
+    mark();                 // it is a room now rather than the promise of one
   }
 
   function wait() {
@@ -2725,10 +2737,17 @@ cat > docs/chronicle-song.js <<'JS'
   btn.innerHTML = '<span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>' +
                   '<span class="lab">sound</span>';
 
+  // Three states rather than two, because for the first few seconds of most
+  // pages the true answer is neither. The room is on and the browser has not
+  // let it in yet; bars dancing over silence is the switch telling a small lie
+  // about a room that has not arrived.
   function mark() {
     btn.classList.toggle("on", playing);
+    btn.classList.toggle("waiting", playing && !awake());
     btn.setAttribute("aria-pressed", playing ? "true" : "false");
-    btn.title = (playing ? "quiet, then (s)" : "the room this is read in (s)");
+    btn.title = !playing ? "the room this is read in (s)"
+      : awake() ? "quiet, then (s)"
+      : "waiting for a click or a key (s)";
   }
 
   btn.addEventListener("click", function () { playing ? off() : on(); });
@@ -2850,15 +2869,25 @@ cat > docs/chronicle-song.js <<'JS'
   mark();
   document.body.appendChild(btn);
   // On unless somebody said otherwise, and a reader who said yes on the last
-  // page has said yes. The browser does not agree — a page arrived at by
-  // clicking a link may not make a noise until something is done on it — and
-  // asking anyway only earns a console full of it saying so. So the switch
-  // comes up lit and the room waits for the next thing they do, which on this
-  // book is usually the arrow key.
+  // page has said yes. Whether that can be honoured on arrival is the
+  // browser's call rather than ours, so the room asks it. Making a context is
+  // free and silent and it answers on the spot: one handed back already
+  // running is a browser that trusts this book — one it has been read in
+  // before, one told to allow it, a file opened off a disk — and then the
+  // piece starts on its own, which is what a lit switch is supposed to mean.
+  //
+  // Where it comes back parked there is nothing to be done but wait, and
+  // asking anyway only earns a console full of the browser saying so. So the
+  // switch stays lit and gets honest about it: the bars hold still, the
+  // tooltip says what it is waiting for, and the next thing the reader does —
+  // a click, the arrow key that turns the page — starts the room. Nothing is
+  // asked of them twice, and the context they are waiting on is the one they
+  // get.
   if (remembered() !== "off") {
     playing = true;
+    spare = new Ctx();
+    if (spare.state === "running") on(); else wait();
     mark();
-    wait();
   }
 })();
 JS
