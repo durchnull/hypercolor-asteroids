@@ -6,13 +6,13 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 19,
-    latest: { v: 19, pilot: "David Friedrich", date: "07 August 2026", line: "The cabinet keeps score with slightly different arithmetic now.", plate: "b842dec3.jpg", alt: "The cabinet keeps score with slightly different arithmetic now." },
+    versions: 21,
+    latest: { v: 21, pilot: "David Friedrich", date: "07 August 2026", line: "The rules of the field changed while nobody was flying.", plate: "c7f6ade1.jpg", alt: "The rules of the field changed while nobody was flying." },
     plates: [
+      { v: 21, file: "c7f6ade1.jpg", alt: "The rules of the field changed while nobody was flying.", line: "The rules of the field changed while nobody was flying." },
+      { v: 20, file: "d31aabf8.jpg", alt: "What counts as fair was quietly re-argued.", line: "What counts as fair was quietly re-argued." },
       { v: 19, file: "b842dec3.jpg", alt: "The cabinet keeps score with slightly different arithmetic now.", line: "The cabinet keeps score with slightly different arithmetic now." },
       { v: 18, file: "e0a7f624.jpg", alt: "Somebody rewrote a rule the game had been taking for granted.", line: "Somebody rewrote a rule the game had been taking for granted." },
-      { v: 17, file: "e055287b.jpg", alt: "The HUD is more forthcoming than it used to be. The picture followed.", line: "The cabinet put its name up. A rock three colours out of true is holding it." },
-      { v: 16, file: "9538f273.jpg", alt: "The instrument panel developed an opinion. It looks different, too.", line: "The instrument panel developed an opinion. It looks different, too." },
     ]
   };
   A.BOARD = [
