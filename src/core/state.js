@@ -10,6 +10,7 @@
   A.game = {
     phase: "start",   // start | playing | over
     paused: false,
+    holding: false,   // something has the screen and is waiting for an answer
     level: 1,
     levelTimer: 0,    // counts down to the next wave once the field is clear
     best: 0,

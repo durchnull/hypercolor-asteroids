@@ -18,6 +18,13 @@
     overEl.hidden = true;
   };
 
+  /** Back to the menu — from boot, where it is already up, or from a run that
+   *  somebody walked out of. */
+  A.showStart = function showStart() {
+    overEl.hidden = true;
+    startEl.hidden = false;
+  };
+
   A.showGameOver = function showGameOver(scoreHtml, best) {
     finalEl.innerHTML = scoreHtml;
     bestEl.textContent = best;

@@ -25,6 +25,7 @@
   A.attract = function attract() {
     A.game.phase = "start";
     A.run("reset", "attract");
+    A.showStart();
   };
 
   A.gameOver = function gameOver() {

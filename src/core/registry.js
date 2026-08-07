@@ -19,6 +19,7 @@
 //     update(tick) {},               // every frame, running or not
 //     resolve(tick) {},              // after every update, only while running
 //     draw(tick, g) {},              // onto the glowing entity layer
+//     chrome(tick, ctx) {},          // over the finished frame, out of the bloom
 //     guide: { name, icon, ... },    // optional field-guide row
 //   })
 //

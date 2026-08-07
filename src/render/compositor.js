@@ -60,7 +60,13 @@
     }
 
     if (fx.banner) drawBanner(fx.banner);
-    if (A.game.paused) drawPaused();
+    // one voice at a time in the middle of the screen: something holding the
+    // screen for an answer has already said the field is stopped
+    if (A.game.paused && !A.game.holding) drawPaused();
+
+    // the chrome pass: the cabinet talking to you, over everything and out of
+    // the bloom. Draws on `ctx`, not on the entity layer
+    A.run("chrome", tick, ctx);
   };
 
   function drawBanner(banner) {
