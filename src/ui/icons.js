@@ -41,6 +41,8 @@
     frame: '<rect x="3.2" y="4.6" width="17.6" height="14.8" rx="1.4"/><path d="M3.2 15.4l4.6-4.5 3.5 3.4 3-2.9 6.5 6.5"/><circle cx="8.6" cy="9" r="1.3"/>',
     // the way out of the cabinet
     door: '<path d="M13.6 3.4H5.4v17.2h8.2"/><path d="M10 12h9.4M16.2 8.4L19.6 12l-3.4 3.6"/>',
+    // service chevrons, the way a sleeve wears them
+    chevron: '<path d="M5 9.5l7-4.3 7 4.3M5 15l7-4.3 7 4.3M5 20.5l7-4.3 7 4.3"/>',
   };
 
   A.ico = function ico(name, cls) {

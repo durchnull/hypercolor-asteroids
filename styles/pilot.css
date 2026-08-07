@@ -81,6 +81,21 @@
 .pilotcard .pmeta .cold { opacity: 0.5; filter: none; }
 .pilotcard:not(.on) .pmeta { color: var(--dim); }
 
+/* The service record: versions landed and flights on the board, counted off
+   the record by machines. A boast in the same quiet voice as the rest of the
+   card - the loud version is the trim the hull wears in the field. */
+.pilotcard .pserv {
+  display: flex;
+  align-items: center;
+  gap: 0.34rem;
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+}
+.pilotcard .pserv .ic { width: 0.72rem; height: 0.72rem; }
+.pilotcard:not(.on) .pserv { color: var(--dim); }
+
 /* Only ever there for a pilot who has bent something. GR12. Three is where
    their own events stop sparing them, so three is where it stops being an
    annotation and starts being lit. */

@@ -65,7 +65,15 @@
             p.events < 0 ? A.ico("aim") + "every trap armed"
             : p.events === 0 ? A.ico("trap", "cold") + "no traps laid"
             : A.ico("trap") + plural(p.events, "trap", "traps") + " laid"
-          }</span>${bends(p.name) ? `
+          }</span>${(() => {
+            const r = A.serviceRecord && A.serviceRecord(p.name);
+            if (!r || (!r.versions && !r.flights)) return "";
+            const bits = [];
+            if (r.versions) bits.push(plural(r.versions, "version", "versions") + " landed");
+            if (r.flights) bits.push(plural(r.flights, "flight", "flights") + " on the board");
+            return `
+          <span class="pserv">${A.ico("chevron")}${bits.join(" &middot; ")}</span>`;
+          })()}${bends(p.name) ? `
           <span class="pbends${(A.pilotHeatBends ? A.pilotHeatBends(p.name) : bends(p.name)) >= 3 ? " hot" : ""}">${A.ico("bend")}${
             plural(bends(p.name), "bend", "bends")} on the ledger</span>`
           : ""}
