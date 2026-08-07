@@ -575,7 +575,10 @@ NF < 4 { next }
       note = note "  <p class=\"unrecorded\">The referee never saw this one. " unrec "</p>\n"
 
     IB[ver] = IB[ver] "<article class=\"interlude\">\n" note "</article>\n"
-    ENT[++en] = "I" SUBSEP said
+    # The subject travels to the cover as well as the chapter. A deed is one of
+    # four sentences, so two rule changes in a row read as the same line twice -
+    # which is exactly how the book writing itself four times went unnoticed.
+    ENT[++en] = "I" SUBSEP said SUBSEP esc(subj)
     interludes[who]++
     next
   }
@@ -671,8 +674,11 @@ END {
       v = e[2]
       printf "<li class=\"cv\"><a href=\"v%s.html\"><b>v%s</b><span>%s</span><i>%s%s</i></a></li>\n", \
              v, v, esc(shout(v)), face(VW[v]), esc(VW[v]) > cover
-    } else
-      printf "<li class=\"ci\">%s</li>\n", e[2] > cover
+    } else {
+      printf "<li class=\"ci\">%s", e[2] > cover
+      if (e[3] != "") printf "<span>&ldquo;%s&rdquo;</span>", e[3] > cover
+      print "</li>" > cover
+    }
   }
   print "</ol>" > cover
   print "</main>" > cover
@@ -938,6 +944,16 @@ h1 {
   color: var(--dim);
 }
 .ci b { color: var(--violet); font-weight: 500; }
+/* Quieter than the deed above it and in the same proportion the chapter uses,
+   because it is here to tell two interludes apart rather than to be read. */
+.ci span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  color: var(--dim);
+  opacity: 0.8;
+}
 
 /* --- one version, one page ------------------------------------------------
    A chapter fills the screen, is read in one look, and the next one is one

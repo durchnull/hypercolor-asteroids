@@ -178,6 +178,16 @@ h1 {
   color: var(--dim);
 }
 .ci b { color: var(--violet); font-weight: 500; }
+/* Quieter than the deed above it and in the same proportion the chapter uses,
+   because it is here to tell two interludes apart rather than to be read. */
+.ci span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  color: var(--dim);
+  opacity: 0.8;
+}
 
 /* --- one version, one page ------------------------------------------------
    A chapter fills the screen, is read in one look, and the next one is one
