@@ -210,6 +210,11 @@ history() {
 # referee's own definition or it is just an opinion.
 LIB='
 function is_game(p) { return (p == "index.html" || p ~ /^src\// || p ~ /^styles\//) }
+function is_book(p) {
+  return (p == "docs/index.html" || p == "docs/chronicle.css" ||
+          p == "docs/taglines.tsv" || p ~ /^docs\/v[0-9]+\.html$/ ||
+          p ~ /^docs\/art\// || p ~ /^docs\/faces\//)
+}
 function is_stat(l) { return (l ~ /^(-|[0-9]+)\t(-|[0-9]+)\t./) }
 function is_raw(l)  { return (l ~ /^:[0-7]+ [0-7]+ [0-9a-f]+ [0-9a-f]+ [A-Z]/) }
 function is_referee(p) {
@@ -444,7 +449,7 @@ NF < 4 { next }
   # continuation of it, which is how anybody sane writes a two-line reason.
   line = ""; overrides = ""; rulechange = ""; tallyline = ""; mode = ""
   gamefiles = 0; files = 0; acmr = 0; ins = 0; del = 0; kc = 0
-  refmoved = 0; docmoved = 0; readmemoved = 0; elsemoved = 0
+  refmoved = 0; docmoved = 0; bookmoved = 0; readmemoved = 0; elsemoved = 0
   refstrict = 0; nonref = 0; stolen = 0
   split("", deleted)
   n = split(rest, b, "\n")
@@ -465,6 +470,7 @@ NF < 4 { next }
       if (is_game(p)) gamefiles++
       else if (p ~ /^tools\// || p ~ /^\.githooks\// || p ~ /^\.claude\// ||
                p == "CLAUDE.md" || p == "GOLDEN_RULES.md") refmoved = 1
+      else if (is_book(p)) bookmoved = 1
       else if (p ~ /^docs\//) docmoved = 1
       else if (p == "README.md") readmemoved = 1
       else elsemoved = 1
@@ -535,9 +541,22 @@ NF < 4 { next }
   # the cabinet while it happened. That is the whole of what a mention is: it
   # never gets a number, so it never gets a page.
   if (gamefiles == 0) {
+    # The book rebuilding itself is not a thing that happened. Every commit
+    # leaves docs/ a commit out of date, so the next one carries the rebuilt
+    # book - and if that counted as an interlude it would leave the book out of
+    # date again, one identical line longer every time, for ever. Nothing is
+    # lost by passing over it: the pages it wrote are the book you are reading.
+    # A commit that spent an override, altered a rule, went round the referee or
+    # was written up by the ledger is still an event, whatever else it touched,
+    # and it keeps its note.
+    if (bookmoved && !docmoved && !refmoved && !readmemoved && !elsemoved &&
+        overrides == "" && rulechange == "" && unrec == "" && tallyline == "")
+      next
+
     if (rulechange != "" || refmoved) deed = "changed the rules"
     else if (readmemoved)             deed = "rewrote the notes on the cabinet"
-    else if (docmoved && !elsemoved)  deed = "rebuilt the book"
+    else if ((docmoved || bookmoved) && !elsemoved)
+                                      deed = "rebuilt the book"
     else                              deed = "did some housekeeping"
 
     if (ver > 0) said = "While v" ver " was on the cabinet, <b>" esc(who) "</b> " deed "."
