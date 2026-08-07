@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How this cabinet is wired &mdash; ASTEROIDS // HYPERCOLOR</title>
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="../styles/crt.css">
+<link rel="stylesheet" href="notes.css">
+</head><body class="notes">
+<div class="crt vignette"></div>
+<div class="crt scanlines"></div>
+<div class="crt roll"></div>
+<main>
+<header class="plate"><span class="kind">THE NOTES</span><span class="of">docs/ARCHITECTURE.md</span></header>
+<h1 id="how-this-cabinet-is-wired">How this cabinet is wired</h1>
+<p>
+No build step, no dependencies, no bundler, no server. You double-click
+<code>index.html</code> and the game runs. Everything below exists to keep that true while
+still letting a dozen people work on it at once.
+</p>
+<p>
+The rule the whole layout is built around: <b>a change should touch one file.</b>
+If two people add two features in the same week, the only line they both touch
+is a single entry in <a href="../src/features.js"><code>src/features.js</code></a>.
+</p>
+<hr>
+<h2 id="why-classic-scripts-and-not-es-modules">Why classic scripts and not ES modules</h2>
+<p>
+Because <code>import</code> cannot be fetched from a <code>file://</code> page — every browser blocks
+it — and opening the game by double-clicking it is the point. So instead of an
+import graph there is:
+</p>
+<ul>
+<li><b>one global namespace</b>, <code>window.ASTEROIDS</code>, called <code>A</code> inside every module;</li>
+<li><b>one manifest</b>, <code>src/features.js</code>, listing every file in load order;</li>
+<li><b>one loader</b>, <code>src/boot.js</code>, the only <code>&lt;script&gt;</code> tag in <code>index.html</code>.</li></ul>
+<p>
+Each file is an IIFE that takes the namespace, keeps its own internals private,
+and hangs its public parts on <code>A</code>:
+</p>
+<pre><code class="lang-js">
+(function (A) {
+  "use strict";
+
+  const mines = [];          // private: nobody outside can see this
+  A.mines = mines;           // public: everyone can
+
+  A.layMine = function layMine(x, y) { ... };
+})(ASTEROIDS);
+</code></pre>
+<p>
+The loader injects the manifest's scripts with <code>async = false</code>, which the HTML
+spec guarantees will execute in insertion order, so the list is the load order
+and <code>main.js</code> is always last.
+</p>
+<hr>
+<h2 id="the-map">The map</h2>
+<pre><code>
+index.html            the shell — canvas, overlays, empty containers, and one
+                      &lt;script src="src/boot.js"&gt;. Rarely edited.
+styles/               one file per region of the screen
+  tokens.css            palette, reset, the two shared keyframes
+  crt.css  hud.css  overlay.css  lobby.css  touch.css
+
+src/
+  boot.js             the loader. One script tag points here
+  features.js         THE MANIFEST — every module, in load order
+  main.js             boot: size, build DOM, install input, start the loop
+
+  core/
+    registry.js       features register here; the loop asks it who runs
+    state.js          A.game — phase, paused, level, best
+    loop.js           the frame: update → resolve → draw
+    viewport.js       canvases, A.W / A.H / A.DPR, resize
+    math.js           A.TAU, A.rand, A.wrap
+
+  render/
+    palette.js        the drifting A.hue, A.neon(), A.glow()
+    starfield.js      nebula + stars, drawn under everything
+    effects.js        debris, shockwaves, popups, shake, flash, slow-mo
+    compositor.js     fade-trails, bloom, aberration, banner, pause
+
+  audio/
+    context.js        the one AudioContext, mute, noise
+    buses.js          the mixing desk (guitar, lead, bass, drums)
+    voices.js         the band: chug, leadNote, bassNote, kick, snare…
+    song.js           the four-section track and its scheduler
+    sfx.js            every one-shot noise the game makes
+    riff.js           the death riff
+
+  input/
+    bindings.js       A.SEATS: keys, names, colours, touch pad. Edit this to
+                      rebind anything or to add a third pilot
+    input.js          A.keys[seat][action] / A.held[seat][action]
+
+  game/
+    lifecycle.js      startGame / gameOver / attract
+    difficulty.js     A.tune() — everything that scales with the wave
+    players.js        the roster, joining, dying
+    waves.js          clear the field → next wave
+
+  entities/           one file per thing in the game
+    ship.js bullets.js asteroids.js hook.js kraken.js
+    nuke.js portals.js planet.js falcon.js
+
+  events/             one file per pilot — see game/events.js
+
+  ui/
+    hud.js            score panels, generated from A.SEATS
+    overlays.js       splash + game over
+    fieldguide.js     the splash field guide, generated from the features
+    lobby.js          the seat cards, generated from A.SEATS
+    mute.js           the sound button
+</code></pre>
+<hr>
+<h2 id="the-frame">The frame</h2>
+<p>
+<code>core/loop.js</code> runs three phases through the registry, then renders:
+</p>
+<div class="scroll"><table>
+<thead>
+<tr><th>phase</th><th>when</th><th>for</th></tr>
+</thead>
+<tbody>
+<tr><td><code>update(tick)</code></td><td>every frame, running or not</td><td>movement, timers, spawning</td></tr>
+<tr><td><code>resolve(tick)</code></td><td>only while running</td><td>collisions and rules</td></tr>
+<tr><td><code>draw(tick, g)</code></td><td>every frame</td><td>strokes onto the glowing entity layer</td></tr>
+</tbody>
+</table></div>
+<p>
+<code>tick</code> is <code>{ dt, raw, time, running }</code> — <code>dt</code> is scaled by slow-mo, <code>raw</code> is not.
+It is one reused object, so new fields can be added without touching a single
+feature.
+</p>
+<p>
+A feature that should only act during play starts with <code>if (!tick.running) return;</code>.
+Anything before that line still runs on the menu and while paused — which is how
+the rocks drift behind the splash screen and the kraken's drone fades out
+instead of cutting off.
+</p>
+<p>
+<code>reset(mode)</code> is the fourth hook, called by <code>game/lifecycle.js</code>:
+</p>
+<div class="scroll"><table>
+<thead>
+<tr><th>mode</th><th>meaning</th></tr>
+</thead>
+<tbody>
+<tr><td><code>"play"</code></td><td>a new game — wipe and re-seed</td></tr>
+<tr><td><code>"attract"</code></td><td>the menu — wipe, and put up something worth looking at</td></tr>
+<tr><td><code>"over"</code></td><td>the game just ended; the field stays on screen behind the overlay, so only stop what should stop moving</td></tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="adding-a-feature">Adding a feature</h2>
+<p>
+One file. Say <code>src/entities/mine.js</code>:
+</p>
+<pre><code class="lang-js">
+(function (A) {
+  "use strict";
+
+  const mines = A.mines = [];
+
+  function reset(mode) {
+    if (mode !== "over") mines.length = 0;
+  }
+
+  function update(tick) {
+    if (!tick.running) return;
+    for (const m of mines) { m.x += m.vx * tick.dt; A.wrap(m); }
+  }
+
+  function resolve() {
+    for (const p of A.flyingShips()) {
+      if (p.invuln &gt; 0) continue;
+      for (const m of mines) {
+        if (Math.hypot(m.x - p.x, m.y - p.y) &lt; m.radius + p.radius) A.killShip(p);
+      }
+    }
+  }
+
+  function draw(tick, g) {
+    if (!tick.running) return;
+    for (const m of mines) {
+      A.glow(A.neon(A.hue + 200, 65));
+      g.beginPath();
+      g.arc(m.x, m.y, m.radius, 0, A.TAU);
+      g.stroke();
+    }
+  }
+
+  A.register({
+    id: "mines",
+    order: { update: 45, resolve: 15, draw: 45, guide: 35 },
+    reset, update, resolve, draw,
+    guide: {                        // optional: your row on the splash screen
+      name: "MINE",
+      meta: "500",
+      tint: "var(--magenta)",
+      icon: `&lt;svg width="34" height="34" viewBox="0 0 34 34" fill="none"
+               stroke="currentColor" stroke-width="1.3"&gt;&lt;circle cx="17" cy="17" r="9"/&gt;&lt;/svg&gt;`,
+      desc: "Sits there. Does not move. Ruins your day.",
+    },
+  });
+})(ASTEROIDS);
+</code></pre>
+<p>
+…then one line in <code>src/features.js</code>, at the end of the features list:
+</p>
+<pre><code class="lang-js">
+  "./entities/mine.js",
+</code></pre>
+<p>
+That is the whole change. The field guide, the frame, the resets and the render
+order all pick it up. Deleting the feature is deleting the file and that line.
+</p>
+<h3 id="where-in-the-order">Where in the order?</h3>
+<p>
+<code>order</code> is a number, or an object per hook; the default is 50. Nothing breaks if
+you pick a number nobody else uses — leave gaps.
+</p>
+<div class="scroll"><table>
+<thead>
+<tr><th></th><th>10</th><th>20</th><th>30</th><th>40</th><th>50</th><th>60</th><th>70</th><th>80</th><th>88–95</th><th>850+</th></tr>
+</thead>
+<tbody>
+<tr><td><b>update</b></td><td>ship</td><td>bullets</td><td>asteroids</td><td>kraken</td><td>nuke</td><td>portals</td><td>falcon</td><td>planet</td><td>effects, hud</td><td></td></tr>
+<tr><td><b>resolve</b></td><td>asteroids</td><td>kraken</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>events, waves</td></tr>
+<tr><td><b>draw</b></td><td>planet</td><td>portals</td><td>kraken (deep)</td><td>asteroids</td><td>kraken (surface)</td><td>ship</td><td>falcon</td><td>nuke</td><td>effects, bullets</td><td></td></tr>
+</tbody>
+</table></div>
+<p>
+Draw order is back-to-front. A feature may register more than one entry — the
+kraken does, so that a diving one passes behind the rocks and a surfacing one in
+front of them.
+</p>
+<hr>
+<h2 id="house-rules">House rules</h2>
+<p>
+<b>Everything shared lives on <code>A</code>. Everything else is private.</b> A <code>const</code> inside
+your IIFE cannot be reached from another file, which is the point: put on the
+namespace only what others genuinely need, and it doubles as the list of what
+you are promising to keep working.
+</p>
+<p>
+<b>Read mutable values off <code>A</code> every time.</b> <code>A.W</code>, <code>A.H</code>, <code>A.hue</code>, <code>A.planet</code>,
+<code>A.portals</code>, <code>A.nuke</code>, <code>A.falcon</code>, <code>A.audio</code> and the audio buses all change at
+runtime. <code>const { W, H } = A</code> at the top of a file captures a stale number and
+is the one mistake this layout makes easy — don't.
+</p>
+<p>
+<b>Arrays are shared in place.</b> <code>A.asteroids</code>, <code>A.bullets</code>, <code>A.squids</code>,
+<code>A.players</code> are created once and mutated. Never reassign one; use <code>.length = 0</code>.
+</p>
+<p>
+<b>Screen feel goes through <code>render/effects.js</code>.</b> <code>A.shakeBy</code>, <code>A.screenFlash</code>,
+<code>A.kaboom</code>, <code>A.shockwave</code>, <code>A.popup</code>, <code>A.slowmo</code>, <code>A.aberrate</code>. They take the
+loudest caller, so a small knock never damps a big one.
+</p>
+<p>
+<b>Every noise lives in <code>audio/sfx.js</code>.</b> They are safe to call before the audio
+context exists and while muted — they return.
+</p>
+<p>
+<b>Balance numbers that scale with the wave go in <code>game/difficulty.js</code>.</b> Numbers
+that belong to one feature stay at the top of that feature, named.
+</p>
+<p>
+<b>Load order is the manifest.</b> A feature is loaded after every commons file, so
+at <i>call</i> time everything is there. Only top-level code in your IIFE has to care
+about order, so keep top-level code to declarations and <code>A.register(...)</code>.
+</p>
+<hr>
+<h2 id="the-merge-conflict-contract">The merge-conflict contract</h2>
+<div class="scroll"><table>
+<thead>
+<tr><th>you are…</th><th>you touch</th></tr>
+</thead>
+<tbody>
+<tr><td>adding or changing a feature</td><td>your one file in <code>entities/</code>, plus one line in <code>features.js</code></td></tr>
+<tr><td>rebinding keys, adding a seat</td><td><code>input/bindings.js</code> — alone</td></tr>
+<tr><td>retuning the difficulty ramp</td><td><code>game/difficulty.js</code> — alone</td></tr>
+<tr><td>changing a sound</td><td><code>audio/sfx.js</code>, or one file in <code>audio/</code></td></tr>
+<tr><td>restyling a region of the screen</td><td>one file in <code>styles/</code></td></tr>
+<tr><td>changing what the splash says about your feature</td><td>the <code>guide</code> block in your feature</td></tr>
+</tbody>
+</table></div>
+<p>
+<code>index.html</code> holds no lists and no per-feature copy, which is why it almost never
+appears in a diff. The HUD, the seat cards and the field guide are generated —
+they cannot drift from the code, and two people adding two features do not both
+edit the same markup.
+</p>
+<hr>
+<h2 id="running-it">Running it</h2>
+<p>
+Open <code>index.html</code>. That is the whole procedure, and it is a promise: if you ever
+find yourself needing a server to see your change, something has gone in that
+should not have.
+</p>
+<nav class="flip" aria-label="the notes">
+<a href="readme.html">README</a>
+<span class="here">ARCHITECTURE</span>
+<a href="golden-rules.html">GOLDEN RULES</a>
+<a href="rankings.html">RANKINGS</a>
+<a href="claude.html">CLAUDE</a>
+<a class="out" href="index.html">THE CHRONICLE</a>
+<a class="out" href="../index.html">PLAY</a>
+</nav>
+</main>
+</body></html>

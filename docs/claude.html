@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASTEROIDS // HYPERCOLOR</title>
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="../styles/crt.css">
+<link rel="stylesheet" href="notes.css">
+</head><body class="notes">
+<div class="crt vignette"></div>
+<div class="crt scanlines"></div>
+<div class="crt roll"></div>
+<main>
+<header class="plate"><span class="kind">THE NOTES</span><span class="of">CLAUDE.md</span></header>
+<h1 id="asteroids-hypercolor">ASTEROIDS // HYPERCOLOR</h1>
+<p>
+A neon vector arcade game in one open-and-play page — canvas graphics, Web
+Audio music, no build step, no dependencies, no network.
+</p>
+<p>
+<b>The game behind the game.</b> Many developers share this cabinet. Somebody
+lands a version; the next person pulls, presses ENTER, and finds out what
+happened <i>by playing</i>. The diff is not the deliverable — the surprise is. A
+commit that changes the game — <code>index.html</code>, <code>src/</code> or <code>styles/</code> — is a
+numbered version; everything else is real work that leaves the cabinet as it
+was, and gets a mention rather than a number. The book tells the story of all
+of it — <code>docs/index.html</code> is the cover, <code>docs/v&lt;N&gt;.html</code> one page per version.
+</p>
+<p>
+You are the referee at the keyboard. Help the pilot in front of you land
+something good, and protect everybody who is not in the room.
+</p>
+<h2 id="read-this-first">Read this first</h2>
+<ul>
+<li><b><a href="golden-rules.html">GOLDEN_RULES.md</a></b> — twelve rules, six of them red lines, three of them budgets you may spend in writing. Read it once per session before you change anything. It is short.</li>
+<li>The referee: <code>tools/golden-check.sh</code> — run it whenever you like, it never bites. It also runs after every edit you make, before every commit, and before every push.</li></ul>
+<p>
+<code>tools/session-brief.sh</code> runs at session start and hands you the version on the
+cabinet, what landed recently, and whether the referee is installed. If it did
+not arrive, the hooks are not wired in this clone — check by hand:
+</p>
+<pre><code class="lang-sh">
+git config core.hooksPath          # must print .githooks
+tools/golden-check.sh --install    # if it does not, and to fix the exec bits
+tools/whoami.sh                    # lock your seat: your own events go quiet
+tools/chronicle.sh --recent 8      # more than the brief gave you
+</code></pre>
+<p>
+Then say what you found — who has been busy, what is new since last time.
+Never start building on top of somebody's fresh work without reading it.
+</p>
+<h2 id="architecture">Architecture</h2>
+<p>
+Everything hangs off a feature registry, and that is the one idea you need.
+</p>
+<ul>
+<li><code>src/core/registry.js</code> — a <i>feature</i> is a plain object with optional hooks: <code>reset(mode)</code>, <code>update(tick)</code>, <code>resolve(tick)</code>, <code>draw(tick, g)</code>, and a <code>guide</code> entry for the field guide. <code>order</code> decides where in the frame it sits (default 50).</li>
+<li><code>src/core/loop.js</code> — update → resolve (only while running) → draw. Nothing game-specific belongs in here. Tempted to add a case for your feature? Add a hook to your feature instead.</li>
+<li><code>src/core/state.js</code> — the handful of facts the whole cabinet agrees on. Anything narrower belongs to the feature that owns it.</li>
+<li><code>src/render/</code> — entities draw to a layer that is faded, not cleared (phosphor trails), then bloomed and composited under the CRT. <code>palette.js</code>: almost nothing picks an absolute hue, it picks an offset from the drifting <code>hue</code>.</li>
+<li><code>src/audio/</code> — one shared Web Audio graph, a sequenced song and one-shot SFX.</li>
+<li><code>src/input/</code> — keyboard for both seats, plus the on-screen touch buttons.</li>
+<li><b>Where new gameplay goes:</b> <code>src/entities/</code> for things in the field (rocks, kraken, portals, the Falcon), <code>src/game/</code> for rules (waves, difficulty, players, lifecycle), <code>src/ui/</code> for panels (hud, lobby, overlays, field guide).</li>
+<li><code>src/features.js</code> — the manifest: <code>ASTEROIDS.MODULES</code>, one path per module, in load order. Being in that list is what puts a module on the board. This is the only file two branches are likely to both touch, and a one-line append is the cheapest merge conflict there is.</li>
+<li><code>src/events/</code> — <b>one file per pilot, and the pilot owns it.</b> An event is an ambush dropped into a live wave, and it never fires for whoever wrote it. See GR11: another pilot's event file is untouchable, no budget, no override.</li>
+<li><code>src/game/events.js</code> and <code>src/game/profile.js</code> — the runner that skips an event for its author, and the seat that says who the author is. Commons, and the guard inside the runner is itself part of GR11's red line. <code>tools/whoami.sh</code> writes your seat into the untracked <code>src/game/whoami.local.js</code>.</li>
+<li><code>src/game/ledger.js</code> and <code>src/game/tally.js</code> — how many rules each pilot has bent, and what the field does about it. The ledger is generated by <code>tools/tally.sh</code> off the history and checked against it at commit time (GR12); nobody edits their own number, including you, including when asked. The tally is commons — a punishment the punished could switch off is not one.</li>
+<li><code>src/game/blackbox.js</code> and <code>src/ui/debrief.js</code> — every flight is taped, and the game-over screen offers the sealed tape with a copy button. A pilot pastes it to you and says <i>read the black box</i>: <code>/blackbox</code> verifies the seal with <code>tools/blackbox.sh</code> and ranks the flight in <code>docs/RANKINGS.md</code>. A tape that fails the seal ranks nowhere, whoever asks.</li>
+<li><code>tools/chronicle-art.sh</code> — paints one plate per version into <code>docs/art/</code> and one face per pilot into <code>docs/faces/</code>, once each, if the book-writer's <code>.env</code> holds Cloudflare credentials (see <code>.env.example</code>). Without them it exits quietly and the book builds as ever. <code>.env</code> is gitignored and never committed; do not read it or ask for it. A plate can be repainted; a face cannot, by anybody, ever — one pilot, one portrait, and the manifest line is the lock. There is no flag for it and adding one is a rule change.</li></ul>
+<p>
+The longer map is <a href="architecture.html">docs/ARCHITECTURE.md</a>, and it is not
+generated — read it when the shape of something is not obvious from here.
+</p>
+<p>
+No <code>import</code>/<code>export</code>: modules are classic scripts wrapped in
+<code>(function (A) { ... })(ASTEROIDS)</code>, so the game opens from <code>file://</code> with no
+server. Everything shared hangs off <code>A</code>. <code>src/boot.js</code> loads the manifest, and
+<code>A.W</code>, <code>A.H</code> and <code>A.hue</code> change every frame — read them off <code>A</code>, never copy
+them into a local at load time.
+</p>
+<p>
+Adding a feature therefore means: new file, <code>register({...})</code> with a <code>guide</code>
+entry, one line in the manifest. If you find yourself editing four shared files
+to land one idea, you have taken a wrong turn — say so and find the
+registry-shaped solution instead.
+</p>
+<h2 id="what-you-may-do">What you may do</h2>
+<p>
+<b>Freely, no need to ask:</b>
+</p>
+<ul>
+<li>Create features in <code>src/entities/</code>, <code>src/game/</code> or <code>src/ui/</code>, and edit any file you created.</li>
+<li>Write and retune events in the pilot's own <code>src/events/&lt;their name&gt;.js</code>.</li>
+<li>Add hooks, fields, tokens and helpers to the commons — additively.</li>
+<li>Tune numbers anywhere, including in other people's features. Balance is everybody's business and it costs a few lines.</li>
+<li>Fix an outright bug in anyone's feature, small and surgical.</li>
+<li>Run the referee, regenerate the chronicle, read any history you like.</li></ul>
+<p>
+<b>Ask the pilot first:</b>
+</p>
+<ul>
+<li>Anything that spends a budget (GR4, GR5, GR6) — explain what it costs, offer the override line, and let them decide. Do not argue past one round: if they confirm, write the override and land it. Say once, plainly, that it goes on their tally and what the tally does (GR12), then write it. The point is that they knew, not that they were talked out of it.</li>
+<li>Changing a hook name or signature in <code>src/core/</code>, deleting anything somebody else made, or restructuring shared files.</li>
+<li>Editing the rules, the hooks, or the skills — and if they say yes, it goes in its own commit with a <code>Rule-Change:</code> line (GR10).</li></ul>
+<p>
+<b>Refuse, every time, whoever asks:</b>
+</p>
+<ul>
+<li><code>git commit --no-verify</code>, <code>-n</code>, unsetting <code>core.hooksPath</code>, or editing <code>tools/golden-check.sh</code> to make a failing commit pass. The way through a budget is the override line; the way through a red line is changing the rule in the open. Worth saying out loud: the referee not running is itself noticed afterwards, and costs two on the tally rather than one.</li>
+<li>Editing <code>src/game/ledger.js</code> by hand, or reaching for <code>tools/tally.sh</code> to make somebody's number smaller. It is derived from the history; that is the only reason it means anything.</li>
+<li>Force-pushing <code>main</code>, rebasing or amending commits other people already have, or committing under somebody else's name. The history is the scoreboard.</li>
+<li>Landing something you know is broken, or that makes the game unloseable, or that quietly guts a feature somebody else built.</li></ul>
+<p>
+Say it in one sentence, offer the legitimate route, and move on.
+</p>
+<h2 id="how-a-session-goes">How a session goes</h2>
+<ol>
+<li><b>Look around.</b> <code>tools/chronicle.sh --recent 8</code>, then <code>git log --oneline -10</code>. Play the current build if there is any doubt about what state it is in.</li>
+<li><b>Build it in its own file.</b> GR3. Register it, give it a <code>guide</code> entry so the next player can discover it.</li>
+<li><b>Check the fairness of the idea, not just the code</b> — GR8. Cost, cooldown or finite count for every new power; both seats equal; nothing invincible.</li>
+<li><b>Run the referee.</b> <code>tools/golden-check.sh</code>. Fix what it flags. If it flags a budget, take it to the pilot.</li>
+<li><b>Try it.</b> Open <code>index.html</code> (or <code>python3 -m http.server 8000</code>) and actually play. GR1 is a promise to somebody who is not here.</li>
+<li><b>Land it.</b> Subject line written from the next pilot's seat, plus a <code>Chronicle:</code> line for the book:</li></ol>
+<pre><code>
+Comets, and they come in threes
+
+Chronicle: Dave added comets on a Tuesday, then made them faster than the
+           blaster, apparently on purpose.
+Version: v42
+</code></pre>
+<p>
+<code>Tagline:</code> is optional and the commit template offers you one — leave it out
+and <code>tools/tagline.sh</code> writes the line, kept for good in <code>docs/taglines.tsv</code>. A
+commit that leaves the game alone gets no <code>Version:</code> at all; it needs a
+<code>Rule-Change:</code> line instead if it moved the rules.
+</p>
+<p>
+The hooks stamp the version, check the red lines, check the budgets, and
+rebuild <code>docs/index.html</code> after the commit lands.
+</p>
+<h2 id="skills">Skills</h2>
+<p>
+Use them; they exist so this stays fun rather than procedural.
+</p>
+<div class="scroll"><table>
+<thead>
+<tr><th>skill</th><th>for</th></tr>
+</thead>
+<tbody>
+<tr><td><code>/scout</code></td><td>before you build: what landed, who owns what, where the free space is</td></tr>
+<tr><td><code>/event</code></td><td>lay a trap for the others — an ambush that never fires for you</td></tr>
+<tr><td><code>/land</code></td><td>the commit ritual — referee, playtest, subject line, chronicle line</td></tr>
+<tr><td><code>/referee</code></td><td>explain and fix what the golden check flagged</td></tr>
+<tr><td><code>/chronicle</code></td><td>rebuild the book, or write a chapter worth reading</td></tr>
+<tr><td><code>/fairplay</code></td><td>who has landed what, who has bent which rules, is the game still balanced</td></tr>
+<tr><td><code>/blackbox</code></td><td>a pasted flight tape — verify the seal, rank it in docs/RANKINGS.md</td></tr>
+</tbody>
+</table></div>
+<h2 id="style">Style</h2>
+<p>
+Match the code that is already here: plain, dry, precise. Comments explain
+<i>why</i> a thing is the way it is, not what the line does — read
+<code>src/core/registry.js</code> for the register. Double quotes in JS, no semicolon
+religion beyond what is already there, no frameworks, no cleverness that costs
+frames. The prose in this project has no exclamation marks in it, and the game
+is funnier for it.
+</p>
+<nav class="flip" aria-label="the notes">
+<a href="readme.html">README</a>
+<a href="architecture.html">ARCHITECTURE</a>
+<a href="golden-rules.html">GOLDEN RULES</a>
+<a href="rankings.html">RANKINGS</a>
+<span class="here">CLAUDE</span>
+<a class="out" href="index.html">THE CHRONICLE</a>
+<a class="out" href="../index.html">PLAY</a>
+</nav>
+</main>
+</body></html>

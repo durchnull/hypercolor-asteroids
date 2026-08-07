@@ -1,0 +1,86 @@
+/* Written by tools/docs.sh. The notes, wearing the book's clothes.
+   Do not edit: every run of the tool writes this file from scratch. */
+html, body { height: auto; overflow: visible; }
+body {
+  user-select: text;
+  -webkit-user-select: text;
+  line-height: 1.65;
+  font-size: 15px;
+  padding: 0 1.2rem 6rem;
+}
+main { max-width: 46rem; margin: 0 auto; position: relative; z-index: 1; }
+
+.plate {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 1rem; flex-wrap: wrap;
+  margin: 3.5rem 0 2.5rem; padding-bottom: .6rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--violet) 45%, transparent);
+  font-size: .72rem; letter-spacing: .22em; text-transform: uppercase;
+}
+.plate .kind { color: var(--magenta); }
+.plate .of   { color: var(--dim); }
+
+h1, h2, h3, h4, h5, h6 { line-height: 1.25; scroll-margin-top: 2rem; }
+h1 {
+  font-size: clamp(1.9rem, 6vw, 3rem); letter-spacing: .04em;
+  margin: 1.5rem 0 2rem; color: var(--amber);
+}
+h2 {
+  font-size: 1.15rem; letter-spacing: .16em; text-transform: uppercase;
+  margin: 3rem 0 1rem; color: var(--cyan);
+}
+h3 { font-size: 1rem; letter-spacing: .08em; margin: 2rem 0 .75rem; color: var(--lime); }
+h4, h5, h6 { font-size: .95rem; margin: 1.5rem 0 .5rem; color: var(--dim); }
+
+p, ul, ol, blockquote, pre, .scroll { margin: 0 0 1.1rem; }
+ul, ol { padding-left: 1.4rem; }
+li { margin: .35rem 0; }
+li::marker { color: var(--violet); }
+
+a { color: var(--cyan); text-underline-offset: 3px; }
+a:hover { color: var(--magenta); }
+
+b, strong { color: var(--ink); }
+i, em { color: var(--dim); font-style: italic; }
+
+code {
+  font-size: .88em; color: var(--lime);
+  background: color-mix(in srgb, var(--violet) 16%, transparent);
+  padding: .1em .35em; border-radius: 3px;
+}
+pre {
+  background: color-mix(in srgb, var(--violet) 10%, transparent);
+  border-left: 2px solid var(--violet);
+  padding: .9rem 1rem; overflow-x: auto;
+}
+pre code { background: none; padding: 0; color: var(--ink); }
+
+blockquote {
+  border-left: 2px solid var(--magenta);
+  padding: .2rem 0 .2rem 1rem; color: var(--dim);
+}
+blockquote p { margin: 0; }
+
+hr { border: 0; border-top: 1px dashed color-mix(in srgb, var(--dim) 50%, transparent); margin: 2.5rem 0; }
+
+img { max-width: 100%; height: auto; display: block; margin: 1.5rem 0; border-radius: 2px; }
+
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: .5rem .8rem; vertical-align: top; border-bottom: 1px solid color-mix(in srgb, var(--dim) 25%, transparent); }
+th { color: var(--cyan); font-weight: normal; letter-spacing: .12em; text-transform: uppercase; font-size: .72rem; }
+
+.flip {
+  display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; align-items: baseline;
+  margin-top: 4rem; padding-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--violet) 45%, transparent);
+  font-size: .72rem; letter-spacing: .16em; text-transform: uppercase;
+}
+.flip .here { color: var(--amber); }
+.flip .out  { margin-left: auto; color: var(--lime); }
+.flip .out:hover { color: var(--magenta); }
+
+@media (max-width: 34rem) {
+  body { font-size: 14px; padding: 0 .9rem 4rem; }
+  .flip .out { margin-left: 0; }
+}

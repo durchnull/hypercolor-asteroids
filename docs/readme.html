@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASTEROIDS // HYPERCOLOR</title>
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="../styles/crt.css">
+<link rel="stylesheet" href="notes.css">
+</head><body class="notes">
+<div class="crt vignette"></div>
+<div class="crt scanlines"></div>
+<div class="crt roll"></div>
+<main>
+<header class="plate"><span class="kind">THE NOTES</span><span class="of">README.md</span></header>
+<h1 id="asteroids-hypercolor">ASTEROIDS // HYPERCOLOR</h1>
+<p>
+A neon vector rewrite of the 1979 arcade game. Canvas graphics, Web Audio music,
+hand written HTML, CSS and JavaScript. No build step, no dependencies, no
+network.
+</p>
+<p>
+<img src="../media/field.png" alt="Two pilots, a kraken, a pair of portals, and somebody on the end of a grapple line" loading="lazy" decoding="async">
+</p>
+<h2 id="play">Play</h2>
+<p>
+Open <code>index.html</code> in a browser. If your browser is fussy about <code>file://</code>, serve
+it instead:
+</p>
+<pre><code class="lang-sh">
+python3 -m http.server 8000
+</code></pre>
+<p>
+Two pilots, one screen. Player two can drop in mid-wave, and anyone out of lives
+can buy back in.
+</p>
+<div class="scroll"><table>
+<thead>
+<tr><th></th><th>Player 1</th><th>Player 2</th></tr>
+</thead>
+<tbody>
+<tr><td>Turn</td><td><code>←</code> <code>→</code></td><td><code>A</code> <code>D</code></td></tr>
+<tr><td>Thrust</td><td><code>↑</code></td><td><code>W</code></td></tr>
+<tr><td>Fire</td><td><code>space</code></td><td><code>Q</code></td></tr>
+<tr><td>Grapple (hold to winch)</td><td><code>↓</code></td><td><code>S</code></td></tr>
+<tr><td>Atom bomb</td><td><code>B</code></td><td><code>E</code></td></tr>
+</tbody>
+</table></div>
+<p>
+<code>P</code> pauses, <code>M</code> toggles sound.
+</p>
+<h2 id="what-s-out-there">What's out there</h2>
+<ul>
+<li><b>Asteroid</b> — 20 / 50 / 100 points, splits into smaller, quicker pieces.</li>
+<li><b>Atom bomb</b> — the panic button. Eats half the screen. Two to start, one more each wave.</li>
+<li><b>Grapple</b> — the line locks where it bites and swings you rather than hauling you in. Cut loose to fly off on the tangent, faster than you came. The rock swings too, and wrecks whatever it meets.</li>
+<li><b>Kraken</b> — 250 points, 3–5 hits. Dives, then surfaces right beneath you. Angrier with every hit.</li>
+<li><b>Portals</b> — fly in one and out the other. So can your shots, and the kraken.</li>
+<li><b>Planet</b> — too big for the screen, and happy to flatten you.</li>
+<li><b>The Falcon</b> — passing smuggler, one enormous laser, then gone.</li>
+<li><b>The black box</b> — every flight is taped, and the tape is a scoreboard entry.</li></ul>
+<p>
+<img src="../media/swing.png" alt="The grapple: the dotted circle is the arc the line will hold you to, and you leave on the tangent" loading="lazy" decoding="async">
+</p>
+<p>
+<img src="../media/planet.png" alt="A planet crossing the field, with rocks bouncing off the limb" loading="lazy" decoding="async">
+</p>
+<h2 id="how-it-s-put-together">How it's put together</h2>
+<p>
+Every feature is one module that registers itself with the game loop. Adding one
+is a new file plus a line in the manifest; nothing else mentions it. The HUD,
+the seat cards and the field guide are generated from the same registry, so two
+people adding two features never edit the same lines.
+</p>
+<p>
+<b><a href="architecture.html">docs/ARCHITECTURE.md</a> is the map.</b>
+</p>
+<hr>
+<h2 id="the-game-behind-the-game">The game behind the game</h2>
+<p>
+<b>Several developers share this cabinet, and nobody announces what they built.</b>
+You commit it, the next person pulls, presses ENTER, and finds out by playing.
+Reading the diff first is like shaking the presents.
+</p>
+<p>
+<img src="../media/cabinet.png" alt="The splash screen: the field guide, and a card saying who is flying and what the ledger has on them" loading="lazy" decoding="async">
+</p>
+<p>
+<b>Every change to the game is a numbered version.</b> A commit touching
+<code>index.html</code>, <code>src/</code> or <code>styles/</code> gets a number, counted off the git history by a
+script. Docs and tools are not versions.
+</p>
+<p>
+<b>The book.</b> After every commit a script rewrites the chronicle —
+<a href="index.html">docs/index.html</a> is the cover, one page per version behind it.
+Put a <code>Chronicle:</code> line in your commit and the book quotes you.
+</p>
+<p>
+<b>Twelve rules, and a script enforces them.</b> <a href="golden-rules.html">GOLDEN_RULES.md</a>
+is the whole rulebook. <i>Red lines</i> are hard stops. <i>Budgets</i> you may exceed, but
+you must say so in the commit: <code>Golden-Rule-Override: GR4 - &lt;why&gt;</code>, and that line
+stays in the history under your name. <i>Nudges</i> just get mentioned.
+</p>
+<p>
+<b>Bending rules has a price.</b> Overrides are counted from the history into a
+ledger nobody may edit by hand, and the game reads your number: 1 bend and
+ambushes come sooner, 3 and your own traps stop sparing you, 4 and a wave may
+hold an extra ambush. Skipping the hooks costs two instead of one. Nothing
+blocks you and nobody shames you — your game just gets harder, in public.
+</p>
+<p>
+<b>Events are traps we lay for each other</b>, each in its own file under
+<code>src/events/</code>. One rule makes it worth doing:
+</p>
+<blockquote>
+<p><b>Your own trap never fires for you.</b></p>
+</blockquote>
+<p>
+Nobody may edit your event file or sign one with your name. No override exists
+for this.
+</p>
+<p>
+<b>The black box.</b> When a flight ends, copy the tape off the game-over screen,
+paste it to claude and say <i>read the black box</i>. The tape carries a checksum, so
+an edited one ranks nowhere. Honest flights land in
+<a href="rankings.html">docs/RANKINGS.md</a>.
+</p>
+<h2 id="joining-in">Joining in</h2>
+<pre><code class="lang-sh">
+git clone &lt;this repo&gt;
+tools/golden-check.sh --install   # wire in the referee, once
+tools/whoami.sh                   # lock your seat
+open index.html                   # find out what the others did to you
+</code></pre>
+<p>
+Then build something — one new file, one line in <code>src/features.js</code> — play it,
+and commit it with a subject line the next pilot will enjoy. With Claude Code,
+<a href="claude.html">CLAUDE.md</a> makes claude the referee at your keyboard, and there are
+skills for the ritual: <code>/scout</code>, <code>/event</code>, <code>/land</code>, <code>/blackbox</code>, <code>/fairplay</code>.
+</p>
+<p>
+Nobody has to trust anybody. <code>git blame</code> says who made a thing, the book says who
+bent which rule, and the ledger is computed from both. That is all the governance
+a game about shooting rocks needs.
+</p>
+<p>
+Now go and do something to annoy the others.
+</p>
+<nav class="flip" aria-label="the notes">
+<span class="here">README</span>
+<a href="architecture.html">ARCHITECTURE</a>
+<a href="golden-rules.html">GOLDEN RULES</a>
+<a href="rankings.html">RANKINGS</a>
+<a href="claude.html">CLAUDE</a>
+<a class="out" href="index.html">THE CHRONICLE</a>
+<a class="out" href="../index.html">PLAY</a>
+</nav>
+</main>
+</body></html>

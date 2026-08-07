@@ -167,6 +167,12 @@ is_referee() {
   return 1
 }
 
+# The notes - docs/ pages rendered from the markdown by tools/docs.sh. Which
+# notes exist is derived from the README rather than written down anywhere, so
+# the tool is asked once, here, rather than copied into a case arm below that
+# would go stale the first time somebody adds one.
+sh tools/docs.sh --list > "$TMP/notes" 2>/dev/null || : > "$TMP/notes"
+
 # written by a machine from the history - nobody owns it, nobody is judged for it
 is_generated() {
   case "$1" in
@@ -176,6 +182,7 @@ is_generated() {
     docs/faces/*) return 0 ;;           # the pilots, painted once and never again
     src/game/ledger.js) return 0 ;;
   esac
+  grep -qxF "$1" "$TMP/notes" 2>/dev/null && return 0
   return 1
 }
 
@@ -254,6 +261,11 @@ check_gr2() {
         fail GR2 "$f - the cabinet has no build step" ; continue ;;
     esac
     case "$f" in *.js|*.css|*.html) ;; *) continue ;; esac
+    # A page that quotes this rule is not a page that breaks it. The rendered
+    # golden rules say "XMLHttpRequest" and "sendBeacon" precisely because GR2
+    # forbids them, and a machine put the words there. Nothing that ships in
+    # the cabinet is generated, so everything that ships is still read.
+    is_generated "$f" && continue
     if content "$f" | grep -Eq '\bfetch[[:space:]]*\(|XMLHttpRequest|new[[:space:]]+WebSocket|sendBeacon|new[[:space:]]+EventSource'; then
       fail GR2 "$f reaches for the network - the game plays on a plane"
     fi
@@ -273,6 +285,10 @@ check_gr7() {
   esac
   while IFS= read -r f; do
     case "$f" in *.js|*.css|*.html) ;; *) continue ;; esac
+    # As GR2 above: the rendered rules carry GR7's own "@author" because GR7 is
+    # the rule that bans it. A generated page is not somebody signing their
+    # work, and nothing a person wrote is exempt from this.
+    is_generated "$f" && continue
     if content "$f" | grep -Eiq '@author|^[[:space:]]*(//|\*)[[:space:]]*(author|written by)[[:space:]]*:'; then
       fail GR7 "$f signs itself in a comment - git blame already knows"
     fi
