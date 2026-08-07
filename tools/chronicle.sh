@@ -427,6 +427,47 @@ function stamp(cls, word, x, y, deg) {
          "<text x=\"0\" y=\"12\">" word "</text></g>"
 }
 
+# --- the small pictures -----------------------------------------------------
+# One glyph per thing the book keeps saying, drawn rather than named, so a cel
+# is recognisable before it is read. They are stroked in currentColor and they
+# are all on the same 24-square grid, which is the entire trick to them looking
+# like one set. No file, no font, no request: a chapter is still one page that
+# opens from a stick.
+function ico(n,   p) {
+  if (n == "bolt")           p = "<path d=\"M13 2 4 14h6l-1 8 9-12h-6z\"/>"
+  else if (n == "quote")     p = "<path d=\"M4 4h16v12H10l-6 5z\"/><path d=\"M8 9h8M8 12.5h5\"/>"
+  else if (n == "gauge")     p = "<path d=\"M3 18a9 9 0 1 1 18 0\"/><path d=\"M12 18l5.5-6.5\"/><circle cx=\"12\" cy=\"18\" r=\"1.6\"/>"
+  else if (n == "target")    p = "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3\"/>"
+  else if (n == "ship")      p = "<path d=\"M21 12 4 20l4-8-4-8z\"/>"
+  else if (n == "up")        p = "<path d=\"M12 20V5M6.5 10.5 12 5l5.5 5.5M4 21h16\"/>"
+  else if (n == "down")      p = "<path d=\"M12 4v15M6.5 13.5 12 19l5.5-5.5M4 3h16\"/>"
+  else if (n == "clock")     p = "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 6.5V12l3.5 2.5\"/>"
+  else if (n == "cal")       p = "<rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"1.5\"/><path d=\"M3 10h18M8 3v4M16 3v4\"/>"
+  else if (n == "medal")     p = "<circle cx=\"12\" cy=\"15\" r=\"5.6\"/><path d=\"M8.6 3l2.2 5.6M15.4 3l-2.2 5.6\"/>"
+  else if (n == "eye")       p = "<path d=\"M2 12s4.2-6 10-6 10 6 10 6-4.2 6-10 6-10-6-10-6z\"/><path d=\"M3 3l18 18\"/>"
+  else if (n == "scroll")    p = "<path d=\"M6.5 3h11v18h-11z\"/><path d=\"M9.5 8h5M9.5 12h5M9.5 16h3\"/>"
+  else if (n == "hourglass") p = "<path d=\"M6 3h12M6 21h12M7.5 3v3.5L12 12l4.5-5.5V3M7.5 21v-3.5L12 12l4.5 5.5V21\"/>"
+  else if (n == "coin")      p = "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 6.5v11M9.5 9.5h5M9.5 14.5h5\"/>"
+  else if (n == "frame")     p = "<rect x=\"3\" y=\"4.5\" width=\"18\" height=\"15\" rx=\"1.5\"/><path d=\"M3 15.5l4.5-4.5 3.5 3.5 3-3 7 7\"/><circle cx=\"8.5\" cy=\"9\" r=\"1.4\"/>"
+  else return ""
+  return "<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\">" p "</svg>"
+}
+
+# One number, its glyph and what it counts. data-n is there for the script to
+# count up to on the way past; the tile already reads correctly without it,
+# because a page that needs JavaScript to say 99 is a worse page.
+function tile(name, n, val, lab) {
+  return "<li>" ico(name) "<b" (n != "" ? " data-n=\"" n "\"" : "") ">" val "</b><span>" lab "</span></li>\n"
+}
+
+# An override line arrives as "GR5 - because", and the rule it bent is the part
+# worth reading from the doorway. The rest is the sentence under it.
+function grtag(s) { return (match(s, /GR[0-9]+/) ? substr(s, RSTART, RLENGTH) : "OVERRIDE") }
+function grwhy(s) {
+  sub(/^[[:space:]]*GR[0-9]+[[:space:]]*[-:]?[[:space:]]*/, "", s)
+  return s
+}
+
 BEGIN { ver = total; bound = (rules != "") }
 $1 == "TAG" { tag[$2] = $3; next }
 $1 == "OWN" { owner[$2] = $3; next }
@@ -575,6 +616,7 @@ NF < 4 { next }
       note = note "  <p class=\"unrecorded\">The referee never saw this one. " unrec "</p>\n"
 
     IB[ver] = IB[ver] "<article class=\"interlude\">\n" note "</article>\n"
+    IBN[ver]++
     # The subject travels to the cover as well as the chapter. A deed is one of
     # four sentences, so two rule changes in a row read as the same line twice -
     # which is exactly how the book writing itself four times went unnoticed.
@@ -686,26 +728,43 @@ END {
   close(cover)
 
   # ---- one page per version ------------------------------------------------
-  # It fills the screen because a version is one thing that happened and it
-  # deserves to be looked at on its own, and because the next one is always one
-  # key away.
+  # A chapter is a page of cels rather than one screenful: the tagline as a
+  # splash with the plate behind it, the narration next to the numbers, the
+  # drawn commit under both, and a cel apiece for anything the book had to
+  # write down. Nothing here is wider than a comfortable line of prose, which
+  # is why there are several blocks instead of one - and the next chapter is
+  # still one arrow key away.
   for (v = 1; v <= total; v++) {
     f = "docs/v" v ".html"
     head(f, "v" v " &mdash; ASTEROIDS // HYPERCOLOR", "page")
-    print "<main>" > f
-    printf "<header class=\"plate\"><span class=\"num\">CHAPTER %s</span><span class=\"ver\">v%s</span>", \
-           roman(v), v > f
+    # Three facts the layout needs before it starts: whether the book had to
+    # write anything down, whether anything happened alongside, and whether so
+    # much happened alongside that it has outgrown the margin. Any of them
+    # missing and its neighbour takes the room instead of leaving a hole.
+    kept = (VU[v] != "" || VO[v] != "" || VR[v] != "")
+    printf "<main class=\"ch%s%s%s\">\n", (kept ? " has-record" : ""), \
+           ((v in IB) ? " has-aside" : ""), (IBN[v] >= 3 ? " long-aside" : "") > f
+    printf "<header class=\"cel bar\"><span class=\"badge\"><b>%s</b><i>chapter</i></span>", roman(v) > f
+    printf "<span class=\"ver\">v%s</span>", v > f
     printf "<span class=\"who\">%s%s</span><span class=\"when\">%s &middot; %s</span></header>\n", \
            face(VW[v]), esc(VW[v]), esc(VN[v]), VC[v] > f
-    printf "<h1 class=\"shout\">%s</h1>\n", esc(shout(v)) > f
-    # The plate, if this version has one, above the drawn field: the scene
-    # first and the diff underneath it, which is the order a reader wants them
-    # in. Nothing below changes when it is missing.
+
+    # The splash. One version is one sentence, and this is it, at the size that
+    # sentence deserves - with the plate behind it if this chapter has one, and
+    # a field of halftone dots if it does not. Nothing below changes either way.
+    printf "<section class=\"cel splash%s\">", (VP[v] != "" ? " plated" : "") > f
     if (VP[v] != "")
-      printf "<figure class=\"plate-art\"><a href=\"art/%s\"><img src=\"art/%s\" alt=\"%s\" loading=\"lazy\" decoding=\"async\"></a><figcaption>Painted for this chapter, once, from its own tagline.</figcaption></figure>\n", \
-             VP[v], VP[v], att(VQ[v] != "" ? VQ[v] : shout(v)) > f
-    printf "<figure class=\"frame\">%s<figcaption>%s</figcaption></figure>\n", picture(v), esc(caption(v)) > f
-    print "<div class=\"told\">" > f
+      printf "<img class=\"plate-img\" src=\"art/%s\" alt=\"%s\" loading=\"lazy\" decoding=\"async\">", \
+             VP[v], att(VQ[v] != "" ? VQ[v] : shout(v)) > f
+    print "<span class=\"dots\" aria-hidden=\"true\"></span>" > f
+    printf "<div class=\"say\"><p class=\"kicker\">%s what changed</p><h1 class=\"shout\">%s</h1></div>", \
+           ico("bolt"), esc(shout(v)) > f
+    if (VP[v] != "")
+      printf "<a class=\"plate-full\" href=\"art/%s\">%s painted for this chapter</a>", VP[v], ico("frame") > f
+    print "</section>" > f
+
+    print "<section class=\"cel told\">" > f
+    printf "<h2 class=\"tab\">%s what happened</h2>\n", ico("quote") > f
     if (VL[v] == "")
       printf "<p class=\"deed untold\">Nobody wrote this one down. The flight recorder kept the subject line: &ldquo;%s&rdquo;</p>\n", \
              esc(VS[v]) > f
@@ -713,27 +772,67 @@ END {
       printf "<p class=\"deed\">%s</p>\n", esc(VL[v]) > f
       if (VL[v] != VS[v]) printf "<p class=\"subj\">landed as &ldquo;%s&rdquo;</p>\n", esc(VS[v]) > f
     }
-    # First of the three, because it decides how much of the rest a reader
-    # should believe. Assembled, not copied, so it is escaped already.
-    if (VU[v] != "") printf "<p class=\"unrecorded\">The referee never saw this one. %s</p>\n", VU[v] > f
-    if (VO[v] != "") printf "<p class=\"override\">On this day %s invoked an override: %s</p>\n", esc(VW[v]), esc(VO[v]) > f
-    if (VR[v] != "") printf "<p class=\"lawchange\">The rules themselves were altered: %s</p>\n", esc(VR[v]) > f
-    if (v in IB)     printf "<div class=\"meanwhile\">%s</div>\n", IB[v] > f
-    print "</div>" > f
+    print "</section>" > f
+
+    print "<section class=\"cel figures\">" > f
+    printf "<h2 class=\"tab\">%s the numbers</h2>\n", ico("gauge") > f
     print "<ul class=\"stats\">" > f
-    printf "<li><b>%d</b><span>sector%s touched</span></li>", VF[v], plural(VF[v]) > f
-    printf "<li><b>%d</b><span>line%s aboard</span></li>", VI[v], plural(VI[v]) > f
-    printf "<li><b>%d</b><span>jettisoned</span></li>", VJ[v] > f
-    printf "<li><b>%s</b><span>on the clock</span></li>", VC[v] > f
+    printf "%s", tile("target", VF[v], VF[v], "sector" plural(VF[v]) " touched") > f
+    printf "%s", tile("up", VI[v], VI[v], "line" plural(VI[v]) " aboard") > f
+    printf "%s", tile("down", VJ[v], VJ[v], "jettisoned") > f
+    printf "%s", tile("clock", "", VC[v], "on the clock") > f
     if (v > 1) {
       gap = int((VA[v] - VA[v-1]) / 86400)
-      printf "<li><b>%d</b><span>day%s after v%d</span></li>", gap, plural(gap), v - 1 > f
+      printf "%s", tile("cal", gap, gap, "day" plural(gap) " after v" (v - 1)) > f
     } else
-      printf "<li><b>first</b><span>coin in the slot</span></li>" > f
-    printf "<li><b>%s</b><span>version by %s</span></li>", ord(NT[v]), esc(VW[v]) > f
+      printf "%s", tile("cal", "", "first", "coin in the slot") > f
+    printf "%s", tile("medal", "", ord(NT[v]), "version by " esc(VW[v])) > f
     print "</ul>" > f
+    print "</section>" > f
+
+    print "<figure class=\"cel frame\">" > f
+    printf "<h2 class=\"tab\">%s the commit, drawn</h2>\n", ico("ship") > f
+    printf "%s<figcaption>%s</figcaption>\n", picture(v), esc(caption(v)) > f
+    print "</figure>" > f
+
+    # The margin, beside the drawn field: everything that happened around this
+    # version rather than in it. A chapter with a quiet week either side has no
+    # margin at all, and the field takes the whole width instead.
+    if (kept || (v in IB)) print "<div class=\"margin\">" > f
+
+    # The three things a chapter cannot keep quiet, each in a cel of its own
+    # with the rule it bent in letters you can read from the doorway. The
+    # referee-off one comes first, because it decides how much of the rest a
+    # reader should believe. Assembled, not copied, so it is escaped already.
+    if (kept) {
+      print "<section class=\"record\">" > f
+      if (VU[v] != "") {
+        printf "<article class=\"cel loud off\"><h2 class=\"tab\">%s the referee never saw this</h2>", ico("eye") > f
+        printf "<p class=\"klaxon\">OFF</p><p class=\"reason\">%s</p></article>\n", VU[v] > f
+      }
+      if (VO[v] != "") {
+        nov = split(VO[v], ovs, " // ")
+        for (k = 1; k <= nov; k++) {
+          printf "<article class=\"cel loud over\"><h2 class=\"tab\">%s override</h2>", ico("bolt") > f
+          printf "<p class=\"klaxon\">%s</p><p class=\"reason\">%s</p>", esc(grtag(ovs[k])), esc(grwhy(ovs[k])) > f
+          printf "<p class=\"byline\">spent by %s, in writing, for good</p></article>\n", esc(VW[v]) > f
+        }
+      }
+      if (VR[v] != "") {
+        printf "<article class=\"cel loud law\"><h2 class=\"tab\">%s the rules themselves</h2>", ico("scroll") > f
+        printf "<p class=\"klaxon\">AMENDED</p><p class=\"reason\">%s</p></article>\n", esc(VR[v]) > f
+      }
+      print "</section>" > f
+    }
+
+    if (v in IB)
+      printf "<section class=\"cel meanwhile\"><h2 class=\"tab\">%s meanwhile</h2>\n%s</section>\n", \
+             ico("hourglass"), IB[v] > f
+    if (kept || (v in IB)) print "</div>" > f
+
     # The one line that stays literal: it is meant to be pasted into a terminal.
-    printf "<p class=\"play\">Drop a coin in this one: <code>git checkout %s</code></p>\n", substr(VH[v], 1, 8) > f
+    printf "<p class=\"cel play\">%s Drop a coin in this one: <code>git checkout %s</code></p>\n", \
+           ico("coin"), substr(VH[v], 1, 8) > f
     print "<nav class=\"flip\">" > f
     if (v > 1) printf "<a class=\"prev\" rel=\"prev\" href=\"v%d.html\">&#9664; v%d</a>\n", v - 1, v - 1 > f
     else       print "<span class=\"prev none\">&#9664; the first</span>" > f
@@ -750,13 +849,44 @@ END {
     print "</nav>" > f
     print "</main>" > f
     # The arrow keys, because a book of pages that only turn by mouse is a
-    # worse book, and because this cabinet is played on a keyboard.
+    # worse book, and because this cabinet is played on a keyboard. And the
+    # cels, which land one at a time as you scroll onto them and count their
+    # numbers up when they do. Everything the script does is decoration: with
+    # it switched off the page is the same page, already right, just still.
     print "<script>" > f
     print "addEventListener(\"keydown\", function (e) {" > f
     print "  var to = { ArrowLeft: \".prev\", ArrowRight: \".next\", Escape: \".up\" }[e.key]" > f
     print "  var a = to ? document.querySelector(\"nav.flip \" + to) : null" > f
     print "  if (a && a.href) location.href = a.href" > f
     print "})" > f
+    print "document.documentElement.className = \"js\"" > f
+    print "var cels = document.querySelectorAll(\".cel\")" > f
+    print "function land(cel) {" > f
+    print "  cel.classList.add(\"in\")" > f
+    print "  var ns = cel.querySelectorAll(\"b[data-n]\"), i" > f
+    print "  for (i = 0; i < ns.length; i++) count(ns[i])" > f
+    print "}" > f
+    print "function count(el) {" > f
+    print "  var to = +el.getAttribute(\"data-n\"), t0 = 0" > f
+    print "  if (!(to > 1)) return" > f
+    print "  requestAnimationFrame(function step(t) {" > f
+    print "    if (!t0) t0 = t" > f
+    print "    var k = Math.min(1, (t - t0) / 700)" > f
+    print "    el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3)))" > f
+    print "    if (k < 1) requestAnimationFrame(step)" > f
+    print "  })" > f
+    print "}" > f
+    print "if (matchMedia(\"(prefers-reduced-motion: reduce)\").matches || !window.IntersectionObserver) {" > f
+    print "  for (var i = 0; i < cels.length; i++) cels[i].classList.add(\"in\")" > f
+    print "} else {" > f
+    print "  var io = new IntersectionObserver(function (seen) {" > f
+    print "    for (var i = 0; i < seen.length; i++) if (seen[i].isIntersecting) {" > f
+    print "      land(seen[i].target)" > f
+    print "      io.unobserve(seen[i].target)" > f
+    print "    }" > f
+    print "  }, { rootMargin: \"0px 0px -6% 0px\" })" > f
+    print "  for (var j = 0; j < cels.length; j++) io.observe(cels[j])" > f
+    print "}" > f
     print "</script>" > f
     print "</body></html>" > f
     close(f)
@@ -955,71 +1085,218 @@ h1 {
   opacity: 0.8;
 }
 
-/* --- one version, one page ------------------------------------------------
-   A chapter fills the screen, is read in one look, and the next one is one
-   arrow key away. It scrolls only when what is written on it will not fit,
-   which is rare and still better than clipping somebody mid-sentence. */
-body.page { padding: 0; overflow: hidden; }
+/* --- one version, one comic page ------------------------------------------
+   A chapter used to be one screenful read in a single look, and it fought the
+   prose for room the whole time. It is a page of cels now: a splash for the
+   tagline, the narration beside the numbers, the drawn commit under both, and
+   a cel apiece for anything the book had to write down. No block of prose in
+   here is wider than 600px, which is the whole reason there are several of
+   them — a chapter is a handful of short things rather than one wide one.
+
+   Everything sits on the same twelve columns, so the cels line up without
+   anybody having to place them, and a cel with no neighbour this week takes
+   the width its neighbour is not using. */
+body.page { padding: 0 0 clamp(2rem, 6vh, 4rem); }
 .page main {
-  max-width: 78rem;
-  height: 100dvh;
-  padding: clamp(0.7rem, 2vh, 1.4rem) clamp(0.9rem, 3vw, 2.4rem) clamp(0.5rem, 1.4vh, 1rem);
-  /* a column rather than fixed rows: a chapter that grows a part later does
-     not have to come back here and count them again */
-  display: flex;
-  flex-direction: column;
-  gap: clamp(0.35rem, 1.1vh, 0.85rem);
-  overflow-y: auto;
+  max-width: 82rem;
+  margin: 0 auto;
+  padding: clamp(0.8rem, 2.4vh, 1.6rem) clamp(0.7rem, 2.4vw, 2rem) 0;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: clamp(0.6rem, 1.1vw, 1rem);
+  align-content: start;
 }
-.plate {
+
+/* A cel: hard border, black ink dropped behind it, a corner of the spectrum
+   leaking in at the top. It arrives as you scroll onto it — the script adds
+   .in, and adds it to everything at once for anybody who asked for less
+   motion, so nothing is ever left hidden behind an animation. */
+.cel {
+  position: relative;
+  grid-column: span 12;
+  padding: 1.35rem 1.2rem 1.1rem;
+  background: linear-gradient(168deg, rgba(160, 75, 255, 0.1), rgba(7, 3, 15, 0.88) 46%);
+  border: 2px solid rgba(160, 75, 255, 0.45);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.7), 0 0 26px rgba(160, 75, 255, 0.16);
+}
+/* Hidden only once the script has said it is there to unhide them. A page that
+   needs JavaScript to show its own words is not a page, and the book is read
+   in whatever somebody happens to have open. */
+.js .cel {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.45s ease, transform 0.5s cubic-bezier(0.2, 0.85, 0.3, 1);
+}
+.js .cel.in { opacity: 1; transform: none; }
+.cel:hover { border-color: rgba(33, 243, 255, 0.5); }
+/* A cel inside the margin is not on the twelve columns any more, and asking
+   for all of them there makes its grid build eleven tracks nobody wanted. */
+.margin > .cel, .record > .cel { grid-column: auto; }
+
+/* The label of a cel, sitting on its top edge the way a comic captions a
+   panel. The glyph does most of the work: a reader knows which cel this is
+   before they have read the word. */
+.tab {
+  position: absolute;
+  top: -0.66rem;
+  left: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.14rem 0.55rem;
+  background: var(--void);
+  border: 2px solid currentColor;
+  color: var(--violet);
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px currentColor;
+  white-space: nowrap;
+}
+.ic {
+  flex: none;
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tab .ic { width: 0.85rem; height: 0.85rem; }
+
+/* Who flew it and when, across the top, where a comic prints its credits. */
+.bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem 1.1rem;
-  align-items: baseline;
-  padding-bottom: 0.45rem;
-  border-bottom: 1px dashed rgba(160, 75, 255, 0.3);
+  align-items: center;
+  gap: 0.4rem 1.2rem;
+  padding: 0.65rem 1rem;
 }
-.num {
-  font-size: 0.58rem;
-  letter-spacing: 0.34em;
+.badge { display: flex; align-items: baseline; gap: 0.5rem; }
+.badge b {
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   color: var(--violet);
-  text-shadow: 0 0 8px currentColor;
+  text-shadow: 0 0 18px currentColor;
 }
-.ver { font-size: 0.58rem; letter-spacing: 0.2em; color: var(--cyan); }
-.plate .who {
-  margin-left: auto;
-  font-size: 0.62rem;
-  letter-spacing: 0.22em;
+.badge i {
+  font-style: normal;
+  font-size: 0.5rem;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
+  color: var(--dim);
+}
+.ver {
+  padding: 0.1rem 0.42rem;
+  border: 1px solid rgba(33, 243, 255, 0.45);
+  font-size: 0.56rem;
+  letter-spacing: 0.2em;
   color: var(--cyan);
+}
+.bar .who {
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 0.55rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--cyan);
 }
 /* Whoever flew it, at the top of their own chapter, where there is room for
    them to be slightly more than a line of text. */
-.plate .who .face {
-  width: 4rem;
-  height: 4rem;
+.bar .who .face {
+  width: 3.4rem;
+  height: 3.4rem;
   border-color: rgba(33, 243, 255, 0.55);
   box-shadow: 0 0 12px rgba(33, 243, 255, 0.35);
 }
-.plate .when {
-  font-size: 0.58rem;
+.bar .when {
+  font-size: 0.56rem;
   letter-spacing: 0.14em;
   color: var(--dim);
   font-variant-numeric: tabular-nums;
 }
 
+/* --- the splash -----------------------------------------------------------
+   One version is one sentence, and this is where it gets said at the size it
+   deserves. The plate goes behind it when the chapter has one — painted once
+   by tools/chronicle-art.sh and kept in docs/art/ from then on — and the
+   halftone dots are there either way, so a chapter with no plate reads as a
+   panel somebody meant rather than as one short of a picture. */
+.splash {
+  min-height: clamp(14rem, 42vh, 24rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  padding: clamp(1.2rem, 3.6vw, 2.6rem);
+  border-color: rgba(255, 62, 200, 0.4);
+  background: radial-gradient(120% 100% at 82% 4%, rgba(160, 75, 255, 0.3), transparent 62%), #05010c;
+}
+.plate-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.62;
+  /* the book is a CRT and the plate did not come off one, so it is sent
+     through the same glass as everything else on the page */
+  filter: saturate(1.18) contrast(1.06);
+  animation: breathe 34s ease-in-out infinite alternate;
+}
+@keyframes breathe {
+  from { transform: scale(1.03); }
+  to { transform: scale(1.14) translate(-1.6%, -1.4%); }
+}
+/* Halftone. A comic is dots before it is anything else, and these ones drift,
+   which is the cheapest way there is to make a still page look like it runs. */
+.dots {
+  position: absolute;
+  inset: -12%;
+  background-image: radial-gradient(rgba(255, 62, 200, 0.55) 1.1px, transparent 1.3px);
+  background-size: 7px 7px;
+  opacity: 0.2;
+  animation: halftone 18s linear infinite;
+}
+@keyframes halftone { to { transform: translate(7px, 7px); } }
+/* the scanline layer sits behind main, so the splash gets its own, along with
+   the scrim that keeps the tagline legible over whatever was painted */
+.splash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to top, rgba(5, 1, 12, 0.95) 4%, rgba(5, 1, 12, 0.4) 52%, rgba(5, 1, 12, 0.15)),
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0 1px, transparent 1px 3px);
+}
+.say { position: relative; z-index: 2; }
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.7rem;
+  font-size: 0.54rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--lime);
+  text-shadow: 0 0 14px currentColor;
+}
 /* What happened to the game, in letters you can read from the other side of
    the room. Every version has one, and on a page it is the whole headline. */
 .shout {
-  font-size: clamp(1.1rem, 3.3vw, 2.5rem);
+  font-size: clamp(1.75rem, 5.4vw, 4.2rem);
   font-weight: 600;
-  line-height: 1.14;
+  line-height: 1.04;
   /* the cover title is spaced out like a marquee; a sentence is not */
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
   margin-right: 0;
+  max-width: 17ch;
   text-wrap: balance;
   background: linear-gradient(100deg,
     #ff3ec8, #ffb020, #b6ff3d, #21f3ff, #a04bff, #ff3ec8);
@@ -1027,53 +1304,100 @@ body.page { padding: 0; overflow: hidden; }
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 0 14px rgba(255, 62, 200, 0.35));
+  filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.85)) drop-shadow(0 0 24px rgba(255, 62, 200, 0.35));
   animation: slide 9s linear infinite;
 }
-
-/* The plate: a painted scene of whatever the tagline says happened, asked for
-   once by tools/chronicle-art.sh and kept in docs/art/ from then on. It is a
-   band rather than a picture that fills the page, because the drawn field
-   below it is the one that is actually about the commit, and because a chapter
-   with no plate has to look deliberate rather than short of one. */
-.plate-art {
-  /* two shares against the drawn field's three, both flexible: on a laptop the
-     band gives way first, because the field below is the one that is about the
-     commit and it must never be the thing that gets squeezed out */
-  flex: 2 1 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(160, 75, 255, 0.28);
-  background: #000;
-}
-.plate-art a { display: block; position: relative; flex: 1 1 auto; min-height: 0; line-height: 0; }
-.plate-art img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  max-height: min(34vh, 18rem);
-  object-fit: cover;
-  /* the book is a CRT and the plate did not come off one, so it is sent
-     through the same glass as everything else on the page */
-  filter: saturate(1.15) contrast(1.06);
-  opacity: 0.92;
-}
-/* the scanline layer sits behind main, so the plate gets its own */
-.plate-art a::after {
-  content: "";
+.plate-full {
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    to bottom, rgba(0, 0, 0, 0.28) 0 1px, transparent 1px 3px);
+  z-index: 2;
+  top: 0.7rem;
+  right: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.24rem 0.5rem;
+  background: rgba(7, 3, 15, 0.75);
+  border: 1px solid rgba(33, 243, 255, 0.45);
+  color: var(--cyan);
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
 }
-.plate-art figcaption {
-  padding-top: 0.25rem;
-  font-size: 0.57rem;
-  letter-spacing: 0.1em;
+.plate-full:hover { border-color: var(--cyan); box-shadow: 0 0 16px rgba(33, 243, 255, 0.3); }
+
+/* --- the narration --------------------------------------------------------
+   The pilot's own sentence about what they did, in what a comic would call a
+   caption box. Capped at 600px, because that is where a line of monospace
+   stops being comfortable — and that cap is what makes the rest of the page
+   divide into cels in the first place. */
+.told { grid-column: span 5; }
+.deed {
+  max-width: 600px;
+  font-size: clamp(0.92rem, 1.3vw, 1.12rem);
+  line-height: 1.6;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.deed::first-letter {
+  float: left;
+  padding: 0.04em 0.09em 0 0;
+  font-size: 2.6em;
+  line-height: 0.82;
+  color: var(--amber);
+  text-shadow: 0 0 20px rgba(255, 176, 32, 0.5);
+}
+
+/* --- the numbers ----------------------------------------------------------
+   Six tiles, each with its glyph, each counting up as the cel lands. They are
+   the same six facts a chapter always carried; they have just stopped being a
+   footnote about themselves. */
+.figures { grid-column: span 7; }
+.stats {
+  list-style: none;
+  display: grid;
+  /* three and three, so the six of them read as a block rather than as a row
+     that ran out */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(3.2rem, 1fr);
+  gap: 0.45rem;
+  height: 100%;
+}
+.stats li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.6rem;
+  align-content: center;
+  padding: 0.5rem 0.6rem;
+  background: rgba(160, 75, 255, 0.09);
+  border: 1px solid rgba(160, 75, 255, 0.28);
+  border-left: 3px solid var(--cyan);
+  transition: background 0.2s, border-left-color 0.2s;
+}
+.stats li:hover { background: rgba(255, 62, 200, 0.11); border-left-color: var(--magenta); }
+.stats .ic {
+  grid-row: 1 / 3;
+  align-self: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  color: var(--cyan);
+  opacity: 0.8;
+}
+.stats li:hover .ic { color: var(--magenta); opacity: 1; }
+.stats b {
+  font-size: 1.3rem;
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 16px rgba(33, 243, 255, 0.35);
+}
+.stats span {
+  font-size: 0.48rem;
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--dim);
-  text-align: center;
 }
 
 /* The commit, drawn: one rock per sector it touched, sized by how much of that
@@ -1081,14 +1405,28 @@ body.page { padding: 0; overflow: hidden; }
    the repository altogether. The ship is the pilot, taking a shot at the
    biggest thing they moved. None of it is random — tools/chronicle.sh seeds it
    with the commit hash, so a version looks the same in every clone forever. */
-/* basis 0 rather than auto: the drawn field asks for whatever is left over
-   instead of for its own natural height, so a chapter carrying a plate as well
-   still fits on one screen and neither picture has to be told about the other */
-.frame { flex: 3 1 0; display: flex; flex-direction: column; min-height: 6rem; }
-.frame .art { flex: 1; min-height: 0; width: 100%; }
+/* Seven columns rather than twelve: the field is drawn on a 1400x640 board, so
+   at full width it turns into a wall of empty space with three rocks in it.
+   Beside the margin it is a picture. With nothing in the margin it takes the
+   whole row back. */
+/* align-self, so a version with five things in its margin does not stretch the
+   field into a black rectangle with one rock adrift in it. The picture keeps
+   the height its own shape asks for and the margin runs on past it. */
+.frame {
+  grid-column: span 7;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-bottom: 0.8rem;
+}
+.frame .art { display: block; width: 100%; height: auto; }
+.ch:not(.has-record):not(.has-aside) .frame,
+.ch.long-aside .frame { grid-column: span 12; }
+.ch:not(.has-record):not(.has-aside) .frame .art,
+.ch.long-aside .frame .art { max-height: 52vh; }
 .frame figcaption {
-  padding-top: 0.25rem;
-  font-size: 0.57rem;
+  font-size: 0.55rem;
   letter-spacing: 0.1em;
   color: var(--dim);
   text-align: center;
@@ -1144,36 +1482,99 @@ body.page { padding: 0; overflow: hidden; }
 @keyframes twinkle { to { opacity: 0.12; } }
 @keyframes march { to { stroke-dashoffset: -48; } }
 
-/* The numbers the commit made, in the vocabulary the rest of the book uses. */
-.stats { list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.stats li {
-  flex: 1 1 7rem;
-  padding: 0.36rem 0.6rem;
-  background: rgba(160, 75, 255, 0.08);
-  border-left: 2px solid rgba(160, 75, 255, 0.5);
+/* --- what the book had to write down --------------------------------------
+   The loud cels. A rule bent in writing, a rule changed outright, or a commit
+   the referee never got to look at — each with the rule itself in letters that
+   carry, because the whole point of a budget is that spending it is visible
+   from the doorway. */
+/* The margin runs down the side of the drawn field and holds everything that
+   happened around this version rather than in it. */
+.margin {
+  grid-column: span 5;
+  display: grid;
+  gap: clamp(0.6rem, 1.1vw, 1rem);
 }
-.stats b {
-  display: block;
-  font-size: 0.92rem;
-  font-weight: 500;
-  color: var(--cyan);
-  font-variant-numeric: tabular-nums;
+/* A version that had three other things happen while it was on the cabinet has
+   more margin than there is margin. It comes out from beside the field and
+   runs underneath it in columns, where the notes read as a stack of cards
+   rather than as one long wall down the side. */
+.ch.long-aside .margin { grid-column: span 12; }
+.ch.long-aside .meanwhile {
+  columns: 22rem;
+  column-gap: clamp(0.8rem, 1.6vw, 1.6rem);
 }
-.stats span {
-  font-size: 0.53rem;
-  letter-spacing: 0.13em;
+.ch.long-aside .interlude { break-inside: avoid; margin: 0 0 0.9rem; }
+.record {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: clamp(0.6rem, 1.1vw, 1rem);
+}
+.loud { color: var(--amber); }
+.loud .tab { color: inherit; }
+/* The burst a comic puts behind a noise, turning slowly enough to be noticed
+   rather than watched. Masked rather than clipped, because clipping the cel
+   would take the corner off its own label with it. */
+.loud::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 9rem;
+  height: 9rem;
+  background: conic-gradient(from 0deg, currentColor 0 5deg, transparent 5deg 30deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 28%, transparent 76%);
+  mask-image: radial-gradient(closest-side, #000 28%, transparent 76%);
+  opacity: 0.16;
+  pointer-events: none;
+  animation: spin 70s linear infinite;
+}
+.klaxon {
+  position: relative;
+  font-size: clamp(1.7rem, 3.6vw, 2.9rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.8), 0 0 28px currentColor;
+}
+.reason {
+  max-width: 600px;
+  margin-top: 0.55rem;
+  font-size: 0.7rem;
+  line-height: 1.75;
+  color: var(--ink);
+}
+.byline {
+  margin-top: 0.5rem;
+  font-size: 0.52rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--dim);
+}
+.loud.over { border-color: rgba(255, 176, 32, 0.6); }
+.loud.law { color: var(--violet); border-color: rgba(160, 75, 255, 0.65); }
+/* The other two are a pilot saying what they did. This one is the book saying
+   it for them, because nobody wrote it down and the referee was not running.
+   It is the one cel on the page that flashes, and it flashes on purpose. */
+.loud.off {
+  color: var(--magenta);
+  border-color: var(--magenta);
+  background: linear-gradient(168deg, rgba(255, 62, 200, 0.16), rgba(7, 3, 15, 0.88) 52%);
+  animation: alarm 2.6s ease-in-out infinite;
+}
+@keyframes alarm {
+  50% { box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.7), 0 0 40px rgba(255, 62, 200, 0.45); }
 }
 
 /* Forward, back, and out. The arrow keys do the same thing — see the script
    at the foot of every page. */
 .flip {
+  grid-column: span 12;
   display: flex;
   gap: 1rem;
   align-items: baseline;
   justify-content: space-between;
-  padding-top: 0.45rem;
+  margin-top: 0.5rem;
+  padding-top: 0.6rem;
   border-top: 1px dashed rgba(160, 75, 255, 0.3);
   font-size: 0.66rem;
   letter-spacing: 0.18em;
@@ -1186,7 +1587,7 @@ body.page { padding: 0; overflow: hidden; }
 /* Every version there has ever been, oldest first, always in reach. The two
    kinds of trouble are marked, so a reader can see where the book gets loud
    before they get there. */
-.strip { position: relative; display: flex; flex-wrap: wrap; gap: 3px; }
+.strip { grid-column: span 12; position: relative; display: flex; flex-wrap: wrap; gap: 3px; }
 .tick {
   min-width: 1.5rem;
   padding: 0.16rem 0.28rem;
@@ -1228,52 +1629,49 @@ body.page { padding: 0; overflow: hidden; }
 }
 .tick:hover::after, .tick:focus::after { opacity: 1; }
 
-.deed {
-  font-size: 0.95rem;
-  line-height: 1.7;
-  color: var(--ink);
-  text-wrap: pretty;
-}
 /* A version whose pilot wrote no Chronicle line reads as a gap in the record,
    and looks like one, so the next person can see what a missing chapter costs. */
 .deed.untold {
   color: var(--dim);
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   font-style: italic;
 }
+.deed.untold::first-letter { float: none; font-size: 1em; color: inherit; text-shadow: none; }
 .subj {
-  margin-top: 0.4rem;
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
+  max-width: 600px;
+  margin-top: 0.7rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed rgba(160, 75, 255, 0.3);
+  font-size: 0.62rem;
+  line-height: 1.6;
+  letter-spacing: 0.12em;
   color: var(--dim);
 }
 /* Something happened that was not a version: the rules moved, the book was
    rebuilt, somebody tidied. It goes in the record because everything goes in
    the record, but it never took a number, so it does not take a page either —
    it sits in the margin of whichever version was on the cabinet at the time. */
-.meanwhile {
-  margin-top: 0.55rem;
-  padding-top: 0.45rem;
-  border-top: 1px dotted rgba(160, 75, 255, 0.25);
-}
 .interlude {
-  margin: 0 0 0.5rem;
   padding-left: 0.9rem;
-  border-left: 1px dashed rgba(160, 75, 255, 0.22);
+  border-left: 2px dashed rgba(160, 75, 255, 0.3);
 }
+.interlude + .interlude { margin-top: 0.8rem; }
 .between {
-  font-size: 0.74rem;
+  max-width: 600px;
+  font-size: 0.78rem;
   line-height: 1.7;
-  letter-spacing: 0.06em;
-  color: var(--dim);
+  letter-spacing: 0.04em;
+  color: var(--ink);
 }
 .between b { color: var(--violet); font-weight: 500; }
-.interlude .subj { margin-top: 0.25rem; font-size: 0.62rem; }
+.interlude .subj { margin-top: 0.35rem; padding-top: 0; border: none; font-size: 0.58rem; }
 
-/* The four things the book records whether you like it or not. */
+/* The four things the book records whether you like it or not, here in the
+   margin where the interludes live. On the chapter itself they get a cel each. */
 .override, .lawchange, .unrecorded, .ledger {
+  max-width: 600px;
   margin-top: 0.6rem;
-  padding: 0.42rem 0.7rem;
+  padding: 0.45rem 0.7rem;
   font-size: 0.66rem;
   line-height: 1.65;
   border-left: 2px solid currentColor;
@@ -1294,28 +1692,44 @@ body.page { padding: 0; overflow: hidden; }
 }
 .roster td:last-child b { color: var(--ink); font-weight: 500; }
 
-.play { margin-top: 0.6rem; font-size: 0.62rem; letter-spacing: 0.1em; color: var(--dim); }
+.play {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  padding: 0.7rem 1rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+}
+.play .ic { width: 1.1rem; height: 1.1rem; color: var(--lime); }
 .play code {
   color: var(--lime);
   background: rgba(182, 255, 61, 0.08);
-  padding: 0.1rem 0.4rem;
+  border: 1px solid rgba(182, 255, 61, 0.25);
+  padding: 0.14rem 0.5rem;
   user-select: all;
 }
 
+/* Below the width where two cels side by side stop being two cels and start
+   being two columns of four words, there is one column. */
+@media (max-width: 62rem) {
+  .told, .figures, .frame, .margin { grid-column: span 12; }
+  .shout { max-width: none; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 34rem) {
   .roster table { font-size: 0.62rem; }
   .cv a { grid-template-columns: 2.9rem 1fr; }
   .cv i { display: none; }
   .ci { padding-left: 0.3rem; }
-  .plate .who { margin-left: 0; }
-}
-/* A screen too short to hold a panel stops pretending, and becomes a page. */
-@media (max-height: 34rem) {
-  body.page { overflow: auto; }
-  .page main { height: auto; min-height: 100dvh; }
+  .bar .who { margin-left: 0; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .stats span { font-size: 0.44rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  h1, .shout, .roster, .art * { animation: none; }
+  h1, .shout, .roster, .art *, .dots, .plate-img, .loud, .loud::before { animation: none; }
+  .js .cel { opacity: 1; transform: none; transition: none; }
 }
 CSS
 
