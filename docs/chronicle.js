@@ -6,16 +6,16 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 32,
-    latest: { v: 32, pilot: "David Friedrich", date: "07 August 2026", line: "David taught the splash screen the difference between a warning and a trophy.", plate: "7dde5091.jpg", alt: "David taught the splash screen the difference between a warning and a trophy." },
+    versions: 33,
+    latest: { v: 33, pilot: "David Friedrich", date: "07 August 2026", line: "The cabinet keeps score with slightly different arithmetic now.", plate: "5d0b9ea0.jpg", alt: "The cabinet keeps score with slightly different arithmetic now." },
     plates: [
+      { v: 33, file: "5d0b9ea0.jpg", alt: "The cabinet keeps score with slightly different arithmetic now.", line: "The cabinet keeps score with slightly different arithmetic now." },
       { v: 32, file: "7dde5091.jpg", alt: "David taught the splash screen the difference between a warning and a trophy.", line: "David taught the splash screen the difference between a warning and a trophy." },
       { v: 31, file: "5557764e.jpg", alt: "The rules of the field changed while nobody was flying.", line: "The rules of the field changed while nobody was flying." },
       { v: 30, file: "e799c360.jpg", alt: "Something out there behaves differently now and will not say so. The difficulty came along for the ride.", line: "Something out there behaves differently now and will not say so. The difficulty came along for the ride." },
-      { v: 29, file: "7164cd03.jpg", alt: "A rule was taken out, looked at, and put back differently.", line: "A rule was taken out, looked at, and put back differently." },
     ],
     roster: {
-      "David Friedrich": 32,
+      "David Friedrich": 33,
     }
   };
   A.BOARD = [

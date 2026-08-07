@@ -41,6 +41,7 @@
     ["e799c360.jpg", "Something out there behaves differently now and will not say so. The difficulty came along for the ride.", ""],
     ["5557764e.jpg", "The rules of the field changed while nobody was flying.", ""],
     ["7dde5091.jpg", "David taught the splash screen the difference between a warning and a trophy.", ""],
+    ["5d0b9ea0.jpg", "The cabinet keeps score with slightly different arithmetic now.", ""],
   ]
   var dock = document.querySelector("nav.dock[data-here]")
   if (!dock || !T.length) return
