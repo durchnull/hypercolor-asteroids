@@ -17,7 +17,12 @@
 #   tools/tally.sh --roll          the standings, for a human
 #
 # A bend costs one. Going round the referee costs two, because the whole point
-# of a budget is that spending it happens where people can see it.
+# of a budget is that spending it happens where people can see it. A
+# Golden-Rule-Breach line - written by the table when a landing crossed GR8 -
+# costs the pilot it names one, whoever held the pen. And clean versions landed
+# since a pilot's last bend are counted beside the bends: three of them ease
+# the field by one bend's worth. src/game/tally.js does that sum; this file
+# only ever reports what the history says.
 # ---------------------------------------------------------------------------
 set -u
 
@@ -49,18 +54,32 @@ ME=$(git config user.name 2>/dev/null || true)
 # has not landed yet counts too, under whoever is at the keyboard - which is
 # how the referee checks a ledger commit while it is still only a proposal.
 rows() {
-  git log --no-merges --format='%x1e%an%x1f%B' 2>/dev/null \
+  git log --no-merges --format='%x1e%an%x1f%B%x1f' --name-only 2>/dev/null \
   | awk -v me="$ME" -v plus="$PLUS" '
-      BEGIN { RS = "\036"; FS = "\037"; pending = 0 }
+      # A message still being written is the newest thing there is, so it goes
+      # through first: a pending bend resets its pilot before any landed
+      # version can count as "since". It never counts as a version itself -
+      # a landing is only clean once it is history.
+      BEGIN {
+        RS = "\036"; FS = "\037"; pending = 0
+        if (plus != "") {
+          body = ""
+          while ((getline chunk < plus) > 0) body = body chunk "\n"
+          pending = 1
+          bend(me, body, "")
+          pending = 0
+        }
+      }
 
       function add(who, n, what) {
         bends[who] += n
+        seen[who] = 1
         # git log runs newest first, so the first mention of a pilot is their
         # latest one; a message still being written beats all of them.
         if (pending || !(who in last)) last[who] = what
       }
 
-      function bend(who, body,   n, L, i, t, lt, u) {
+      function bend(who, body, files,   n, L, i, t, lt, u, r, nm, ver) {
         n = split(body, L, "\n")
         for (i = 1; i <= n; i++) {
           t = L[i]
@@ -72,20 +91,39 @@ rows() {
             add(who, 1, (match(u, /GR[0-9]+/) ? substr(u, RSTART, RLENGTH) : "a rule"))
           } else if (lt ~ /^referee-skipped:/) {
             add(who, 2, "the referee itself")
+          } else if (lt ~ /^golden-rule-breach:/) {
+            # written by the table when a landing crossed GR8. The line names
+            # the pilot it is about; the commit author is only the scribe.
+            sub(/^[^:]*:[ \t]*/, "", t)
+            u = toupper(t)
+            if (match(u, /^GR[0-9]+[ \t]/) && t ~ / - /) {
+              r = substr(u, RSTART, RLENGTH); sub(/[ \t]+$/, "", r)
+              nm = t
+              sub(/^[A-Za-z0-9]+[ \t]+/, "", nm)
+              sub(/[ \t]+-[ \t].*$/, "", nm)
+              if (nm != "") add(nm, 1, r)
+            }
           }
         }
+        # A landing that moved the game and bent nothing is a clean version,
+        # counted only until the pilot`s most recent bend. The ledger file
+        # itself does not make a commit a version here, or every bend would
+        # earn back a third of its cost in the receipt that records it.
+        if (pending) return
+        ver = 0
+        n = split(files, L, "\n")
+        for (i = 1; i <= n; i++) {
+          t = L[i]
+          if (t == "" || t == "src/game/ledger.js") continue
+          if (t == "index.html" || t ~ /^src\// || t ~ /^styles\//) { ver = 1; break }
+        }
+        if (ver && !seen[who]) clean[who]++
       }
 
-      NF >= 2 { bend($1, $2) }
+      NF >= 2 { bend($1, $2, (NF >= 3 ? $3 : "")) }
 
       END {
-        if (plus != "") {
-          body = ""
-          while ((getline chunk < plus) > 0) body = body chunk
-          pending = 1
-          bend(me, body)
-        }
-        for (w in bends) if (bends[w] > 0) printf "%s\t%d\t%s\n", w, bends[w], last[w]
+        for (w in bends) if (bends[w] > 0) printf "%s\t%d\t%d\t%s\n", w, bends[w], clean[w] + 0, last[w]
       }
   ' | tr -d '\\"' | LC_ALL=C sort
 }
@@ -101,10 +139,14 @@ render() {
 // the referee: a ledger that disagrees with the history is a commit that does
 // not land. Nobody edits their own record. That is the whole of it.
 //
+// clean is the other half of the arithmetic: versions the pilot has landed
+// since their last bend, read off the same history. Three of them ease the
+// field by one bend's worth - src/game/tally.js does that sum. See GR12.
+//
 // What the number does to a pilot's field is in src/game/tally.js. See GR12.
 EOF
   printf 'ASTEROIDS.LEDGER = {\n'
-  rows | awk -F'\t' '{ printf "  \"%s\": { bends: %d, last: \"%s\" },\n", $1, $2, $3 }'
+  rows | awk -F'\t' '{ printf "  \"%s\": { bends: %d, clean: %d, last: \"%s\" },\n", $1, $2, $3, $4 }'
   printf '};\n'
 }
 
@@ -136,11 +178,12 @@ case "$MODE" in
   roll)
     printf '\n  THE LEDGER\n'
     rows | awk -F'\t' '
-      { printf "    %-24s %2d bend%s   last: %s\n", $1, $2, ($2 == 1 ? " " : "s"), $3; n++ }
+      { printf "    %-24s %2d bend%s   %2d clean since   last: %s\n", $1, $2, ($2 == 1 ? " " : "s"), $3, $4; n++ }
       END { if (!n) print "    nobody has bent anything. yet." }'
     printf '\n    1 bend  events come sooner\n'
     printf '    3 bends your own events stop sparing you\n'
-    printf '    4 bends a wave may hold one more ambush\n\n'
+    printf '    4 bends a wave may hold one more ambush\n'
+    printf '    every 3 clean versions since the last bend ease all of it one bend\n\n'
     ;;
 
   write)

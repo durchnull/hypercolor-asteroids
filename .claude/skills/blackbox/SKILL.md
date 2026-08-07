@@ -33,7 +33,16 @@ is what makes the board worth reading.
    A hit means this exact flight already landed — point at its row and stop,
    because one flight is one entry no matter how many times it is pasted.
 
-4. **Work out the fun numbers.** The JSON has the raw counts per seat; derive
+4. **Whose name is in the seat?** The tape says who flew. If that is not the
+   pilot at this keyboard (`git config user.name`), stop and ask one question
+   before ranking: was this genuinely the named pilot's flight? Couriering a
+   friend's real tape is fine and lands under the friend's name. A run flown
+   under a borrowed name — somebody dodging their own tally or somebody
+   else's traps — ranks nowhere, keeps no best score, and puts nothing on
+   the board, however good the numbers (GR12). The seal proves the tape;
+   this step is what proves the pilot.
+
+5. **Work out the fun numbers.** The JSON has the raw counts per seat; derive
    the ones people actually enjoy reading:
 
    - accuracy — `hits / shots`, as a percent. Bullets only; the bomb is not aim.
@@ -42,7 +51,7 @@ is what makes the board worth reading.
      kraken hits and kills, close shaves, the longest flurry.
    - distance flown in klicks (`dist / 1000`), and top speed.
 
-5. **Land it in `docs/RANKINGS.md`.** THE BOARD is ranked by score and keeps
+6. **Land it in `docs/RANKINGS.md`.** THE BOARD is ranked by score and keeps
    twenty rows; THE FLIGHT LOG below keeps every tape, newest first. A board
    row ends with the flight in one line — dry, specific, written from the
    numbers ("died with the bomb still in the rack" beats "great game"). Tag
@@ -50,7 +59,7 @@ is what makes the board worth reading.
    greps for. A two-seat tape lands once, under the tape's pilot, and the
    line mentions the wingmate.
 
-6. **Commit it** — `docs/RANKINGS.md` alone, nothing else that happens to be
+7. **Commit it** — `docs/RANKINGS.md` alone, nothing else that happens to be
    dirty. A ranking does not change the game, so it gets no `Version:` line;
    it gets a subject worth reading and a `Chronicle:` line like everything
    else. Example:
@@ -65,6 +74,9 @@ is what makes the board worth reading.
 ## What this skill never does
 
 - Rank a tape the reader rejected, or numbers typed in without a tape.
+- Rank a flight flown under a borrowed name. The seat on the tape is the
+  pilot the run belongs to; a run flown as somebody else ranks nowhere,
+  whoever asks (GR12).
 - Edit an existing score, reorder the board by anything but score, or delete
   somebody's flight to make room. The log keeps everything; the board keeps
   the best twenty and drops the rest by falling off, not by being erased.

@@ -121,10 +121,14 @@ person nothing to discover and nothing to review, and it makes the book
 unreadable.
 
 Nothing under `docs/` counts against you — the book is generated, and the map
-beside it is not the cabinet.
+beside it is not the cabinet. Neither does a commit that is nothing but the
+rules and their machinery: GR10 already forces that shape into its own commit
+with its reason on the record, and a referee written in sh is verbose rather
+than surprising. The budget is for the game.
 
 *Checked:* over budget needs `Golden-Rule-Override: GR6 - <why>`. Over 600
-added lines is a nudge, not a block.
+added lines is a nudge, not a block. A commit touching only rule files and
+generated files is not measured at all.
 
 ## GR7 — Sign your work in git, not in the code. `red line`
 
@@ -156,6 +160,23 @@ actually keeps the game good:
 - It still holds 60fps on a laptop, and it still works on a keyboard with no
   numpad.
 - You do not nerf somebody's feature to make yours look better.
+
+No machine checks any of that, and none ever will. What exists is a witness:
+when the pilots agree that something landed across this line — an unloseable
+power, a firing-squad event, a nerf dressed as a tune — any one of them may
+put it on the record, in a commit that carries the freshly generated ledger:
+
+```
+Golden-Rule-Breach: GR8 Dave Okoro - the comet shield has no cost and no
+                    cooldown, and the table agrees it crossed the line
+```
+
+The line names the pilot it is about, not whoever typed it, and it costs them
+one on the tally like any other bend (GR12). It is not a veto and it undoes
+nothing: the feature stays until somebody fixes it in the open. Agreement
+first, always — a breach line written by one annoyed pilot without the table
+behind it is itself the kind of thing the table gets to judge, in the open,
+where it landed.
 
 ## GR9 — Keep the surprise. `nudge`
 
@@ -260,7 +281,9 @@ could quietly switch off would not be one.
 A bend costs one. Going round the referee costs two — `--no-verify`, hooks
 unset, a check edited until it passes — because a rule bent quietly costs more
 than a rule bent out loud. The referee cannot stop you doing it. It can notice
-afterwards that it was never asked, and that turns out to be enough.
+afterwards that it was never asked, and that turns out to be enough. A GR8
+breach the table put on the record costs one, under the name of the pilot the
+line names rather than whoever held the pen (see GR8).
 
 The number is not a scolding. It is a difficulty setting, and it is yours:
 
@@ -277,16 +300,27 @@ takes the promise back — which is why it is written into GR11 as well, where
 somebody looking for it will find it.
 
 Nobody else's field changes. It follows the name on the splash screen, so yes,
-you could pick somebody else's and fly clean. You would then be flying as
-somebody whose events are all armed against you, including the ones you wrote
-yourself, which is a worse deal than the tally on any reading. The cheapest way
-out of the ledger costs more than the ledger. That is the design.
+you could pick somebody else's name and fly their field instead — their traps
+quiet for you, yours armed, their tally on your evening. What that buys is a
+flight worth nothing: the black box seals the seat into the tape, and a flight
+flown under a name that is not the pilot's own ranks nowhere, keeps no best
+score, and puts nothing on the board — the blackbox ritual checks, and
+refuses. The cheapest way out of the ledger is a run the record ignores. That
+is the design.
 
-It does not decay, because the history does not decay. Land good versions
-instead; the number stops mattering the moment you stop adding to it.
+The record does not decay, because the history does not decay. The field
+forgives all the same: every three clean versions landed since your last bend
+ease the field's arithmetic by one bend's worth — the heat, the crowding, and
+at the far end your own traps go back to sparing you. Every row of the table
+reads that eased number; the written one never moves, and the next bend puts
+the whole of it straight back. `tools/tally.sh` counts the clean landings off
+the same history it counts everything else — a landing is clean when it moved
+the game and bent nothing, and the ledger's own receipts do not qualify. Land
+good versions; that was always the way out, and now the field can tell.
 
 *Checked:* `src/game/ledger.js` must say what `tools/tally.sh` reads off the
-history, with the pending commit message in hand. Editing your own count is
+history, with the pending commit message in hand — the clean-version count
+beside each name included, derived the same way. Editing your own count is
 refused, deleting the file is refused, and there is no override on either — the
 tally is the one number in this project nobody writes for themselves.
 

@@ -425,6 +425,20 @@ check_gr45() {
 # GR6  One surprise per commit.
 # ---------------------------------------------------------------------------
 check_gr6() {
+  # The rules and their machinery cannot land in pieces - GR10 already forces
+  # them into their own commit with the reason on the record, and a referee
+  # written in sh is verbose rather than surprising. The budget is for the
+  # game, so a commit that is nothing but rule files does not spend it.
+  if [ -s "$TMP/files" ]; then
+    rulesonly=1
+    while IFS= read -r f; do
+      case "$f" in docs/*) continue ;; esac
+      is_generated "$f" && continue
+      is_referee "$f" || { rulesonly=0; break; }
+    done < "$TMP/files"
+    [ "$rulesonly" = 1 ] && return 0
+  fi
+
   # awk rather than grep -c, which prints 0 and exits 1 on a docs-only commit -
   # and a docs-only commit is the normal shape after the book is rebuilt.
   files=$(awk '!/^docs\//' "$TMP/files" | wc -l | tr -d ' ')
@@ -476,6 +490,7 @@ check_gr12() {
   cmp -s "$TMP/ledger.mine" "$TMP/ledger.true" && return 0
   hard GR12 "$LEDGER does not say what the history says"
   note "the tally is not edited by hand - run tools/tally.sh, or --roll to read it"
+  note "or leave $LEDGER out of this commit - the hooks keep it fresh"
 }
 
 # ---------------------------------------------------------------------------

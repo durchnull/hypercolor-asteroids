@@ -28,6 +28,11 @@ rm -f "$MARK"
 
 sh "$ROOT/tools/chronicle.sh" >/dev/null 2>&1 || exit 0
 
+# The ledger counts clean landings now as well as bends (GR12), so it goes
+# stale the moment anything lands. Refresh it the way the book refreshes -
+# into the working tree, to ride along with whatever commit comes next.
+sh "$ROOT/tools/tally.sh" >/dev/null 2>&1 || true
+
 VER=$(sh "$ROOT/tools/chronicle.sh" --version)
 
 if sh "$ROOT/tools/chronicle.sh" --moved HEAD; then
