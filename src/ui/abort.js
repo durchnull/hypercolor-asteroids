@@ -193,21 +193,6 @@
 
   A.register({
     id: "abort",
-    // under the mark, over the band: it is the cabinet rather than the field
-    order: { guide: 94 },
     reset, chrome,
-    guide: {
-      name: "THE WAY OUT",
-      meta: "ESC",
-      tint: "var(--amber)",
-      icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
-        stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"
-        stroke-linecap="round" aria-hidden="true">
-        <path d="M18 5H7v24h11"/>
-        <path d="M14 17h13M22 12l5 5-5 5"/></svg>`,
-      desc: `ESC asks whether you meant it, and holds the field still while it
-        waits. ESC again and you are out; any other key and you never left. A
-        run walked out of goes on no record at all.`,
-    },
   });
 })(ASTEROIDS);

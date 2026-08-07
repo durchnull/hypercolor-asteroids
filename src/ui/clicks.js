@@ -108,23 +108,4 @@
   // first, so by the time this runs the switch has already flipped.
   const mute = document.getElementById("mute");
   if (mute) mute.addEventListener("click", () => A.uiClick(OUTSIDE));
-
-  A.register({
-    id: "ui:clicks",
-    // last in the guide, under the band — it is not a thing in the field either
-    order: { guide: 96 },
-    guide: {
-      name: "THE PANELS",
-      meta: "in tonight's key",
-      tint: "var(--cyan)",
-      icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
-        <path d="M9 5.5 L9 23 L13.2 18.9 L16 25.5 L18.6 24.4 L15.9 18 L21.5 17.4 Z"/>
-        <path d="M23.5 11.5a7 7 0 0 1 0 11" opacity="0.75"/>
-        <path d="M27 8a11.5 11.5 0 0 1 0 18" opacity="0.4"/>
-      </svg>`,
-      desc: `This screen answers back. Every card, row and door has a note of
-        its own, picked by where it sits and tuned to tonight's key, so running
-        a cursor down this list is a scale. M still turns the lot off.`,
-    },
-  });
 })(ASTEROIDS);
