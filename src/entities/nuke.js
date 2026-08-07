@@ -1,7 +1,10 @@
 // The atom bomb: your panic button.
 //
-// The blast front covers half the playfield — pi*r² = W*H/2 — and everything
-// it sweeps over is vaporised as it passes, so you watch it eat the screen.
+// The blast front covers somewhere between 30% and 50% of the playfield —
+// pi*r² = f*W*H, f drawn fresh per bomb — so you never quite know how much
+// screen it will eat, and it never eats all of it. Small and medium rocks
+// vaporise; a big rock is too much stone to erase and shatters into small
+// ones instead.
 
 (function (A) {
   "use strict";
@@ -9,10 +12,9 @@
   A.nuke = null;
 
   const FRONT_TIME = 0.55;    // seconds for the front to cross its own radius
-  const KRAKEN_HURT = 3;      // hit points a caught kraken loses
   const RELOAD = 0.8;
 
-  A.blastRadius = () => Math.sqrt((A.W * A.H) / (2 * Math.PI));
+  A.blastRadius = () => Math.sqrt((A.rand(0.3, 0.5) * A.W * A.H) / Math.PI);
 
   A.detonate = function detonate(p) {
     if (!p || p.bombs <= 0 || p.dead || p.bombCooldown > 0 || A.game.phase !== "playing") return;
@@ -43,18 +45,30 @@
     n.r += (n.max / FRONT_TIME) * tick.dt;
     n.life -= tick.dt;
 
-    // vaporise rocks the front has just swept past
+    // rocks the front has just swept past: small and medium vaporise, big
+    // shatters into smalls — marked as the blast's own debris so the front
+    // does not eat them on the very next frame
     for (let i = A.asteroids.length - 1; i >= 0; i--) {
       const a = A.asteroids[i];
+      if (n.hit.has(a)) continue;
       const d = Math.hypot(a.x - n.x, a.y - n.y);
-      if (d <= n.r && d > prev - a.radius) A.vaporiseAsteroid(i, n.owner);
+      if (d <= n.r && d > prev - a.radius) {
+        const rock = A.vaporiseAsteroid(i, n.owner);
+        if (rock.size === 3) {
+          for (let k = 0; k < 2; k++) {
+            const shard = A.makeAsteroid(rock.x, rock.y, 1);
+            n.hit.add(shard);
+            A.asteroids.push(shard);
+          }
+        }
+      }
     }
-    // krakens caught in the blast take heavy damage, once each
+    // a kraken is all tentacle and no armour — caught in the blast, it dies
     for (const s of A.squids.slice()) {
       if (n.hit.has(s)) continue;
       if (Math.hypot(s.x - n.x, s.y - n.y) <= n.r) {
         n.hit.add(s);
-        A.damageSquid(s, KRAKEN_HURT, n.owner);
+        A.damageSquid(s, s.hp, n.owner);
       }
     }
     if (n.life <= 0) A.nuke = null;
@@ -114,8 +128,10 @@
         <path d="M16 11 V6 M12 7.5 L20 4.5" stroke-linecap="round"/>
         <circle cx="16" cy="20" r="14" stroke-dasharray="2.5 3.5" opacity="0.65"/>
       </svg>`,
-      desc: `Your panic button. The blast front eats half the screen, vaporising
-        every rock and gutting any kraken. One more each wave.`,
+      desc: `Your panic button. The blast front eats up to half the screen —
+        never all of it — vaporising small and medium rocks, shattering big
+        ones into pebbles, and killing any kraken it catches. One more every
+        second wave.`,
     },
   });
 })(ASTEROIDS);
