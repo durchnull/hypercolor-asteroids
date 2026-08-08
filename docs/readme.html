@@ -28,34 +28,13 @@ at the same time. That half is explained in
 and just fly.
 </p>
 <p>
+Open <code>index.html</code> in a browser and it plays. Two pilots, one screen; player two
+can drop in mid-wave, and anyone out of lives can buy back in. What you need to
+play and to build — including what a Windows machine needs — is in
+<a href="requirements.html">docs/requirements.md</a>.
+</p>
+<p>
 <img src="../media/field.png" alt="Two pilots, a kraken, a pair of portals, and somebody on the end of a grapple line" loading="lazy" decoding="async">
-</p>
-<h2 id="play">Play</h2>
-<p>
-Open <code>index.html</code> in a browser. If your browser is fussy about <code>file://</code>, serve
-it instead:
-</p>
-<pre><code class="lang-sh">
-python3 -m http.server 8000
-</code></pre>
-<p>
-Two pilots, one screen. Player two can drop in mid-wave, and anyone out of lives
-can buy back in.
-</p>
-<div class="scroll"><table>
-<thead>
-<tr><th></th><th>Player 1</th><th>Player 2</th></tr>
-</thead>
-<tbody>
-<tr><td>Turn</td><td><code>←</code> <code>→</code></td><td><code>A</code> <code>D</code></td></tr>
-<tr><td>Thrust</td><td><code>↑</code></td><td><code>W</code></td></tr>
-<tr><td>Fire</td><td><code>space</code></td><td><code>Q</code></td></tr>
-<tr><td>Grapple (hold to winch)</td><td><code>↓</code></td><td><code>S</code></td></tr>
-<tr><td>Atom bomb</td><td><code>B</code></td><td><code>E</code></td></tr>
-</tbody>
-</table></div>
-<p>
-<code>P</code> pauses, <code>M</code> toggles sound.
 </p>
 <h2 id="what-s-out-there">What's out there</h2>
 <ul>
@@ -107,22 +86,15 @@ each in its own file under <code>src/events/</code>, and one rule makes it worth
 <p><b>Your own trap never fires for you.</b></p>
 </blockquote>
 <p>
-Nobody may edit your event file or sign one with your name. No override exists
-for this.
-</p>
-<p>
-<b>Playing counts.</b> When a flight ends, copy the tape off the game-over screen,
-paste it to claude and say <i>read the black box</i>. The tape carries a checksum,
-so an edited one ranks nowhere. Honest flights land in
+<b>Playing counts.</b> Every flight is taped, the tape carries a checksum, and an
+edited one ranks nowhere. Honest ones land in
 <a href="rankings.html">docs/RANKINGS.md</a>.
 </p>
 <p>
 <b>The rules are part of the game.</b> <a href="golden-rules.html">GOLDEN_RULES.md</a> is the
-whole rulebook — thirteen rules, one page. <i>Red lines</i> are hard stops. <i>Budgets</i>
-you may spend, but you must say so in the commit —
-<code>Golden-Rule-Override: GR4 - &lt;why&gt;</code> — and that line stays in the history under
-your name. <i>Nudges</i> just get mentioned. Changing a rule is allowed too, in its
-own commit, in the open.
+whole rulebook. <i>Red lines</i> are hard stops. <i>Budgets</i> you may spend, but only
+in writing, in the commit, under your own name. <i>Nudges</i> just get mentioned.
+Changing a rule is allowed too, in its own commit, in the open.
 </p>
 <p>
 <b>Bending rules has a price.</b> Overrides are counted from the history into a
@@ -133,9 +105,8 @@ blocks you and nobody shames you — your game just gets harder, in public.
 </p>
 <p>
 <b>A referee at the keyboard.</b> <code>tools/golden-check.sh</code> checks the rules on
-every commit. With Claude Code, <a href="claude.html">CLAUDE.md</a> makes claude a referee
-too: it enforces the rulebook, refuses the shortcuts, and brings skills for the
-ritual — <code>/scout</code>, <code>/event</code>, <code>/land</code>, <code>/blackbox</code>, <code>/fairplay</code>.
+every commit, and <a href="claude.html">CLAUDE.md</a> makes claude a second one: it enforces
+the rulebook and refuses the shortcuts.
 </p>
 <p>
 <b>The book.</b> After every commit a script rewrites the chronicle —
@@ -185,6 +156,7 @@ Now go and do something to annoy the others.
 </p>
 <nav class="flip" aria-label="the notes">
 <span class="here">README</span>
+<a href="requirements.html">REQUIREMENTS</a>
 <a href="architecture.html">ARCHITECTURE</a>
 <a href="rankings.html">RANKINGS</a>
 <a href="golden-rules.html">GOLDEN RULES</a>

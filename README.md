@@ -11,29 +11,12 @@ at the same time. That half is explained in
 [The game behind the game](#the-game-behind-the-game) — you can also ignore it
 and just fly.
 
+Open `index.html` in a browser and it plays. Two pilots, one screen; player two
+can drop in mid-wave, and anyone out of lives can buy back in. What you need to
+play and to build — including what a Windows machine needs — is in
+[docs/requirements.md](docs/requirements.md).
+
 ![Two pilots, a kraken, a pair of portals, and somebody on the end of a grapple line](media/field.png)
-
-## Play
-
-Open `index.html` in a browser. If your browser is fussy about `file://`, serve
-it instead:
-
-```sh
-python3 -m http.server 8000
-```
-
-Two pilots, one screen. Player two can drop in mid-wave, and anyone out of lives
-can buy back in.
-
-| | Player 1 | Player 2 |
-|---|---|---|
-| Turn | `←` `→` | `A` `D` |
-| Thrust | `↑` | `W` |
-| Fire | `space` | `Q` |
-| Grapple (hold to winch) | `↓` | `S` |
-| Atom bomb | `B` | `E` |
-
-`P` pauses, `M` toggles sound.
 
 ## What's out there
 
@@ -83,20 +66,14 @@ each in its own file under `src/events/`, and one rule makes it worth doing:
 
 > **Your own trap never fires for you.**
 
-Nobody may edit your event file or sign one with your name. No override exists
-for this.
-
-**Playing counts.** When a flight ends, copy the tape off the game-over screen,
-paste it to claude and say *read the black box*. The tape carries a checksum,
-so an edited one ranks nowhere. Honest flights land in
+**Playing counts.** Every flight is taped, the tape carries a checksum, and an
+edited one ranks nowhere. Honest ones land in
 [docs/RANKINGS.md](docs/RANKINGS.md).
 
 **The rules are part of the game.** [GOLDEN_RULES.md](GOLDEN_RULES.md) is the
-whole rulebook — thirteen rules, one page. *Red lines* are hard stops. *Budgets*
-you may spend, but you must say so in the commit —
-`Golden-Rule-Override: GR4 - <why>` — and that line stays in the history under
-your name. *Nudges* just get mentioned. Changing a rule is allowed too, in its
-own commit, in the open.
+whole rulebook. *Red lines* are hard stops. *Budgets* you may spend, but only
+in writing, in the commit, under your own name. *Nudges* just get mentioned.
+Changing a rule is allowed too, in its own commit, in the open.
 
 **Bending rules has a price.** Overrides are counted from the history into a
 ledger nobody may edit by hand, and the game reads your number: 1 bend and
@@ -105,9 +82,8 @@ hold an extra ambush. Skipping the hooks costs two instead of one. Nothing
 blocks you and nobody shames you — your game just gets harder, in public.
 
 **A referee at the keyboard.** `tools/golden-check.sh` checks the rules on
-every commit. With Claude Code, [CLAUDE.md](CLAUDE.md) makes claude a referee
-too: it enforces the rulebook, refuses the shortcuts, and brings skills for the
-ritual — `/scout`, `/event`, `/land`, `/blackbox`, `/fairplay`.
+every commit, and [CLAUDE.md](CLAUDE.md) makes claude a second one: it enforces
+the rulebook and refuses the shortcuts.
 
 **The book.** After every commit a script rewrites the chronicle —
 [docs/index.html](docs/index.html) is the cover, one page per version behind

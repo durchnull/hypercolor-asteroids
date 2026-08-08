@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>REQUIREMENTS &mdash; HYPERCOLOR ASTEROIDS</title>
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="../styles/crt.css">
+<link rel="stylesheet" href="notes.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script src="chronicle-song.js" defer></script>
+</head><body class="notes">
+<div class="crt vignette"></div>
+<div class="crt scanlines"></div>
+<div class="crt roll"></div>
+<main>
+<header class="plate"><span class="kind">THE NOTES</span><span class="of">docs/requirements.md</span></header>
+<h1 id="requirements">REQUIREMENTS</h1>
+<p>
+Short, on purpose. The game is one page you open; the tooling around it is
+shell scripts and git. Nothing installs anything, ever.
+</p>
+<h2 id="to-play">To play</h2>
+<ul>
+<li>A browser. That is the whole list.</li>
+<li>Open <code>index.html</code>. If your browser is fussy about <code>file://</code>, serve it:</li></ul>
+<pre><code class="lang-sh">
+python3 -m http.server 8000     # Windows: py -m http.server 8000
+</code></pre>
+<ul>
+<li>Two pilots share one keyboard. The splash screen lists the keys, and the field guide explains what is out there.</li></ul>
+<h2 id="to-build">To build</h2>
+<ul>
+<li><b>git</b></li>
+<li><b>a POSIX shell</b> — <code>sh</code>, <code>awk</code>, <code>sed</code>, <code>grep</code>. Everything in <code>tools/</code> and <code>.githooks/</code> is made of those and nothing else. - macOS and Linux: already there. - Windows: <b>Git Bash</b>, which comes with Git for Windows. WSL works too.</li>
+<li><b><a href="https://claude.com/claude-code">Claude Code</a></b> — how most turns are taken here. Not strictly required; you can write the files yourself.</li></ul>
+<p>
+That is it. There is no package manager, no bundler, no TypeScript, no CDN and
+no network call anywhere in the game. That is GR2 in
+<a href="golden-rules.html">GOLDEN_RULES.md</a>, and it is a red line — if a change seems
+to need any of it, the change is wrong.
+</p>
+<h3 id="nice-to-have-never-required">Nice to have, never required</h3>
+<ul>
+<li><b>node</b> — the referee parse-checks changed JavaScript if it finds node. If it does not, that one check is skipped and nothing fails.</li>
+<li><b>python3</b> — only to serve the page, if your browser refuses <code>file://</code>.</li>
+<li><b>curl</b> and a Cloudflare <code>.env</code> — only for whoever paints the book's pictures. Without them <code>tools/chronicle-art.sh</code> exits quietly and the book builds as ever.</li></ul>
+<h2 id="if-you-are-on-windows">If you are on Windows</h2>
+<p>
+Three things, and the second one matters.
+</p>
+<ul>
+<li><b>Use Git Bash</b>, not CMD and not PowerShell. The hooks and every script in <code>tools/</code> are <code>#!/bin/sh</code>.</li></ul>
+<ul>
+<li><b>Set your line endings before you clone:</b></li></ul>
+<pre><code class="lang-sh">
+git config --global core.autocrlf input
+</code></pre>
+<p>
+  Git for Windows installs with <code>core.autocrlf=true</code>, which rewrites every
+  checked-out file to CRLF. A hook whose first line reads <code>#!/bin/sh</code> followed
+  by a carriage return does not run — so the referee quietly stops checking
+  your commits, on the one machine nobody else can see. If you already cloned
+  with the default, set it and re-clone.
+</p>
+<ul>
+<li><b>Two commands in the docs are mac-shaped.</b> <code>open index.html</code> is <code>start index.html</code>, and <code>python3</code> is usually <code>py</code>.</li></ul>
+<h2 id="check-your-setup">Check your setup</h2>
+<p>
+From the repository, in a shell:
+</p>
+<pre><code class="lang-sh">
+git config core.hooksPath        # must print: .githooks
+tools/golden-check.sh            # must print: golden rules: clear
+</code></pre>
+<p>
+If the first prints nothing, run <code>tools/golden-check.sh --install</code> once. If the
+second complains, it will tell you which rule and why — that is its job, and it
+never bites.
+</p>
+<nav class="flip" aria-label="the notes">
+<a href="readme.html">README</a>
+<span class="here">REQUIREMENTS</span>
+<a href="architecture.html">ARCHITECTURE</a>
+<a href="rankings.html">RANKINGS</a>
+<a href="golden-rules.html">GOLDEN RULES</a>
+<a href="claude.html">CLAUDE</a>
+<a class="out" href="index.html">THE CHRONICLE</a>
+<a class="out" href="../index.html">PLAY</a>
+</nav>
+</main>
+</body></html>
