@@ -39,4 +39,17 @@ if git diff --cached --name-only --diff-filter=ACMR |
   done
 fi
 
+# Nothing checks the referee except this, so it runs when the referee moves -
+# golden-check.sh itself, its own tests, and the two tools it leans on to
+# decide what is generated and what the ledger should say. It takes about
+# twenty seconds, which is why it is not on the path of an ordinary landing.
+if git diff --cached --name-only --diff-filter=ACMRD |
+   grep -Eq '^tools/(golden-check|referee-test|tally|docs)\.sh$'; then
+  if ! sh tools/referee-test.sh; then
+    printf '\n  the referee no longer referees. nothing was committed.\n' >&2
+    printf '  tools/referee-test.sh says which rule stopped working.\n\n' >&2
+    exit 1
+  fi
+fi
+
 exec tools/golden-check.sh --staged --stage pre-commit

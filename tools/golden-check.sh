@@ -72,6 +72,24 @@ hard() { fail "$@"; HARD=1; }
 warn() { printf ' %s?%s %-4s %s\n' "$Y" "$Z" "$1" "$2" >> "$TMP/out"; WARNED=1; }
 note() { printf '   %s%s%s\n' "$D" "$1" "$Z" >> "$TMP/out"; }
 
+# A working tree fills up with things that were never going to be committed: a
+# screenshot somebody pasted, a render, an export. The referee cannot read a
+# byte of any of it, and asking wc -l how many lines a PNG has is how a
+# docs-and-tools afternoon got told it was ten thousand lines of game (GR6) and
+# that the rules and the game were moving together (GR10). A referee that cries
+# wolf gets skimmed past, and then the true ones go unread with it.
+#
+# Only ever applied to what nobody has offered yet. Staged is different: git add
+# is the pilot saying this belongs, and then it counts, whatever it is.
+is_litter() {
+  case "$1" in
+    *.png|*.jpg|*.jpeg|*.gif|*.webp|*.avif|*.ico) return 0 ;;
+    *.mp4|*.mov|*.webm|*.wav|*.mp3|*.ogg) return 0 ;;
+    *.zip|*.gz|*.tar|*.pdf|*.ttf|*.woff|*.woff2) return 0 ;;
+  esac
+  return 1
+}
+
 # --- the change under review ------------------------------------------------
 
 if git rev-parse --verify -q HEAD >/dev/null 2>&1; then
@@ -82,17 +100,26 @@ fi
 
 ME=$(git config user.name 2>/dev/null || true)
 
+# A rename reaches the lists above as an add and nothing else - git is being
+# tactful about where the file came from. Everywhere else that tact is welcome.
+# For GR11 it is the one move the red line cannot survive, so the pairs are
+# kept: old path, tab, new path.
+renames() { awk -F'\t' '$1 ~ /^R/ { print $2 "\t" $3 }'; }
+
 if [ "$MODE" = staged ]; then
   git diff --cached --name-only --diff-filter=ACMR "$BASE" > "$TMP/files"
   git diff --cached --name-only --diff-filter=D    "$BASE" > "$TMP/gone"
   git diff --cached --numstat "$BASE"                      > "$TMP/stat"
+  git diff --cached --name-status --find-renames "$BASE" | renames > "$TMP/moved"
 else
   git diff --name-only --diff-filter=ACMR "$BASE" > "$TMP/files"
   git diff --name-only --diff-filter=D    "$BASE" > "$TMP/gone"
   git diff --numstat "$BASE"                      > "$TMP/stat"
+  git diff --name-status --find-renames "$BASE" | renames > "$TMP/moved"
   git ls-files --others --exclude-standard        > "$TMP/new"
   while IFS= read -r f; do
     [ -f "$f" ] || continue
+    is_litter "$f" && continue
     printf '%s\t0\t%s\n' "$(wc -l < "$f" | tr -d ' ')" "$f" >> "$TMP/stat"
     printf '%s\n' "$f" >> "$TMP/files"
   done < "$TMP/new"
@@ -120,8 +147,17 @@ path_exists() {
 
 # the author of the commit that first added a file. empty means it is new,
 # which means it is yours.
+#
+# Asked without --follow, and that is the whole point rather than an oversight.
+# --follow turns on git's find-copies-harder, which will happily report a new
+# file as having been added by whoever wrote the file it happens to resemble -
+# no rename involved, the original still sitting there untouched. A pilot
+# writing their first event from somebody else's as a template is exactly that
+# shape, so the referee used to tell them, the second time they opened their
+# own trap, that it belonged to the pilot they had copied. GR11 has no
+# override, so there was no way out of it either.
 owner_of() {
-  o=$(git log --follow --diff-filter=A --format='%an' -- "$1" 2>/dev/null | tail -1)
+  o=$(git log --diff-filter=A --format='%an' -- "$1" 2>/dev/null | tail -1)
   [ -n "$o" ] || o="$ME"
   printf '%s' "$o"
 }
@@ -322,22 +358,29 @@ check_gr7() {
 # GR10  Changing the rules is its own commit.
 # ---------------------------------------------------------------------------
 check_gr10() {
-  ref=0; game=0; reffiles=''
+  ref=0; game=0; reffiles=''; gamefiles=''
   # The book and the taglines are written by a machine from the history, and
   # they land with whatever commit comes next - including a rule change. They
   # are nobody's work, so they are neither side of this argument.
   while IFS= read -r f; do
     is_generated "$f" && continue
-    if is_referee "$f"; then ref=1; reffiles="$reffiles $f"; else game=1; fi
+    if is_referee "$f"; then ref=1; reffiles="$reffiles $f"
+    else game=1; gamefiles="$gamefiles $f"; fi
   done < "$TMP/files"
   while IFS= read -r f; do
     [ -n "$f" ] || continue
     is_generated "$f" && continue
-    if is_referee "$f"; then ref=1; reffiles="$reffiles $f"; else game=1; fi
+    if is_referee "$f"; then ref=1; reffiles="$reffiles $f"
+    else game=1; gamefiles="$gamefiles $f"; fi
   done < "$TMP/gone"
   [ "$ref" = 1 ] || return 0
   if [ "$game" = 1 ]; then
-    hard GR10 "the rules and the game are moving together -$reffiles"
+    # Both sides, because half the argument is unreadable on its own: a pilot
+    # who can see the rules half still has to guess which of their files the
+    # referee thinks is the game.
+    hard GR10 "the rules and the game are moving together"
+    note "the rules:$reffiles"
+    note "the game:$gamefiles"
     note "split it: rule changes land alone, where everyone can see them"
   fi
   if [ -n "$MSGFILE" ] && [ -f "$MSGFILE" ]; then
@@ -368,6 +411,25 @@ check_gr11() {
     o=$(owner_of "$f")
     [ "$o" = "$ME" ] || fail GR11 "$f is $o's - you cannot delete another pilot's events"
   done < "$TMP/gone"
+
+  # Deleting somebody's trap is refused above, so the way round it was to move
+  # it: rename another pilot's event file, sign the copy your own name, and it
+  # fires at them and never at you - which is the exact thing this rule exists
+  # to make impossible. git reports that as an ordinary new file, so the pair
+  # has to be asked for by name and judged on where it came from.
+  while IFS="$(printf '\t')" read -r was now; do
+    [ -n "${was:-}" ] || continue
+    case "$was" in
+      "$RUNNER"|"$SEAT")
+        fail GR11 "$was is what arms everybody's events - moving it is deleting it"
+        continue ;;
+      src/events/*.js) ;;
+      *) continue ;;
+    esac
+    o=$(owner_of "$was")
+    [ "$o" = "$ME" ] || \
+      fail GR11 "$now is $o's $was under a new name - a trap is not yours to move"
+  done < "$TMP/moved"
 
   # The one line that makes the whole mechanic true. Rewrite the runner all you
   # like; if this guard stops being recognisable, every pilot's own traps are
