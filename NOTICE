@@ -1,0 +1,19 @@
+HYPERCOLOR ASTEROIDS
+Licensed under the MIT License. See LICENSE.
+
+This note is not a second licence. It is here because two directories are
+pictures rather than code, and a reader who finds them will wonder.
+
+  docs/art/    One plate per version, painted once by tools/chronicle-art.sh
+               through Cloudflare Workers AI and committed as an ordinary
+               file. Machine-made from a prompt built out of the commit;
+               nobody sat and drew one. A plate can be repainted.
+
+  docs/faces/  One portrait per pilot, painted the same way and never again.
+               A face is somebody's, in the sense that matters here rather
+               than the sense a court would use: the manifest is the lock, no
+               flag exists to overwrite one, and adding a flag is a rule
+               change. If a pilot wants their face out of the book, that is
+               their call and it needs no argument.
+
+The rest of the media in media/ is hand-made and covered by the licence.

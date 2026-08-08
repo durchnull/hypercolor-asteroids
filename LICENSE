@@ -19,23 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Two directories are pictures rather than code, and the licence covers them the
-same way. What follows is not a second licence, it is a note about what they
-are, because a reader who finds them will wonder.
-
-  docs/art/    one plate per version, painted once by tools/chronicle-art.sh
-               through Cloudflare Workers AI and committed as an ordinary file.
-               Machine-made from a prompt built out of the commit; nobody sat
-               and drew one. A plate can be repainted.
-
-  docs/faces/  one portrait per pilot, painted the same way and never again.
-               A face is somebody's, in the sense that matters here rather than
-               the sense a court would use: the manifest is the lock, no flag
-               exists to overwrite one, and adding a flag is a rule change. If
-               a pilot wants their face out of the book, that is their call and
-               it needs no argument.
-
-The rest of the media in media/ is hand-made and covered by the licence above.
