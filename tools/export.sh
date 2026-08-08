@@ -528,11 +528,14 @@ CSS
   // The chapter turns its own pages with the arrow keys, by setting
   // location.href. There is nowhere for that to go from in here, so the keys
   // are caught first - and handed back the moment the lightbox is up, because
-  // then Escape means the picture rather than the page.
+  // then Escape means the picture rather than the page. Same for a book pulled
+  // off the shelf in the dock: while it is open, Escape puts it back, and the
+  // arrows are nobody's business.
   window.addEventListener("keydown", function (e) {
     var to = { ArrowLeft: ".prev", ArrowRight: ".next", Escape: ".up" }[e.key];
     if (!to) return;
     if (document.documentElement.classList.contains("lit-open")) return;
+    if (document.documentElement.classList.contains("tray-open")) return;
     var a = document.querySelector(".dock " + to);
     var h = a && a.getAttribute("href");
     if (!h) return;

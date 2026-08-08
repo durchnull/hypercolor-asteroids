@@ -31,6 +31,28 @@
 # itself. Both are generated, both are committed, and a page stands on its own -
 # somebody who has never cloned this can be handed a link to v7.
 #
+# The entries are shelved rather than listed. A book is a run of chapters one
+# pilot flew with nobody else landing in between, and the gap is the whole idea:
+# fly three, hand the cabinet over, take it back and fly three more, and that is
+# two books rather than one, because a turn that belonged to somebody else
+# happened in the middle. Books are numbered oldest first like the versions are,
+# so book I holds v1 in every clone forever; each one carries the arithmetic of
+# its whole run, which is the one thing no single chapter inside it can say. An
+# interlude is shelved with whichever book was being written while it happened.
+# The cover opens them; the dock at the foot of a chapter is a shelf of spines,
+# and pressing one stacks that book up over the dock without turning a page -
+# a book opening is not a page turning, and the chapter is a second press.
+#
+# And every chapter wears its marks: which parts of the cabinet the commit
+# moved, drawn rather than listed, in the vocabulary the book already uses out
+# loud - the game, the game within, the ui, the music, the controls, the engine,
+# the chronicle, the rules, the notes. They are worked out from the paths alone,
+# which is what makes them true of every commit ever landed rather than only of
+# the ones somebody remembered to tag. Two rules keep them honest: the book
+# files its own pages onto every commit there is, so its own output is never a
+# mark, and a path is asked what it is for rather than where it sits -
+# src/ui/debrief.js is among the panels and belongs to the game within the game.
+#
 # The picture is not decoration and it is not the same picture twice. Every
 # shape is a sector the commit touched, drawn as the thing it is - a trap is a
 # mine, the rules are a gear, the song is a note, a panel is a panel - sized by
@@ -111,6 +133,8 @@
 #   no Chronicle:   -> nobody wrote this one down
 #   not a version   -> an interlude: while vN was on the cabinet, ...
 #   the book's own paperwork -> nothing at all, anywhere the book speaks
+#   which paths moved -> the marks a chapter wears
+#   one pilot in a row -> a book, and every book is a shelf
 #
 # The one exception is machinery somebody has to type: the checkout command
 # under each chapter stays literal, because a joke you cannot paste into a
@@ -901,9 +925,130 @@ function ico(n,   p) {
   else if (n == "coin")      p = "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 6.5v11M9.5 9.5h5M9.5 14.5h5\"/>"
   else if (n == "frame")     p = "<rect x=\"3\" y=\"4.5\" width=\"18\" height=\"15\" rx=\"1.5\"/><path d=\"M3 15.5l4.5-4.5 3.5 3.5 3-3 7 7\"/><circle cx=\"8.5\" cy=\"9\" r=\"1.4\"/>"
   else if (n == "grid")      p = "<rect x=\"3.5\" y=\"3.5\" width=\"7\" height=\"7\"/><rect x=\"13.5\" y=\"3.5\" width=\"7\" height=\"7\"/><rect x=\"3.5\" y=\"13.5\" width=\"7\" height=\"7\"/><rect x=\"13.5\" y=\"13.5\" width=\"7\" height=\"7\"/>"
+  # The marks. Nine of them, one per part of the cabinet a commit can move. The
+  # two loudest borrow their glyphs from what they actually are: the game is the
+  # ship above, the same triangle the field is flown with, and the game behind
+  # it is a prompt, because every trap and every rule in this place was typed at
+  # one. The rest are the thing they name.
+  else if (n == "prompt")    p = "<path d=\"M4 6.5 10 12l-6 5.5\"/><path d=\"M12.5 17.5h7.5\"/>"
+  else if (n == "panel")     p = "<rect x=\"2.5\" y=\"4\" width=\"19\" height=\"16\" rx=\"1.5\"/><path d=\"M2.5 9h19M6 12.5h9M6 16h6\"/><circle cx=\"5.4\" cy=\"6.5\" r=\"0.9\"/>"
+  else if (n == "note")      p = "<path d=\"M9 17.5V4.5l11-1.5v13\"/><circle cx=\"6.4\" cy=\"17.5\" r=\"2.6\"/><circle cx=\"17.4\" cy=\"16\" r=\"2.6\"/>"
+  else if (n == "pad")       p = "<rect x=\"2\" y=\"7\" width=\"20\" height=\"10\" rx=\"3.5\"/><path d=\"M7 10v4M5 12h4\"/><circle cx=\"16\" cy=\"11\" r=\"1.1\"/><circle cx=\"18.5\" cy=\"13.5\" r=\"1.1\"/>"
+  else if (n == "core")      p = "<circle cx=\"12\" cy=\"12\" r=\"2.2\"/><ellipse cx=\"12\" cy=\"12\" rx=\"10\" ry=\"4\"/><ellipse cx=\"12\" cy=\"12\" rx=\"10\" ry=\"4\" transform=\"rotate(60 12 12)\"/><ellipse cx=\"12\" cy=\"12\" rx=\"10\" ry=\"4\" transform=\"rotate(120 12 12)\"/>"
+  else if (n == "book")      p = "<path d=\"M12 6.5C10.5 4.8 8 4 4 4.2v13.5C8 17.5 10.5 18.3 12 20\"/><path d=\"M12 6.5C13.5 4.8 16 4 20 4.2v13.5c-4-.2-6.5.6-8 2.3z\"/><path d=\"M12 6.5V20\"/>"
+  else if (n == "wrench")    p = "<path d=\"M15.6 3.4a5 5 0 0 0-6.2 6.4L3 16.2 6.8 20l6.4-6.4a5 5 0 0 0 6.4-6.2l-3 3-2.8-2.8z\"/>"
   else return ""
   return "<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\">" p "</svg>"
 }
+
+# --- the marks --------------------------------------------------------------
+# What a commit moved, as a reader would name it. sector() further up asks a
+# different question - where a path sits - and gets a different answer for the
+# same file: src/ui/debrief.js sits among the panels and belongs to the game
+# within the game. This one is the one a badge is printed from, so it answers
+# in the vocabulary the book already uses out loud.
+#
+# The order is the order they are printed in, everywhere, so two chapters
+# wearing the same three marks wear them in the same three places.
+function markof(p) {
+  # The book files its own pages onto every commit there is, so a mark for
+  # that would be a mark on everything and would say nothing. Only the hand
+  # that writes the generator counts as work on the chronicle.
+  if (is_book(p)) return ""
+  if (p ~ /^src\/events\// ||
+      p == "src/game/events.js"   || p == "src/game/profile.js" ||
+      p == "src/game/ledger.js"   || p == "src/game/tally.js" ||
+      p == "src/game/blackbox.js" || p == "src/ui/debrief.js")   return "meta"
+  if (p ~ /^src\/audio\//)  return "music"
+  if (p ~ /^src\/input\//)  return "hands"
+  if (p ~ /^src\/core\//)   return "engine"
+  if (p ~ /^src\/ui\// || p ~ /^src\/render\// || p ~ /^styles\// ||
+      p == "index.html")    return "ui"
+  if (p ~ /^src\//)         return "game"
+  if (p ~ /^tools\/chronicle/) return "book"
+  if (is_referee(p))        return "rules"
+  return "notes"
+}
+# What a badge says. Bare, because badges arrive in rows of three and four and
+# nine articles in a row is nine words of nothing - the picture and one noun is
+# the whole of what a badge is for.
+function markname(k) {
+  if (k == "game")   return "game"
+  if (k == "meta")   return "game within"
+  if (k == "ui")     return "ui"
+  if (k == "music")  return "music"
+  if (k == "hands")  return "controls"
+  if (k == "engine") return "engine"
+  if (k == "book")   return "chronicle"
+  if (k == "rules")  return "rules"
+  return "notes"
+}
+# The same thing in a sentence, where the article is doing work. Only the prose
+# uses this; every badge in the book uses the bare name above.
+function marklabel(k) { return "the " markname(k) }
+function markglyph(k) {
+  # The two loudest parts of the cabinet get the two glyphs the game itself is
+  # made of: the ship you fly, and the prompt the rest of us are typing at.
+  if (k == "game")   return "ship"
+  if (k == "meta")   return "prompt"
+  if (k == "ui")     return "panel"
+  if (k == "music")  return "note"
+  if (k == "hands")  return "pad"
+  if (k == "engine") return "core"
+  if (k == "book")   return "book"
+  if (k == "rules")  return "wrench"
+  return "scroll"
+}
+
+# A set of marks, collected in whatever order the numstat arrived in, printed
+# back in the one order MARKS gives them.
+function marksort(seen,   i, n, m, out) {
+  n = split(MARKS, m, " ")
+  out = ""
+  for (i = 1; i <= n; i++) if (m[i] in seen) out = out (out == "" ? "" : " ") m[i]
+  return out
+}
+# The badges themselves. cls "tiny" is the icon-only form for a list; the label
+# stays in the markup either way, because a row of pictures with no words in it
+# is unreadable to anybody who cannot see the pictures.
+function markrow(s, cls,   i, n, m, out) {
+  if (s == "") return ""
+  n = split(s, m, " ")
+  out = "<span class=\"marks" (cls != "" ? " " cls : "") "\">"
+  for (i = 1; i <= n; i++)
+    out = out "<span class=\"mk mk-" m[i] "\" title=\"" markname(m[i]) "\">" \
+              ico(markglyph(m[i])) "<em>" markname(m[i]) "</em></span>"
+  return out "</span>"
+}
+# The same set said out loud, for the prose a summary is written in.
+function marksaid(s,   i, n, m, out) {
+  n = split(s, m, " ")
+  out = ""
+  for (i = 1; i <= n; i++) out = out (i == 1 ? "" : (i == n ? " and " : ", ")) marklabel(m[i])
+  return out
+}
+
+# --- a book -----------------------------------------------------------------
+# What a run of chapters was, in a paragraph. The cover has the room for it and
+# prints it under the spine; a chapter page does not, and does not get one - a
+# reader who is already inside a book does not need it summarised at them.
+function gist(b,   s, n, days, mv) {
+  n = BE[b] - BS[b] + 1
+  s = n " chapter" plural(n) ", " (n == 1 ? "v" BS[b] : "v" BS[b] " through v" BE[b]) ", "
+  days = int((VA[BE[b]] - VA[BS[b]]) / 86400)
+  s = s (days < 1 ? "all of it inside a day" : "over " days " day" plural(days)) ". "
+  s = s BI[b] " line" plural(BI[b]) " aboard and " BJ[b] " jettisoned, across " \
+      BF[b] " sector" plural(BF[b])
+  mv = marksaid(BM[b])
+  s = s (mv == "" ? ". " : "; it moved " mv ". ")
+  if (BO[b]) s = s BO[b] " override" plural(BO[b]) " spent, in writing, for good. "
+  if (BX[b]) s = s "The referee never saw " BX[b] " of " (BX[b] == 1 ? "them" : "these") ". "
+  if (BN[b]) s = s BN[b] " other thing" plural(BN[b]) " happened while it was being written. "
+  sub(/[[:space:]]+$/, "", s)
+  return s
+}
+# The label a book wears wherever it is named, on the cover and in the dock.
+function bspan(b) { return BS[b] == BE[b] ? "v" BS[b] : "v" BS[b] "&ndash;v" BE[b] }
 
 # One number, its glyph and what it counts. data-n is there for the script to
 # count up to on the way past; the tile already reads correctly without it,
@@ -920,7 +1065,8 @@ function grwhy(s) {
   return s
 }
 
-BEGIN { ver = total; bound = (rules != "") }
+BEGIN { ver = total; bound = (rules != "")
+        MARKS = "game meta ui music hands engine book rules notes" }
 $1 == "TAG" { tag[$2] = $3; next }
 $1 == "OWN" { owner[$2] = $3; next }
 $1 == "ART" { art[$2] = $3; altof[$2] = $4; next }
@@ -953,6 +1099,7 @@ NF < 4 { next }
   refmoved = 0; docmoved = 0; bookmoved = 0; readmemoved = 0; elsemoved = 0
   refstrict = 0; nonref = 0; stolen = 0
   split("", deleted); split("", arrived); split("", fseen); split("", fadd); split("", fdel)
+  split("", mkseen)
   n = split(rest, b, "\n")
   for (k = 1; k <= n; k++) {
     t = b[k]
@@ -971,6 +1118,7 @@ NF < 4 { next }
     if (is_stat(t)) {
       split(t, ns, "\t")
       p = ns[3]
+      mk = markof(p); if (mk != "") mkseen[mk] = 1
       if (is_game(p)) gamefiles++
       else if (p ~ /^tools\// || p ~ /^\.githooks\// || p ~ /^\.claude\// ||
                p ~ /^\.github\// ||
@@ -1125,7 +1273,11 @@ NF < 4 { next }
     # The subject travels to the cover as well as the chapter. A deed is one of
     # four sentences, so two rule changes in a row read as the same line twice -
     # which is exactly how the book writing itself four times went unnoticed.
-    ENT[++en] = "I" SUBSEP said SUBSEP esc(subj)
+    # The version on the cabinet at the time rides along too: it is what puts
+    # an interlude on the right shelf below, in the book that was being written
+    # while it happened. Nothing before v1 has a book to belong to, and 0 is
+    # read as the first one.
+    ENT[++en] = "I" SUBSEP said SUBSEP esc(subj) SUBSEP ver SUBSEP marksort(mkseen)
     interludes[who]++
     next
   }
@@ -1140,13 +1292,32 @@ NF < 4 { next }
   VH[v] = $1;    VW[v] = who;  VN[v] = when;   VC[v] = clock; VA[v] = $5
   VS[v] = subj;  VL[v] = line; VT[v] = ($1 in tag) ? tag[$1] : ""
   VP[v] = ($1 in plate) ? plate[$1] : "";  VQ[v] = ($1 in plated) ? plated[$1] : ""
-  VF[v] = files; VI[v] = ins;  VJ[v] = del
+  VF[v] = files; VI[v] = ins;  VJ[v] = del;  VM[v] = marksort(mkseen)
   VO[v] = overrides; VU[v] = unrec; VR[v] = rulechange; VB[v] = breach
   VP[v] = ($1 in art) ? art[$1] : ""; VQ[v] = altof[$1]
   RC[v] = kc;    RM[v] = kn[1]
   for (k = 1; k <= kc; k++) { RP[v,k] = kp[k]; RN[v,k] = kn[k]; RD[v,k] = kd[k]; RA[v,k] = kb[k] }
   ENT[++en] = "V" SUBSEP v
 }
+# One line of the contents, a version or an interlude, wearing the marks for
+# whatever it moved. The same shape inside every book on the shelf, so a reader
+# learns it once and then reads down all of them.
+function entry(f, e,   v) {
+  if (e[1] == "V") {
+    v = e[2]
+    # No face and no name on a chapter here. The book above it already says
+    # whose run this is, in bigger letters and with the portrait, and repeating
+    # it down every row of a twenty-six-chapter book was the same answer to a
+    # question nobody was still asking.
+    printf "<li class=\"cv\"><a href=\"v%s.html\"><b>v%s</b><span>%s</span>%s</a></li>\n", \
+           v, v, esc(shout(v)), markrow(VM[v], "tiny") > f
+  } else {
+    printf "<li class=\"ci\">%s%s", e[2], markrow(e[5], "tiny") > f
+    if (e[3] != "") printf "<span class=\"said\">&ldquo;%s&rdquo;</span>", e[3] > f
+    print "</li>" > f
+  }
+}
+
 # Same tokens, same CRT as the game itself, so the book follows along on its own
 # the day somebody changes the spectrum. Every page in here wears them.
 function head(f, ttl, cls,   b) {
@@ -1206,26 +1377,75 @@ END {
     nth[VW[v]]++
     NT[v] = nth[VW[v]]
   }
+
+  # ---- the books -----------------------------------------------------------
+  # A book is a run of chapters one pilot flew with nobody else landing in
+  # between, and the gap is the whole point of it: fly three, hand the cabinet
+  # over, take it back and fly three more, and that is two books rather than
+  # one, because a turn that belonged to somebody else happened in the middle
+  # and a shelf that hides it tells the wrong story. Numbered oldest first, the
+  # same way the versions are, so book I contains v1 in every clone forever.
+  nb = 0
+  for (v = 1; v <= total; v++) {
+    if (v == 1 || VW[v] != VW[v-1]) { nb++; BS[nb] = v; BW[nb] = VW[v] }
+    BE[nb] = v; BK[v] = nb
+    BF[nb] += VF[v]; BI[nb] += VI[v]; BJ[nb] += VJ[v]
+    if (VO[v] != "") BO[nb]++
+    if (VU[v] != "") BX[nb]++
+    nm = split(VM[v], mm, " ")
+    for (k = 1; k <= nm; k++) bmk[nb SUBSEP mm[k]] = 1
+  }
+  nm = split(MARKS, mm, " ")
+  for (bi = 1; bi <= nb; bi++) {
+    BM[bi] = ""
+    for (k = 1; k <= nm; k++)
+      if ((bi SUBSEP mm[k]) in bmk) BM[bi] = BM[bi] (BM[bi] == "" ? "" : " ") mm[k]
+  }
+  # Which shelf every entry on the cover belongs to. A version is in its own
+  # book; an interlude is in whichever book was being written while it
+  # happened, which is the book of the version that was on the cabinet at the
+  # time. Anything older than v1 predates every book and goes on the first one.
+  for (i = 1; i <= en; i++) {
+    split(ENT[i], e, SUBSEP)
+    if (e[1] == "V") EB[i] = BK[e[2] + 0]
+    else {
+      EB[i] = (e[4] + 0 >= 1 ? BK[e[4] + 0] : (nb ? 1 : 0))
+      if (EB[i]) BN[EB[i]]++
+    }
+  }
+
   rj = "docs/rail.js"
   print "// Generated by tools/chronicle.sh - the dock at the foot of every" > rj
   print "// chapter: back and next the size of a thing you press, and between" > rj
-  print "// them the rail, every version there has ever been wearing its own" > rj
-  print "// plate. One copy for the whole book rather than one baked into each" > rj
-  print "// page, so a new version is a new line here instead of an edit to" > rj
-  print "// every chapter ever landed. Do not edit: every rebuild writes it" > rj
-  print "// fresh." > rj
+  print "// them the shelf, every book there has ever been. A book is a run of" > rj
+  print "// chapters one pilot flew without anybody else landing in between;" > rj
+  print "// press one and its chapters stack up above the shelf, and it takes a" > rj
+  print "// second press - on a chapter - to leave the page you are on. One copy" > rj
+  print "// for the whole book rather than one baked into each page, so a new" > rj
+  print "// version is a new line here instead of an edit to every chapter ever" > rj
+  print "// landed. Do not edit: every rebuild writes it fresh." > rj
   print "(function () {" > rj
   print "  \"use strict\"" > rj
-  print "  // one line per version: [plate, the shout, \"bent\" or \"off\" or \"\"]" > rj
+  print "  // one line per version: [plate, the shout, \"bent\"/\"off\"/\"\", its book, its marks]" > rj
   print "  var T = [" > rj
   for (v = 1; v <= total; v++)
-    printf "    [\"%s\", \"%s\", \"%s\"],\n", js(VP[v]), js(shout(v)), \
-           (VU[v] != "" ? "off" : (VO[v] != "" ? "bent" : "")) > rj
+    printf "    [\"%s\", \"%s\", \"%s\", %d, \"%s\"],\n", js(VP[v]), js(shout(v)), \
+           (VU[v] != "" ? "off" : (VO[v] != "" ? "bent" : "")), BK[v], js(markrow(VM[v], "tiny")) > rj
+  print "  ]" > rj
+  # A book wears every mark its chapters wear, once each - which is the one
+  # thing a spine can say about a run of six chapters in the width of a thumb.
+  print "  // one line per book: [numeral, the pilot, their face, first, last, its marks]" > rj
+  print "  var B = [" > rj
+  for (bi = 1; bi <= nb; bi++)
+    printf "    [\"%s\", \"%s\", \"%s\", %d, %d, \"%s\"],\n", roman(bi), js(BW[bi]), js(mug[BW[bi]]), \
+           BS[bi], BE[bi], js(markrow(BM[bi], "tiny")) > rj
   print "  ]" > rj
   print "  var dock = document.querySelector(\"nav.dock[data-here]\")" > rj
   print "  if (!dock || !T.length) return" > rj
   print "  var here = +dock.getAttribute(\"data-here\")" > rj
+  print "  var doc = document.documentElement" > rj
   print "  function shout(v) { return \"v\" + v + \" \\u00b7 \" + T[v - 1][1] }" > rj
+  print "  function span(d) { return d[3] === d[4] ? \"v\" + d[3] : \"v\" + d[3] + \"\\u2013v\" + d[4] }" > rj
   print "  function turn(v, dir, edge) {" > rj
   print "    var live = v >= 1 && v <= T.length" > rj
   print "    var e = document.createElement(live ? \"a\" : \"span\")" > rj
@@ -1243,32 +1463,118 @@ END {
   print "  up.title = \"the contents\"" > rj
   printf "  up.innerHTML = \"%s<i>all</i>\"\n", js(ico("grid")) > rj
   print "  dock.appendChild(up)" > rj
+  # The shelf. One spine per book, oldest on the left, the way the rail of
+  # ticks it replaced ran - and the book this chapter is in is marked, so a
+  # reader knows where they are standing before they press anything.
   print "  var rail = document.createElement(\"div\")" > rj
   print "  rail.className = \"rail\"" > rj
-  print "  for (var v = 1; v <= T.length; v++) {" > rj
+  print "  for (var b = 1; b <= B.length; b++) rail.appendChild(spine(b))" > rj
+  print "  dock.appendChild(rail)" > rj
+  print "  dock.appendChild(turn(here + 1, \"next\", \"on the cabinet\"))" > rj
+  print "  var tray = document.createElement(\"div\")" > rj
+  print "  tray.className = \"tray\"" > rj
+  print "  tray.id = \"tray\"" > rj
+  print "  tray.hidden = true" > rj
+  print "  dock.appendChild(tray)" > rj
+  print "  var open = 0" > rj
+  print "  function spine(b) {" > rj
+  print "    var d = B[b - 1]" > rj
+  print "    var e = document.createElement(\"button\")" > rj
+  print "    e.type = \"button\"" > rj
+  print "    e.className = \"spine\" + (b === T[here - 1][3] ? \" here\" : \"\")" > rj
+  print "    e.setAttribute(\"aria-expanded\", \"false\")" > rj
+  print "    e.setAttribute(\"aria-controls\", \"tray\")" > rj
+  print "    e.title = \"book \" + d[0] + \" \\u00b7 \" + d[1] + \" \\u00b7 \" + span(d)" > rj
+  print "    if (d[2]) {" > rj
+  print "      var img = e.appendChild(document.createElement(\"img\"))" > rj
+  print "      img.className = \"face\"" > rj
+  print "      img.src = \"faces/\" + d[2]" > rj
+  print "      img.alt = \"\"" > rj
+  print "      img.loading = \"lazy\"" > rj
+  print "      img.decoding = \"async\"" > rj
+  print "    }" > rj
+  print "    var t = e.appendChild(document.createElement(\"span\"))" > rj
+  print "    t.className = \"sp\"" > rj
+  print "    t.appendChild(document.createElement(\"b\")).textContent = d[0]" > rj
+  print "    t.appendChild(document.createElement(\"i\")).textContent = span(d)" > rj
+  print "    var w = e.appendChild(document.createElement(\"span\"))" > rj
+  print "    w.className = \"nm\"" > rj
+  print "    w.textContent = d[1]" > rj
+  print "    if (d[5]) e.insertAdjacentHTML(\"beforeend\", d[5])" > rj
+  print "    e.addEventListener(\"click\", function () { toggle(b) })" > rj
+  print "    return e" > rj
+  print "  }" > rj
+  # A chapter, stacked. The same plate its own page opens with, so a reader
+  # recognises one they have already read before they have read its number.
+  print "  function leaf(v) {" > rj
   print "    var t = T[v - 1]" > rj
   print "    var a = document.createElement(\"a\")" > rj
-  print "    a.className = \"tick\" + (t[2] ? \" \" + t[2] : \"\") + (v === here ? \" here\" : \"\")" > rj
+  print "    a.className = \"leaf\" + (t[2] ? \" \" + t[2] : \"\") + (v === here ? \" here\" : \"\")" > rj
   print "    a.href = \"v\" + v + \".html\"" > rj
+  # The sentence is cut off by whatever room the marks left it, and on a phone
+  # that is most of it, so the whole of it stays reachable.
   print "    a.title = shout(v)" > rj
   print "    if (v === here) a.setAttribute(\"aria-current\", \"page\")" > rj
+  print "    var th = a.appendChild(document.createElement(\"span\"))" > rj
+  print "    th.className = \"thumb\"" > rj
   print "    if (t[0]) {" > rj
-  print "      var img = document.createElement(\"img\")" > rj
+  print "      var img = th.appendChild(document.createElement(\"img\"))" > rj
   print "      img.src = \"art/\" + t[0]" > rj
   print "      img.alt = \"\"" > rj
   print "      img.loading = \"lazy\"" > rj
   print "      img.decoding = \"async\"" > rj
-  print "      a.appendChild(img)" > rj
   print "    }" > rj
-  print "    var b = document.createElement(\"b\")" > rj
-  print "    b.textContent = v" > rj
-  print "    a.appendChild(b)" > rj
-  print "    rail.appendChild(a)" > rj
+  print "    a.appendChild(document.createElement(\"b\")).textContent = \"v\" + v" > rj
+  print "    var s = a.appendChild(document.createElement(\"span\"))" > rj
+  print "    s.className = \"line\"" > rj
+  print "    s.textContent = t[1]" > rj
+  print "    if (t[4]) a.insertAdjacentHTML(\"beforeend\", t[4])" > rj
+  print "    return a" > rj
   print "  }" > rj
-  print "  dock.appendChild(rail)" > rj
-  print "  dock.appendChild(turn(here + 1, \"next\", \"on the cabinet\"))" > rj
-  # The rail opens on the chapter you are reading rather than on the first one
-  # ever landed. This used to sit in every page and rode here with the rail.
+  print "  function toggle(b) {" > rj
+  print "    if (open === b) { shut(); return }" > rj
+  print "    var d = B[b - 1]" > rj
+  print "    open = b" > rj
+  print "    tray.textContent = \"\"" > rj
+  print "    var h = tray.appendChild(document.createElement(\"p\"))" > rj
+  print "    h.className = \"tray-head\"" > rj
+  print "    h.appendChild(document.createElement(\"b\")).textContent = \"BOOK \" + d[0]" > rj
+  print "    h.appendChild(document.createElement(\"span\")).textContent = d[1]" > rj
+  print "    h.appendChild(document.createElement(\"i\")).textContent = span(d)" > rj
+  print "    var stack = tray.appendChild(document.createElement(\"div\"))" > rj
+  print "    stack.className = \"stack\"" > rj
+  print "    for (var v = d[3]; v <= d[4]; v++) stack.appendChild(leaf(v))" > rj
+  print "    tray.hidden = false" > rj
+  print "    doc.classList.add(\"tray-open\")" > rj
+  print "    mark()" > rj
+  print "    var now = stack.querySelector(\".here\") || stack.firstChild" > rj
+  print "    if (now) now.focus({ preventScroll: true })" > rj
+  print "  }" > rj
+  print "  function shut() {" > rj
+  print "    if (!open) return" > rj
+  print "    var was = rail.children[open - 1]" > rj
+  print "    open = 0" > rj
+  print "    tray.hidden = true" > rj
+  print "    tray.textContent = \"\"" > rj
+  print "    doc.classList.remove(\"tray-open\")" > rj
+  print "    mark()" > rj
+  print "    if (was) was.focus({ preventScroll: true })" > rj
+  print "  }" > rj
+  print "  function mark() {" > rj
+  print "    for (var i = 0; i < rail.children.length; i++)" > rj
+  print "      rail.children[i].setAttribute(\"aria-expanded\", i + 1 === open ? \"true\" : \"false\")" > rj
+  print "  }" > rj
+  # Escape puts the tray away rather than leaving the chapter, and a click
+  # anywhere that is not the dock does the same. The page script defers to
+  # this while the tray is up, the same way it defers to the plate.
+  print "  addEventListener(\"keydown\", function (e) {" > rj
+  print "    if (open && e.key === \"Escape\") { e.stopPropagation(); shut() }" > rj
+  print "  })" > rj
+  print "  addEventListener(\"click\", function (e) {" > rj
+  print "    if (open && !dock.contains(e.target)) shut()" > rj
+  print "  })" > rj
+  # The shelf opens on the book you are reading rather than on the first one
+  # ever written. This used to sit in every page and rode here with the rail.
   print "  var now = rail.querySelector(\".here\")" > rj
   print "  if (now) rail.scrollLeft = now.offsetLeft - (rail.clientWidth - now.offsetWidth) / 2" > rj
   print "})()" > rj
@@ -1294,21 +1600,44 @@ END {
   printf "%s", roster > cover
   print "</tbody></table>" > cover
   print "</section>" > cover
-  print "<h2 class=\"heading\">THE VERSIONS</h2>" > cover
-  print "<ol class=\"contents\">" > cover
-  for (i = 1; i <= en; i++) {
-    split(ENT[i], e, SUBSEP)
-    if (e[1] == "V") {
-      v = e[2]
-      printf "<li class=\"cv\"><a href=\"v%s.html\"><b>v%s</b><span>%s</span><i>%s%s</i></a></li>\n", \
-             v, v, esc(shout(v)), face(VW[v]), esc(VW[v]) > cover
-    } else {
-      printf "<li class=\"ci\">%s", e[2] > cover
-      if (e[3] != "") printf "<span>&ldquo;%s&rdquo;</span>", e[3] > cover
-      print "</li>" > cover
+  print "<h2 class=\"heading\">THE BOOKS</h2>" > cover
+  print "<p class=\"shelfnote\">A book is a run of chapters one pilot flew with" > cover
+  print "nobody else landing in between. Hand the cabinet over and take it back" > cover
+  print "later and that is two books, not one &mdash; somebody else&rsquo;s turn" > cover
+  print "happened in the middle. Open one and read down it; the marks say which" > cover
+  print "parts of the cabinet it moved.</p>" > cover
+  if (nb == 0) {
+    # Nothing has been flown yet, so there is no shelf - only whatever happened
+    # before there was a game to change, in the order it happened.
+    print "<ol class=\"contents\">" > cover
+    for (i = 1; i <= en; i++) { split(ENT[i], e, SUBSEP); entry(cover, e) }
+    print "</ol>" > cover
+  } else {
+    print "<div class=\"shelf\">" > cover
+    for (bi = nb; bi >= 1; bi--) {
+      # The book on the cabinet is the one a reader came for, so it is the one
+      # that is already open. Everything under it is a shelf, and a shelf is
+      # something you choose to take a book off.
+      printf "<details class=\"book\"%s>\n", (bi == nb ? " open" : "") > cover
+      print "<summary>" > cover
+      printf "<span class=\"bk\"><b>%s</b><i>book</i></span>", roman(bi) > cover
+      printf "<span class=\"by\">%s%s</span>", face(BW[bi]), esc(BW[bi]) > cover
+      printf "<span class=\"bspan\">%s</span>", bspan(bi) > cover
+      printf "<span class=\"bn\">%d chapter%s</span>", BE[bi] - BS[bi] + 1, plural(BE[bi] - BS[bi] + 1) > cover
+      printf "%s", markrow(BM[bi], "tiny") > cover
+      print "</summary>" > cover
+      printf "<p class=\"gist\">%s</p>\n", gist(bi) > cover
+      print "<ol class=\"contents\">" > cover
+      for (i = 1; i <= en; i++) {
+        if (EB[i] != bi) continue
+        split(ENT[i], e, SUBSEP)
+        entry(cover, e)
+      }
+      print "</ol>" > cover
+      print "</details>" > cover
     }
+    print "</div>" > cover
   }
-  print "</ol>" > cover
   print "</main>" > cover
   print "</body></html>" > cover
   close(cover)
@@ -1342,8 +1671,12 @@ END {
       printf "<img class=\"plate-img\" src=\"art/%s\" alt=\"%s\" loading=\"lazy\" decoding=\"async\">", \
              VP[v], att(VQ[v] != "" ? VQ[v] : shout(v)) > f
     print "<span class=\"dots\" aria-hidden=\"true\"></span>" > f
-    printf "<div class=\"say\"><p class=\"kicker\">%s what changed</p><h1 class=\"shout\">%s</h1></div>", \
-           ico("bolt"), esc(shout(v)) > f
+    # The marks, right under the sentence, because which part of the cabinet a
+    # version moved is the second thing a reader wants and the sentence is the
+    # first. Labelled here and icon-only in a list: this is the one place a
+    # reader gets taught what the little pictures mean.
+    printf "<div class=\"say\"><p class=\"kicker\">%s what changed</p><h1 class=\"shout\">%s</h1>%s</div>", \
+           ico("bolt"), esc(shout(v)), markrow(VM[v], "big") > f
     printf "<p class=\"credits\"><span class=\"badge\"><b>%s</b><i>chapter</i></span>", roman(v) > f
     printf "<span class=\"ver\">v%s</span>", v > f
     printf "<span class=\"who\">%s%s</span><span class=\"when\">%s &middot; %s</span></p>", \
@@ -1452,6 +1785,11 @@ END {
     print "    if (e.key === \"Escape\") drop()" > f
     print "    return" > f
     print "  }" > f
+    # A book is open in the dock, so the keyboard belongs to it: rail.js takes
+    # Escape and puts it away. Same arrangement as the plate above, and for the
+    # same reason - a page turning under something the reader just opened is a
+    # surprise nobody asked for.
+    print "  if (document.documentElement.classList.contains(\"tray-open\")) return" > f
     print "  var to = { ArrowLeft: \".prev\", ArrowRight: \".next\", Escape: \".up\" }[e.key]" > f
     print "  var a = to ? document.querySelector(\".dock \" + to) : null" > f
     print "  if (a && a.href) location.href = a.href" > f
@@ -1647,6 +1985,17 @@ h1 {
   text-shadow: 0 0 10px currentColor;
   margin: 3.4rem 0 1.4rem;
 }
+/* The one paragraph that says what a book is. It is under the heading rather
+   than in it because the heading is a marquee and this is an explanation, and
+   a reader only needs it once. */
+.shelfnote {
+  max-width: 62ch;
+  margin: -0.7rem 0 0;
+  font-size: 0.68rem;
+  line-height: 1.7;
+  color: var(--dim);
+  text-wrap: pretty;
+}
 
 /* An instrument panel, same brackets as the field guide on the splash. */
 .panel {
@@ -1704,33 +2053,30 @@ h1 {
 .prompt .read { color: var(--amber); }
 .contents { list-style: none; }
 .contents li { border-top: 1px solid rgba(160, 75, 255, 0.16); }
+/* The number, the sentence, and the marks hard against the right edge — so the
+   marks read down the page as their own column rather than trailing whatever
+   length the sentence happened to be. */
 .cv a {
   display: grid;
-  grid-template-columns: 3.4rem 1fr auto;
+  grid-template-columns: 3.4rem minmax(0, 1fr) auto;
   gap: 0.9rem;
   align-items: baseline;
   padding: 0.62rem 0.3rem;
   text-decoration: none;
 }
+.cv .marks { justify-content: flex-end; }
 .cv a:hover { background: rgba(160, 75, 255, 0.13); }
 .cv b { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.16em; color: var(--cyan); }
-.cv span {
+/* The tagline, and only the tagline. It used to be every span in the row,
+   which was true right up until the marks arrived wearing spans of their own
+   and came out amber and three sizes too big. */
+.cv a > span:not(.marks) {
   font-size: 0.85rem;
   line-height: 1.55;
   color: var(--amber);
   text-wrap: pretty;
 }
-.cv a:hover span { text-shadow: 0 0 12px rgba(255, 176, 32, 0.5); }
-.cv i {
-  font-style: normal;
-  font-size: 0.6rem;
-  letter-spacing: 0.12em;
-  color: var(--dim);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
+.cv a:hover > span:not(.marks) { text-shadow: 0 0 12px rgba(255, 176, 32, 0.5); }
 /* The pilots' faces. One each, painted once by tools/chronicle-art.sh, and the
    same one everywhere their name is written — which is the reason it is worth
    painting at all. Round, because a portrait among all these straight lines
@@ -1756,7 +2102,7 @@ h1 {
 .ci b { color: var(--violet); font-weight: 500; }
 /* Quieter than the deed above it and in the same proportion the chapter uses,
    because it is here to tell two interludes apart rather than to be read. */
-.ci span {
+.ci .said {
   display: block;
   margin-top: 0.2rem;
   font-size: 0.6rem;
@@ -1764,6 +2110,168 @@ h1 {
   color: var(--dim);
   opacity: 0.8;
 }
+
+/* --- the marks -------------------------------------------------------------
+   Which parts of the cabinet a commit moved, drawn rather than listed. There
+   are nine of them and most chapters wear two, so the row is short by
+   arithmetic rather than by being cut off somewhere.
+
+   Every mark carries its own words in the markup, in both forms. The tiny one
+   hides them from the eye and not from a screen reader, because a row of
+   little pictures with nothing behind them is a row of nothing at all to
+   anybody who cannot see little pictures.
+
+   The colours are ranked rather than assigned. This book is read for two
+   questions before any other — did somebody change the game, and did somebody
+   change the game behind it — so those two take the two loudest things in the
+   spectrum and everything else takes what is left. The rules and the notes are
+   dim on purpose, and for the same reason the drawn field will not light a
+   rock that is not the game: real work, but not the thing you came to read
+   about. */
+.marks { display: flex; flex-wrap: wrap; align-items: center; gap: 0.34rem; }
+.mk {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.36rem;
+  padding: 0.16rem 0.5rem 0.16rem 0.4rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: rgba(5, 1, 12, 0.55);
+  color: var(--dim);
+  font-size: 0.52rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.mk .ic { flex: none; width: 0.84rem; height: 0.84rem; }
+.mk em { font-style: normal; }
+/* the two loudest, and they are loud on purpose */
+.mk-game   { color: var(--magenta); }
+.mk-meta   { color: var(--lime); }
+.mk-ui     { color: var(--cyan); }
+.mk-music  { color: var(--amber); }
+.mk-hands  { color: var(--violet); }
+.mk-engine { color: var(--mint); }
+.mk-book   { color: var(--ink); }
+/* the rules and the notes are real work and not the game, and the field draws
+   that distinction in exactly this colour */
+.mk-rules, .mk-notes { color: var(--dim); }
+
+/* On the splash, where the badges are met for the first time and are the only
+   place in the book that says what they mean. */
+.marks.big { margin-top: 1rem; gap: 0.45rem; }
+.marks.big .mk {
+  padding: 0.26rem 0.68rem 0.26rem 0.55rem;
+  font-size: 0.58rem;
+  box-shadow: 0 0 14px rgba(5, 1, 12, 0.8), inset 0 0 12px rgba(255, 255, 255, 0.04);
+  text-shadow: 0 0 10px currentColor;
+}
+.marks.big .mk .ic { width: 0.95rem; height: 0.95rem; }
+
+/* In a list, where a reader is scanning down a column and the words would be
+   a second column arguing with the first. */
+.marks.tiny { gap: 0.22rem; }
+.marks.tiny .mk { padding: 0.2rem; border-radius: 50%; }
+.marks.tiny em {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* An interlude keeps to the same right-hand column the chapters use. Half a
+   column aligned and half of it trailing whatever length the sentence was
+   reads as a mistake rather than as two kinds of entry. */
+.ci .marks { float: right; margin-left: 0.6rem; }
+.ci .said { clear: right; }
+
+/* --- the shelf -------------------------------------------------------------
+   A book is a run of chapters one pilot flew with nobody else landing in
+   between, and the shelf is every book there has been, newest on top. The one
+   on the cabinet is open, because that is the one somebody arriving came for;
+   everything under it is a spine you choose to pull.
+
+   <details> does the whole of the opening and closing, so the shelf works on a
+   page with the script switched off — which is the same promise every other
+   moving part of this book makes. */
+.shelf { display: grid; gap: 0.7rem; margin-top: 0.9rem; }
+.book {
+  border: 1px solid rgba(160, 75, 255, 0.32);
+  background: linear-gradient(to right, rgba(160, 75, 255, 0.09), rgba(160, 75, 255, 0.02));
+}
+.book[open] { border-color: rgba(160, 75, 255, 0.6); }
+.book > summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.95rem;
+  padding: 0.7rem 0.9rem;
+  cursor: pointer;
+  list-style: none;
+}
+.book > summary::-webkit-details-marker { display: none; }
+.book > summary::before {
+  content: "\25b6";
+  flex: none;
+  font-size: 0.6rem;
+  color: var(--violet);
+  transition: transform 0.18s;
+}
+.book[open] > summary::before { transform: rotate(90deg); }
+.book > summary:hover { background: rgba(160, 75, 255, 0.13); }
+.bk { display: flex; align-items: baseline; gap: 0.45rem; }
+.bk b {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--violet);
+  text-shadow: 0 0 16px currentColor;
+}
+.bk i {
+  font-style: normal;
+  font-size: 0.46rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.by {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-right: auto;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+}
+.by .face { width: 2.1rem; height: 2.1rem; }
+.bspan {
+  padding: 0.12rem 0.46rem;
+  border: 1px solid rgba(33, 243, 255, 0.45);
+  font-size: 0.56rem;
+  letter-spacing: 0.18em;
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+}
+.bn {
+  font-size: 0.56rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+/* What the book was, in a paragraph — the arithmetic of the whole run, which
+   is the one thing no single chapter inside it can say. */
+.gist {
+  max-width: 62ch;
+  margin: 0 0.9rem 0.4rem;
+  padding-left: 0.85rem;
+  border-left: 1px solid rgba(255, 176, 32, 0.4);
+  font-size: 0.66rem;
+  line-height: 1.7;
+  color: var(--dim);
+  text-wrap: pretty;
+}
+.book .contents { padding: 0 0.9rem 0.5rem; }
 
 /* --- one version, one comic page ------------------------------------------
    A chapter used to be one screenful read in a single look, and it fought the
@@ -2499,11 +3007,15 @@ html { scroll-padding-bottom: 6rem; }
 .up i { font-style: normal; font-size: 0.44rem; letter-spacing: 0.22em; text-transform: uppercase; }
 .up:hover { color: var(--ink); border-color: var(--cyan); }
 
-/* Every version there has ever been, oldest first, always in reach, each one
-   wearing the plate its own chapter opens with. Both kinds of trouble are
-   marked, so a reader can see where the book gets loud before they get there.
-   More chapters than window and this scrolls sideways — which it will, and
-   which is why it is the only part of the dock allowed to move. */
+/* Every book there has ever been, oldest first, always in reach. It used to be
+   every version, and by about thirty of them the row had stopped being a shelf
+   and started being a filmstrip nobody could aim at. A book is a run of
+   chapters one pilot flew with nobody else landing in between, which is a
+   coarser thing to press and a truer thing to name — and the chapters are one
+   press away rather than none, which is the trade.
+
+   More books than window and this scrolls sideways — which it will, and which
+   is why it is the only part of the dock allowed to move. */
 .rail {
   position: relative;
   display: flex;
@@ -2520,51 +3032,150 @@ html { scroll-padding-bottom: 6rem; }
 }
 .rail::-webkit-scrollbar { height: 3px; }
 .rail::-webkit-scrollbar-thumb { background: rgba(160, 75, 255, 0.5); }
-.tick {
-  position: relative;
+/* One spine per book. The numeral is what it is called, the range is what is
+   inside it, and the face is whose run it was — which is the fact the shelf
+   exists to show, and the one the old row of numbered thumbnails never did. */
+.spine {
   flex: none;
-  display: block;
-  width: clamp(2.6rem, 4.4vw, 3.3rem);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   height: 2.4rem;
-  overflow: hidden;
+  padding: 0 0.5rem;
   border: 1px solid rgba(160, 75, 255, 0.3);
-  /* the halftone a chapter with no plate falls back to, under the plate a
-     chapter with one covers it with */
-  background: radial-gradient(rgba(255, 62, 200, 0.5) 1px, transparent 1.2px) 0 0 / 6px 6px, #0b0418;
+  background: linear-gradient(to top, rgba(160, 75, 255, 0.16), rgba(11, 4, 24, 0.9));
+  color: var(--dim);
+  font: inherit;
+  cursor: pointer;
+}
+.spine .face {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-color: rgba(160, 75, 255, 0.5);
+  box-shadow: none;
+}
+.spine .sp { display: grid; gap: 0.02rem; text-align: left; }
+.spine .sp b {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--violet);
+}
+.spine .sp i {
+  font-style: normal;
+  font-size: 0.46rem;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+}
+.spine .nm {
+  max-width: 7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.5rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+/* Every mark its chapters wear, once each. On a spine this is the only thing
+   that says what the run was about, so it sits at the end where the eye lands
+   after the numeral — and it is the reason a shelf beats a row of numbers. */
+.spine .marks { flex-wrap: nowrap; margin-left: 0.1rem; }
+.spine:hover { border-color: var(--cyan); color: var(--ink); }
+.spine.here { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan), 0 0 16px rgba(33, 243, 255, 0.3); }
+.spine.here .sp b { color: var(--cyan); }
+.spine[aria-expanded="true"] {
+  border-color: var(--amber);
+  color: var(--ink);
+  background: linear-gradient(to top, rgba(255, 176, 32, 0.22), rgba(11, 4, 24, 0.9));
+}
+.spine[aria-expanded="true"] .sp b { color: var(--amber); }
+
+/* The book, pulled off the shelf. It stacks above the dock rather than
+   replacing it, so the shelf you pulled it from is still under your thumb —
+   and nothing has been navigated yet, which is the whole point: a book opening
+   is not a page turning. Press a chapter for that. */
+.tray {
+  position: absolute;
+  inset: auto 0 100% 0;
+  max-height: min(58vh, 30rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.6rem clamp(0.45rem, 1.8vw, 1.2rem) 0.7rem;
+  background: linear-gradient(to top, rgba(9, 4, 20, 0.99), rgba(7, 3, 15, 0.97));
+  border-top: 1px solid rgba(255, 176, 32, 0.5);
+  box-shadow: 0 -18px 40px rgba(7, 3, 15, 0.9);
+  backdrop-filter: blur(6px);
+}
+.tray-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px dashed rgba(255, 176, 32, 0.3);
+  font-size: 0.54rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.tray-head b { font-size: 0.7rem; font-weight: 600; color: var(--amber); }
+.tray-head span { color: var(--ink); }
+.tray-head i { font-style: normal; margin-left: auto; color: var(--cyan); font-variant-numeric: tabular-nums; }
+/* Stacked, oldest at the top, the way the run was flown. */
+.stack { display: grid; gap: 3px; }
+.leaf {
+  display: grid;
+  grid-template-columns: 3.2rem 2.6rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.24rem 0.4rem 0.24rem 0.24rem;
+  border: 1px solid rgba(160, 75, 255, 0.24);
   color: var(--dim);
   text-decoration: none;
 }
-.tick img {
-  position: absolute;
-  inset: 0;
+.leaf .thumb {
+  height: 2.1rem;
+  overflow: hidden;
+  /* the halftone a chapter with no plate falls back to, under the plate a
+     chapter with one covers it with */
+  background: radial-gradient(rgba(255, 62, 200, 0.5) 1px, transparent 1.2px) 0 0 / 6px 6px, #0b0418;
+}
+.leaf .thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.72;
+  opacity: 0.75;
   /* a plate is a square and a thumbnail is not, so it arrives cropped and
      often cropped to the darkest part of itself - lifted here, because a
      thumbnail nobody can make out is a blank tile with extra steps */
   filter: saturate(1.25) contrast(1.05) brightness(1.25);
   transition: opacity 0.15s, transform 0.35s;
 }
-.tick b {
-  position: absolute;
-  inset: auto 0 0 0;
-  padding: 0.06rem 0;
-  background: linear-gradient(to top, rgba(5, 1, 12, 0.92), rgba(5, 1, 12, 0));
-  font-size: 0.54rem;
+.leaf b {
+  font-size: 0.6rem;
   font-weight: 500;
-  text-align: center;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
   font-variant-numeric: tabular-nums;
 }
-.tick:hover { border-color: var(--cyan); color: var(--ink); }
-.tick:hover img { opacity: 0.95; transform: scale(1.08); }
-.tick.bent { border-color: rgba(255, 176, 32, 0.6); color: var(--amber); }
-.tick.off { border-color: var(--magenta); color: var(--magenta); }
-.tick.here { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan), 0 0 16px rgba(33, 243, 255, 0.3); }
-.tick.here img { opacity: 0.9; }
-.tick.here b { background: var(--cyan); color: var(--void); }
+.leaf .line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--amber);
+}
+/* Hard against the right edge, so a stack of six chapters reads as a column of
+   marks somebody can scan down rather than six ragged tails. */
+.leaf .marks { flex-wrap: nowrap; justify-content: flex-end; }
+.leaf:hover { border-color: var(--cyan); color: var(--ink); background: rgba(33, 243, 255, 0.08); }
+.leaf:hover .thumb img { opacity: 1; transform: scale(1.06); }
+.leaf.bent { border-color: rgba(255, 176, 32, 0.6); }
+.leaf.bent b { color: var(--amber); }
+.leaf.off { border-color: var(--magenta); }
+.leaf.off b { color: var(--magenta); }
+.leaf.here { border-color: var(--cyan); box-shadow: inset 0 0 0 1px rgba(33, 243, 255, 0.4); }
+.leaf.here b { color: var(--cyan); }
 
 /* A version whose pilot wrote no Chronicle line reads as a gap in the record,
    and looks like one, so the next person can see what a missing chapter costs. */
@@ -2718,22 +3329,29 @@ html { scroll-padding-bottom: 6rem; }
   .turn.none .lab { display: none; }
   .up i { display: none; }
   .up { padding: 0 0.45rem; }
+  /* the face and the numeral say whose book it is; the name spelled out is
+     the first thing that can go */
+  .spine .nm { display: none; }
 }
 @media (max-width: 34rem) {
   /* the bars say it on their own, the same way the arrows do */
   .song .lab { display: none; }
   .song { padding: 0.4rem 0.5rem; }
   .roster table { font-size: 0.62rem; }
-  .cv a { grid-template-columns: 2.9rem 1fr; }
-  .cv i { display: none; }
+  .cv a { grid-template-columns: 2.9rem minmax(0, 1fr) auto; gap: 0.5rem; }
   .ci { padding-left: 0.3rem; }
+  .book > summary { gap: 0.4rem 0.6rem; padding: 0.6rem; }
+  .by .face { width: 1.7rem; height: 1.7rem; }
+  .gist, .book .contents { margin-inline: 0.6rem; padding-inline: 0; }
+  .leaf { grid-template-columns: 2.6rem 2.2rem minmax(0, 1fr) auto; gap: 0.5rem; }
   /* four stacked lines is a lot of corner on a phone; tightened up they are
      still four lines somebody can read at a glance */
   .credits { gap: 0.28rem; }
   .stats { grid-template-columns: 1fr 1fr; }
   .stats span { font-size: 0.44rem; }
   .turn .lab { display: none; }
-  .tick { width: 2.6rem; height: 2.1rem; }
+  .spine { padding: 0 0.35rem; gap: 0.3rem; }
+  .spine .face { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   h1, .shout, .roster, .art *, .dots, .plate-img, .loud, .loud::before { animation: none; }
@@ -2742,6 +3360,9 @@ html { scroll-padding-bottom: 6rem; }
   .lit { transition: none; }
   /* the sound plays, the meter holds still - it was only ever saying so */
   .song.on .eq i { animation: none; height: 60%; }
+  /* the book still opens, the arrow just points the other way at once */
+  .book > summary::before { transition: none; }
+  .leaf .thumb img { transition: none; }
 }
 CSS
 
