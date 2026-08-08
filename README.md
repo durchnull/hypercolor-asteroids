@@ -35,7 +35,11 @@ play and to build — including what a Windows machine needs — is in
 
 ![The grapple: the dotted circle is the arc the line will hold you to, and you leave on the tangent](media/swing.png)
 
-![A planet crossing the field, with rocks bouncing off the limb](media/planet.png)
+![The atom bomb going off: the front eats up to half the screen, never all of it, and the kraken to the right of it has about a second left](media/bomb.png)
+
+![The Falcon crossing the field, putting one enormous laser through a kraken on its way past](media/falcon.png)
+
+![A planet crossing the field, with a rock bouncing off the limb and shots burning up on it](media/planet.png)
 
 ## How it's put together
 
