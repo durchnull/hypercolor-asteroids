@@ -16,6 +16,12 @@
 # not a thing to publish to the room it describes.
 .claude/observe/
 
+# Where a session that wants to work in isolation puts its worktree. A whole
+# second checkout of this repository, living inside the first one, and git will
+# happily commit the lot of it if anybody types  git add -A  in the main tree.
+# Untracked by nature; ignored so that it stays that way.
+.claude/worktrees/
+
 # Credentials, and the one file in here that must never be committed. Only
 # tools/chronicle-art.sh reads it, only on the machine of whoever is writing
 # the book, and nothing in the game has ever heard of it. See .env.example.
