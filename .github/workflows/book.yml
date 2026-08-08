@@ -63,10 +63,16 @@ jobs:
             exit 0
           fi
 
-          # A name that says what it is. It never becomes a pilot: the roster
-          # and the flight meter only count commits that moved the game, and
-          # this one by construction never does.
-          git config user.name  "the book"
+          # A name that says what it is: the crew that files the paperwork
+          # after a landing and has never flown anything. It never becomes a
+          # pilot either - the roster and the flight meter only count commits
+          # that moved the game, and this one by construction never does.
+          #
+          # It signed as "the book" until this line changed, which read oddly:
+          # the book is the thing being filed, not the hand filing it. Those
+          # commits are in the history for good, so the filters that keep a
+          # machine off the roster still answer to both names.
+          git config user.name  "Ground Crew"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add -A

@@ -184,21 +184,27 @@ NOTGAME=':!src/game/ledger.js'
 # free choice and the [bot] suffix is github's own mark. The literal name this
 # repository's workflow commits under is spelled out beside it, so that a future
 # reader can find both ends of the arrangement from either one.
+#
+# Both names it has ever filed under are spelled out, because the history keeps
+# the old ones whatever the workflow is called this year. The address alone
+# would catch them all today; the day somebody narrows that test, a name the
+# log still carries and this list has forgotten is a machine on the roster.
 MACHINE='
 function is_machine(who, mail) {
   # Where the address is the last field of a record it arrives carrying the
   # newline that ended it, and the anchored form below would miss on that alone.
   sub(/[[:space:]]+$/, "", mail)
-  return (who == "the book" ||                  # .github/workflows/book.yml
+  return (who == "Ground Crew" ||               # .github/workflows/book.yml
+          who == "the book" ||                  # what it filed under before
           mail ~ /\[bot\]@/ ||                  # github marks its own
           mail ~ /^actions@github\.com$/)
 }
 '
 
 # The same question in shell, for the places that ask it about one commit rather
-# than about a stream. Same three answers, same order.
+# than about a stream. Same answers, same order.
 is_machine() {
-  case "$1" in "the book") return 0 ;; esac
+  case "$1" in "Ground Crew" | "the book") return 0 ;; esac
   case "$2" in *'[bot]@'* | actions@github.com) return 0 ;; esac
   return 1
 }

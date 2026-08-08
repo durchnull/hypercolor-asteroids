@@ -284,11 +284,17 @@ seed_of_name() {
 # free choice and the [bot] suffix is github's own mark. The literal name this
 # repository's workflow commits under is spelled out beside it, so that a
 # future reader can find both ends of the arrangement from either one.
+#
+# Both names it has ever filed under are listed, and this is the file where
+# that matters: a plate can be repainted and a face cannot, so a machine that
+# slips through here is in the book for good. Cheaper to keep a retired name
+# in the list than to find out it was load-bearing.
 pilots() {
   git log --format='%an%x1f%ae' 2>/dev/null \
   | awk -F'\037' '
       $1 == "" { next }
-      $1 == "the book" { next }                 # .github/workflows/book.yml
+      $1 == "Ground Crew" { next }              # .github/workflows/book.yml
+      $1 == "the book" { next }                 # what it filed under before
       $2 ~ /\[bot\]@/ { next }                  # github marks its own
       $2 ~ /^actions@github\.com$/ { next }
       { print $1 }' \
