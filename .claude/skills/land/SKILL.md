@@ -113,3 +113,38 @@ the same as the `Chronicle:` line.
 
 If a hook blocks the commit, read what it said and fix the cause. Do not
 retry the same commit with the check disabled.
+
+## 5. File the paperwork, and do not stop one round early
+
+The book describes commits, so it can only be built once they exist: the
+`post-commit` hook rebuilds `docs/` into the working tree, paints the plate and
+writes the tagline *after* the landing. Every commit therefore leaves the tree
+dirty, by design. Landing is not finished until that is filed, so file it —
+staging the generated paths and nothing else that happens to be lying about:
+
+```sh
+git status --porcelain -- docs src/game/ledger.js     # what the hook just wrote
+git add -A -- docs src/game/ledger.js
+git commit -m "The paperwork from <what landed>, filed"
+```
+
+**Then look again, because once is usually not enough.** Round one often
+carries `src/game/ledger.js` — the refreshed clean-landing count — and the book
+counts any commit touching `src/` as a version, generated file or not. So that
+filing commit becomes a version itself and earns a chapter, a plate and a
+tagline: more paperwork. Round two touches nothing but `docs/`, which is not a
+version, so the book has nothing to say about it and the tree comes out clean.
+
+Repeat until `git status --porcelain` is empty. It settles in two rounds at the
+outside; if a third is somehow needed, stop and say so rather than looping,
+because something else is dirty and it is not the book's doing.
+
+A filing commit is not a story. Subject line only — no `Chronicle:` line, no
+`Tagline:`, nothing to explain. The referee will nudge about the missing
+chronicle line and the nudge is wrong here, which is the one place in this
+ritual to ignore it: the book passes over its own filing in silence everywhere
+it speaks, and a book that narrated its own bookkeeping would never reach a
+last chapter.
+
+Report the version that landed, not the filing commits. The pilot asked for a
+version; the paperwork is the tail of it.
