@@ -115,15 +115,37 @@ it. Put a `Chronicle:` line in your commit and the book quotes you.
 
 ## Joining in
 
+You take your turn by talking to claude in this folder. A whole session looks
+like this:
+
+- *"what did the others land since I last played?"* — or `/scout`
+- *"add comets, and make them come in threes"*
+- *"a trap that flips everyone's controls for ten seconds"* — or `/event`
+- *"the kraken is too easy now"*
+- *"land it"* — or `/land`
+- *"read the black box"* — paste the tape off the game-over screen
+
+That is the job. Claude puts each thing in its own file, wires it in, checks
+the rules, hands the game back for you to play, and writes the commit. You do
+not need to know how any of it works.
+
+Set up once, in a terminal:
+
 ```sh
 git clone <this repo>
-tools/golden-check.sh --install   # wire in the referee, once
-tools/whoami.sh                   # lock your seat
+tools/golden-check.sh --install   # wire in the referee
+tools/whoami.sh                   # say who you are
 open index.html                   # find out what the others did to you
+claude                            # and take your turn
 ```
 
-Then build something — one new file, one line in `src/features.js` — play it,
-and commit it with a subject line the next pilot will enjoy.
+Two things worth knowing:
+
+- Claude will refuse some things — another player's trap file, skipping the
+  referee, editing your own tally. That is the game working, not a bug.
+- Bending a rule is allowed. It costs one line in the commit, and your game
+  gets harder in public. [GOLDEN_RULES.md](GOLDEN_RULES.md) is one page if you
+  are curious.
 
 Nobody has to trust anybody. `git blame` says who made a thing, the book says
 who bent which rule, and the ledger is computed from both. That is all the

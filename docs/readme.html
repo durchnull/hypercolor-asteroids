@@ -143,16 +143,38 @@ ritual — <code>/scout</code>, <code>/event</code>, <code>/land</code>, <code>/
 it. Put a <code>Chronicle:</code> line in your commit and the book quotes you.
 </p>
 <h2 id="joining-in">Joining in</h2>
+<p>
+You take your turn by talking to claude in this folder. A whole session looks
+like this:
+</p>
+<ul>
+<li><i>"what did the others land since I last played?"</i> — or <code>/scout</code></li>
+<li><i>"add comets, and make them come in threes"</i></li>
+<li><i>"a trap that flips everyone's controls for ten seconds"</i> — or <code>/event</code></li>
+<li><i>"the kraken is too easy now"</i></li>
+<li><i>"land it"</i> — or <code>/land</code></li>
+<li><i>"read the black box"</i> — paste the tape off the game-over screen</li></ul>
+<p>
+That is the job. Claude puts each thing in its own file, wires it in, checks
+the rules, hands the game back for you to play, and writes the commit. You do
+not need to know how any of it works.
+</p>
+<p>
+Set up once, in a terminal:
+</p>
 <pre><code class="lang-sh">
 git clone &lt;this repo&gt;
-tools/golden-check.sh --install   # wire in the referee, once
-tools/whoami.sh                   # lock your seat
+tools/golden-check.sh --install   # wire in the referee
+tools/whoami.sh                   # say who you are
 open index.html                   # find out what the others did to you
+claude                            # and take your turn
 </code></pre>
 <p>
-Then build something — one new file, one line in <code>src/features.js</code> — play it,
-and commit it with a subject line the next pilot will enjoy.
+Two things worth knowing:
 </p>
+<ul>
+<li>Claude will refuse some things — another player's trap file, skipping the referee, editing your own tally. That is the game working, not a bug.</li>
+<li>Bending a rule is allowed. It costs one line in the commit, and your game gets harder in public. <a href="golden-rules.html">GOLDEN_RULES.md</a> is one page if you are curious.</li></ul>
 <p>
 Nobody has to trust anybody. <code>git blame</code> says who made a thing, the book says
 who bent which rule, and the ledger is computed from both. That is all the
