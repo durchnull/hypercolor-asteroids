@@ -98,8 +98,8 @@ like this:
 - *"add comets, and make them come in threes"*
 - *"a trap that flips everyone's controls for ten seconds"* — or `/event`
 - *"the kraken is too easy now"*
-- *"land it"* — or `/land`
 - *"read the black box"* — paste the tape off the game-over screen
+- *"land it"* — or `/land`
 
 That is the job. Claude puts each thing in its own file, wires it in, checks
 the rules, hands the game back for you to play, and writes the commit. You do
