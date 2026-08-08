@@ -506,9 +506,58 @@ case_ GR4 "tuning another pilot's numbers is everybody's business"
   check commit-msg --message-file "$MSG"
   lands
 
+# The cuts below are shallower than the ones above, and that is the whole test.
+# Take enough out and git stops calling it a rename at all - it reports a delete
+# and an add, the delete lands in the list GR4 has always read, and the case
+# passes without the rename ever being asked about. Every move here leaves more
+# than half the file behind, so git reports the pair and nothing else does.
+case_ GR4 "the same cut, with the file carried out under a new name"
+  git mv src/entities/rock.js src/entities/boulder.js >/dev/null 2>&1
+  truncate_to src/entities/boulder.js 40
+  awk '{ sub(/rock\.js/, "boulder.js"); print }' \
+    src/features.js > f && mv f src/features.js
+  stage; message "The rock is a boulder now, and shorter"
+  check commit-msg --message-file "$MSG"
+  blocks GR4
+
+case_ GR4 "the same move, with the budget spent out loud"
+  git mv src/entities/rock.js src/entities/boulder.js >/dev/null 2>&1
+  truncate_to src/entities/boulder.js 40
+  awk '{ sub(/rock\.js/, "boulder.js"); print }' \
+    src/features.js > f && mv f src/features.js
+  stage; message "The rock is a boulder now, and shorter" "" \
+                 "Golden-Rule-Override: GR4 - Ada wanted the name and agreed to the cut"
+  check commit-msg --message-file "$MSG"
+  lands
+
+case_ GR4 "your own feature is yours to rename and yours to cut"
+  printf '(function (A) {\n  A.comet = { tail: 9 };\n})(ASTEROIDS);\n' > src/entities/comet.js
+  pad src/entities/comet.js 60 "comet, elaborated,"
+  awk '/^\];$/ && !d { print "  \"./entities/comet.js\","; d = 1 } { print }' \
+    src/features.js > f && mv f src/features.js
+  land "Bo Renn brings a comet, and it comes in threes"
+  git mv src/entities/comet.js src/entities/comets.js >/dev/null 2>&1
+  truncate_to src/entities/comets.js 35
+  awk '{ sub(/comet\.js/, "comets.js"); print }' \
+    src/features.js > f && mv f src/features.js
+  stage; message "The comet was always plural"
+  check commit-msg --message-file "$MSG"
+  lands
+
 case_ GR5 "carving a hole in the commons"
   truncate_to src/core/loop.js 20
   stage; message "The loop loses most of itself"
+  check commit-msg --message-file "$MSG"
+  blocks GR5
+
+case_ GR5 "the commons does not stop being commons on the way out of it"
+  pad src/core/loop.js 100 "the loop, at greater length,"
+  land "The loop has more to say for itself"
+  git mv src/core/loop.js src/game/loop.js >/dev/null 2>&1
+  truncate_to src/game/loop.js 130
+  awk '{ sub(/core\/loop\.js/, "game/loop.js"); print }' \
+    src/features.js > f && mv f src/features.js
+  stage; message "The loop moves house, and leaves a good deal behind"
   check commit-msg --message-file "$MSG"
   blocks GR5
 
