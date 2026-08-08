@@ -40,7 +40,12 @@
    so v3 always sounds like v3 — and where the reader arrives from somewhere
    else in the book, the harmony changes under a piece that keeps its place.
    The chapter's own offset into the progression is only where it begins when
-   nobody arrived from anywhere: the first page of a sitting. */
+   nobody arrived from anywhere: the first page of a sitting.
+
+   And every third chapter has a music box in the room with it, wound once a
+   cycle. Twice a minute at the outside, off the chord, gone before it has
+   outstayed anything — a reader who never works out which pages have it just
+   finds some of them nicer than the others. */
 
 (function () {
   "use strict";
@@ -466,6 +471,135 @@
     s.stop(t + dur + 0.7);
   }
 
+  // ---- the visitor --------------------------------------------------------
+  // Every chapter already has its own key and its own progression. Every third
+  // one gets a thing more: a music box, wound and let go once a cycle. It is
+  // the only voice in here allowed to be conspicuous — brighter than the pad,
+  // quicker than anything else, and it ends on a note it holds rather than on a
+  // note it resolves.
+  //
+  // Once every half minute is the entire discipline. A charm that arrives every
+  // bar is a ringtone; one that arrives while somebody is halfway down a
+  // paragraph is a thing they look up for, and looking up is the whole point of
+  // it. It is built off the chord it lands in, so it can be the loudest idea in
+  // the piece for a second and a half and still not be an interruption.
+  //
+  // One page in three, which is the rate a reader can feel. Rarer and it is a
+  // rumour; commoner and it is the house style. The cover is chapter zero and
+  // divides by everything, so it is left out by hand: it is not a third
+  // chapter, it is not a chapter.
+  var BOXED = CH > 0 && CH % 3 === 0;
+
+  // How many notes, which is the chapter's own business and does not change:
+  // v3 has four of them, v6 five, v9 three, and round again from there.
+  var NOTES = 3 + Math.floor(CH / 3) % 3;
+
+  // Where it sits. The figure is built off whatever chord it lands in, and some
+  // keys put the top of it two octaves over the rest of the piece, so the whole
+  // thing is folded down under a ceiling — in one piece, because folding a
+  // single note out of a climb makes it something other than a climb, and by
+  // one amount for the whole chapter, worked out off the highest chord in the
+  // progression, because a charm that changes register between one cycle and
+  // the next is two charms.
+  //
+  // C7 is where a music box stops being charming and starts being a smoke
+  // alarm, and it is the partial rather than the note that gets there first.
+  var CEIL = 96;
+
+  function ceiling() {
+    var top = 0, d = 0, i, c, li = NOTES - 1;
+    for (i = 0; i < 4; i++) {
+      c = chord(i);
+      top = Math.max(top, c.root + 42 + c.voice[li % c.voice.length] +
+                          12 * Math.floor(li / c.voice.length));
+    }
+    while (top - d > CEIL) d += 12;
+    return d;
+  }
+  var DROP = ceiling();
+
+  // Where in the cycle it lands, and it moves: four spots, one per time round,
+  // three different chords between them, and none of them on the turn of a
+  // chord or on the beat the heart is on. A charm that arrives in the same
+  // place every time stops being a charm and becomes a clock.
+  //
+  // Four boxes to four cycles is fixed arithmetic, so spreading them out is
+  // only ever a choice about which waits are long: these are twenty-four to
+  // forty-three seconds apart, which is as even as it gets without putting the
+  // thing in the same corner every time.
+  var SPOTS = [10, 26, 42, 22];
+
+  // One tine. A sine, a twelfth above it that dies well before it does — which
+  // is most of what makes struck metal sound struck — and a filter closing over
+  // the tail so the note darkens as it goes instead of only getting quieter.
+  function tine(t, f, amp, hold) {
+    var g = ctx.createGain();
+    var lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(Math.min(12000, f * 6), t);
+    lp.frequency.exponentialRampToValueAtTime(Math.max(400, f * 1.4), t + hold);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(amp, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + hold);
+    var a = ctx.createOscillator();
+    a.frequency.value = f;
+    var b = ctx.createOscillator();
+    b.frequency.value = f * 3.02;
+    var bg = ctx.createGain();
+    bg.gain.setValueAtTime(0.42, t);
+    bg.gain.exponentialRampToValueAtTime(0.0001, t + hold * 0.3);
+    a.connect(lp);
+    b.connect(bg);
+    bg.connect(lp);
+    lp.connect(g);
+    g.connect(dry);
+    g.connect(send);
+    // The dotted-eighth echo makes a run of these sound like a box in a room.
+    // The note that hangs stays out of it — repeating a three-second tail four
+    // times is not a charm, it is a fault.
+    if (hold < 2) g.connect(echo);
+    a.start(t); a.stop(t + hold + 0.1);
+    b.start(t); b.stop(t + hold + 0.1);
+  }
+
+  // The winding: three clicks of filtered noise, a mechanism rather than a
+  // note. It is what tells a reader that something is about to happen, and it
+  // is quiet enough that a reader who misses it has lost nothing. Each click
+  // starts somewhere else in the buffer, because three copies of the same three
+  // milliseconds is one click stuttering.
+  function cog(t, from) {
+    var s = ctx.createBufferSource();
+    s.buffer = noise;
+    var hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = 2800;
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.022, t + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    s.connect(hp);
+    hp.connect(g);
+    g.connect(dry);
+    g.connect(send);
+    s.start(t, from);
+    s.stop(t + 0.08);
+  }
+
+  // The figure. Notes off the chord, climbing, a third of a step apart so it
+  // arrives faster than anything else in the piece, and the last one thrown an
+  // octave over the rest and left ringing.
+  function box(t, c) {
+    for (var w = 0; w < 3; w++) cog(t + w * 0.085, 0.11 + w * 0.43);
+    for (var i = 0; i < NOTES; i++) {
+      var deg = c.voice[i % c.voice.length] + 12 * Math.floor(i / c.voice.length);
+      var last = i === NOTES - 1;
+      tine(t + 0.42 + i * STEP / 3,
+           mtof(c.root + 30 + deg + (last ? 12 : 0) - DROP),
+           last ? 0.07 : 0.05,
+           last ? 3.4 : 1.1);
+    }
+  }
+
   // ---- the arrangement ----------------------------------------------------
   // Four chords, and then the same four chords again with something different
   // switched on. A cycle is thirty-four seconds, so a reader who stays for one
@@ -496,6 +630,9 @@
     if (cyc > 0 && pos === 12 && rnd() < 0.4)
       bell(t, mtof(c.root + 36 + c.voice[Math.floor(rnd() * 4)]), 0.05);
     if (cyc % 2 === 1 && n === 60) sweep(t, 2.1);
+    // The thin cycle is where the box has the most room, so it is not spared
+    // the way the pulse and the arpeggio are.
+    if (BOXED && n === SPOTS[cyc % SPOTS.length]) box(t, c);
   }
 
   // Wake up four times a second, fill the next second and a half of the audio
@@ -836,6 +973,11 @@
   var wave = [], fast = 0, slow = 0, since = 9, cast = 0, cold = true, warm = 0;
   var raf = 0, last = 0, life = 0, gone = 0, glow = 0;
   var hx = 0, hy = 0, cx = 0, cy = 0, R = 0, took = -9e9;
+  // What it was last drawn at, rather than what it was told to be. R is the
+  // size of the berth it was given and the object is a good deal smaller than
+  // that for the first second of its life, so a fingertip is tested against
+  // this one.
+  var sz = 0;
 
   // Where it hangs. A chapter opens with a panel that has the sentence in one
   // corner of it and a lot of painted sky to the right of that, which is the
@@ -931,19 +1073,29 @@
       tr.push(new Float32Array(BANDS));
     }
     // Spent, all of them, until the room throws one.
-    for (i = 0; i < WAVES; i++) wave.push({ t: 1, amp: 0, hue: 0, sh: new Float32Array(BANDS) });
+    for (i = 0; i < WAVES; i++)
+      wave.push({ t: 1, amp: 0, hue: 0, hand: false, sh: new Float32Array(BANDS) });
     fit();
     addEventListener("resize", resize);
+    // Only while there is something to poke. Both handlers are on the window
+    // rather than on the canvas because the canvas is not a lid — see the poke
+    // below, where the argument for that lives, and where the second of these
+    // explains why one press needs two events.
+    addEventListener("pointerdown", prod, true);
+    addEventListener("mousedown", bite, true);
   }
 
   function tear() {
     hush();
     if (!cv) return;
     removeEventListener("resize", resize);
+    removeEventListener("pointerdown", prod, true);
+    removeEventListener("mousedown", bite, true);
     if (cv.parentNode) cv.parentNode.removeChild(cv);
     cv = null; cg = null; host = null; bins = null; lev = []; NEB = null;
     tr = []; wire = null; gauge = 0;
     life = 0; gone = 0; glow = 0;
+    sz = 0; sx = sy = svx = svy = 0; gx = gy = gvx = gvy = 0;
   }
 
   // Half a ring of bands, spaced by ear rather than by bin — an octave is an
@@ -1087,13 +1239,19 @@
 
   // Out goes another one, on the oldest slot there is. A pool and not a queue:
   // the beat is not a place to be making arrays.
-  function throw_(amp) {
+  //
+  // A ring goes out when the room does something, and one goes out when the
+  // reader pokes the thing. The slot remembers which of those it was, because a
+  // ring somebody caused ought to be the one in the panel behaving differently
+  // from the rest.
+  function throw_(amp, hand) {
     since = 0;
     var old = wave[0];
     for (var i = 1; i < WAVES; i++) if (wave[i].t > old.t) old = wave[i];
     old.t = 0;
     old.amp = Math.min(1, 0.35 + amp * 2.2);
     old.hue = (cast++) % HUES.length;
+    old.hand = !!hand;
     // What it carries is the spectrum with its own average taken out, so the
     // lobes go outward and inward from the circle rather than all one way.
     var k, m = 0;
@@ -1425,13 +1583,24 @@
       var k = Math.min(1, (0.42 + v * 1.05) * (0.55 + glow * 1.1));
       cg.globalAlpha = al * k * (fore ? 0.26 : 0.52);
       cg.fillStyle = NEB[c.c];
+      // And when the thing gets poked, the weather goes with it — further than
+      // the rock does and later, because it is gas. cx already carries the
+      // rock's share of the shove, so what is added here is the difference
+      // between the gas and the rock rather than the shove again.
+      //
+      // A share each, off the cloud's own size: the big diffuse ones are pushed
+      // furthest, which is both the way gas behaves and the only way eight of
+      // them read as weather being disturbed rather than as a photograph being
+      // slid sideways.
+      var f = 0.6 + c.s * 0.5;
+      var ox = (gx * f - sx) * R, oy = (gy * f - sy) * R;
       // Everything from here is in the cloud's own frame, where it is one unit
       // across — which is the whole trick, because the four gradients were
       // built one unit across too and a gradient is painted in whatever space
       // it is painted in. Place it and size it with the brush and none of them
       // ever has to be built again.
       cg.save();
-      cg.translate(cx + Math.cos(a) * d, cy + Math.sin(a) * d);
+      cg.translate(cx + ox + Math.cos(a) * d, cy + oy + Math.sin(a) * d);
       // Turned and squashed, and the squash gives out on a loud band, so a
       // cloud rounds up as the room fills and goes back to a streak after.
       cg.rotate(a * 0.6 + c.w);
@@ -1850,6 +2019,12 @@
       v.t = Math.min(1, v.t + dt / 2.4);
       var e = 1 - Math.pow(1 - v.t, 2.2);        // away quickly, then coasting
       var base = rr * (0.86 + e * 2);
+      // The hand-thrown one breathes on its way across: three swells, each
+      // shallower than the last, over the two and a half seconds it takes to
+      // cross the panel. It is the same ring as all the others and it is doing
+      // one thing they are not, which is how a reader works out that the thing
+      // answered them rather than the music happening to land as they clicked.
+      if (v.hand) base *= 1 + Math.sin(v.t * 18.85) * 0.06 * (1 - v.t);
       // The lobes it left with stay lobes most of the way out, and they go
       // both ways round the circle, so what crosses the panel is wavy rather
       // than a circle with a texture on it.
@@ -1939,10 +2114,19 @@
     // never repeats anywhere a reader could catch it repeating.
     cx = hx + (Math.sin(now * 0.00021) * 0.13 + Math.sin(now * 0.00013) * 0.07) * R;
     cy = hy + (Math.cos(now * 0.00017) * 0.11 + Math.sin(now * 0.00029) * 0.05) * R;
+    // Added to the drift rather than replacing it, so a thing that has been
+    // shoved goes on floating while it recovers. The rock, the rings, the
+    // corona and the light are all measured off cx and cy, which is why they go
+    // as one thing and not as a rock leaving the middle of its own light. The
+    // weather takes the same shove off a spring of its own — see the poke.
+    shift(dt);
+    cx += sx * R;
+    cy += sy * R;
     // And it throbs on the bottom of the spectrum, because that is where this
     // piece keeps its heartbeat.
     var bass = (lev[0][0] + lev[0][1] + lev[0][2] + lev[0][3]) / 4;
     var rr = R * grow * (1 + Math.sin(now * 0.00043) * 0.02 + bass * 0.13 + kick(dt));
+    sz = rr;
     cg.globalCompositeOperation = "lighter";
     clouds(now, rr, al, 0);
     core(rr, al);
@@ -2023,6 +2207,263 @@
     run();
   }
 
+  // ---- the poke -----------------------------------------------------------
+  // Everything else in this panel answers the music. This one thing answers the
+  // reader, and it answers the way a thing floating in a tank answers a hand on
+  // the glass: it is not a button, it does not do anything, it moves.
+  //
+  // The canvas keeps pointer-events: none. It is a readout and not a lid, and
+  // it is a readout laid over the whole panel — a rock that swallowed clicks
+  // would be swallowing them for the plate and the credits underneath it as
+  // well. So the disc is tested against the pointer instead, on the window, and
+  // no click is ever eaten: whatever the reader hit, they still hit it. A click
+  // that landed on furniture is a click on the furniture however much rock
+  // happens to be drifting over it at that moment, which is why this hands the
+  // event straight back if there is a link or a button under it. The one thing
+  // taken away from a press that did land on the object is the caret it would
+  // have dropped into the sentence behind, and the argument for that is with
+  // the handler that does it.
+  //
+  // Three things arrive together, because that is what one event looks like
+  // from the outside: it shoves off, it growls about it, and it spills a ring.
+  // None of the three is a state and there is nothing to be in the middle of,
+  // so a reader who pokes it four times gets four of each, and the only thing
+  // stopping the fourth one sending it off the page is that the shove does not
+  // accumulate past the speed of one shove.
+  //
+  // And a reader who asked for less motion gets the growl and nothing else.
+  // There is no frame loop at all for that reader — the object is a still
+  // picture — so a spring would settle in one jump and a ring would be a circle
+  // painted at radius nought. The rock still answers; it answers with the one
+  // part of this that does not move.
+
+  var PROD = 7;                            // the shove, in radii per second. It
+                                           // peaks about a seventh of a radius
+                                           // out, a twelfth of a second after
+                                           // the press, and is back where it
+                                           // started inside a second: enough to
+                                           // see it flinch and not enough to
+                                           // lose the thing off its own panel
+  var PSTIFF = 190, PDAMP = 17;            // slacker than the thought's spring
+                                           // and damped harder, because the two
+                                           // are different events: a thought is
+                                           // felt from the inside and springs
+                                           // back, and a shove is felt from the
+                                           // outside and is drifted back out of
+  // And a second spring for the weather, because the rock and the gas around it
+  // are not the same kind of thing and moving them on one number said they were.
+  // The first pass did move the clouds — they hang off the same middle as
+  // everything else — but a nine-pixel step in a soft lobe two hundred pixels
+  // across is not a step anybody can see, so the panel read as a rock jumping
+  // out of a sky that stayed where it was.
+  //
+  // Slacker and slower: it goes further, it gets there a little after the rock
+  // does, and it is still drifting back when the rock has finished. That is the
+  // difference between weather and scenery, and it costs four numbers.
+  var GUST = 10;                           // the shove the gas takes
+  var GSTIFF = 95, GDAMP = 12;             // half the rock's spring, near enough
+  var sx = 0, sy = 0, svx = 0, svy = 0;    // how far off it has been pushed, in
+                                           // radii, and how fast it is going
+  var gx = 0, gy = 0, gvx = 0, gvy = 0;    // and the same for the weather
+  var poked = -9e9;                        // and when, so that a pointer that
+                                           // reports one press as two events
+                                           // does not make two of everything
+
+  // The same second-order system the thought uses, on the two axes the thought
+  // was not using. Written as a spring rather than as a curve for the same
+  // reason it was there: a curve has to be told how long to take, and a spring
+  // only has to be told how hard it was hit — so a poke on the rim and a poke
+  // through the middle are one piece of code and two different motions.
+  function shift(dt) {
+    if (!sx && !sy && !svx && !svy && !gx && !gy && !gvx && !gvy) return;
+    svx += (-PSTIFF * sx - PDAMP * svx) * dt;
+    svy += (-PSTIFF * sy - PDAMP * svy) * dt;
+    sx += svx * dt;
+    sy += svy * dt;
+    gvx += (-GSTIFF * gx - GDAMP * gvx) * dt;
+    gvy += (-GSTIFF * gy - GDAMP * gvy) * dt;
+    gx += gvx * dt;
+    gy += gvy * dt;
+    if (Math.abs(sx) + Math.abs(sy) < 0.0006 &&
+        Math.abs(svx) + Math.abs(svy) < 0.006) sx = sy = svx = svy = 0;
+    if (Math.abs(gx) + Math.abs(gy) < 0.0006 &&
+        Math.abs(gvx) + Math.abs(gvy) < 0.006) gx = gy = gvx = gvy = 0;
+  }
+
+  // The complaint. Something that has watched this cabinet get built in four
+  // hundred universes has been prodded by somebody who has been reading for four
+  // minutes, and it has a view about that.
+  //
+  // Anger, in a room this quiet, is not volume. It is three things the rest of
+  // the piece never does. It is low — the chord's own bass note, the one the
+  // pad is already sitting on, folded into the octave the piece keeps its
+  // bottom in. It is rough — two sawtooths where everything else here is sines
+  // and filtered noise, with the growl rate wobbling on top of them, which is
+  // the difference between a note and a throat. And it sags — the whole thing
+  // bends a tone and a half downwards while it dies, because a pitch that falls
+  // is a complaint and a pitch that rises is a question.
+  //
+  // It is still in the key, and that is deliberate rather than timid: the root
+  // is the room's, so the growl belongs to the room. What does not belong to
+  // anything is the second saw, a semitone over the first. That interval is the
+  // rudest one there is and it is the only part of this that is out of the
+  // chord, which makes it the part carrying the opinion.
+  //
+  // Drier than anything else in here. The reverb is what makes this piece sound
+  // like a large room, and a large room is exactly what a thing snapping at you
+  // from a foot away is not in. A third of the usual send, and it stays close.
+  var grr = 0;                             // which poke this is, so that four in
+                                           // a row are four growls rather than
+                                           // one growl four times
+
+  function snarl(t) {
+    var c = chord(Math.floor((((step % CYCLE) + CYCLE) % CYCLE) / 16));
+    // The octave over the room's own bass note, and the octave is the whole
+    // trick. On the bass note itself this was inaudible and the reason was not
+    // the level: the pad is already sitting on that note with four voices, so a
+    // growl there is a growl inside something louder, and what came out was the
+    // pad getting very slightly fatter for half a second. One octave up is a
+    // hole in this arrangement — under the chord, over the bass — and a thing
+    // that nothing else is doing is heard at a third of the volume of a thing
+    // competing.
+    var f = mtof(low(c.root) + 12);
+    var i, o;
+    var env = ctx.createGain();           // the envelope
+    env.gain.setValueAtTime(0.0001, t);
+    env.gain.exponentialRampToValueAtTime(0.11, t + 0.007);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + 0.52);
+    var am = ctx.createGain();             // and the throat in it
+    am.gain.value = 0.72;
+    var lfo = ctx.createOscillator();
+    lfo.type = "triangle";
+    lfo.frequency.value = 23 + (grr++ % 3) * 5;
+    var amt = ctx.createGain();
+    amt.gain.value = 0.28;
+    lfo.connect(amt);
+    amt.connect(am.gain);
+    var lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    // Open enough to keep four or five harmonics of a sawtooth and closing onto
+    // the fundamental as it dies. Shut tighter than this and the teeth go with
+    // it: what is left is a sine with a wobble on it, which is a hum rather
+    // than a complaint.
+    lp.Q.value = 2.2;
+    lp.frequency.setValueAtTime(2600, t);
+    lp.frequency.exponentialRampToValueAtTime(520, t + 0.42);
+    for (i = 0; i < 2; i++) {
+      o = ctx.createOscillator();
+      o.type = "sawtooth";
+      // The second one a semitone up, and it arrives a hair late so the two of
+      // them start as one thing going wrong rather than as a chord.
+      var b = i ? 1.0595 : 1;
+      o.frequency.setValueAtTime(f * b, t + i * 0.012);
+      o.frequency.exponentialRampToValueAtTime(f * b * 0.84, t + 0.36);
+      o.connect(lp);
+      o.start(t + i * 0.012);
+      o.stop(t + 0.56);
+    }
+    lp.connect(am);
+    am.connect(env);
+    env.connect(dry);
+    var wet = ctx.createGain();
+    wet.gain.value = 0.34;
+    env.connect(wet);
+    wet.connect(send);
+    lfo.start(t);
+    lfo.stop(t + 0.56);
+    // The air at the front of it. Sixty milliseconds of noise is what turns a
+    // low sound into a low sound made by something — the consonant the growl
+    // needs to be heard as a growl rather than as a fault in the speakers.
+    if (!noise) return;
+    var s = ctx.createBufferSource();
+    s.buffer = noise;
+    s.loop = true;
+    var bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.Q.value = 1.1;
+    bp.frequency.setValueAtTime(2400, t);
+    bp.frequency.exponentialRampToValueAtTime(700, t + 0.1);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.03, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+    s.connect(bp);
+    bp.connect(g);
+    g.connect(dry);
+    s.start(t);
+    s.stop(t + 0.16);
+  }
+
+  // Did that land on the object, and where. Two events want the answer and they
+  // want it from the same disc, so it is asked once and here: the press that
+  // moves the thing, and the press the browser would otherwise have started
+  // selecting a paragraph with.
+  //
+  // Where the object is on the reader's screen is not where its canvas is: it
+  // drifts around inside its own box, and on the cover and the notes that box is
+  // a fixed corner of the window. One rect per press is nothing.
+  //
+  // The disc is the rings and not the halo. The halo stands a long way off on a
+  // loud bar, and a target that grows when the music does is a target that
+  // moves.
+  function caught(e) {
+    if (!cv || !sz || gone > 0) return null;
+    if (e.button > 0) return null;         // a right-click is a menu, not a poke
+    if (reach(e)) return null;             // furniture first, always
+    var b = cv.getBoundingClientRect();
+    var dx = b.left + cx - e.clientX, dy = b.top + cy - e.clientY;
+    var d = Math.sqrt(dx * dx + dy * dy);
+    if (d > sz * 1.25) return null;
+    return { d: d, dx: dx, dy: dy };
+  }
+
+  // A poke is not a text cursor. The rock hangs over a panel with a sentence in
+  // it, and a reader who prodded the thing twice got a word of that sentence
+  // selected for their trouble — the browser being right about a press on a
+  // paragraph and wrong about this one. So a press that landed on the object is
+  // taken out of that: no caret, no word, no drag-select started under a thing
+  // that is plainly not text.
+  //
+  // On mousedown rather than on the pointerdown that does everything else,
+  // because cancelling a pointerdown does nothing for a mouse: mousedown is not
+  // a compatibility event there, it is the original, and the caret belongs to
+  // it. What a finger would lose to this is not a selection but the page
+  // scrolling, and a touch never gets here — the mousedown a tap eventually
+  // produces arrives long after the scroll it did not do.
+  function bite(e) { if (caught(e) && e.cancelable) e.preventDefault(); }
+
+  function prod(e) {
+    if (!awake()) return;
+    var g = caught(e);
+    if (!g) return;
+    var t = ctx.currentTime;
+    if (t - poked < 0.09) return;
+    poked = t;
+    snarl(t);
+    if (still) return;
+    // Away from the finger, and hardest at the edge. A shove through the middle
+    // of a thing is mostly a shove into it, and a thing shoved into does not go
+    // anywhere much. Dead centre there is no direction in it at all, and that
+    // one goes up, which reads as a thing bobbing rather than as a thing with a
+    // bug in it.
+    var d = g.d, dx = g.dx, dy = g.dy;
+    if (d < 1) { dx = 0; dy = -1; d = 1; }
+    var k = 0.45 + 0.55 * Math.min(1, d / sz);
+    svx += dx / d * PROD * k;
+    svy += dy / d * PROD * k;
+    var v = Math.sqrt(svx * svx + svy * svy);
+    if (v > PROD) { svx = svx / v * PROD; svy = svy / v * PROD; }
+    gvx += dx / d * GUST * k;
+    gvy += dy / d * GUST * k;
+    v = Math.sqrt(gvx * gvx + gvy * gvy);
+    if (v > GUST) { gvx = gvx / v * GUST; gvy = gvy / v * GUST; }
+    // And it spills one, carrying whatever the spectrum was doing at the moment
+    // it was touched. The room's own rings report the room; this one reports the
+    // room and the reader at once, which is the only honest thing it could
+    // carry.
+    throw_(0.2 + fast, true);
+  }
+
   // ---- the voice ----------------------------------------------------------
   // The thing in the panel has been a meter, then an object, then a rock with
   // weather round it, and at every step it got harder to look at without
@@ -2092,9 +2533,13 @@
   // circles is a thought coming apart into something else, and two smaller
   // copies of the thing itself say what is happening without being explained.
   var PUFF = [0.32, 0.18];
-  var LAP = 5;                             // and each laps over the one behind
-                                           // it, so they read as one thought in
-                                           // pieces rather than as three shapes
+  var LAP = 2;                             // and each laps over the one behind
+                                           // it by that much, so they read as
+                                           // one thought in pieces rather than
+                                           // as three shapes. Enough to touch
+                                           // and no more: a puff mostly buried
+                                           // in the one behind it is not a
+                                           // trail, it is a blot
   var RUN = [];                            // where each of their middles lands
   var STALK = 0.35;                        // where it leaves the balloon: left
                                            // of its middle, which is where a
@@ -2186,6 +2631,56 @@
     return jolt;
   }
 
+  // And it is heard as well as seen. The swell and the noise are one event —
+  // the thing has a thought, and the thought displaces something.
+  //
+  // What it displaces is water, which is a decision about what the rock is. A
+  // chime would make it an instrument and a voice would make it a character;
+  // three bubbles make it a large old thing that has been sitting in something
+  // for a while, which is the register the sentences are already in. It is the
+  // only sound in this file with no metre on it at all: it arrives whenever the
+  // thought does, off a timer that has never heard of the tempo.
+  //
+  // Tuned all the same, to the chord the scheduler is standing in. A bubble
+  // that is in the key reads as part of the room; the same bubble a semitone
+  // out reads as a notification, and the reader goes looking for what they
+  // clicked on.
+  function blub(t, f, amp) {
+    var g = ctx.createGain();
+    var lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(f * 4, t);
+    lp.frequency.exponentialRampToValueAtTime(f * 1.5, t + 0.2);
+    var o = ctx.createOscillator();
+    // The rise is the whole bubble. Held flat it is a beep, and falling it is a
+    // drip, and neither of those is charming about anything.
+    o.frequency.setValueAtTime(f * 0.45, t);
+    o.frequency.exponentialRampToValueAtTime(f, t + 0.08);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(amp, t + 0.014);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+    o.connect(lp);
+    lp.connect(g);
+    g.connect(dry);
+    g.connect(send);
+    o.start(t);
+    o.stop(t + 0.28);
+  }
+
+  // Three of them, climbing and getting smaller, which is what a bubble does on
+  // the way up. Low: the octave over the chord's root rather than the register
+  // the box plays in, because this is underneath the music and not on top of
+  // it. If the room is not running there is nothing to be underneath and it
+  // says nothing — the panel is silent then anyway.
+  function burble() {
+    if (!ctx || !dry || !playing) return;
+    var c = chord(Math.floor((((step % CYCLE) + CYCLE) % CYCLE) / 16));
+    var t = ctx.currentTime + 0.02;
+    var deg = [0, 7, 12], amp = [0.085, 0.07, 0.05], at = [0, 0.1, 0.175];
+    for (var i = 0; i < 3; i++)
+      blub(t + at[i], mtof(c.root + 12 + deg[i]), amp[i]);
+  }
+
   // bub is the frame the whole thought is hung in and the thing that scales;
   // pane is the paper inside it, which is the part whose width opens; sen is
   // the sentence, pinned to the width it was laid out at so that opening the
@@ -2273,12 +2768,12 @@
     pane.style.width = Math.round(brim * (open ? 1 : OPEN)) + "px";
   }
 
-  // Where each puff's middle falls along the trail, and how far the whole trail
-  // reaches. Both depend on how tall the balloon turned out to be this time,
-  // because the puffs are that balloon scaled down and it is a different size
-  // for every sentence. The trail runs off the edge facing the rock, which is
-  // very nearly straight up or straight down, so heights are the measurement
-  // that matters and the small error at an angle is not worth the arithmetic.
+  // How far above or below the balloon each puff's middle falls, and how far
+  // the whole trail reaches. Both depend on how tall the balloon turned out to
+  // be this time, because the puffs are that balloon scaled down and it is a
+  // different size for every sentence. Heights the whole way: the trail leaves
+  // the top edge or the bottom one, and the sideways part of it is a lean that
+  // spot() adds rather than a distance anything is spaced by.
   function trail(bh) {
     var i, last = 0, run = 0;
     for (i = 0; i < PUFF.length; i++) {
@@ -2329,22 +2824,31 @@
     // the rock, and walks towards it — so the two of them lead back to the
     // thinker from whatever side the balloon ended up on, and go on leading
     // back to it as the rock drifts.
+    //
+    // Walked in the vertical, and leaning sideways by however far off the rock
+    // has got to. What holds three wide flat shapes apart on a page is the room
+    // between their tops and their bottoms, and a run paid out along a trail
+    // heading off at forty degrees spends most of itself sideways, where the
+    // puffs overlap anyway and nothing is separated by it. The lean is held
+    // short of the horizontal for the moment the rock is level with the paper,
+    // when the arithmetic would otherwise post the puffs off the far edge of
+    // the panel.
     var ax = bw * STALK, ay = o.y < T + bh / 2 ? 0 : bh;
     var dx = o.x - (L + ax), dy = o.y - (T + ay);
-    var m = Math.sqrt(dx * dx + dy * dy) || 1;
-    dx /= m; dy /= m;
+    var down = dy < 0 ? -1 : 1;
+    var lean = Math.max(-1.4, Math.min(1.4, dx / (Math.abs(dy) || 1)));
     for (var i = 0; i < puff.length; i++) {
       var k = PUFF[i], pw = bw * k, ph = bh * k, q = puff[i].style;
       // Held inside the balloon's own width. A puff is a third of the paper
       // wide, and centring the widest of them on a stalk a tenth in would hang
       // it off the left-hand edge, which reads as a mistake rather than as a
       // trail.
-      var mx = Math.min(Math.max(ax + dx * RUN[i], pw / 2), bw - pw / 2);
+      var mx = Math.min(Math.max(ax + lean * RUN[i], pw / 2), bw - pw / 2);
       q.width = Math.round(pw) + "px";
       q.height = Math.round(ph) + "px";
       q.borderRadius = Math.max(3, Math.round(ph * CURL)) + "px";
       q.left = Math.round(mx - pw / 2) + "px";
-      q.top = Math.round(ay + dy * RUN[i] - ph / 2) + "px";
+      q.top = Math.round(ay + down * RUN[i] - ph / 2) + "px";
     }
   }
 
@@ -2383,6 +2887,7 @@
     bub.style.transform = "none";
     pane.style.width = brim + "px";
     jolted = JOLT;                        // and the rock notices it thought
+    burble();                             // out loud, as it turns out
     for (var i = 0; i < sen.children.length; i++) sen.children[i].style.opacity = "1";
     // As long as it takes to read it, and a beat either side of that. Nobody
     // should have to hurry for a joke they did not ask for.
