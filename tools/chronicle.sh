@@ -96,6 +96,10 @@
 #   tools/chronicle.sh --versions [r] every version, oldest first, as sha
 #   tools/chronicle.sh --pilots [r]   everybody the history calls a person
 #   tools/chronicle.sh --is-game P... which of those paths are the game
+#   tools/chronicle.sh --skips        every commit the referee provably never
+#                                     saw, as the ledger reads it
+#   tools/chronicle.sh --audit        the same list as the chapters read it,
+#                                     and nothing else the builder does
 #
 # The last four are the same question in four shapes, and this file is the only
 # place any of it is answered - tools/flights.sh, tools/tally.sh,
@@ -218,6 +222,10 @@ is_machine() {
     | awk -F'\037' "$MACHINE"'{ found = is_machine($1, $2) } END { exit !found }'
 }
 
+# --audit below, which cannot exit where it is asked for. Set here so that the
+# guards on the build have something to read whichever way this was run.
+AUDIT=0
+
 git rev-parse --verify -q HEAD >/dev/null 2>&1 || { echo "no history yet" >&2; exit 0; }
 
 # Every commit that gets a chapter, oldest first - which is the order a capped
@@ -307,6 +315,18 @@ case "${1:-}" in
   # and a picture spent on a chapter that will never exist.
   --versions)   versions "${2:-HEAD}"; exit 0 ;;
   --pilots)     pilots "${2:-HEAD}"; exit 0 ;;
+  # The book builder run for its audit and nothing else: one line per commit it
+  # would accuse in a chapter, in the same shape --skips prints. It does not
+  # exit here because the audit lives inside the builder, which is most of this
+  # file below - so this only sets the flag, and everything the build would
+  # write is guarded on it. Nothing is painted, nothing is backfilled, and no
+  # page is removed and rewritten.
+  #
+  # Nothing in here needs it either. tools/lockstep.sh does: the two audits are
+  # two readings of one rule, one of which prices a skip at two on the ledger
+  # (GR12) while the other accuses somebody in prose, and until this they were
+  # kept together by a comment.
+  --audit)      AUDIT=1 ;;
 esac
 
 # How many versions deep the history is. The builder below skips exactly the
@@ -550,6 +570,10 @@ case "${1:-}" in
             # skip in the book builder below - same test, same exceptions: an
             # override, a rule change, a ledger receipt or a breach keeps its
             # line whatever files it rode in on.
+            #
+            # This pair is still on trust. tools/lockstep.sh holds the version
+            # question and the audits; the two silences are the same rule
+            # written in different variables, and nobody puts a commit to both.
             if (!game && bookish && !offbook && !event) next
             # The pilot wrote it, or the tagline says it, or the subject has to do.
             if (line == "" && game && $1 in tag) line = tag[$1]
@@ -570,9 +594,15 @@ RULES=$(git log --diff-filter=A --format='%H' --no-renames -- GOLDEN_RULES.md 2>
 # The audit above, reduced to a verdict: one line per commit the referee
 # provably never saw - full sha, a tab, the pilot who flew it. Read by
 # tools/tally.sh, which prices a skip at two (GR12) without depending on the
-# skipper's own hooks having written a receipt. Keep this in lockstep with the
-# audit in the book builder below - same forgiving form, same exemptions, and
-# anywhere the two could disagree, both stay quiet.
+# skipper's own hooks having written a receipt.
+#
+# The same arithmetic runs a second time in the book builder below, where it is
+# written out as prose in a chapter, and the two used to be held together by a
+# comment apiece asking the other to keep up. They are held together now:
+# --audit is the handle on the builder's copy, and tools/lockstep.sh puts the
+# same commits to both, on a scripted cabinet and on this history, every commit.
+# Same forgiving form, same exemptions, and anywhere the two could disagree,
+# both stay quiet - which is a claim the fixture makes rather than a hope.
 if [ "${1:-}" = "--skips" ]; then
   { owners; renames; history '%d %b %Y'; } \
   | awk -v RS='\036' -v FS='\037' -v rules="$RULES" "$LIB"'
@@ -653,22 +683,28 @@ if [ "${1:-}" = "--skips" ]; then
   exit 0
 fi
 
+# From here down the book is being written, and --audit is not writing one. It
+# wants the audit inside the builder and none of what the builder is for, so
+# every step that leaves something behind is guarded - most of all the sweep
+# below, which would take the chapters away and then be asked to exit without
+# putting them back.
+
 # Every version that does not have a line yet gets one now. This is what makes
 # the whole arrangement work for a pilot who never ran --install: the hooks are
 # a convenience, and a rebuild is the repair.
-sh tools/tagline.sh --backfill >/dev/null 2>&1 || true
+[ "$AUDIT" = 1 ] || sh tools/tagline.sh --backfill >/dev/null 2>&1 || true
 
 # And every version that has no plate yet gets asked for one - after the
 # taglines, because the tagline is what the plate is a picture of. It is capped,
 # it keeps what it painted, and it exits without a word on a machine that has no
 # credentials for it, which is most of them. Nothing below waits on the result.
-[ -n "${ASTEROIDS_NO_ART:-}" ] || sh tools/chronicle-art.sh --auto 2>/dev/null || true
+[ "$AUDIT" = 1 ] || [ -n "${ASTEROIDS_NO_ART:-}" ] || sh tools/chronicle-art.sh --auto 2>/dev/null || true
 
-mkdir -p docs
+[ "$AUDIT" = 1 ] || mkdir -p docs
 
 # Every page is written fresh on every rebuild, so a chapter somebody deleted
 # comes back and a chapter for a version that no longer exists does not.
-rm -f docs/v[0-9]*.html
+[ "$AUDIT" = 1 ] || rm -f docs/v[0-9]*.html
 
 # The tab wears the signet, and the drawing is not copied here: the rock, its
 # box, the three lobes and the flat hues are read off src/ui/logo.js - the one
@@ -677,7 +713,7 @@ rm -f docs/v[0-9]*.html
 # the book builds with no tab icon rather than a wrong one, and head() leaves
 # the link out.
 FAV=""
-if [ -f src/ui/logo.js ]; then
+if [ "$AUDIT" = 0 ] && [ -f src/ui/logo.js ]; then
   awk '
     # the rock spans concatenated string literals; collect until the path closes
     /const ROCK/ { grab = 1 }
@@ -727,7 +763,8 @@ if [ -f src/ui/logo.js ]; then
 fi
 
 { taglines; owners; renames; plates; faces; history '%d %B %Y|%H:%M'; } \
-  | awk -v RS='\036' -v FS='\037' -v total="$TOTAL" -v rules="$RULES" -v fav="$FAV" "$LIB"'
+  | awk -v RS='\036' -v FS='\037' -v total="$TOTAL" -v rules="$RULES" -v fav="$FAV" \
+        -v auditonly="$AUDIT" "$LIB"'
 function esc(s) { gsub(/&/,"\\&amp;",s); gsub(/</,"\\&lt;",s); gsub(/>/,"\\&gt;",s); return s }
 function att(s) { s = esc(s); gsub(/"/, "\\&quot;", s); return s }
 # JS string literals, a character at a time - the same function the digest at
@@ -1335,9 +1372,11 @@ NF < 4 { next }
       unrec = unrec "It touched " esc(owner[stolenpath[q]]) "&rsquo;s event file, " esc(stolenpath[q]) \
                     ", which GR11 leaves to " esc(owner[stolenpath[q]]) " alone. "
     # GR4 and GR5, per file: the same net-lines arithmetic the referee runs,
-    # measured against whoever first added the file, overrides honoured. Keep
-    # this in lockstep with the --skips mode above - same budgets, same
-    # exemptions.
+    # measured against whoever first added the file, overrides honoured. In
+    # lockstep with the --skips mode above - same budgets, same exemptions -
+    # and tools/lockstep.sh is what makes that a fact rather than a request:
+    # --audit is this audit with the book left unwritten, and the two lists are
+    # compared on a scripted cabinet and on this history, every commit.
     #
     # A file that moved is asked about under the name it had, the way the
     # referee asks (came_from, GR4). It is named that way too: a chapter saying
@@ -1364,6 +1403,14 @@ NF < 4 { next }
     sub(/[[:space:]]+$/, "", unrec)
   }
 
+  # --audit stops here, with the verdict and nothing else - the shape --skips
+  # prints, so tools/lockstep.sh can hold the two side by side. Everything below
+  # is the book, and the book is not being written on this run.
+  if (auditonly) {
+    if (unrec != "") printf "%s\t%s\n", $1, who
+    next
+  }
+
   # The roster counts both, and counts them for an interlude too: a rule bent
   # while nothing was on the cabinet is still a rule bent.
   if (overrides != "") bent[who]++
@@ -1382,7 +1429,9 @@ NF < 4 { next }
     # A commit that spent an override, altered a rule, went round the referee or
     # was written up by the ledger is still an event, whatever else it touched,
     # and it keeps its note. The digest above keeps the same silence - change
-    # one, change both.
+    # one, change both, and note that this is the one pair of readers in here
+    # nothing checks: the test is spelled differently at each end, and this end
+    # consults the audit while the other cannot.
     if (bookmoved && !docmoved && !refmoved && !readmemoved && !elsemoved &&
         overrides == "" && rulechange == "" && unrec == "" && tallyline == "" &&
         breach == "")
@@ -1486,6 +1535,10 @@ function head(f, ttl, cls,   b) {
   print "<div class=\"crt roll\"></div>" > f
 }
 END {
+  # --audit has already said everything it was asked for, a commit at a time.
+  # Nothing below it opens a file that is not a page of the book.
+  if (auditonly) exit 0
+
   # The roster counts versions, not commits. A pilot who has only ever changed
   # the rules has flown none, and the table says so, which is fair and which is
   # also funny.
@@ -2053,6 +2106,12 @@ END {
     close(f)
   }
 }'
+
+# The audit was the whole of what --audit wanted, and the stylesheet, the room
+# and the sidecar below all write files. Out here rather than at the top of the
+# script because the audit is inside the builder and there is no reaching it
+# without coming this far.
+[ "$AUDIT" = 1 ] && exit 0
 
 cat > docs/chronicle.css <<'CSS'
 /* THE CHRONICLE.

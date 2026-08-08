@@ -15,6 +15,15 @@
 # readers left, both in that one file - the GAME/NOTGAME pathspec and the awk
 # is_game() - and this puts the same commits to both and fails when they differ.
 #
+# There is a second question of the same shape, and it is the expensive one:
+# "would the referee have let this commit past?" The book re-referees the
+# history as it writes, once for the ledger (chronicle.sh --skips, which
+# tools/tally.sh prices at two under GR12) and once for the chapters (the
+# builder own audit, which accuses somebody in prose). Two readers again, in
+# the same file again, kept together by a comment asking each to remember the
+# other. So the same treatment: --audit is the handle on the second, and this
+# puts the same commits to both.
+#
 #   tools/lockstep.sh              the fixture, then this history
 #   tools/lockstep.sh --history    ... and ask --moved about every commit, which
 #                                  is a fork per commit and takes a moment
@@ -31,9 +40,14 @@
 #   the fixture a scripted cabinet whose commits separate every clause of the
 #               rule - the ledger exception, the machine authors, a path that
 #               starts with the letters src and is not src/ - with the expected
-#               answer written beside each one. So it is a specification as
-#               well as a comparison: three readers agreeing on the wrong
-#               answer still fails.
+#               answer written beside each one, and the audits' expected
+#               verdict beside that. So it is a specification as well as a
+#               comparison: three readers agreeing on the wrong answer still
+#               fails, and two audits agreeing on the wrong one does too. That
+#               second half is not hypothetical - both of them called a
+#               byte-identical rename a GR4 breach until the landing before
+#               this one, and a comparison on its own would have gone green
+#               through the whole of it.
 #   this history the same comparison over the real log, which is the one that
 #               matters and the one that is always true right up until it is not.
 #
@@ -158,7 +172,19 @@ machine_seat() {
   printf '%s\037%s\n' "$mn" "$me"
 }
 
-# expected | author | email | paths...
+# expected | author | email | paths | gone | blob | audit
+#
+# The last three are empty on almost every line and mean: a fresh blob of its
+# own, nothing removed, and the audits are to say nothing about it.
+#
+#   gone   paths this commit deletes
+#   blob   the case whose content this one carries, rather than a new blob.
+#          Which is the whole of what makes a move a move: git calls two
+#          identical blobs under two names a rename, and a fixture that wrote a
+#          fresh blob would be testing a delete and an add wearing the word.
+#   audit  "flag" where the two audits must accuse this commit. Empty is a
+#          claim as well - the fixture would rather say clear and be wrong than
+#          say nothing and pass.
 #
 # Every clause of the rule gets a line, and the lines that look pointless are
 # the ones that were not: src2/ is there because ^src/ and a pathspec of "src"
@@ -176,6 +202,14 @@ machine_seat() {
 # GR10 asks for. Not decoration: tools/tally.sh re-referees this history through
 # the book's own audit, and a fixture that breaks a red line by accident charges
 # its pilot for it and moves the clean landings the ledger check counts.
+#
+# The last two lines are the audits' pair, and they are Bo's on purpose: he is
+# on neither the meter's list nor the ledger's, so putting him two deep in the
+# red moves none of the numbers above. He carries off Ada's commons outright
+# and no override line, which both audits have to call - a check where nothing
+# is ever flagged is one that passes while broken. Then he moves Ada's rock to
+# a new name and changes not one byte of it, which neither audit may call, and
+# which both of them called until the landing before this one.
 cases() {
   cat <<EOF
 no|Ada Vex|ada@example.com|tools/flights.sh tools/tally.sh GOLDEN_RULES.md
@@ -197,6 +231,8 @@ no|Ground Crew|actions@github.com|styles/crt.css
 no|dependabot[bot]|49699333+dependabot[bot]@users.noreply.github.com|src/main.js
 no|the book|thebook@example.com|src/render/bloom.js
 no|Ground Crew|crew@example.com|src/audio/riff.js
+yes|Bo Renn|bo@example.com||index.html||flag
+yes|Bo Renn|bo@example.com|src/entities/boulder.js|src/entities/rock.js|4|
 EOF
 }
 
@@ -227,9 +263,14 @@ build_cabinet() {
   # fixture's own pilot two and moves every number the ledger check counts.
   {
     n=0
-    cases | while IFS='|' read -r want who mail paths; do
+    cases | while IFS='|' read -r want who mail paths gone blob audit; do
       n=$((n + 1))
       when=$((1750000000 + n * 3600))
+      # A case that names another case's blob is carrying that content rather
+      # than content of its own, which is the only way to write a move: git
+      # calls two identical blobs under two names a rename and two different
+      # ones a delete and an add, and those are the two answers this is here
+      # to tell apart.
       printf 'blob\nmark :%d\ndata <<LOCKSTEP\nfixture %d\nLOCKSTEP\n\n' "$n" "$n"
       printf 'commit refs/heads/main\nmark :%d\n' "$((100 + n))"
       printf 'author %s <%s> %d +0000\n' "$who" "$mail" "$when"
@@ -240,9 +281,13 @@ build_cabinet() {
       [ "$n" = 2 ] && printf '\nGolden-Rule-Override: GR6 - the fixture needs a pilot on the ledger\n'
       rule_change_case "$n" && printf '\nRule-Change: the fixture own scaffolding\n'
       printf 'LOCKSTEP\n'
-      for p in $paths; do printf 'M 100644 :%d %s\n' "$n" "$p"; done
+      for p in $paths; do printf 'M 100644 :%d %s\n' "${blob:-$n}" "$p"; done
+      for p in $gone; do printf 'D %s\n' "$p"; done
       printf '\n'
-      printf '%d\t%s\t%s\t%s\n' "$n" "$want" "$who" "$paths" >> "$WORK/cases.idx"
+      # A deleted path is a path the commit touched, and every reader below has
+      # to be asked about the same list the log will hand it.
+      printf '%d\t%s\t%s\t%s\t%s\n' "$n" "$want" "$who" "$paths $gone" "$audit" \
+        >> "$WORK/cases.idx"
     done
   } > "$WORK/stream"
 
@@ -257,7 +302,7 @@ build_cabinet() {
   # The marks file is how the stream says which commit each case became.
   awk -F'\t' '
       NR == FNR { split($0, a, " "); m = a[1]; sub(/^:/, "", m); sha[m] = a[2]; next }
-      { print sha[100 + $1] "\t" $2 "\t" $3 "\t" $4 }
+      { print sha[100 + $1] "\t" $2 "\t" $3 "\t" $4 "\t" $5 }
   ' "$WORK/marks" "$WORK/cases.idx" > "$WORK/expected"
   [ -s "$WORK/expected" ]
 }
@@ -353,6 +398,7 @@ fixture() {
   if [ "$got" = "v$want" ]; then ok "the cabinet is on v$want"
   else bad "--version says ${got:-nothing} where the versions list has $want in it"; fi
 
+  audits "$WORK/cabinet" "$WORK/expected"
   meter
   ledger
 }
@@ -380,6 +426,46 @@ meter() {
     if [ "$got" = "$want" ]; then ok "the meter has $who at $want"
     else bad "the meter has $who at $got, the versions list has $want"; fi
   done < "$WORK/whos"
+}
+
+# The other question, and the other pair of readers. The book re-referees every
+# commit it files, twice: --skips reduces the verdict to a list tools/tally.sh
+# prices at two a line (GR12), and the builder writes the same verdict out as
+# prose in the chapter. Same budgets, same exemptions, same forgiving form -
+# said in two comments and, until now, by nobody who could be wrong out loud.
+#
+# The expectation is checked as well as the agreement, because two copies of one
+# mistake agree perfectly. It is what the rename case is for: both audits read a
+# move as a burial, both said flag, and a comparison would have called that
+# lockstep right up to the day somebody looked at their ledger.
+audits() {
+  cab=$1; expected=$2
+  ( cd "$cab" || exit 1
+    # shellcheck disable=SC2086
+    unset $GIT_ENV_UNSET 2>/dev/null || true
+    sh "$ROOT/$BOOK" --skips > "$WORK/a.skips" 2>/dev/null
+    sh "$ROOT/$BOOK" --audit > "$WORK/a.audit" 2>/dev/null
+  )
+  awk -F'\t' -v s="$WORK/a.skips" -v b="$WORK/a.audit" '
+      FILENAME == s { skips[$1] = 1; next }
+      FILENAME == b { book[$1]  = 1; next }
+      {
+        printf "%s\t%s\t%s\t%s\t%s\n",
+               (($1 in skips) ? "flag " : "clear"), (($1 in book) ? "flag " : "clear"),
+               ($5 == "flag" ? "flag " : "clear"), $3, $4
+      }
+  ' "$WORK/a.skips" "$WORK/a.audit" "$expected" > "$WORK/a.rows"
+
+  while IFS="$(printf '\t')" read -r a b want who paths; do
+    label="$who:$paths"
+    if [ "$a" = "$b" ] && [ "$b" = "$want" ]; then
+      ok "$want $label"
+    elif [ "$a" = "$b" ]; then
+      bad "both audits say $a, the rule says $want   -   $label"
+    else
+      bad "--skips says $a and --audit says $b   -   $label"
+    fi
+  done < "$WORK/a.rows"
 }
 
 # The same again for tools/tally.sh, which counts clean landings off the same
@@ -452,6 +538,25 @@ this_history() {
     BAD=$((BAD + $(grep -c '	' "$WORK/h.diff")))
   else
     ok "${n:-0} commits, and both readers picked the same $v of them"
+  fi
+
+  # And the other pair, over the same log. No expectation to check against out
+  # here - what the referee would have said about a commit landed two years ago
+  # is what the audits say it is - so this is the comparison alone, which is
+  # exactly the half the fixture above cannot be trusted to do on its own.
+  sh "$BOOK" --skips 2>/dev/null | sort > "$WORK/h.skips"
+  sh "$BOOK" --audit 2>/dev/null | sort > "$WORK/h.audit"
+  if cmp -s "$WORK/h.skips" "$WORK/h.audit"; then
+    ok "both audits flagged the same $(awk 'END { print NR + 0 }' "$WORK/h.skips") of them"
+  else
+    # Whichever side has it, named by the side that does not.
+    comm -3 "$WORK/h.skips" "$WORK/h.audit" \
+      | while IFS="$(printf '\t')" read -r one two three; do
+          if [ -n "$three" ]; then sha=$two; who=$three; which='--audit alone'
+          else                     sha=$one; who=$two;   which='--skips alone'; fi
+          bad "$(printf '%.8s' "$sha") - flagged by $which   $who: $(git log -1 --format='%s' "$sha" 2>/dev/null)"
+        done
+    BAD=$((BAD + $(comm -3 "$WORK/h.skips" "$WORK/h.audit" | grep -c .)))
   fi
 
   [ "$DEEP" = 1 ] || return 0
