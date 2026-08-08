@@ -46,10 +46,11 @@
        everybody except the pilot who wrote it, which is the entire reason to
        write a good one.`],
     ["bend", "THE RULES",
-      `Thirteen, and a referee that reads every change. Most cannot be crossed
-       at all; three can be bent, in writing, in the open. The field reads the
-       number afterwards: bend enough and the ambushes come sooner, and at the
-       far end your own stop sparing you.`],
+      `Fourteen, and a referee that reads every change. Most cannot be crossed
+       at all; four can be bent, in writing, in the open, and one of the four
+       asks when you last played the thing you are building. The field reads
+       the number afterwards: bend enough and the ambushes come sooner, and at
+       the far end your own stop sparing you.`],
     ["cup", "THE RECORD",
       `A score reaches the board one way. You die, the game seals the whole
        flight into a tape, and somebody checks the seal before it lands. There

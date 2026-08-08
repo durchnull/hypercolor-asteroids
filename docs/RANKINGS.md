@@ -7,7 +7,9 @@ flight lands here. Nobody types their own score in; the tape is the only way
 onto this page, and a tape with a broken seal ranks nowhere.
 
 Ranked by score. The board keeps the twenty best flights; the log below keeps
-them all.
+them all — which is also what makes this page the flight meter. A tape here
+buys its pilot three landings, and the fourth one has to explain itself
+(GR14). A bad evening ranks low and counts the same.
 
 ## THE BOARD
 
