@@ -242,9 +242,15 @@ function is_book(p) {
 }
 function is_stat(l) { return (l ~ /^(-|[0-9]+)\t(-|[0-9]+)\t./) }
 function is_raw(l)  { return (l ~ /^:[0-7]+ [0-7]+ [0-9a-f]+ [0-9a-f]+ [A-Z]/) }
+# is_referee in tools/golden-check.sh is the list this one has to match, for
+# the same reason is_commons below does. The audit re-referees the history off
+# a commit alone, so a path the referee treats as its own machinery and this
+# treats as game code reads as a GR10 breach that never happened - and charges
+# somebody two for it.
 function is_referee(p) {
   return (p == "CLAUDE.md" || p == "GOLDEN_RULES.md" || p == ".gitattributes" ||
           p == ".env.example" || p ~ /^tools\// || p ~ /^\.githooks\// ||
+          p ~ /^\.github\// ||
           p == ".claude/settings.json" || p ~ /^\.claude\/skills\//)
 }
 # The shared ground GR5 protects, and is_commons in tools/golden-check.sh is
@@ -856,6 +862,7 @@ NF < 4 { next }
       p = ns[3]
       if (is_game(p)) gamefiles++
       else if (p ~ /^tools\// || p ~ /^\.githooks\// || p ~ /^\.claude\// ||
+               p ~ /^\.github\// ||
                p == "CLAUDE.md" || p == "GOLDEN_RULES.md") refmoved = 1
       else if (is_book(p)) bookmoved = 1
       else if (p ~ /^docs\//) docmoved = 1

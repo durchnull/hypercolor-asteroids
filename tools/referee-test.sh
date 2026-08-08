@@ -648,6 +648,32 @@ case_ GR10 "a screenshot the pilot actually staged still counts"
   stage; check pre-commit
   blocks GR10
 
+case_ GR12 "the audit and the referee mean the same thing by 'the rules'"
+  # Two readers decide what counts as referee machinery: is_referee in
+  # golden-check.sh, and its twin in chronicle.sh that re-referees the history
+  # for GR12. Divergence does not look like a bug. It looks like a pilot who
+  # went round the referee - the audit decides a rule-only commit moved the
+  # game as well, calls it a GR10 breach with nothing written down, and puts
+  # two on somebody's tally for a commit the referee cleared. So both are asked
+  # about every kind of path either of them knows.
+  for p in CLAUDE.md GOLDEN_RULES.md .gitattributes .env.example \
+           tools/nothing.sh .githooks/post-merge .github/workflows/referee.yml \
+           .claude/settings.json .claude/skills/scout/SKILL.md; do
+    mkdir -p "$(dirname "$p")" 2>/dev/null
+    printf '# the rules move\n' >> "$p"
+  done
+  git add -A >/dev/null 2>&1
+  git commit -q -m "Every kind of rule file at once
+
+Rule-Change: to see whether both readers agree that is all this commit is" \
+    >/dev/null 2>&1
+  sh tools/chronicle.sh --skips > "$OUT" 2>&1
+  if [ -s "$OUT" ]; then
+    verdict no "the audit called a rule-only commit a red line breach - the lists have drifted"
+  else
+    verdict yes
+  fi
+
 # --- refereeing a pilot who is not in the room --------------------------------
 #
 # Everything above is the referee reading a tree somebody is standing in front
