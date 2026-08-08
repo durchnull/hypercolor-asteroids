@@ -271,34 +271,22 @@ seed_of_name() {
 # Everybody the history has ever heard of, which is the same roster the book
 # puts on the cover - a pilot who has only ever changed the rules has flown no
 # versions and still has a name in here, so they still get a face.
-# Everybody who has ever authored a commit here, machines excepted.
 #
 # A workflow files the book's own paperwork after a push, and it has to author
-# that commit as somebody - so an account that is not a person now appears in
-# the history and, read naively, asks for a portrait like anybody else. It got
-# one, once, before this line existed. That matters more here than anywhere
-# else in the book: a plate can be repainted and a face cannot, by anybody,
-# ever, so a machine that slips into this list is in it for good.
+# that commit as somebody - so an account that is not a person appears in the
+# history and, read naively, asks for a portrait like anybody else. It got one,
+# once. That matters more here than anywhere else in the book: a plate can be
+# repainted and a face cannot, by anybody, ever, so a machine that slips into
+# this list is in it for good.
 #
-# Filtered on the address rather than the name, because the name is somebody's
-# free choice and the [bot] suffix is github's own mark. The literal name this
-# repository's workflow commits under is spelled out beside it, so that a
-# future reader can find both ends of the arrangement from either one.
-#
-# Both names it has ever filed under are listed, and this is the file where
-# that matters: a plate can be repainted and a face cannot, so a machine that
-# slips through here is in the book for good. Cheaper to keep a retired name
-# in the list than to find out it was load-bearing.
+# Which is exactly why the test is no longer in this file. It was, and it was
+# one of three copies, each carrying a comment asking the other two to keep up.
+# The version list already comes from tools/chronicle.sh; the roster comes from
+# there now too, and the question has one answer. If that call ever fails there
+# is no roster and nothing is painted, which is the direction this file wants
+# to fail in.
 pilots() {
-  git log --format='%an%x1f%ae' 2>/dev/null \
-  | awk -F'\037' '
-      $1 == "" { next }
-      $1 == "Ground Crew" { next }              # .github/workflows/book.yml
-      $1 == "the book" { next }                 # what it filed under before
-      $2 ~ /\[bot\]@/ { next }                  # github marks its own
-      $2 ~ /^actions@github\.com$/ { next }
-      { print $1 }' \
-  | sort -u
+  sh tools/chronicle.sh --pilots 2>/dev/null
 }
 
 slug_of() {

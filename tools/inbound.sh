@@ -146,11 +146,13 @@ if [ -f tools/flights.sh ]; then
   per=$(sh tools/flights.sh --per 2>/dev/null) || per=3
   : > "$TMP/meter"
   awk -F'\t' '{ print $2 }' "$TMP/rows" | sort -u | while IFS= read -r who; do
+    # What counts as a version is tools/chronicle.sh's question, and this asks
+    # it one commit at a time rather than keeping a path list of its own. It
+    # also gets the root commit right, which a diff against r^ does not.
     landed=0
     for r in $REVS; do
       [ "$(git log -1 --format='%an' "$r")" = "$who" ] || continue
-      git diff --name-only "$r^" "$r" 2>/dev/null \
-        | grep -Eq '^(index\.html|src/|styles/)' && landed=$((landed + 1))
+      sh tools/chronicle.sh --moved "$r" 2>/dev/null && landed=$((landed + 1))
     done
     [ "$landed" = 0 ] && continue
     m=$(sh tools/flights.sh --count "$who" 2>/dev/null) || m=0

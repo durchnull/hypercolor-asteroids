@@ -5,9 +5,9 @@
 # GR14 says a sealed flight buys three landings. Nobody writes that number down
 # and nobody edits it: it is read off the history the way tools/tally.sh reads
 # the ledger and tools/chronicle.sh reads the book. A flight is a commit that
-# put a tape on the board in docs/RANKINGS.md; a version is a commit that moved
-# index.html, src/ or styles/. Count one since the other, per pilot, and that is
-# the whole of it.
+# put a tape on the board in docs/RANKINGS.md; which commits are versions is
+# tools/chronicle.sh's answer and this asks for it. Count one since the other,
+# per pilot, and that is the whole of it.
 #
 #   tools/flights.sh                 the standings, for a human
 #   tools/flights.sh --count NAME    versions NAME has landed since flying
@@ -127,29 +127,23 @@ pending_flight() {
 # pilot, versions since they last flew, then the last flight itself: date,
 # score, wave, time - or empty when they never have.
 #
-# A landing here is a version somebody built. The book counts the ledger's own
-# receipts as versions too, which is the book's business; a receipt the hooks
-# wrote is nobody's evening at the keyboard and does not spend a tape, exactly
-# as tools/tally.sh does not let one earn a clean landing back.
+# Which commits are versions is not decided here. This used to keep its own copy
+# of the judgement, with a comment asking it to stay in step with two others; it
+# asks tools/chronicle.sh instead, folded into the stream ahead of the log the
+# way the board's own flights are. That is not tidiness: the copy was already
+# wrong. It knew about the generated ledger and not about the machine that files
+# it, so the workflow that rebuilds the book after every push had a row on the
+# meter and versions to its name, and nothing in here could have noticed.
 rows() {
-  { board_flights | awk -F'\t' '
+  { sh tools/chronicle.sh --versions "$HIST" 2>/dev/null \
+      | awk '{ printf "\036VERSION\037%s", $1 }'
+    board_flights | awk -F'\t' '
       { printf "\036FLIGHT\037%s\037%s\037%s\037%s\037%s\037%s", $1, $2, $3, $4, $5, $6 }'
-    git log "$HIST" --no-merges --format='%x1e%H%x1f%an%x1f' --name-only 2>/dev/null; } \
+    git log "$HIST" --no-merges --format='%x1e%H%x1f%an%x1f' 2>/dev/null; } \
   | awk -v epoch="$EPOCH" '
       BEGIN { RS = "\036"; FS = "\037" }
 
-      # A commit is a version if it moved the page somebody opens. The ledger is
-      # generated and rides along with whatever comes next, so it never makes a
-      # commit a version - the same judgement tools/tally.sh makes.
-      function isversion(files,   n, L, i, t) {
-        n = split(files, L, "\n")
-        for (i = 1; i <= n; i++) {
-          t = L[i]
-          if (t == "" || t == "src/game/ledger.js") continue
-          if (t == "index.html" || t ~ /^src\// || t ~ /^styles\//) return 1
-        }
-        return 0
-      }
+      $1 == "VERSION" { version[$2] = 1; next }
 
       # Flights come past first and newest first, so the first row for a pilot
       # is their latest. Held by sha rather than by author: whoever committed
@@ -162,10 +156,10 @@ rows() {
         next
       }
 
-      # sha, author, then the file list git wrote after the format string
+      # sha, then author
       NF >= 3 {
         sha = $1; who = $2
-        ver = isversion($3)
+        ver = (sha in version)
         if (ver) seen[who] = 1
 
         # The tape clears the meter before the same commit spends it, so a

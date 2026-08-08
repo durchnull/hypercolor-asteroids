@@ -80,3 +80,11 @@ jobs:
       # asks the referee about it.
       - name: the miniature cabinet
         run: sh tools/referee-test.sh
+
+      # "Does this commit count as a version" decides the number on the cabinet,
+      # the chapter, the plate, the clean landing and the meter. The hooks run
+      # this too, on the fixture and on the history in bulk; --history is the
+      # expensive half - --moved asked once per commit, the way the hooks ask
+      # it - and a runner has the time for it where a pilot mid-landing does not.
+      - name: one question, one answer
+        run: sh tools/lockstep.sh --history

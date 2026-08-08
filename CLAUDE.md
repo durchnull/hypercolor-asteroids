@@ -86,6 +86,14 @@ Everything hangs off a feature registry, and that is the one idea you need.
   landings, and this reads the meter off the history (GR14). `--roll` shows the
   room, `--count <name>` answers for one pilot. Nothing to install and nothing
   to edit; the board is the record.
+- **What counts as a version is one question with one answer, and it lives in
+  `tools/chronicle.sh`.** `--versions` lists them, `--moved` asks about one,
+  `--pilots` says who is a person rather than a workflow, `--game-paths` and
+  `--is-game` answer about paths. The meter, the ledger, the painter, the
+  tagline and the referee all ask; none of them keeps a copy, and writing a
+  fresh one is a thing the referee notices. `tools/lockstep.sh` is why: it puts
+  the same commits to every reader still standing and fails when the answers
+  differ, on a scripted fixture and on this history, every commit.
 - `tools/chronicle-art.sh` — paints one plate per version into `docs/art/` and
   one face per pilot into `docs/faces/`, once each, if the book-writer's `.env`
   holds Cloudflare credentials (see `.env.example`). Without them it exits

@@ -638,14 +638,15 @@ check_gr6() {
 check_gr14() {
   [ -f tools/flights.sh ] || return 0
 
-  version=0
-  while IFS= read -r f; do
-    is_generated "$f" && continue
-    case "$f" in
-      index.html|src/*|styles/*) version=1; break ;;
-    esac
-  done < "$TMP/files"
-  [ "$version" = 1 ] || return 0
+  # Whether this is a version at all is not decided here. It was, off a copied
+  # path list, and the referee saying "version" where the book says otherwise is
+  # a pilot grounded for a landing that never gets a chapter. $BOOK answers it
+  # for the index, the worktree and a commit alike, which is exactly the three
+  # modes below.
+  case "$MODE" in
+    rev) sh "$BOOK" --moved "$REV" 2>/dev/null || return 0 ;;
+    *)   sh "$BOOK" --moved 2>/dev/null || return 0 ;;
+  esac
 
   per=$(sh tools/flights.sh --per 2>/dev/null) || per=3
   case "$MODE" in
@@ -853,16 +854,43 @@ check_message() {
     warn GR9 "no Chronicle: line - the book will have to make do with your subject"
 }
 
+# ---------------------------------------------------------------------------
+# The referee's own arithmetic.
+#
+# Not a golden rule - a rule needs somebody to have broken it, and nobody breaks
+# this one on purpose. "Does this commit count as a version" decides the number
+# on the cabinet, the chapter in the book, the plate, the clean landing on the
+# ledger and the meter under GR14, and it used to be answered in seven places
+# that were asked by comment to keep up. tools/lockstep.sh is what asks them
+# instead. When it says they disagree, several of the checks above are quietly
+# measuring different commits from the ones the book will file.
+#
+# Only for a pilot who is here. In --rev the tools under review are whatever
+# that commit shipped rather than what is in this tree, and in --json this runs
+# after every keystroke somebody's editor decides to save.
+# ---------------------------------------------------------------------------
+check_lockstep() {
+  [ -f tools/lockstep.sh ] || return 0
+  case "$MODE" in rev) return 0 ;; esac
+  [ "$FORMAT" = text ] || return 0
+  out=$(sh tools/lockstep.sh 2>&1) && return 0
+  fail LOCK "the readers of what counts as a version no longer agree"
+  printf '%s\n' "$out" | sed -n 's/^  *no  */   /p' | while IFS= read -r l; do
+    note "$l"
+  done
+  note "tools/lockstep.sh says it in full"
+}
+
 # --- run --------------------------------------------------------------------
 
 case "$STAGE" in
   pre-commit) check_gr1; check_gr2; check_gr7; check_gr10; check_gr11; check_gr12
-              check_gr13; check_gr39 ;;
+              check_gr13; check_gr39; check_lockstep ;;
   commit-msg) check_gr45; check_gr6; check_gr10; check_gr12; check_gr14
               check_breach; check_message ;;
   *)          check_gr1; check_gr2; check_gr7; check_gr10; check_gr11
               check_gr45; check_gr6; check_gr12; check_gr13; check_gr14
-              check_breach; check_gr39 ;;
+              check_breach; check_gr39; check_lockstep ;;
 esac
 
 if [ ! -s "$TMP/out" ]; then

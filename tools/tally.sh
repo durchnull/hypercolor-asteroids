@@ -59,9 +59,16 @@ rows() {
   # a skip costs its two even when the skipper's hooks never wrote a receipt -
   # and deduplicated against the receipts, so a witnessed skip still costs two
   # rather than four.
+  # And which commits are versions, from the same place, for the same reason:
+  # a clean landing is a version somebody flew, and this used to decide that for
+  # itself off a copied path list. The copy did not know that the workflow
+  # filing the book is not a pilot, so a machine could have earned clean
+  # landings against a name that cannot fly.
   { sh tools/chronicle.sh --skips 2>/dev/null \
       | awk -F'\t' '{ printf "\036SKIP\037%s\037%s", $1, $2 }'
-    git log --no-merges --format='%x1e%H%x1f%an%x1f%B%x1f' --name-only 2>/dev/null; } \
+    sh tools/chronicle.sh --versions 2>/dev/null \
+      | awk '{ printf "\036VERSION\037%s", $1 }'
+    git log --no-merges --format='%x1e%H%x1f%an%x1f%B%x1f' 2>/dev/null; } \
   | awk -v me="$ME" -v plus="$PLUS" '
       # A message still being written is the newest thing there is, so it goes
       # through first: a pending bend resets its pilot before any landed
@@ -94,7 +101,7 @@ rows() {
         return 0
       }
 
-      function bend(who, body, files, sha,   n, L, i, t, lt, u, r, nm, ver) {
+      function bend(who, body, sha,   n, L, i, t, lt, u, r, nm) {
         n = split(body, L, "\n")
         for (i = 1; i <= n; i++) {
           t = L[i]
@@ -127,23 +134,17 @@ rows() {
           add(who, 2, "the referee itself")
 
         # A landing that moved the game and bent nothing is a clean version,
-        # counted only until the pilot`s most recent bend. The ledger file
-        # itself does not make a commit a version here, or every bend would
-        # earn back a third of its cost in the receipt that records it.
+        # counted only until the pilot`s most recent bend. The book leaves the
+        # generated ledger out of what makes a commit a version, or every bend
+        # would earn back a third of its cost in the receipt that records it.
         if (pending) return
-        ver = 0
-        n = split(files, L, "\n")
-        for (i = 1; i <= n; i++) {
-          t = L[i]
-          if (t == "" || t == "src/game/ledger.js") continue
-          if (t == "index.html" || t ~ /^src\// || t ~ /^styles\//) { ver = 1; break }
-        }
-        if (ver && !seen[who]) clean[who]++
+        if ((sha in version) && !seen[who]) clean[who]++
       }
 
-      $1 == "SKIP" { skip[$2] = 1; next }
+      $1 == "SKIP"    { skip[$2] = 1; next }
+      $1 == "VERSION" { version[$2] = 1; next }
 
-      NF >= 3 { bend($2, $3, (NF >= 4 ? $4 : ""), $1) }
+      NF >= 3 { bend($2, $3, $1) }
 
       END {
         for (w in bends) if (bends[w] > 0) printf "%s\t%d\t%d\t%s\n", w, bends[w], clean[w] + 0, last[w]

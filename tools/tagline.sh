@@ -40,8 +40,13 @@ FILE=docs/taglines.tsv
 
 # One definition of what the game is, and it lives in chronicle.sh, because
 # that is the script that decides what counts as a version.
+#
+# There used to be a copy of the list on the next line, for the day the ask
+# failed. A fallback to a copy is how a definition ends up with two values and
+# no argument about which is right, and a tagline is decoration: without the
+# book there is nothing here worth guessing at.
 GAME=$(sh tools/chronicle.sh --game-paths 2>/dev/null | tr '\n' ' ')
-[ -n "$GAME" ] || GAME='index.html src styles'
+[ -n "$GAME" ] || exit 0
 
 # --- the record -------------------------------------------------------------
 

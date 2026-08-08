@@ -93,6 +93,14 @@
 #   tools/chronicle.sh --recent N     plain text digest of the last N commits
 #   tools/chronicle.sh --moved [rev]  quietly: did that touch the game?
 #   tools/chronicle.sh --game-paths   what counts as the game, one path a line
+#   tools/chronicle.sh --versions [r] every version, oldest first, as sha
+#   tools/chronicle.sh --pilots [r]   everybody the history calls a person
+#   tools/chronicle.sh --is-game P... which of those paths are the game
+#
+# The last four are the same question in four shapes, and this file is the only
+# place any of it is answered - tools/flights.sh, tools/tally.sh,
+# tools/chronicle-art.sh and tools/tagline.sh all ask rather than keeping a copy.
+# tools/lockstep.sh is what makes that a fact rather than a promise.
 #
 # What a commit can put in the book, all optional, all read from the message:
 #
@@ -163,9 +171,8 @@ GAME='index.html src styles'
 # rather than by one per idea.
 #
 # tools/flights.sh and tools/tally.sh both already made exactly this judgement,
-# each with a comment saying so. This is the third reader agreeing with them,
-# and it has to be applied everywhere the list above is used rather than only
-# in moved(): the count below is what names a version.
+# each with a comment saying so. Neither of them makes it any more: they ask
+# --versions below, and this file is where the exception lives.
 NOTGAME=':!src/game/ledger.js'
 
 # And not every name in the history is somebody. A workflow files the book's own
@@ -173,12 +180,11 @@ NOTGAME=':!src/game/ledger.js'
 # account that is not a person is in the log - and read naively it flies versions
 # and sits on the roster like anybody else. It did both.
 #
-# tools/chronicle-art.sh got here first, where it matters most: a face is painted
-# once and never repainted, so a machine that slips into that list is in it for
-# good. There are three copies of this test now - the awk one here, the shell one
-# below, and the painter's - and they have to stay in lockstep, because the book
-# and the faces disagreeing about who is a pilot is how a machine ends up with a
-# portrait and no name to hang it on.
+# It matters most where a picture is involved: a face is painted once and never
+# repainted, so a machine that slips onto the roster is in the book for good.
+# tools/chronicle-art.sh used to keep its own copy of this test for exactly that
+# reason, and a copy is a promise rather than a fact. It asks --pilots now, and
+# this is the only place the question is answered.
 #
 # Filtered on the address rather than the name, because the name is somebody's
 # free choice and the [bot] suffix is github's own mark. The literal name this
@@ -201,70 +207,118 @@ function is_machine(who, mail) {
 }
 '
 
-# The same question in shell, for the places that ask it about one commit rather
-# than about a stream. Same answers, same order.
+# The same question asked about one seat rather than about a stream. It used to
+# be a second implementation in shell, sitting under the first and asked to stay
+# in step with it by a comment. It is the same awk, handed one record - which
+# costs a process, so the callers below ask it last and only when the answer can
+# still change anything.
+US=$(printf '\037')
 is_machine() {
-  case "$1" in "Ground Crew" | "the book") return 0 ;; esac
-  case "$2" in *'[bot]@'* | actions@github.com) return 0 ;; esac
-  return 1
+  printf '%s\n' "$1" \
+    | awk -F'\037' "$MACHINE"'{ found = is_machine($1, $2) } END { exit !found }'
 }
 
 git rev-parse --verify -q HEAD >/dev/null 2>&1 || { echo "no history yet" >&2; exit 0; }
 
-# How many versions deep the history is. --full-history so that path limiting
-# does not quietly simplify a version out of the count, and one pass through
-# is_machine because a version is something a person landed. The builder below
-# skips exactly the same commits: a counter that numbers what the builder
-# declines to file leaves a chapter that renders as nothing at all.
-TOTAL=$(git log --format='%an%x1f%ae' --full-history --no-merges HEAD -- $GAME "$NOTGAME" \
-        | awk -F'\037' "$MACHINE"'!is_machine($1, $2) { n++ } END { print n + 0 }')
+# Every commit that gets a chapter, oldest first - which is the order a capped
+# painting run wants, and the order a count wants to be counted in.
+#
+# --full-history so that path limiting does not quietly simplify a version out
+# of the list, and one pass through is_machine because a version is something a
+# person landed.
+#
+# This is the one answer. TOTAL below counts it, --versions prints it,
+# tools/flights.sh and tools/tally.sh fold it into their own streams, and
+# tools/chronicle-art.sh paints from it. What cannot read it is the awk is_game()
+# further down, which is asked about a path inside a stream that is already
+# flowing and cannot stop to run git - so that one is a second reader by
+# necessity rather than by choice, and tools/lockstep.sh puts the same commits
+# to both and fails when they disagree.
+versions() {
+  git log --format='%H%x1f%an%x1f%ae' --full-history --no-merges --reverse "${1:-HEAD}" \
+          -- $GAME "$NOTGAME" 2>/dev/null \
+    | awk -F'\037' "$MACHINE"'!is_machine($2, $3) { print $1 }'
+}
+
+# Everybody the history has ever heard of, machines excepted. The roster on the
+# cover, and the list tools/chronicle-art.sh paints a face from.
+pilots() {
+  git log --format='%an%x1f%ae' "${1:-HEAD}" 2>/dev/null \
+    | awk -F'\037' "$MACHINE"'$1 != "" && !is_machine($1, $2) { print $1 }' \
+    | sort -u
+}
 
 # Did this commit touch the game? With no argument: will the next one?
+#
+# The cheap half of the question first. Most commits leave the cabinet alone,
+# and for those the answer is one command and nobody has to be identified at
+# all - which matters because this is asked once per commit by the hooks, by the
+# referee and, seventeen times in a row, by tools/lockstep.sh.
 moved() {
-  # Whoever is asking, a machine's commit is not a version. The count above
-  # leaves those out and the book declines to file them, so this has to agree or
-  # the hooks stamp a number onto a commit that never gets a chapter.
   if [ -n "${1:-}" ]; then
-    flier=$(git log -1 --format='%an' "$1" 2>/dev/null)
-    flier_mail=$(git log -1 --format='%ae' "$1" 2>/dev/null)
-  else
-    flier=$(git config user.name 2>/dev/null)
-    flier_mail=$(git config user.email 2>/dev/null)
-  fi
-  is_machine "$flier" "$flier_mail" && return 1
-
-  if [ -n "${1:-}" ]; then
-    [ -n "$(git diff-tree --root -r --name-only --no-commit-id "$1" -- $GAME "$NOTGAME" 2>/dev/null)" ]
+    hit=$(git diff-tree --root -r --name-only --no-commit-id "$1" -- $GAME "$NOTGAME" 2>/dev/null)
   elif [ -n "$(git diff --cached --name-only HEAD 2>/dev/null)" ]; then
     # Something is staged, so the index is the question being asked - which is
     # also the case inside the hooks, including for git commit -a.
-    [ -n "$(git diff --cached --name-only HEAD -- $GAME "$NOTGAME" 2>/dev/null)" ]
+    hit=$(git diff --cached --name-only HEAD -- $GAME "$NOTGAME" 2>/dev/null)
   else
     # Nobody is committing; a pilot is asking mid-flight. Answer about the
     # worktree, untracked files included - a brand new feature is a file git
     # has never heard of.
-    [ -n "$(git status --porcelain -- $GAME "$NOTGAME" 2>/dev/null)" ]
+    hit=$(git status --porcelain -- $GAME "$NOTGAME" 2>/dev/null)
   fi
+  [ -n "$hit" ] || return 1
+
+  # And then who flew it, because a machine's commit is not a version whoever is
+  # asking. The list above leaves those out and the book declines to file them,
+  # so this has to agree or the hooks stamp a number onto a commit that never
+  # gets a chapter.
+  if [ -n "${1:-}" ]; then
+    seat=$(git log -1 --format="%an${US}%ae" "$1" 2>/dev/null)
+  else
+    seat="$(git config user.name 2>/dev/null)$US$(git config user.email 2>/dev/null)"
+  fi
+  is_machine "$seat" && return 1
+  return 0
 }
 
 case "${1:-}" in
   --game-paths) printf '%s\n' $GAME; exit 0 ;;
   --moved)      moved "${2:-}"; exit $? ;;
-  --versions)
-    # Every commit that gets a chapter, oldest first, which is the order a
-    # capped painting run wants: fill the earliest gap rather than a random one.
-    #
-    # This exists because --game-paths was being read as the answer to a
-    # different question. A path list says what the game is; it cannot say that
-    # the generated ledger under src/ is not the game, and it cannot say that
-    # nobody flew the commit a workflow authored. tools/chronicle-art.sh asked
-    # it anyway and painted a plate for two commits the book does not file -
-    # which is a Cloudflare call and a picture spent on a chapter that will
-    # never exist. One question, asked here, where the rule actually lives.
-    git log --format='%H%x1f%an%x1f%ae' --full-history --no-merges --reverse HEAD \
-            -- $GAME "$NOTGAME" 2>/dev/null \
-      | awk -F'\037' "$MACHINE"'!is_machine($2, $3) { print $1 }'
+  # The same function asked about a list, once, in one process. tools/lockstep.sh
+  # asks it about every commit in a fixture history, and this file is seven
+  # thousand lines for a shell to read before it can answer anything - so the
+  # question that gets asked in a loop is worth being able to ask in one.
+  --moved-each)
+    shift
+    for r in "$@"; do
+      if moved "$r"; then printf 'yes\t%s\n' "$r"; else printf 'no\t%s\n' "$r"; fi
+    done
     exit 0 ;;
+  # Every version, oldest first, optionally as of some other tip than HEAD -
+  # which is what tools/flights.sh wants when it reads the meter as it stood
+  # before a commit landed.
+  #
+  # This exists because --game-paths was being read as the answer to a different
+  # question. A path list says what the game is; it cannot say that the generated
+  # ledger under src/ is not the game, and it cannot say that nobody flew the
+  # commit a workflow authored. tools/chronicle-art.sh asked it anyway and
+  # painted a plate for two commits the book does not file - a Cloudflare call
+  # and a picture spent on a chapter that will never exist.
+  --versions)   versions "${2:-HEAD}"; exit 0 ;;
+  --pilots)     pilots "${2:-HEAD}"; exit 0 ;;
+esac
+
+# How many versions deep the history is. The builder below skips exactly the
+# commits this leaves out: a counter that numbers what the builder declines to
+# file leaves a chapter that renders as nothing at all.
+#
+# Below the questions above rather than beside them, because it walks the whole
+# log and they do not. --moved is asked once per commit by the hooks, by the
+# referee and by tools/lockstep.sh, and it has no use for a count.
+TOTAL=$(versions | awk 'END { print NR + 0 }')
+
+case "${1:-}" in
   --version)    printf 'v%s\n' "$TOTAL"; exit 0 ;;
   --next)
     if moved; then printf 'v%s\n' "$((TOTAL + 1))"; else printf -- '-\n'; fi
@@ -347,12 +401,17 @@ history() {
 # referee's own definition or it is just an opinion.
 LIB=$MACHINE'
 function is_game(p) {
-  # The same exception NOTGAME makes above, and it has to be the same one or
-  # the two halves disagree about what a version is: the counter would decline
-  # to number a commit while the builder still filed it as one, and a commit
-  # classed as a version with no number to its name renders as nothing at all.
-  # That is how three ledger receipts - the record of somebody bending a rule -
-  # went missing from the book on the first attempt at this.
+  # GAME and NOTGAME above, said again in the one language that cannot ask git.
+  # The stream is already flowing by the time a path arrives here, so this is
+  # the second reader of the question and the only one that had to be: the
+  # counter declining to number a commit while the builder still filed it as one
+  # is a chapter that renders as nothing at all, and that is how three ledger
+  # receipts - the record of somebody bending a rule - went missing from the
+  # book on the first attempt at this.
+  #
+  # Nothing is asked to remember that any more. tools/lockstep.sh puts the same
+  # commits to this function and to the pathspec above, and fails when the two
+  # answer differently; --is-game below is how it gets to ask.
   if (p == "src/game/ledger.js") return 0
   return (p == "index.html" || p ~ /^src\// || p ~ /^styles\//)
 }
@@ -400,6 +459,16 @@ function is_gutted_ground(p) {
 '
 
 case "${1:-}" in
+  # Which of these paths the awk above calls the game, printed back. Nothing in
+  # here needs it and nothing in here uses it; tools/lockstep.sh does, because a
+  # reader that cannot be asked a question cannot be caught disagreeing with the
+  # pathspec that asks the same one.
+  --is-game)
+    shift
+    if [ $# -gt 0 ]; then printf '%s\n' "$@"; else cat; fi \
+      | awk "$LIB"'$0 != "" && is_game($0) { print }'
+    exit 0 ;;
+
   --recent)
     n=${2:-5}
     { taglines; history '%d %b %Y' "$n"; } \
