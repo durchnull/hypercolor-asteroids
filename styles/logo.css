@@ -27,6 +27,39 @@
   gap: calc(var(--logo) * 0.52);
 }
 
+/* On the splash the mark rides over the deck rather than sitting in a row
+   above it, so it carries its own ground — and only its own. Everything else
+   up there is see-through, which is the point: the reading runs on underneath
+   and you can watch it go. The plate is the shape of the thing standing on it
+   and not one pixel wider, so it is a badge rather than a bar.
+
+   Round, because what is inside it is a rock printed three times and two words
+   with no corners between them, and because a rectangle up there would be a
+   seventh panel in a rack of six. Everything is in `--logo`, so it folds with
+   the mark instead of being a fixed hem the lockup shrinks away from. */
+.splash .lockup {
+  padding: calc(var(--logo) * 0.3) calc(var(--logo) * 1.05);
+  border-radius: 999px;
+  background: rgba(12, 5, 24, 0.66);
+  border: 1px solid rgba(160, 75, 255, 0.3);
+  box-shadow: 0 0 30px rgba(160, 75, 255, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+/* Same trade the rack makes, for the same reason, with the same scoping — see
+   the long note in overlay.css. */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .splash:not([hidden]) .lockup {
+    background:
+      linear-gradient(148deg,
+        rgba(255, 255, 255, 0.15),
+        rgba(255, 255, 255, 0.035) 40%,
+        rgba(255, 255, 255, 0) 70%),
+      rgba(12, 5, 24, 0.34);
+    -webkit-backdrop-filter: blur(18px) saturate(1.8) brightness(1.45);
+    backdrop-filter: blur(18px) saturate(1.8) brightness(1.45);
+  }
+}
+
 /* The signet drifts with the rack (overlay.css, `cycle`), which means its
    `filter` is spoken for — hence the bloom being painted into the drawing
    instead of hung off the element. The three hues stay the same distance apart

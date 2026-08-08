@@ -11,6 +11,11 @@
 # Local Claude Code settings
 .claude/settings.local.json
 
+# What this machine has asked Claude to watch for. Local, like the notebook it
+# writes into — and the sabotage axis keeps an index of open holes, which is
+# not a thing to publish to the room it describes.
+.claude/observe/
+
 # Credentials, and the one file in here that must never be committed. Only
 # tools/chronicle-art.sh reads it, only on the machine of whoever is writing
 # the book, and nothing in the game has ever heard of it. See .env.example.

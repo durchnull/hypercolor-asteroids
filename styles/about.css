@@ -1,0 +1,65 @@
+/* WHAT THIS IS — the label on the machine. Contents come from src/ui/about.js;
+   the panel around them is part of the rack, and overlay.css draws that.
+
+   Laid out like the field guide and for the same reason: a sentence about the
+   traps runs four lines and a sentence about the cabinet runs three, so a row
+   of equal cells would be as tall as the worst one and the panel would fill up
+   with holes. Columns flow, so the entries pack, and the rule between them
+   comes free. */
+
+.about .alead {
+  font-size: 0.74rem;
+  line-height: 1.6;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+  text-wrap: pretty;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px dashed rgba(61, 255, 176, 0.22);
+  /* it is one sentence and the panel is the width of the deck: left to itself
+     it would be a single line of very small type across a very wide box, which
+     is a caption rather than an opening */
+  max-width: 52rem;
+}
+.about ul {
+  list-style: none;
+  columns: 14rem;
+  column-gap: 1.6rem;
+  column-rule: 1px dashed rgba(61, 255, 176, 0.22);
+}
+.about li {
+  break-inside: avoid;
+  /* padding, not margin: a column break eats the margin and keeps the padding */
+  padding-bottom: 0.7rem;
+}
+/* Glyph, then the name, then a body under both — the same shape the panel's
+   own header wears one size up, so an entry reads as a small header rather
+   than as a paragraph that happens to start in capitals. */
+.about .aname {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+  color: var(--accent);
+  text-shadow: 0 0 9px currentColor;
+  margin-bottom: 0.4rem;
+}
+/* Bigger than the glyph on the panel's own header, and deliberately: that one
+   is a bullet on a label, this one is the picture of the thing the paragraph
+   is about, and it is the only picture in the panel. */
+.about .aname .ic {
+  width: 1.45rem;
+  height: 1.45rem;
+  stroke-width: 1.5;
+}
+.about .abody {
+  font-size: 0.69rem;
+  line-height: 1.55;
+  color: var(--dim);
+  text-wrap: pretty;
+}
+
+@media (max-height: 940px) {
+  .about .alead { margin-bottom: 0.65rem; padding-bottom: 0.6rem; }
+}

@@ -9,6 +9,9 @@
   --violet: #a04bff;
   --lime: #b6ff3d;
   --amber: #ffb020;
+  /* the gap between lime and cyan, which was the only quarter of the wheel the
+     rack on the splash screen had nobody standing in */
+  --mint: #3dffb0;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }

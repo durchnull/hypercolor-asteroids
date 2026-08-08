@@ -58,6 +58,7 @@ ASTEROIDS.MODULES = [
   "./game/service.js",
   "./game/waves.js",
   "./ui/abort.js",
+  "./ui/about.js",
   "./ui/board.js",
   "./ui/book.js",
   "./ui/clicks.js",
@@ -67,6 +68,7 @@ ASTEROIDS.MODULES = [
   "./ui/mark.js",
   "./ui/profile.js",
   "./ui/soundtrack.js",
+  "./ui/splash.js",
 
   // ---- the events: one file per pilot, and the pilot owns it ---------------
   // Yours never fire for you. Add your own line, never touch anybody else's.

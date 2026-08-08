@@ -21,36 +21,58 @@
      the shade. */
 }
 .overlay[hidden] { display: none; }
-/* The splash is not a stack that scrolls, it is a screen with a dock. Three
-   rows: the title, the deck taking whatever height is left over, and the
-   instruction at the bottom — where it cannot be scrolled away from, on a
-   laptop or a phone or the television in the corner. Before this, a guide long
-   enough to need scrolling put PRESS ENTER below the fold, which is a poor
-   joke to play on somebody who has just been handed the keyboard.
+/* The splash is not a stack that scrolls, it is a screen with two things
+   floating over one. The deck takes the whole screen; the mark and the
+   instruction hang above it, at the top and at the bottom, where neither can
+   be scrolled away from on a laptop or a phone or the television in the
+   corner. PRESS ENTER stays findable, which was the point of the dock the day
+   it was built and still is.
+
+   They were rows before this, and a row is opaque by construction: the deck
+   stopped dead at a hard edge under the title, with a strip of shade above it
+   doing no work. A panel cut in half by an edge reads as broken. A panel
+   running on underneath something you can see through reads as a panel with
+   more of it, and that is the true statement of the two.
+
+   So neither of them hides what is behind it. The mark carries a plate exactly
+   its own size and no bigger; the dock is a bar you can read the foot of a
+   panel through. What holds the deck off them is padding rather than layout —
+   src/ui/splash.js measures both and writes the two lengths onto this element,
+   so nothing on the deck ever starts life underneath either. The defaults are
+   what a browser that somehow never ran that file would need, and they are
+   close enough that nobody would notice.
 
    `:not([hidden])` rather than a plain class, so the rule that hides an
    overlay while a game is running still wins without needing to shout. */
 .splash:not([hidden]) {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  justify-items: center;
-  /* both of these are undoing what the flex layout above set, and the first
-     one is load-bearing: `align-items: center` in a grid means an item is its
-     own natural height in the middle of its track, so the deck would grow past
-     the row instead of scrolling inside it, and the dock would be pushed off
-     the bottom of the screen it is supposed to be nailed to */
-  align-items: stretch;
-  align-content: stretch;
-  gap: 0.85rem;
-  padding: 1.4rem 1.5rem 0;
+  display: block;
+  padding: 0;
   overflow: hidden;              /* the deck scrolls; the screen does not */
+}
+/* The mark, floating. It is the biggest thing on the screen and the least
+   useful once you are three panels down, so it folds as you read — the scale
+   comes off the scroll position, and `top center` is what keeps it hugging the
+   ceiling as it goes rather than drifting up out of the room.
+
+   `pointer-events: none` because it is a picture of a name: a wheel rolled
+   over it belongs to the deck underneath, and so does a cursor. */
+.splash > .logo {
+  position: absolute;
+  top: 1.2rem;
+  left: 50%;
+  transform: translateX(-50%) scale(var(--mark, 1));
+  transform-origin: top center;
+  pointer-events: none;
+  z-index: 2;
 }
 /* The deck: the field on the left, the people on the right, the book across
    the foot of both. Two columns rather than one long stack, because reading
    what is out there and deciding whose seat to take is one decision and it is
    made in one glance. */
 .deck {
+  height: 100%;
   width: min(84rem, 96vw);
+  margin: 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   align-content: start;
@@ -60,7 +82,10 @@
   gap: 0.85rem;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-bottom: 0.4rem;
+  /* the room the mark and the dock are standing in, measured by
+     src/ui/splash.js, plus a little air so the first panel is not touching the
+     plate and the last is not touching the rule */
+  padding: calc(var(--head, 7.5rem) + 0.8rem) 0 calc(var(--foot, 5.5rem) + 0.5rem);
   scrollbar-width: thin;
   scrollbar-color: rgba(160, 75, 255, 0.5) transparent;
 }
@@ -69,16 +94,37 @@
 .lobby { grid-column: 2; grid-row: 2; }
 .board { grid-column: 2; grid-row: 3; }
 .book  { grid-column: 1 / -1; grid-row: 4; }
-/* The dock. Never scrolls, never moves, and the dashed rule above it is still
-   where the reading stops and the pressing starts. */
+.about { grid-column: 1 / -1; grid-row: 5; }
+/* The dock. Never scrolls, never moves, and the dashed rule along the top of
+   it is still where the reading stops and the pressing starts.
+   See-through on purpose, and across the whole foot of the screen rather than
+   the width of the deck: the reading runs on underneath it, darkest down at
+   the instruction and nearly gone up at the rule, so what is behind is a panel
+   you can still half read rather than a strip of night. */
 .splash .dock {
-  width: min(84rem, 96vw);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.8rem 0 1rem;
+  padding: 0.8rem 1.5rem 1rem;
   border-top: 1px dashed rgba(154, 134, 189, 0.3);
+  background: linear-gradient(to top, rgba(7, 3, 15, 0.8), rgba(7, 3, 15, 0.32));
+}
+/* A little frost, so that what is showing through reads as behind the bar
+   rather than printed on it — and so the instruction has something to sit on
+   whatever colour of panel happens to be sliding past underneath. Scoped to a
+   visible splash for the reason the rack is, further down this file: a
+   backdrop-filter on a hidden element still costs the compositor. */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .splash:not([hidden]) .dock {
+    -webkit-backdrop-filter: blur(10px) saturate(1.3);
+    backdrop-filter: blur(10px) saturate(1.3);
+  }
 }
 .overlay h1 {
   font-size: clamp(2rem, 7.5vw, 4.2rem);
@@ -132,16 +178,17 @@
 }
 .overlay .final .best { color: var(--dim); text-shadow: none; }
 
-/* The rack: five instruments bolted to the splash, sharing a chassis — plate,
+/* The rack: six instruments bolted to the splash, sharing a chassis — plate,
    corner brackets, one header shape. What tells them apart is `--accent`, and
    each panel keeps the colour it already wore: magenta for the guide, cyan for
    the pilot, amber for the seats, which is also the colour of the seat that is
-   still open. The two new ones take the two hues that were going spare — lime
-   for the board, because that is the colour this cabinet says yes in, and
-   violet for the book, because the book has been violet since it was one line
-   of text. Five hues evenly around the wheel, and the rack drifts through the
-   spectrum in step, so whatever hue they are at they are still that far apart. */
-.brief, .pilot, .lobby, .board, .book {
+   still open. Then lime for the board, because that is the colour this cabinet
+   says yes in, and violet for the book, because the book has been violet since
+   it was one line of text. The label on the machine took the last quarter of
+   the wheel with nobody in it, which is the mint between lime and cyan. Six
+   hues evenly around, and the rack drifts through the spectrum in step, so
+   whatever hue they are at they are still that far apart. */
+.brief, .pilot, .lobby, .board, .book, .about {
   position: relative;
   padding: 1.1rem 1.3rem 1.2rem;
   background: rgba(12, 5, 24, 0.66);
@@ -170,7 +217,8 @@
   .overlay:not([hidden]) .pilot,
   .overlay:not([hidden]) .lobby,
   .overlay:not([hidden]) .board,
-  .overlay:not([hidden]) .book {
+  .overlay:not([hidden]) .book,
+  .overlay:not([hidden]) .about {
     background:
       linear-gradient(148deg,
         rgba(255, 255, 255, 0.15),
@@ -189,34 +237,38 @@
 .lobby { --accent: var(--amber);   --accent-soft: rgba(255, 176, 32, 0.38); --accent-glow: rgba(255, 176, 32, 0.05); }
 .board { --accent: var(--lime);    --accent-soft: rgba(182, 255, 61, 0.36); --accent-glow: rgba(182, 255, 61, 0.05); }
 .book  { --accent: var(--violet);  --accent-soft: rgba(160, 75, 255, 0.42); --accent-glow: rgba(160, 75, 255, 0.07); }
+.about { --accent: var(--mint);    --accent-soft: rgba(61, 255, 176, 0.36); --accent-glow: rgba(61, 255, 176, 0.05); }
 
-/* the bracketed corners are the family mark — same shape on all five, so the
+/* the bracketed corners are the family mark — same shape on all six, so the
    rack reads as one rack before the colours say which panel is which */
 .brief::before, .brief::after,
 .pilot::before, .pilot::after,
 .lobby::before, .lobby::after,
 .board::before, .board::after,
-.book::before, .book::after {
+.book::before, .book::after,
+.about::before, .about::after {
   content: "";
   position: absolute;
   width: 13px;
   height: 13px;
   border: 1px solid var(--accent);
 }
-.brief::before, .pilot::before, .lobby::before, .board::before, .book::before {
+.brief::before, .pilot::before, .lobby::before,
+.board::before, .book::before, .about::before {
   top: -1px; left: -1px;
   border-right: none;
   border-bottom: none;
 }
-.brief::after, .pilot::after, .lobby::after, .board::after, .book::after {
+.brief::after, .pilot::after, .lobby::after,
+.board::after, .book::after, .about::after {
   bottom: -1px; right: -1px;
   border-left: none;
   border-top: none;
 }
-/* one header shape for all five: the panel's own glyph, the label, a rule
+/* one header shape for all six: the panel's own glyph, the label, a rule
    under it. The glyph replaced a lit square, which said "this is a panel" —
    true, and the pilot could see that. A trap says what kind. */
-.brief h2, .pilot h2, .lobby h2, .board h2, .book h2 {
+.brief h2, .pilot h2, .lobby h2, .board h2, .book h2, .about h2 {
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -229,7 +281,8 @@
   padding-bottom: 0.6rem;
   border-bottom: 1px dashed var(--accent-soft);
 }
-.brief h2 .ic, .pilot h2 .ic, .lobby h2 .ic, .board h2 .ic, .book h2 .ic {
+.brief h2 .ic, .pilot h2 .ic, .lobby h2 .ic,
+.board h2 .ic, .book h2 .ic, .about h2 .ic {
   width: 0.95rem;
   height: 0.95rem;
 }
@@ -311,20 +364,20 @@
 /* Below the width where two columns of panel stop being two columns and start
    being two columns of four words, the deck is one column and the order on the
    page is the order you need it in: who is flying, then the seats, then the
-   field, then the board, then the book. A phone is choosing a pilot, not
-   studying the ecology. */
+   field, then the board, then the book, then what the whole thing is. A phone
+   is choosing a pilot, not studying the ecology. */
 @media (max-width: 64rem) {
   .deck {
     grid-template-columns: minmax(0, 1fr);
     width: min(34rem, 96vw);
   }
-  .brief, .pilot, .lobby, .board, .book { grid-column: 1; grid-row: auto; }
+  .brief, .pilot, .lobby, .board, .book, .about { grid-column: 1; grid-row: auto; }
   .pilot { order: 1; }
   .lobby { order: 2; }
   .brief { order: 3; }
   .board { order: 4; }
   .book  { order: 5; }
-  .splash .dock { width: min(34rem, 96vw); }
+  .about { order: 6; }
 }
 /* A short screen gets a tighter rack — smaller title, less padding, panels
    closer together. It does not get less to read. That trade was made when the
@@ -332,13 +385,13 @@
    missing; the dock holds PRESS ENTER now whatever happens up here, and the
    deck scrolls, so a laptop keeps the field guide it is entitled to. */
 @media (max-height: 940px) {
-  .splash:not([hidden]) { gap: 0.6rem; padding: 1rem 1.25rem 0; }
+  .splash > .logo { top: 0.7rem; }
   .overlay h1 { font-size: clamp(1.7rem, 5.2vw, 2.6rem); }
   .overlay .controls { line-height: 1.6; }
-  .splash .dock { padding: 0.6rem 0 0.75rem; }
+  .splash .dock { padding: 0.6rem 1.25rem 0.75rem; }
   .deck { gap: 0.6rem; }
-  .brief, .pilot, .lobby, .board, .book { padding: 0.85rem 1rem; }
-  .brief h2, .pilot h2, .lobby h2, .board h2, .book h2 {
+  .brief, .pilot, .lobby, .board, .book, .about { padding: 0.85rem 1rem; }
+  .brief h2, .pilot h2, .lobby h2, .board h2, .book h2, .about h2 {
     margin-bottom: 0.6rem;
     padding-bottom: 0.45rem;
   }
@@ -354,5 +407,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .overlay .prompt, .overlay h1, .brief li,
-  .brief, .pilot, .lobby, .board, .book { animation: none; }
+  .brief, .pilot, .lobby, .board, .book, .about { animation: none; }
 }

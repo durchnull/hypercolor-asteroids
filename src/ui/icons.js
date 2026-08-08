@@ -43,6 +43,18 @@
     door: '<path d="M13.6 3.4H5.4v17.2h8.2"/><path d="M10 12h9.4M16.2 8.4L19.6 12l-3.4 3.6"/>',
     // service chevrons, the way a sleeve wears them
     chevron: '<path d="M5 9.5l7-4.3 7 4.3M5 15l7-4.3 7 4.3M5 20.5l7-4.3 7 4.3"/>',
+    // the machine itself, from the front: marquee, screen, control panel
+    cabinet: '<path d="M6.2 3.2h11.6v17.6H6.2z"/><path d="M6.2 7.4h11.6M6.2 16.6h11.6"/>' +
+             '<rect x="8.3" y="9.3" width="7.4" height="5.2" rx="0.8"/>' +
+             '<path d="M9.2 18.6h2.2M14 18.6h.9"/>',
+    // one sheet with a corner turned, which is the whole of what ships
+    page: '<path d="M6.2 3.2h7.4L17.8 7.4v13.4H6.2z"/><path d="M13.3 3.2v4.4h4.5"/>' +
+          '<path d="M9 12.6h6M9 15.8h4.2"/>',
+    // several hands, one cabinet: two lines arriving at the same place
+    merge: '<circle cx="5.4" cy="5.6" r="2.1"/><circle cx="5.4" cy="18.4" r="2.1"/>' +
+           '<circle cx="18.6" cy="12" r="2.1"/>' +
+           '<path d="M7.5 5.6h3.1a3.4 3.4 0 0 1 3.4 3.4 3 3 0 0 0 2.5 3"/>' +
+           '<path d="M7.5 18.4h3.1a3.4 3.4 0 0 0 3.4-3.4 3 3 0 0 1 2.5-3"/>',
   };
 
   A.ico = function ico(name, cls) {
