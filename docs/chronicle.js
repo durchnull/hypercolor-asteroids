@@ -6,16 +6,16 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 34,
-    latest: { v: 34, pilot: "David Friedrich", date: "08 August 2026", line: "The phosphor is a different colour of wrong now. The HUD says so, too.", plate: "cddc9daf.jpg", alt: "The phosphor is a different colour of wrong now. The HUD says so, too." },
+    versions: 35,
+    latest: { v: 35, pilot: "David Friedrich", date: "08 August 2026", line: "Somebody rewrote a rule the game had been taking for granted.", plate: "7d0481cd.jpg", alt: "Somebody rewrote a rule the game had been taking for granted." },
     plates: [
+      { v: 35, file: "7d0481cd.jpg", alt: "Somebody rewrote a rule the game had been taking for granted.", line: "Somebody rewrote a rule the game had been taking for granted." },
       { v: 34, file: "cddc9daf.jpg", alt: "The phosphor is a different colour of wrong now. The HUD says so, too.", line: "The phosphor is a different colour of wrong now. The HUD says so, too." },
       { v: 33, file: "5d0b9ea0.jpg", alt: "The cabinet keeps score with slightly different arithmetic now.", line: "The cabinet keeps score with slightly different arithmetic now." },
       { v: 32, file: "7dde5091.jpg", alt: "David taught the splash screen the difference between a warning and a trophy.", line: "David taught the splash screen the difference between a warning and a trophy." },
-      { v: 31, file: "5557764e.jpg", alt: "The rules of the field changed while nobody was flying.", line: "The rules of the field changed while nobody was flying." },
     ],
     roster: {
-      "David Friedrich": 34,
+      "David Friedrich": 35,
     }
   };
   A.BOARD = [

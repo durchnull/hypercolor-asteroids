@@ -43,6 +43,7 @@
     ["7dde5091.jpg", "David taught the splash screen the difference between a warning and a trophy.", ""],
     ["5d0b9ea0.jpg", "The cabinet keeps score with slightly different arithmetic now.", ""],
     ["cddc9daf.jpg", "The phosphor is a different colour of wrong now. The HUD says so, too.", ""],
+    ["7d0481cd.jpg", "Somebody rewrote a rule the game had been taking for granted.", ""],
   ]
   var dock = document.querySelector("nav.dock[data-here]")
   if (!dock || !T.length) return
