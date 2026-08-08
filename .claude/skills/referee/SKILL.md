@@ -70,7 +70,7 @@ Never edit the ledger, never run the tool to make a number smaller, and do not
 help anybody else do it either. It is derived; that is the only reason it is
 worth anything.
 
-## Budgets: GR4, GR5, GR6
+## Budgets: GR4, GR5, GR6, GR14
 
 You are allowed through. The question is only whether it is fair, and the user
 decides that, not you.
@@ -90,6 +90,22 @@ Golden-Rule-Override: GR4 - the dive state was unreachable after the portal
 ```
 
 One round of discussion, then their call. Do not relitigate.
+
+GR14 is the one budget with a cheaper way out than the override line, so offer
+that first: the block means three versions have landed since this pilot last
+flew, and four minutes at the keyboard clears it for the next three.
+
+```sh
+tools/flights.sh --count "$(git config user.name)"    # how far past the meter
+tools/flights.sh --roll                               # the whole room
+```
+
+Say it as an invitation rather than a fine — *play it and paste me the tape*.
+If they would rather land now and fly later, that is a legitimate call and the
+line is `Golden-Rule-Override: GR14 - <why>`; it costs one on the tally like
+any other bend. Do not ask twice, and never suggest a token flight to clear a
+number: a tape that was not a flight is worse than the override, because the
+override is at least honest.
 
 ## Nudges: GR3, GR9
 

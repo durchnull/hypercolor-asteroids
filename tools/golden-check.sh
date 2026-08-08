@@ -13,7 +13,7 @@
 #
 # Exit 0 = clear (warnings never block). Exit 1 = blocked.
 #
-# Seven rules are red lines and cannot be overridden. Three are budgets: you may
+# Seven rules are red lines and cannot be overridden. Four are budgets: you may
 # spend past them, but only by saying so in the commit message, where everybody
 # can read it later. Two are nudges. One is on your honour.
 # ---------------------------------------------------------------------------
@@ -544,6 +544,45 @@ check_gr6() {
 }
 
 # ---------------------------------------------------------------------------
+# GR14  Fly what you land.
+#
+# GR1 promises the next pilot that this opens and plays, and the referee cannot
+# keep that promise - it reads the code, it does not press ENTER. This is the
+# evidence half: a sealed tape on the board buys three landings, and the meter
+# is read off the history by tools/flights.sh, not written down by anybody.
+#
+# Only a version spends a tape. A commit that leaves the cabinet alone leaves
+# the meter alone with it - there is nothing new to find out by playing a README.
+# ---------------------------------------------------------------------------
+check_gr14() {
+  [ -f tools/flights.sh ] || return 0
+
+  version=0
+  while IFS= read -r f; do
+    is_generated "$f" && continue
+    case "$f" in
+      index.html|src/*|styles/*) version=1; break ;;
+    esac
+  done < "$TMP/files"
+  [ "$version" = 1 ] || return 0
+
+  per=$(sh tools/flights.sh --per 2>/dev/null) || per=3
+  case "$MODE" in staged) pend=--staged ;; *) pend=--dirty ;; esac
+  n=$(sh tools/flights.sh --count "$ME" "$pend" 2>/dev/null) || return 0
+  case "$n" in ''|*[!0-9]*) return 0 ;; esac    # no meter, no verdict
+
+  if [ "$n" -ge "$per" ]; then
+    overridden GR14 || {
+      fail GR14 "$n versions landed since you last flew - this would be number $((n + 1))"
+      note "play it, copy the tape off the game-over screen, and /blackbox puts it on the board"
+      note "or say why not: Golden-Rule-Override: GR14 - <reason>"
+    }
+  elif [ "$n" -eq "$((per - 1))" ]; then
+    warn GR14 "this is the last landing your tape covers - fly it before the next one"
+  fi
+}
+
+# ---------------------------------------------------------------------------
 # GR12  The tally remembers.
 #
 # The ledger is derived, never authored: tools/tally.sh reads it off the
@@ -722,9 +761,11 @@ check_message() {
 case "$STAGE" in
   pre-commit) check_gr1; check_gr2; check_gr7; check_gr10; check_gr11; check_gr12
               check_gr13; check_gr39 ;;
-  commit-msg) check_gr45; check_gr6; check_gr10; check_gr12; check_breach; check_message ;;
+  commit-msg) check_gr45; check_gr6; check_gr10; check_gr12; check_gr14
+              check_breach; check_message ;;
   *)          check_gr1; check_gr2; check_gr7; check_gr10; check_gr11
-              check_gr45; check_gr6; check_gr12; check_gr13; check_breach; check_gr39 ;;
+              check_gr45; check_gr6; check_gr12; check_gr13; check_gr14
+              check_breach; check_gr39 ;;
 esac
 
 if [ ! -s "$TMP/out" ]; then

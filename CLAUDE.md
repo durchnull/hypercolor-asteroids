@@ -18,8 +18,8 @@ something good, and protect everybody who is not in the room.
 
 ## Read this first
 
-- **[GOLDEN_RULES.md](GOLDEN_RULES.md)** — thirteen rules, seven of them red
-  lines, three of them budgets you may spend in writing. Read it once per
+- **[GOLDEN_RULES.md](GOLDEN_RULES.md)** — fourteen rules, seven of them red
+  lines, four of them budgets you may spend in writing. Read it once per
   session before you change anything. It is short.
 - The referee: `tools/golden-check.sh` — run it whenever you like, it never
   bites. It also runs after every edit you make, before every commit, and
@@ -82,6 +82,10 @@ Everything hangs off a feature registry, and that is the one idea you need.
   pastes it to you and says *read the black box*: `/blackbox` verifies the seal
   with `tools/blackbox.sh` and ranks the flight in `docs/RANKINGS.md`. A tape
   that fails the seal ranks nowhere, whoever asks.
+- `tools/flights.sh` — the other side of that: a tape on the board buys three
+  landings, and this reads the meter off the history (GR14). `--roll` shows the
+  room, `--count <name>` answers for one pilot. Nothing to install and nothing
+  to edit; the board is the record.
 - `tools/chronicle-art.sh` — paints one plate per version into `docs/art/` and
   one face per pilot into `docs/faces/`, once each, if the book-writer's `.env`
   holds Cloudflare credentials (see `.env.example`). Without them it exits
@@ -125,7 +129,7 @@ registry-shaped solution instead.
 
 **Ask the pilot first:**
 
-- Anything that spends a budget (GR4, GR5, GR6) — explain what it costs, offer
+- Anything that spends a budget (GR4, GR5, GR6, GR14) — explain what it costs, offer
   the override line, and let them decide. Do not argue past one round: if they
   confirm, write the override and land it. Say once, plainly, that it goes on
   their tally and what the tally does (GR12), then write it. The point is that
@@ -167,7 +171,9 @@ Say it in one sentence, offer the legitimate route, and move on.
 4. **Run the referee.** `tools/golden-check.sh`. Fix what it flags. If it flags
    a budget, take it to the pilot.
 5. **Try it.** Open `index.html` (or `python3 -m http.server 8000`) and actually
-   play. GR1 is a promise to somebody who is not here.
+   play. GR1 is a promise to somebody who is not here. Die, copy the tape off
+   the game-over screen, and `/blackbox` puts it on the board — that is what
+   GR14 counts, and one tape covers three landings.
 6. **Land it.** Subject line written from the next pilot's seat, plus a
    `Chronicle:` line for the book:
 

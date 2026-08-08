@@ -18,10 +18,10 @@ expecting a game. Do the whole ritual; it takes two minutes.
 tools/golden-check.sh
 ```
 
-Fix everything red. If what it flags is a **budget** (GR4, GR5, GR6), do not
-quietly work around it and do not argue: tell the user plainly what the change
-costs somebody else, offer the override line, and let them decide. If they
-confirm, write the override and land it — that is what budgets are for.
+Fix everything red. If what it flags is a **budget** (GR4, GR5, GR6, GR14), do
+not quietly work around it and do not argue: tell the user plainly what the
+change costs somebody else, offer the override line, and let them decide. If
+they confirm, write the override and land it — that is what budgets are for.
 
 Never suggest `--no-verify`. If you find yourself wanting to, the answer is
 either a smaller commit or an override line.
@@ -47,6 +47,20 @@ Do not drive a browser, and never report a build as played. "The code looks
 right" is not a playtest and saying so is the whole failure GR1 exists to
 prevent. If the pilot waves it through unplayed that is their call — land it,
 and do not pretend in the commit message that it was checked.
+
+**Then ask for the tape.** They played until they died; the game-over screen is
+holding a sealed flight record with a copy button on it. One paste and
+`/blackbox` puts it on the board, which is what GR14 counts — a tape covers this
+landing and the next two, and the meter is public either way:
+
+```sh
+tools/flights.sh --count "$(git config user.name)"
+```
+
+Ask once, after the playtest and before the commit message, and take no for an
+answer. A pilot who does not feel like ranking a four-minute death is not doing
+anything wrong; they are just spending their next three landings' worth of
+credit, and the referee will say so when it runs out.
 
 ## 3. Write it for the next pilot
 

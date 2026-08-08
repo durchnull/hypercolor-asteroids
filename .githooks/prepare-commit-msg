@@ -43,7 +43,7 @@ TMP=$(mktemp) || exit 0
 #
 #              $TAG
 #
-# Spending a budget (GR4, GR5, GR6) needs a reason, kept forever:
+# Spending a budget (GR4, GR5, GR6, GR14) needs a reason, kept forever:
 #
 #   Golden-Rule-Override: GR4 - <why this is fair>
 #

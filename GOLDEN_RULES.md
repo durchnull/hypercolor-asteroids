@@ -2,7 +2,7 @@
 
 Many hands, one cabinet. Somebody lands a version, and the next person to pull
 and press ENTER finds out what happened by playing. That is the entire game
-behind the game, and these thirteen rules exist to keep it playable for everyone
+behind the game, and these fourteen rules exist to keep it playable for everyone
 — not to slow anybody down.
 
 They are enforced three times: while you work (your editor tells you), when you
@@ -19,7 +19,7 @@ Rules come in four weights, and the weight is the whole fairness argument:
 | weight | what it means | which |
 |---|---|---|
 | **red line** | cannot be overridden by anyone. To change one, change this file — in its own commit, in front of everybody. | GR1, GR2, GR7, GR10, GR11, GR12, GR13 |
-| **budget** | you may spend past it, but only in writing. One line in the commit message and you are through. That line stays in the book forever. | GR4, GR5, GR6 |
+| **budget** | you may spend past it, but only in writing. One line in the commit message and you are through. That line stays in the book forever. | GR4, GR5, GR6, GR14 |
 | **nudge** | the referee mentions it and gets out of your way. | GR3, GR9 |
 | **on your honour** | no check exists and none could. It is the rule that decides whether the game is any good. | GR8 |
 
@@ -36,7 +36,9 @@ Every commit opens in a browser and plays. Not "works on my branch", not
 
 *Checked:* every changed `.js` file parses; every module path listed in
 `src/features.js` points at a file that ships; every `src=` and `href=` in
-`index.html` points at something that exists in the commit.
+`index.html` points at something that exists in the commit. None of that is
+somebody pressing ENTER, which is why GR14 exists: the referee cannot keep this
+promise for you, so it asks for the tape instead.
 
 There is no `import` anywhere in `src/` — modules are classic scripts loaded
 from the manifest, because that is what opens from `file://` without a server.
@@ -403,6 +405,59 @@ line that lets everybody change it. What it can do is be argued with in the
 open — move this section, in its own commit (GR10), where the owner reads it
 like everybody else. Putting a second thing on the owner's ground is the same
 move, and ought to be at least as hard.
+
+## GR14 — Fly what you land. `budget: 3 versions per tape`
+
+GR1 promises somebody who is not in the room that they can pull this, press
+ENTER and get a game. The referee cannot keep that promise: it reads the code,
+it never presses ENTER. This is the half of GR1 that can be checked.
+
+Every finished flight seals itself into a tape, and a tape on the board in
+`docs/RANKINGS.md` is the only evidence this project accepts that anybody
+played anything. So:
+
+> **A sealed flight buys three landings.**
+
+Land the third version since you last flew and the referee mentions it. Land a
+fourth and it stops you, and the way through is the way through every budget: a
+line in the message.
+
+Three, because a flight is four minutes and a version is an evening. It is the
+cheapest rule in this file to satisfy and the easiest to forget, which is the
+only reason it needed writing down.
+
+- The meter counts **versions** — commits that moved `index.html`, `src/` or
+  `styles/`. Rewriting these rules, fixing a line in the README, ranking
+  somebody else's tape: real work, and it leaves the cabinet exactly as it was.
+  Nobody discovers anything by playing a README.
+- It counts **your own** versions. A rule you could fail by having busy friends
+  would be a bad rule.
+- **Any** finished flight counts. The board keeps the best twenty and the log
+  keeps every tape, so a short bad evening clears the meter exactly like a good
+  one. This is evidence, not a score: the moment a quota starts rewarding a
+  number, people grind the number instead of playing the game.
+- Fly under your own name. A tape sealed to somebody else's seat ranks nowhere
+  (GR12), a run flown as GUEST is GUEST's flight, and neither clears anybody's
+  meter. Couriering a friend's real tape is fine and lands on theirs.
+- A tape is a flight, not a keypress. No machine can tell the difference — but
+  the log prints how long you lasted, beside your name, for good.
+
+The order is the order the ritual already had: build it, play it, paste the
+tape, land the version. Flying, ranking and landing in one sitting is one
+sitting — a commit that puts the tape on the board clears the meter before it
+spends it.
+
+An override here costs one on the tally like any other bend (GR12), and the way
+back off the tally is three clean versions — which is now three versions you
+have flown. That loop is deliberate.
+
+*Checked:* a version commit by a pilot with three or more versions since their
+last taped flight needs `Golden-Rule-Override: GR14 - <why>`; the one before it
+gets a nudge. `tools/flights.sh` reads the meter off the history the way
+`tools/tally.sh` reads the ledger — credited to the pilot the board line names,
+never to whoever held the pen — and `tools/flights.sh --roll` shows the room.
+The meter starts where this rule did: nothing before the commit that added it
+is counted, because before it there was no promise to keep.
 
 ---
 

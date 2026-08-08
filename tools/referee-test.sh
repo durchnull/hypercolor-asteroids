@@ -536,6 +536,54 @@ case_ GR12 "a ledger that does not say what the history says"
   check commit-msg --message-file "$MSG"
   blocks GR12
 
+# GR14 counts off the history like everything else here, and in this lab the
+# commit that added tools/flights.sh is the root commit - so the meter starts at
+# the beginning and Bo's one trap is already one landing against it.
+fly() { printf '// wave %s, retuned\n' "$1" >> "src/events/bo-renn.js"; }
+
+case_ GR14 "a fourth version on the strength of one tape"
+  fly 7; land "The trap comes a wave later"
+  fly 8; land "The trap comes later still"
+  fly 9
+  stage; message "The trap moves once more"
+  check commit-msg --message-file "$MSG"
+  blocks GR14
+
+case_ GR14 "the same landing, with the budget spent out loud"
+  fly 7; land "The trap comes a wave later"
+  fly 8; land "The trap comes later still"
+  fly 9
+  stage; message "The trap moves once more" "" \
+                 "Golden-Rule-Override: GR14 - a one-line retune I have flown twice today"
+  check commit-msg --message-file "$MSG"
+  lands
+
+case_ GR14 "the last landing the tape covers gets a word, not a wall"
+  fly 7; land "The trap comes a wave later"
+  fly 8
+  stage; message "The trap comes later still"
+  check commit-msg --message-file "$MSG"
+  nudges GR14
+
+case_ GR14 "work that leaves the cabinet alone leaves the meter alone"
+  fly 7; land "The trap comes a wave later"
+  fly 8; land "The trap comes later still"
+  printf '\nA paragraph about the cabinet.\n' >> README.md
+  stage; message "The README says what the cabinet is"
+  check commit-msg --message-file "$MSG"
+  silent GR14
+
+case_ GR14 "flying it, ranking it and landing it is one sitting"
+  fly 7; land "The trap comes a wave later"
+  fly 8; land "The trap comes later still"
+  fly 9
+  printf '# THE FLIGHT RECORDS\n\n<!-- log -->\n' > docs/RANKINGS.md
+  printf '**2026-08-08 · Bo Renn · 8400 · wave 5 · 5:03** — flew its own trap.\n' \
+    >> docs/RANKINGS.md
+  stage; message "The trap moves once more, and its author survived it"
+  check commit-msg --message-file "$MSG"
+  lands
+
 case_ GR8 "a breach naming a pilot the history never saw"
   message "The table has a word about the shield" "" \
           "Golden-Rule-Breach: GR8 Nobody Here - the shield has no cost and no cooldown"

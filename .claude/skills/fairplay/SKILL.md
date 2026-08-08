@@ -19,6 +19,7 @@ git shortlog -sn --no-merges
 git log --format='%an' --since="2 months ago" | sort | uniq -c | sort -rn
 git log --format='%an' --grep='Golden-Rule-Override' -i | sort | uniq -c | sort -rn
 tools/tally.sh --roll                    # the same thing, counted, and what it costs
+tools/flights.sh --roll                  # who has been playing what they build (GR14)
 git log --format='%an %s' --grep='Rule-Change' -i
 ```
 
@@ -51,6 +52,10 @@ Look for the things that make a shared project stop being fun:
   why the game got harder.
 - **Somebody's feature being steadily whittled down** by other people's
   commits. Each edit passed GR4 on its own; twenty of them did not.
+- **A pilot who builds and never flies.** The meter says who, and GR14 already
+  stops them at three; the thing worth noticing is the shape of it — a room
+  where everybody is shipping and nobody is playing has stopped being a game
+  and become a codebase, and no rule fixes that on its own.
 - **A pilot who has gone quiet.** Not a problem to fix, but worth mentioning to
   whoever is at the keyboard.
 - **Rule changes that widened somebody's own room.** Check every
