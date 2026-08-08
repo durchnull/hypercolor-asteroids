@@ -49,6 +49,7 @@
     ["31479209.jpg", "The plumbing was rerouted and nothing caught fire.", ""],
     ["7fee65cc.jpg", "The bookkeeping of the cabinet moved a foot to the left.", ""],
     ["6b9065f4.jpg", "The splash screen learned the difference between reading and pressing.", ""],
+    ["43f55fb4.jpg", "Somebody rewrote a rule the game had been taking for granted.", ""],
   ]
   var dock = document.querySelector("nav.dock[data-here]")
   if (!dock || !T.length) return
