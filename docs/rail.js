@@ -46,7 +46,9 @@
     ["7d0481cd.jpg", "Somebody rewrote a rule the game had been taking for granted.", ""],
     ["f31b98ce.jpg", "The panels say something different now.", ""],
     ["74c62dcd.jpg", "The bookkeeping of the cabinet moved a foot to the left.", ""],
-    ["", "The plumbing was rerouted and nothing caught fire.", ""],
+    ["31479209.jpg", "The plumbing was rerouted and nothing caught fire.", ""],
+    ["7fee65cc.jpg", "The bookkeeping of the cabinet moved a foot to the left.", ""],
+    ["6b9065f4.jpg", "The splash screen learned the difference between reading and pressing.", ""],
   ]
   var dock = document.querySelector("nav.dock[data-here]")
   if (!dock || !T.length) return

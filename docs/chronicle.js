@@ -6,16 +6,17 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 38,
-    latest: { v: 38, pilot: "David Friedrich", date: "08 August 2026", line: "The plumbing was rerouted and nothing caught fire." },
+    versions: 40,
+    latest: { v: 40, pilot: "David Friedrich", date: "08 August 2026", line: "The splash screen learned the difference between reading and pressing.", plate: "6b9065f4.jpg", alt: "The splash screen learned the difference between reading and pressing." },
     plates: [
+      { v: 40, file: "6b9065f4.jpg", alt: "The splash screen learned the difference between reading and pressing.", line: "The splash screen learned the difference between reading and pressing." },
+      { v: 39, file: "7fee65cc.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
+      { v: 38, file: "31479209.jpg", alt: "The plumbing was rerouted and nothing caught fire.", line: "The plumbing was rerouted and nothing caught fire." },
       { v: 37, file: "74c62dcd.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
-      { v: 36, file: "f31b98ce.jpg", alt: "The panels say something different now.", line: "The panels say something different now." },
-      { v: 35, file: "7d0481cd.jpg", alt: "Somebody rewrote a rule the game had been taking for granted.", line: "Somebody rewrote a rule the game had been taking for granted." },
-      { v: 34, file: "cddc9daf.jpg", alt: "The phosphor is a different colour of wrong now. The HUD says so, too.", line: "The phosphor is a different colour of wrong now. The HUD says so, too." },
     ],
     roster: {
-      "David Friedrich": 38,
+      "the book": 1,
+      "David Friedrich": 39,
     }
   };
   A.BOARD = [
