@@ -37,7 +37,7 @@ jobs:
     name: the referee, after the fact
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Every check here reads the history: who created a file (GR4, GR11),
           # when a pilot last flew (GR14), what the ledger should say (GR12).
@@ -68,7 +68,7 @@ jobs:
     name: the referee, refereed
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
