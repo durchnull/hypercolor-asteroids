@@ -2,7 +2,7 @@
 
 Many hands, one cabinet. Somebody lands a version, and the next person to pull
 and press ENTER finds out what happened by playing. That is the entire game
-behind the game, and these twelve rules exist to keep it playable for everyone
+behind the game, and these thirteen rules exist to keep it playable for everyone
 — not to slow anybody down.
 
 They are enforced three times: while you work (your editor tells you), when you
@@ -18,7 +18,7 @@ Rules come in four weights, and the weight is the whole fairness argument:
 
 | weight | what it means | which |
 |---|---|---|
-| **red line** | cannot be overridden by anyone. To change one, change this file — in its own commit, in front of everybody. | GR1, GR2, GR7, GR10, GR11, GR12 |
+| **red line** | cannot be overridden by anyone. To change one, change this file — in its own commit, in front of everybody. | GR1, GR2, GR7, GR10, GR11, GR12, GR13 |
 | **budget** | you may spend past it, but only in writing. One line in the commit message and you are through. That line stays in the book forever. | GR4, GR5, GR6 |
 | **nudge** | the referee mentions it and gets out of your way. | GR3, GR9 |
 | **on your honour** | no check exists and none could. It is the rule that decides whether the game is any good. | GR8 |
@@ -358,6 +358,51 @@ GR6, GR10, GR11. Editing your own count is refused, deleting the file is
 refused, and
 there is no override on either — the tally is the one number in this project
 nobody writes for themselves.
+
+## GR13 — The owner's ground. `red line`
+
+Almost nothing here belongs to one person. Tune anybody's numbers, extend
+anybody's feature, rewrite the book builder if you have a better book in you.
+There is one exception, it is small, and it is written down here so that it is
+a rule rather than a habit: **a few things change only when the pilot who
+opened the cabinet changes them.**
+
+Today there is exactly one of them, and it is the orb.
+
+A chapter opens with a rock hanging in weather, lit by whatever is actually
+coming out of the speakers, and every twenty seconds or so it thinks something
+unimpressed about the people writing all this. That object and the song it is
+listening to are the owner's — how it looks, how it moves, what it says, how it
+answers the sound, and the sound itself. Not a hue, not a line of the patter,
+not a note of the piece.
+
+The ground is one file: `docs/chronicle-song.js`, the room the book is read in.
+It is generated like the rest of the book, so the ground that actually gets
+edited is the heredoc in `tools/chronicle.sh` that writes it.
+
+Nobody appoints the owner and nobody writes the name down: it is the author of
+the first commit, which `git log --max-parents=0` will tell you, the same way
+the history tells you everything else that counts here.
+
+This is not a statement about who works hardest. It is one corner of the
+project allowed to stay exactly as somebody meant it, so the room the book is
+read in keeps one voice rather than thirteen. Everything else in
+`tools/chronicle.sh` — the pages, the plates, the digest, the dock, the rail —
+is ordinary work and yours to improve. And if the orb has a bug, or you have a
+better thought for it to think, say so: that is a minute of the owner's evening
+and they will probably enjoy it.
+
+*Checked:* for anybody but the owner, a commit that changes that heredoc,
+hand-edits the generated copy away from what the heredoc says, or deletes
+either file, is refused. A rebuild that only brings the copy back into line
+with the script is the machine catching up rather than anybody's doing, and it
+passes.
+
+No budget, no override: a rule about who may change a thing cannot come with a
+line that lets everybody change it. What it can do is be argued with in the
+open — move this section, in its own commit (GR10), where the owner reads it
+like everybody else. Putting a second thing on the owner's ground is the same
+move, and ought to be at least as hard.
 
 ---
 

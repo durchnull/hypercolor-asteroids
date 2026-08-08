@@ -17,7 +17,7 @@ tools/golden-check.sh --staged   # what the hooks will see
 The full text of every rule is in [GOLDEN_RULES.md](../../../GOLDEN_RULES.md).
 Read the rule before you explain it — quote the reason, not the number.
 
-## Red lines: GR1, GR2, GR7, GR10, GR11, GR12
+## Red lines: GR1, GR2, GR7, GR10, GR11, GR12, GR13
 
 Not overridable, by anyone, including the person who wrote them. Fix the cause:
 
@@ -39,6 +39,12 @@ Not overridable, by anyone, including the person who wrote them. Fix the cause:
 - **GR12** — `src/game/ledger.js` does not match the history. Run
   `tools/tally.sh` and let it write the file; if that still disagrees, something
   is editing a count by hand and the answer is never to help it along.
+- **GR13** — somebody who did not open this repository is changing the orb or
+  its song: the heredoc in `tools/chronicle.sh` that writes
+  `docs/chronicle-song.js`, or that file hand-edited away from it. Revert that
+  part, keep the rest, and take the idea to the owner —
+  `git log --max-parents=0 --format='%an'` says who that is. There is no
+  override, and moving the work to another file does not move the line.
 
 If somebody genuinely needs a red line changed, that is legitimate — it just
 happens in the open, as its own commit, where the others can see it and argue.

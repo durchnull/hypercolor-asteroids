@@ -17,7 +17,7 @@
 <p>
 Many hands, one cabinet. Somebody lands a version, and the next person to pull
 and press ENTER finds out what happened by playing. That is the entire game
-behind the game, and these twelve rules exist to keep it playable for everyone
+behind the game, and these thirteen rules exist to keep it playable for everyone
 — not to slow anybody down.
 </p>
 <p>
@@ -37,7 +37,7 @@ Rules come in four weights, and the weight is the whole fairness argument:
 <tr><th>weight</th><th>what it means</th><th>which</th></tr>
 </thead>
 <tbody>
-<tr><td><b>red line</b></td><td>cannot be overridden by anyone. To change one, change this file — in its own commit, in front of everybody.</td><td>GR1, GR2, GR7, GR10, GR11, GR12</td></tr>
+<tr><td><b>red line</b></td><td>cannot be overridden by anyone. To change one, change this file — in its own commit, in front of everybody.</td><td>GR1, GR2, GR7, GR10, GR11, GR12, GR13</td></tr>
 <tr><td><b>budget</b></td><td>you may spend past it, but only in writing. One line in the commit message and you are through. That line stays in the book forever.</td><td>GR4, GR5, GR6</td></tr>
 <tr><td><b>nudge</b></td><td>the referee mentions it and gets out of your way.</td><td>GR3, GR9</td></tr>
 <tr><td><b>on your honour</b></td><td>no check exists and none could. It is the rule that decides whether the game is any good.</td><td>GR8</td></tr>
@@ -406,6 +406,58 @@ GR6, GR10, GR11. Editing your own count is refused, deleting the file is
 refused, and
 there is no override on either — the tally is the one number in this project
 nobody writes for themselves.
+</p>
+<h2 id="gr13-the-owner-s-ground-red-line">GR13 — The owner's ground. <code>red line</code></h2>
+<p>
+Almost nothing here belongs to one person. Tune anybody's numbers, extend
+anybody's feature, rewrite the book builder if you have a better book in you.
+There is one exception, it is small, and it is written down here so that it is
+a rule rather than a habit: <i></i>a few things change only when the pilot who
+opened the cabinet changes them.<i></i>
+</p>
+<p>
+Today there is exactly one of them, and it is the orb.
+</p>
+<p>
+A chapter opens with a rock hanging in weather, lit by whatever is actually
+coming out of the speakers, and every twenty seconds or so it thinks something
+unimpressed about the people writing all this. That object and the song it is
+listening to are the owner's — how it looks, how it moves, what it says, how it
+answers the sound, and the sound itself. Not a hue, not a line of the patter,
+not a note of the piece.
+</p>
+<p>
+The ground is one file: <code>docs/chronicle-song.js</code>, the room the book is read in.
+It is generated like the rest of the book, so the ground that actually gets
+edited is the heredoc in <code>tools/chronicle.sh</code> that writes it.
+</p>
+<p>
+Nobody appoints the owner and nobody writes the name down: it is the author of
+the first commit, which <code>git log --max-parents=0</code> will tell you, the same way
+the history tells you everything else that counts here.
+</p>
+<p>
+This is not a statement about who works hardest. It is one corner of the
+project allowed to stay exactly as somebody meant it, so the room the book is
+read in keeps one voice rather than thirteen. Everything else in
+<code>tools/chronicle.sh</code> — the pages, the plates, the digest, the dock, the rail —
+is ordinary work and yours to improve. And if the orb has a bug, or you have a
+better thought for it to think, say so: that is a minute of the owner's evening
+and they will probably enjoy it.
+</p>
+<p>
+<i>Checked:</i> for anybody but the owner, a commit that changes that heredoc,
+hand-edits the generated copy away from what the heredoc says, or deletes
+either file, is refused. A rebuild that only brings the copy back into line
+with the script is the machine catching up rather than anybody's doing, and it
+passes.
+</p>
+<p>
+No budget, no override: a rule about who may change a thing cannot come with a
+line that lets everybody change it. What it can do is be argued with in the
+open — move this section, in its own commit (GR10), where the owner reads it
+like everybody else. Putting a second thing on the owner's ground is the same
+move, and ought to be at least as hard.
 </p>
 <hr>
 <h2 id="spending-a-budget">Spending a budget</h2>

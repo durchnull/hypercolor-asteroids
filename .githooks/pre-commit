@@ -8,7 +8,7 @@
 # commit as the words they came from. Only the pages that actually came out
 # different are written; a commit that touches no markdown never runs this.
 #
-# Then the red lines. Six rules that nobody gets to override, checked against
+# Then the red lines. Seven rules that nobody gets to override, checked against
 # what is staged, before the message is even written. See GOLDEN_RULES.md.
 set -u
 ROOT=$(git rev-parse --show-toplevel) || exit 0

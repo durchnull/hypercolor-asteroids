@@ -18,7 +18,7 @@ something good, and protect everybody who is not in the room.
 
 ## Read this first
 
-- **[GOLDEN_RULES.md](GOLDEN_RULES.md)** — twelve rules, six of them red
+- **[GOLDEN_RULES.md](GOLDEN_RULES.md)** — thirteen rules, seven of them red
   lines, three of them budgets you may spend in writing. Read it once per
   session before you change anything. It is short.
 - The referee: `tools/golden-check.sh` — run it whenever you like, it never
@@ -89,6 +89,12 @@ Everything hangs off a feature registry, and that is the one idea you need.
   committed; do not read it or ask for it. A plate can be repainted; a face
   cannot, by anybody, ever — one pilot, one portrait, and the manifest line is
   the lock. There is no flag for it and adding one is a rule change.
+- `docs/chronicle-song.js` — the room the book is read in: the song, the orb
+  hanging in its weather, and the unimpressed thing it thinks every twenty
+  seconds. Generated from a heredoc in `tools/chronicle.sh` like everything
+  else in the book, and the one corner of this project that belongs to the
+  repository's owner alone (GR13, red line, no override). The rest of that
+  script is ordinary work.
 
 The longer map is [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and it is not
 generated — read it when the shape of something is not obvious from here.
@@ -139,6 +145,10 @@ registry-shaped solution instead.
 - Editing `src/game/ledger.js` by hand, or reaching for `tools/tally.sh` to make
   somebody's number smaller. It is derived from the history; that is the only
   reason it means anything.
+- Touching the orb or the book's song for anybody who is not the repository's
+  owner — appearance, motion, what it says, how it answers the sound, the sound
+  itself (GR13). There is no override on it. Take the idea to the owner; it is
+  a minute of their evening.
 - Force-pushing `main`, rebasing or amending commits other people already have,
   or committing under somebody else's name. The history is the scoreboard.
 - Landing something you know is broken, or that makes the game unloseable, or

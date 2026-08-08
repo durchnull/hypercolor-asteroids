@@ -13,7 +13,7 @@
 #
 # Exit 0 = clear (warnings never block). Exit 1 = blocked.
 #
-# Six rules are red lines and cannot be overridden. Three are budgets: you may
+# Seven rules are red lines and cannot be overridden. Three are budgets: you may
 # spend past them, but only by saying so in the commit message, where everybody
 # can read it later. Two are nudges. One is on your honour.
 # ---------------------------------------------------------------------------
@@ -153,6 +153,21 @@ is_commons() {
 RUNNER=src/game/events.js
 SEAT=src/game/profile.js
 GUARD='\.by[[:space:]]*!==[[:space:]]*A\.HOUSE[[:space:]]*&&[^&|]*\.by[[:space:]]*==='
+
+# GR13's ground: the room the book is read in, and the script that writes it.
+# The song is generated like the rest of the book, so the file anybody would
+# actually edit is the heredoc, not the copy.
+SONG=docs/chronicle-song.js
+BOOK=tools/chronicle.sh
+
+# That heredoc and nothing else in that script. Read from stdin so the same
+# reader works on a blob out of the history and on the working copy.
+song_of() {
+  awk -v f="$SONG" '
+    index($0, "cat > " f " <<") == 1 { on = 1; next }
+    on && $0 == "JS" { on = 0; next }
+    on { print }'
+}
 
 # where a feature is allowed to call register()
 is_feature_home() {
@@ -507,6 +522,48 @@ check_gr12() {
 }
 
 # ---------------------------------------------------------------------------
+# GR13  The owner's ground.
+#
+# One corner of this repository is one pilot's, and it is the orb in the book
+# together with the song it listens to. The owner is the author of the first
+# commit - derived like everything else here, so there is no name in a file for
+# anybody to edit themselves into. No budget and no override: a rule about who
+# may change a thing cannot come with a line that lets everybody change it.
+# ---------------------------------------------------------------------------
+check_gr13() {
+  owner=$(git log --max-parents=0 --format='%an' 2>/dev/null | tail -1)
+  [ -n "$owner" ] || return 0            # no history yet, nobody's ground yet
+  [ "$owner" = "$ME" ] && return 0
+
+  if grep -qx "$SONG" "$TMP/gone" 2>/dev/null || grep -qx "$BOOK" "$TMP/gone" 2>/dev/null; then
+    hard GR13 "the room the book is read in is $owner's - it does not get deleted"
+    return 0
+  fi
+
+  if grep -qx "$BOOK" "$TMP/files" 2>/dev/null; then
+    git show "$BASE:$BOOK" 2>/dev/null | song_of > "$TMP/song.was"
+    content "$BOOK" | song_of > "$TMP/song.now"
+    cmp -s "$TMP/song.was" "$TMP/song.now" || {
+      hard GR13 "the orb and its song are $owner's - that heredoc is not yours to change"
+      note "the rest of $BOOK is ordinary work; the part that writes $SONG is not"
+    }
+  fi
+
+  # The copy is the heredoc, byte for byte, so it only moves when the heredoc
+  # does. A pilot with a stale docs/ rebuilding the book is the machine catching
+  # up and is nobody's doing. A copy that no longer says what the script says is
+  # somebody's doing, and it is the same edit by the other door.
+  if grep -qx "$SONG" "$TMP/files" 2>/dev/null; then
+    content "$BOOK" | song_of > "$TMP/song.src"
+    content "$SONG" > "$TMP/song.mine"
+    cmp -s "$TMP/song.src" "$TMP/song.mine" || {
+      hard GR13 "$SONG has been edited away from what $BOOK writes, and it is $owner's"
+      note "it is generated - the next rebuild would overwrite this anyway"
+    }
+  fi
+}
+
+# ---------------------------------------------------------------------------
 # GR8, the one checkable corner of it: a breach line the table writes.
 #
 # The fairness rule itself stays on honour - no machine judges whether a
@@ -601,10 +658,11 @@ check_message() {
 # --- run --------------------------------------------------------------------
 
 case "$STAGE" in
-  pre-commit) check_gr1; check_gr2; check_gr7; check_gr10; check_gr11; check_gr12; check_gr39 ;;
+  pre-commit) check_gr1; check_gr2; check_gr7; check_gr10; check_gr11; check_gr12
+              check_gr13; check_gr39 ;;
   commit-msg) check_gr45; check_gr6; check_gr10; check_gr12; check_breach; check_message ;;
   *)          check_gr1; check_gr2; check_gr7; check_gr10; check_gr11
-              check_gr45; check_gr6; check_gr12; check_breach; check_gr39 ;;
+              check_gr45; check_gr6; check_gr12; check_gr13; check_breach; check_gr39 ;;
 esac
 
 if [ ! -s "$TMP/out" ]; then
