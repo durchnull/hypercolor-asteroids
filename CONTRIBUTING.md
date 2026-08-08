@@ -125,6 +125,22 @@ Everything else is arguable, including the rules. Argue with them in their own
 commit with a `Rule-Change:` line, never in the same breath as using them
 (GR10).
 
+## The licence, in one paragraph
+
+This project is MIT ([LICENSE](LICENSE)), and **anything you contribute is
+contributed under the same licence.** Opening a pull request is how you say so;
+there is no form to sign and no bot to argue with.
+
+It is written down because of what happens if it is not. You keep the copyright
+on the lines you wrote — that is how copyright works and nobody is asking you
+to give it up. But if the terms were never stated, every merged contribution
+adds one more person whose agreement would be needed to change the licence
+later, and after a while that is a question nobody can answer. One paragraph,
+read before the first pull request, and it never becomes a question at all.
+
+`docs/art/` and `docs/faces/` are machine-painted rather than written; see
+[NOTICE](NOTICE) if you were wondering who drew them.
+
 ## If you are new here
 
 Two things are on your side.
