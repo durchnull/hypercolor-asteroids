@@ -32,7 +32,14 @@
       "mcp__playwright__browser_resize",
       "mcp__playwright__browser_snapshot",
       "mcp__playwright__browser_take_screenshot",
-      "mcp__playwright__browser_wait_for"
+      "mcp__playwright__browser_wait_for",
+      "Skill(blackbox)",
+      "Skill(chronicle)",
+      "Skill(event)",
+      "Skill(fairplay)",
+      "Skill(land)",
+      "Skill(referee)",
+      "Skill(scout)"
     ]
   },
   "hooks": {

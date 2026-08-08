@@ -572,12 +572,49 @@ JS
   var shut = document.getElementById("bookshut");
   var here = "";
 
+  // One song at a time.
+  //
+  // Everywhere else in this project the book and the cabinet are two pages,
+  // and a browser only ever has one of them open - the cabinet's band stops
+  // because the page it was playing on is gone. Folded into one file they are
+  // two documents in the same tab, one on top of the other, each with an audio
+  // graph of its own and neither with any idea the other exists. So they play
+  // together, which is two bands in different keys at different tempos, and it
+  // is exactly as good as that sounds.
+  //
+  // The rule is the one a room has rather than one either piece of software
+  // has: whatever is on top is what you can hear. The book is on top for as
+  // long as it is open, so the cabinet goes quiet for as long as it is open,
+  // and comes back afterwards exactly as it was - a pilot who had already
+  // muted it does not get it handed back unmuted, which is why the flag is
+  // remembered rather than assumed.
+  //
+  // The chapter needs nothing from any of this and is not asked for anything:
+  // its own switch is the only switch it has ever had, and closing the book
+  // takes the whole document away, room and all.
+  var hushed = false;
+
+  function hush() {
+    var A = window.ASTEROIDS;
+    if (hushed || !A || !A.setMuted || A.muted) return;
+    hushed = true;
+    A.setMuted(true);
+  }
+
+  function unhush() {
+    var A = window.ASTEROIDS;
+    if (!hushed) return;
+    hushed = false;
+    if (A && A.setMuted) A.setMuted(false);
+  }
+
   function show(name) {
     var page = CHAPTERS[name];
     if (!page) return false;
     here = name;
     pane.srcdoc = page.replace(/@@P:([^@]+)@@/g, function (m, k) { return part(k); });
     frame.hidden = false;
+    hush();
     return true;
   }
 
@@ -585,6 +622,7 @@ JS
     frame.hidden = true;
     pane.srcdoc = "";
     here = "";
+    unhush();
   }
 
   // A chapter asking for the next one. Anything climbing out of docs/ is the

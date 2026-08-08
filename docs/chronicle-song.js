@@ -988,7 +988,16 @@
     var w = cv.clientWidth, h = cv.clientHeight;
     if (adrift) {
       hx = w / 2; hy = h / 2;
-      R = Math.min(w, h) * 0.29;
+      // A fifth rather than the near-third it was, and the box it is in got
+      // bigger by about as much — so the rock is the size it always was and
+      // the room around it is not. What hangs off this object goes a long way
+      // out: the shock ring alone reaches past one and a half of it on a loud
+      // bar, and the flares and the halo further. At the old ratio every one
+      // of them met the edge of the canvas and stopped dead, which reads as a
+      // circle drawn round the thing rather than as light coming off it. The
+      // berth here is a little over four rocks across, which is what the piece
+      // needs at its loudest.
+      R = Math.min(w, h) * 0.21;
       return;
     }
     var box = cv.getBoundingClientRect();
@@ -1040,10 +1049,23 @@
     if (adrift) {
       s.position = "fixed";
       s.zIndex = "4";
-      s.top = "2.9rem";
-      s.right = "0.4rem";
-      s.width = "8.5rem";
-      s.height = "8.5rem";
+      s.top = "2.6rem";
+      s.right = "0.2rem";
+      // Room for what comes off it, not for a bigger rock — see place(), which
+      // takes a smaller share of this box than it used to by exactly enough to
+      // leave the object the size it was. Held against the viewport as well as
+      // in rems, because a phone has no twelve rems to spare in a corner and
+      // the light coming off a stamp does not need them.
+      s.width = s.height = "min(12rem, 44vw)";
+      // And whatever still reaches the edge is feathered there rather than
+      // cut. Room alone was never going to finish this: the weather has no
+      // size of its own and no shape either, so however wide the canvas is it
+      // fills it and then meets the corners, and a cloud with corners is a
+      // rectangle of gas hanging over the roster. The rock and its rings sit
+      // well inside the solid part; what fades is the sky they are in, which
+      // is the part that was pretending to be square.
+      s.webkitMaskImage = s.maskImage =
+        "radial-gradient(closest-side, #000 56%, rgba(0,0,0,0.5) 80%, transparent 100%)";
       document.body.appendChild(cv);
     } else {
       s.position = "absolute";
