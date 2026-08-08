@@ -6,16 +6,16 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 36,
-    latest: { v: 36, pilot: "David Friedrich", date: "08 August 2026", line: "The panels say something different now.", plate: "f31b98ce.jpg", alt: "The panels say something different now." },
+    versions: 37,
+    latest: { v: 37, pilot: "David Friedrich", date: "08 August 2026", line: "The bookkeeping of the cabinet moved a foot to the left.", plate: "74c62dcd.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left." },
     plates: [
+      { v: 37, file: "74c62dcd.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
       { v: 36, file: "f31b98ce.jpg", alt: "The panels say something different now.", line: "The panels say something different now." },
       { v: 35, file: "7d0481cd.jpg", alt: "Somebody rewrote a rule the game had been taking for granted.", line: "Somebody rewrote a rule the game had been taking for granted." },
       { v: 34, file: "cddc9daf.jpg", alt: "The phosphor is a different colour of wrong now. The HUD says so, too.", line: "The phosphor is a different colour of wrong now. The HUD says so, too." },
-      { v: 33, file: "5d0b9ea0.jpg", alt: "The cabinet keeps score with slightly different arithmetic now.", line: "The cabinet keeps score with slightly different arithmetic now." },
     ],
     roster: {
-      "David Friedrich": 36,
+      "David Friedrich": 37,
     }
   };
   A.BOARD = [

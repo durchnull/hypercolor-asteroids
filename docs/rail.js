@@ -45,6 +45,7 @@
     ["cddc9daf.jpg", "The phosphor is a different colour of wrong now. The HUD says so, too.", ""],
     ["7d0481cd.jpg", "Somebody rewrote a rule the game had been taking for granted.", ""],
     ["f31b98ce.jpg", "The panels say something different now.", ""],
+    ["74c62dcd.jpg", "The bookkeeping of the cabinet moved a foot to the left.", ""],
   ]
   var dock = document.querySelector("nav.dock[data-here]")
   if (!dock || !T.length) return
