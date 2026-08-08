@@ -64,25 +64,47 @@ rows() {
   # itself off a copied path list. The copy did not know that the workflow
   # filing the book is not a pilot, so a machine could have earned clean
   # landings against a name that cannot fly.
+  # And every name the history has ever been authored by. A GR8 breach line
+  # names the pilot it is about rather than the pilot who wrote it, which is the
+  # whole point of it - and it is therefore the one line in this file where a
+  # typo charges somebody who does not exist and lets the somebody who does walk
+  # away. The referee refuses that at the gate (check_breach in
+  # tools/golden-check.sh) and this reads the history directly, so it has to
+  # make the same test: the same question, off the same log, machines included
+  # because the question is who has flown here and not who is a person.
+  #
+  # Forgiving, in the way the audit is forgiving: a name nobody recognises
+  # charges nobody, and an empty list charges everybody it used to. This may
+  # miss a breach. It may not invent one.
   { sh tools/chronicle.sh --skips 2>/dev/null \
       | awk -F'\t' '{ printf "\036SKIP\037%s\037%s", $1, $2 }'
     sh tools/chronicle.sh --versions 2>/dev/null \
       | awk '{ printf "\036VERSION\037%s", $1 }'
+    git log --format='%an' 2>/dev/null | sort -u \
+      | awk '$0 != "" { printf "\036FLEW\037%s", $0 }'
     git log --no-merges --format='%x1e%H%x1f%an%x1f%B%x1f' 2>/dev/null; } \
   | awk -v me="$ME" -v plus="$PLUS" '
+      BEGIN { RS = "\036"; FS = "\037"; pending = 0 }
+
       # A message still being written is the newest thing there is, so it goes
-      # through first: a pending bend resets its pilot before any landed
-      # version can count as "since". It never counts as a version itself -
-      # a landing is only clean once it is history.
-      BEGIN {
-        RS = "\036"; FS = "\037"; pending = 0
-        if (plus != "") {
-          body = ""
-          while ((getline chunk < plus) > 0) body = body chunk "\n"
-          pending = 1
-          bend(me, body, "", "")
-          pending = 0
-        }
+      # through before any landed commit: a pending bend resets its pilot before
+      # any landed version can count as "since". It never counts as a version
+      # itself - a landing is only clean once it is history.
+      #
+      # It used to go through in BEGIN, which is one record too early now: the
+      # author set arrives down the stream ahead of the log, and a breach line
+      # in a message nobody has committed yet has to be able to ask the same
+      # question a landed one does. So it goes at the first commit record
+      # instead, which is the same place in the order and a later place in the
+      # reading.
+      function pend(   chunk, body) {
+        started = 1
+        if (plus == "") return
+        body = ""
+        while ((getline chunk < plus) > 0) body = body chunk "\n"
+        pending = 1
+        bend(me, body, "")
+        pending = 0
       }
 
       function add(who, n, what) {
@@ -125,7 +147,12 @@ rows() {
               nm = t
               sub(/^[A-Za-z0-9]+[ \t]+/, "", nm)
               sub(/[ \t]+-[ \t].*$/, "", nm)
-              if (nm != "") add(nm, 1, r)
+              # A name no commit was ever authored by is a typo, and a typo is
+              # not a verdict: charging it would put a phantom on the ledger and
+              # leave whoever the table actually meant untouched. The referee
+              # refuses this line at the gate; a clone that never installed the
+              # hooks lands it anyway, and then this is the only reader left.
+              if (nm != "" && (nflew == 0 || (nm in flew))) add(nm, 1, r)
             }
           }
         }
@@ -143,10 +170,14 @@ rows() {
 
       $1 == "SKIP"    { skip[$2] = 1; next }
       $1 == "VERSION" { version[$2] = 1; next }
+      $1 == "FLEW"    { flew[$2] = 1; nflew++; next }
 
-      NF >= 3 { bend($2, $3, $1) }
+      NF >= 3 { if (!started) pend(); bend($2, $3, $1) }
 
       END {
+        # A repository with nothing landed in it still has a message on the
+        # table, and the referee asks about exactly that on the first commit.
+        if (!started) pend()
         for (w in bends) if (bends[w] > 0) printf "%s\t%d\t%d\t%s\n", w, bends[w], clean[w] + 0, last[w]
       }
   ' | tr -d '\\"' | LC_ALL=C sort
