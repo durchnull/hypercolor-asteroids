@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Joining the cabinet &mdash; HYPERCOLOR ASTEROIDS</title>
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="../styles/crt.css">
+<link rel="stylesheet" href="notes.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script src="chronicle-song.js" defer></script>
+</head><body class="notes">
+<div class="crt vignette"></div>
+<div class="crt scanlines"></div>
+<div class="crt roll"></div>
+<main>
+<header class="plate"><span class="kind">THE NOTES</span><span class="of">CONTRIBUTING.md</span></header>
+<h1 id="joining-the-cabinet">Joining the cabinet</h1>
+<p>
+Somebody lands a version. The next person pulls, presses ENTER, and finds out
+what happened by playing. That is the game behind the game, and everything
+below exists to keep it playable for whoever is not in the room.
+</p>
+<p>
+The short version: build one thing, put it in its own file, play it, and write
+the commit for the next pilot rather than for the diff.
+</p>
+<h2 id="set-up-once">Set up, once</h2>
+<pre><code class="lang-sh">
+git clone https://github.com/durchnull/hypercolor-asteroids
+cd hypercolor-asteroids
+tools/golden-check.sh --install   # wire in the referee
+tools/whoami.sh                   # your seat, so your own traps go quiet
+open index.html                   # find out what the others did to you
+</code></pre>
+<p>
+There is nothing to install and nothing to build. If <code>open index.html</code> shows
+you a game, you are set up. Some browsers are strict about <code>file://</code>, in which
+case <code>python3 -m http.server 8000</code> and go to <code>localhost:8000</code>.
+</p>
+<p>
+<code>tools/golden-check.sh --install</code> is the one step worth not skipping. It points
+git at the hooks in <code>.githooks/</code>, and those are what tell you a rule is about
+to be bent while you can still cheaply do something about it. Skip it and
+nothing stops you — you just find out on the pull request instead, in public,
+which is a worse place to find out.
+</p>
+<h2 id="taking-a-turn">Taking a turn</h2>
+<p>
+Most people here work by talking to <a href="https://claude.com/claude-code">claude</a> in
+the project folder, because <a href="claude.html">CLAUDE.md</a> makes it a second referee
+that knows the rulebook. A session looks like:
+</p>
+<ul>
+<li><i>"what did the others land since I last played?"</i> — or <code>/scout</code></li>
+<li><i>"add comets, and make them come in threes"</i></li>
+<li><i>"a trap that flips everyone's controls for ten seconds"</i> — or <code>/event</code></li>
+<li><i>"read the black box"</i> — paste the tape off the game-over screen</li>
+<li><i>"land it"</i> — or <code>/land</code></li></ul>
+<p>
+You do not have to. Everything the skills do, you can do by hand, and the
+referee does not care which you chose.
+</p>
+<h2 id="what-a-good-change-looks-like">What a good change looks like</h2>
+<p>
+<b>One idea, in its own file.</b> A feature is a plain object registered with the
+game loop, plus one line in the manifest <code>src/features.js</code>. That is the whole
+integration — <code>src/entities/</code> for things in the field, <code>src/game/</code> for rules,
+<code>src/ui/</code> for panels. <a href="architecture.html">docs/ARCHITECTURE.md</a> is the map.
+If you find yourself editing four shared files to land one idea, that is the
+signal to stop and find the registry-shaped solution instead.
+</p>
+<p>
+<b>With a <code>guide</code> entry,</b> so the next player discovers it by playing rather
+than by reading your diff.
+</p>
+<p>
+<b>That you have actually played.</b> Every flight seals itself into a tape; copy
+it off the game-over screen and put it on <code>docs/RANKINGS.md</code>. One tape buys
+three landings (GR14). The referee cannot press ENTER for you, and this is the
+half of that promise which can be checked.
+</p>
+<p>
+<b>Fair.</b> Every new power gets a cost, a cooldown or a finite count. Both seats
+stay equal. Nothing makes the game unloseable. No machine checks this and none
+ever will — it is the rule that decides whether the game is any good.
+</p>
+<h2 id="before-you-open-a-pull-request">Before you open a pull request</h2>
+<pre><code class="lang-sh">
+tools/inbound.sh
+</code></pre>
+<p>
+That runs exactly what CI runs: every commit on your branch, read one at a
+time, judged as its own author against its own message. If it is quiet locally
+it will be quiet there.
+</p>
+<p>
+Write the subject line from the next pilot's seat — *"Comets, and they come in
+threes"<i> beats </i>"add comet feature"* — and add a <code>Chronicle:</code> line, which is
+the sentence the book quotes.
+</p>
+<h2 id="what-happens-to-your-pull-request">What happens to your pull request</h2>
+<p>
+Two things read it, in this order.
+</p>
+<p>
+<b>A workflow</b>, which prints what it found into the pull request summary: every
+commit and its verdict, every budget the branch spent, and where the flight
+meter stands. Red lines fail it. Budgets and nudges never do — they just get
+printed, because the point was never that a machine stops you.
+</p>
+<p>
+<b>People</b>, which is the part that matters. The summary exists so nobody has to
+read the diff to find out what happened, and reading the diff is discouraged
+anyway (GR9 — it is like shaking the presents).
+</p>
+<p>
+Merges keep the individual commits rather than squashing them. Half the
+rulebook only means anything one commit at a time, so a squashed branch is one
+that cannot be refereed.
+</p>
+<h2 id="the-rules">The rules</h2>
+<p>
+<a href="golden-rules.html">GOLDEN_RULES.md</a> is the whole rulebook and it is one page.
+Fourteen rules in four weights:
+</p>
+<div class="scroll"><table>
+<thead>
+<tr><th>weight</th><th>what it means</th></tr>
+</thead>
+<tbody>
+<tr><td><b>red line</b></td><td>cannot be overridden by anyone. To change one, change the file, in its own commit, in front of everybody.</td></tr>
+<tr><td><b>budget</b></td><td>you may spend past it, in writing. One line in the commit message and you are through, and that line stays in the book forever.</td></tr>
+<tr><td><b>nudge</b></td><td>the referee mentions it and gets out of your way.</td></tr>
+<tr><td><b>on your honour</b></td><td>no check exists and none could.</td></tr>
+</tbody>
+</table></div>
+<p>
+Spending a budget is not a failing. It costs one on the tally, your events
+start coming for you sooner, and it is on the record under your name — that is
+the entire price, and it is meant to be cheap to pay and impossible to hide.
+</p>
+<p>
+Three things get refused whoever asks, and they are worth knowing in advance:
+</p>
+<ul>
+<li><b>Another pilot's event file</b> (GR11). An event is a trap that never fires for whoever wrote it, and the whole mechanic rests on nobody being able to disarm the one waiting for them. No budget, no override, not one line.</li>
+<li><b>Your own tally</b> (GR12). It is generated from the history by <code>tools/tally.sh</code>, which is the only reason it means anything.</li>
+<li><b>The orb and the song in the book</b> (GR13). One corner of the project stays as one person meant it. If you have a better thought for it to think, say so — that is a minute of their evening and they will probably enjoy it.</li></ul>
+<p>
+Everything else is arguable, including the rules. Argue with them in their own
+commit with a <code>Rule-Change:</code> line, never in the same breath as using them
+(GR10).
+</p>
+<h2 id="if-you-are-new-here">If you are new here</h2>
+<p>
+Two things are on your side.
+</p>
+<p>
+<b>The field does not ambush the unarmed.</b> A pilot with no event of their own
+has none fired at them. The first evening is for learning the field; writing
+your first trap is the induction that arms the room, and it is the most direct
+route there is to ruining a stranger's evening.
+</p>
+<p>
+<b>Your meter starts at zero.</b> You get three landings before GR14 asks to see a
+tape. Use one of them on something small, so you find out what the ritual feels
+like before it matters.
+</p>
+<p>
+Now go and do something to annoy the others.
+</p>
+<nav class="flip" aria-label="the notes">
+<a href="readme.html">README</a>
+<a href="requirements.html">REQUIREMENTS</a>
+<a href="architecture.html">ARCHITECTURE</a>
+<a href="rankings.html">RANKINGS</a>
+<a href="golden-rules.html">GOLDEN RULES</a>
+<a href="claude.html">CLAUDE</a>
+<span class="here">CONTRIBUTING</span>
+<a class="out" href="index.html">THE CHRONICLE</a>
+<a class="out" href="../index.html">PLAY</a>
+</nav>
+</main>
+</body></html>

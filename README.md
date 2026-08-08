@@ -123,6 +123,11 @@ Two things worth knowing:
   gets harder in public. [GOLDEN_RULES.md](GOLDEN_RULES.md) is one page if you
   are curious.
 
+Arriving from outside, with a pull request rather than a push, works the same
+way and is read the same way — one commit at a time, each judged as its own
+author. [CONTRIBUTING.md](CONTRIBUTING.md) is the walk-through, and
+`tools/inbound.sh` tells you what the referee will say before you send it.
+
 Nobody has to trust anybody. `git blame` says who made a thing, the book says
 who bent which rule, and the ledger is computed from both. That is all the
 governance a game about shooting rocks needs.
