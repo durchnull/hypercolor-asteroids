@@ -92,7 +92,7 @@ so an edited one ranks nowhere. Honest flights land in
 [docs/RANKINGS.md](docs/RANKINGS.md).
 
 **The rules are part of the game.** [GOLDEN_RULES.md](GOLDEN_RULES.md) is the
-whole rulebook — twelve rules, one page. *Red lines* are hard stops. *Budgets*
+whole rulebook — thirteen rules, one page. *Red lines* are hard stops. *Budgets*
 you may spend, but you must say so in the commit —
 `Golden-Rule-Override: GR4 - <why>` — and that line stays in the history under
 your name. *Nudges* just get mentioned. Changing a rule is allowed too, in its
