@@ -336,9 +336,11 @@ taglines() {
 # tools/golden-check.sh's owner_of - whoever's commit first added the file -
 # derived here for the whole tree in one pass: the log arrives newest first,
 # so the last A record seen for a path is its oldest, and that one wins. GR11
-# reads it for the event files and GR4 for everything else. --no-renames where
-# owner_of follows renames, so the two can disagree about a renamed file - and
-# where they could, the audits below stay quiet, as ever.
+# reads it for the event files and GR4 for everything else. --no-renames, which
+# is owner_of's answer too: without --follow git stops looking at the commit
+# that brought the path, so a file that has been moved belongs to whoever moved
+# it, in both readers, from the commit after the move onwards. Inside the move
+# itself the two used to part company, and renames() below is where they stop.
 owners() {
   git log --format='%x1e%an' --diff-filter=A --name-only --no-renames 2>/dev/null \
     | awk -v RS='\036' '
@@ -347,6 +349,35 @@ owners() {
           for (i = 2; i <= n; i++) if (L[i] != "") own[L[i]] = L[1]
         }
         END { for (p in own) printf "\036OWN\037%s\037%s", p, own[p] }'
+}
+
+# Every move git would call a rename, folded in the same way once more: the
+# commit, the path it left, the path it arrived at.
+#
+# The log below is read with --no-renames on purpose and stays that way - the
+# picture draws an arrival differently from a departure, and the marks a chapter
+# wears are of the paths as they are now. But that leaves a move reaching the
+# audits as a delete of one file and an add of another, and a delete of somebody
+# else's file is a GR4 breach with no override line, which is two on the tally
+# (GR12). The referee does not read it that way: check_gr45 in
+# tools/golden-check.sh asks where the file came from and weighs it as what it
+# was. So a rename that changed not one byte cost its pilot two while the
+# referee said clear.
+#
+# This is how the audits get the referee's own answer without forming a second
+# opinion about what a rename is. Both ask git, both with rename detection on,
+# and neither counts similar lines for itself.
+renames() {
+  git log --format='%x1e%H' --diff-filter=R --name-status --find-renames --no-merges 2>/dev/null \
+    | awk -v RS='\036' '
+        {
+          n = split($0, L, "\n")
+          for (i = 2; i <= n; i++) {
+            if (L[i] !~ /^R/) continue
+            split(L[i], f, "\t")
+            printf "\036REN\037%s\037%s\037%s", L[1], f[2], f[3]
+          }
+        }'
 }
 
 # The painted plates, folded in the same way again: commit, file, and the line
@@ -388,6 +419,11 @@ faces() {
 # below and only the body moves. It cannot go last, however tidy that looks:
 # --raw and --numstat print after the format string, so the final field is the
 # one that absorbs the diff, and the body has to be the field that does it.
+#
+# --no-renames, and renames() above is what makes that safe: a move arrives here
+# as a departure and an arrival, which is what the picture wants and what the
+# marks want, and the audits put the two halves back together from the pairs git
+# handed them rather than from a guess.
 history() {
   git log --format='%x1e%H%x1f%an%x1f%ad%x1f%s%x1f%at%x1f%ae%x1f%b' \
           --date=format:"$1" --raw --numstat --no-renames --no-merges ${2:+-n "$2"}
@@ -456,6 +492,19 @@ function is_gutted_ground(p) {
   return (!is_referee(p) && p !~ /^docs\// && p != "src/game/ledger.js" &&
           p !~ /^src\/events\//)
 }
+# The two halves of a move, put back together. renames() above folds the pairs
+# git handed it into the stream and the audits below fill these two arrays from
+# them; where a commit moved nothing, both answers are the path itself and
+# nothing downstream can tell the difference.
+#
+#   came   what this path was called before this commit - the path GR4 asks who
+#          owns and GR5 asks whether it is commons, exactly as came_from does
+#          for tools/golden-check.sh
+#   went   where this path ended up in this commit - the bucket its lines are
+#          counted into, so a move nets out at the arithmetic the referee reads
+#          instead of a whole file deleted and a whole file added
+function came(sha, p,   k) { k = sha SUBSEP p; return (k in cameto) ? cameto[k] : p }
+function went(sha, p,   k) { k = sha SUBSEP p; return (k in moveto) ? moveto[k] : p }
 '
 
 case "${1:-}" in
@@ -525,10 +574,11 @@ RULES=$(git log --diff-filter=A --format='%H' --no-renames -- GOLDEN_RULES.md 2>
 # audit in the book builder below - same forgiving form, same exemptions, and
 # anywhere the two could disagree, both stay quiet.
 if [ "${1:-}" = "--skips" ]; then
-  { owners; history '%d %b %Y'; } \
+  { owners; renames; history '%d %b %Y'; } \
   | awk -v RS='\036' -v FS='\037' -v rules="$RULES" "$LIB"'
       BEGIN { bound = (rules != "") }
       $1 == "OWN" { owner[$2] = $3; next }
+      $1 == "REN" { moveto[$2 SUBSEP $3] = $4; cameto[$2 SUBSEP $4] = $3; next }
       NF < 7 { next }
       # A machine has no seat, no hooks and nothing to confess. The runner that
       # files the book never installed the referee and was never meant to: the
@@ -560,9 +610,14 @@ if [ "${1:-}" = "--skips" ]; then
               if (ns[1] != "-") ins += ns[1]
             }
             if (is_gutted_ground(p)) {
-              if (!(p in fseen)) { fseen[p] = 1; fp[++fpn] = p }
-              fadd[p] += (ns[1] == "-" ? 0 : ns[1])
-              fdel[p] += (ns[2] == "-" ? 0 : ns[2])
+              # Both halves of a move count into the path it moved to, which is
+              # the file the referee weighed: a departure is the whole file out
+              # and an arrival is the whole file in, so the two together net to
+              # what the diff actually did to it.
+              bk = went(sha, p)
+              if (!(bk in fseen)) { fseen[bk] = 1; fp[++fpn] = bk }
+              fadd[bk] += (ns[1] == "-" ? 0 : ns[1])
+              fdel[bk] += (ns[2] == "-" ? 0 : ns[2])
             }
             mode = ""; continue
           }
@@ -580,15 +635,17 @@ if [ "${1:-}" = "--skips" ]; then
         # GR4 and GR5, off the same numbers the referee reads: net lines out of
         # a file against its first author, the commons against everybody. Same
         # budgets, overrides honoured, and a file with no known owner is new,
-        # which means it is theirs.
+        # which means it is theirs. A file that moved is asked about under the
+        # name it had, because that is the name it was owned under: moving a
+        # file does not move who it belongs to, here or in front of the referee.
         for (j = 1; j <= fpn; j++) {
-          p = fp[j]
+          p = fp[j]; src = came(sha, p)
           if (p in deleted) {
-            if (is_commons(p)) { if (toupper(overrides) !~ /GR5/) unrec = 1 }
-            else if ((p in owner) && owner[p] != who && toupper(overrides) !~ /GR4/) unrec = 1
-          } else if (is_commons(p)) {
+            if (is_commons(src)) { if (toupper(overrides) !~ /GR5/) unrec = 1 }
+            else if ((src in owner) && owner[src] != who && toupper(overrides) !~ /GR4/) unrec = 1
+          } else if (is_commons(src)) {
             if (fdel[p] - fadd[p] > 60 && toupper(overrides) !~ /GR5/) unrec = 1
-          } else if ((p in owner) && owner[p] != who && fdel[p] - fadd[p] > 25 && \
+          } else if ((src in owner) && owner[src] != who && fdel[p] - fadd[p] > 25 && \
                      toupper(overrides) !~ /GR4/) unrec = 1
         }
         if (unrec) printf "%s\t%s\n", sha, who
@@ -669,7 +726,7 @@ if [ -f src/ui/logo.js ]; then
   if [ -s docs/favicon.svg ]; then FAV=1; else rm -f docs/favicon.svg; fi
 fi
 
-{ taglines; owners; plates; faces; history '%d %B %Y|%H:%M'; } \
+{ taglines; owners; renames; plates; faces; history '%d %B %Y|%H:%M'; } \
   | awk -v RS='\036' -v FS='\037' -v total="$TOTAL" -v rules="$RULES" -v fav="$FAV" "$LIB"'
 function esc(s) { gsub(/&/,"\\&amp;",s); gsub(/</,"\\&lt;",s); gsub(/>/,"\\&gt;",s); return s }
 function att(s) { s = esc(s); gsub(/"/, "\\&quot;", s); return s }
@@ -1144,6 +1201,7 @@ BEGIN { ver = total; bound = (rules != "")
         MARKS = "game meta ui music hands engine book rules notes" }
 $1 == "TAG" { tag[$2] = $3; next }
 $1 == "OWN" { owner[$2] = $3; next }
+$1 == "REN" { moveto[$2 SUBSEP $3] = $4; cameto[$2 SUBSEP $4] = $3; next }
 $1 == "ART" { art[$2] = $3; altof[$2] = $4; next }
 $1 == "ART" { plate[$2] = $3; plated[$2] = $4; next }
 $1 == "FACE" { mug[$2] = $3; next }
@@ -1212,11 +1270,15 @@ NF < 4 { next }
       if (p ~ /^src\/events\/.+\.js$/ && (p in owner) && owner[p] != who)
         stolenpath[++stolen] = p
       # GR4 and GR5 ask per file rather than per commit, so the audit keeps
-      # both sides of the numstat for every path they measure.
+      # both sides of the numstat for every path they measure - and both halves
+      # of a move count into the path it moved to, which is the file the referee
+      # weighed. A departure is the whole file out and an arrival is the whole
+      # file in; the two together net to what the diff actually did to it.
       if (is_gutted_ground(p)) {
-        if (!(p in fseen)) { fseen[p] = 1; fp[++fpn] = p }
-        fadd[p] += (ns[1] == "-" ? 0 : ns[1])
-        fdel[p] += (ns[2] == "-" ? 0 : ns[2])
+        bk = went($1, p)
+        if (!(bk in fseen)) { fseen[bk] = 1; fp[++fpn] = bk }
+        fadd[bk] += (ns[1] == "-" ? 0 : ns[1])
+        fdel[bk] += (ns[2] == "-" ? 0 : ns[2])
       }
       if (p !~ /^docs\//) {
         files++
@@ -1276,21 +1338,27 @@ NF < 4 { next }
     # measured against whoever first added the file, overrides honoured. Keep
     # this in lockstep with the --skips mode above - same budgets, same
     # exemptions.
+    #
+    # A file that moved is asked about under the name it had, the way the
+    # referee asks (came_from, GR4). It is named that way too: a chapter saying
+    # somebody gutted a path that did not exist until this commit reads as a
+    # typo rather than as an accusation.
     for (q = 1; q <= fpn; q++) {
-      p = fp[q]
+      p = fp[q]; src = came($1, p)
+      nm = (src == p) ? esc(p) : esc(p) " (was " esc(src) ")"
       if (p in deleted) {
-        if (is_commons(p)) {
+        if (is_commons(src)) {
           if (toupper(overrides) !~ /GR5/)
-            unrec = unrec "It deleted " esc(p) ", which is commons and everybody&rsquo;s, past GR5 with nothing written down. "
-        } else if ((p in owner) && owner[p] != who && toupper(overrides) !~ /GR4/)
-          unrec = unrec "It deleted " esc(owner[p]) "&rsquo;s " esc(p) " outright, past GR4 with nothing written down. "
-      } else if (is_commons(p)) {
+            unrec = unrec "It deleted " nm ", which is commons and everybody&rsquo;s, past GR5 with nothing written down. "
+        } else if ((src in owner) && owner[src] != who && toupper(overrides) !~ /GR4/)
+          unrec = unrec "It deleted " esc(owner[src]) "&rsquo;s " nm " outright, past GR4 with nothing written down. "
+      } else if (is_commons(src)) {
         if (fdel[p] - fadd[p] > 60 && toupper(overrides) !~ /GR5/)
-          unrec = unrec "It cut " (fdel[p] - fadd[p]) " lines net out of " esc(p) \
+          unrec = unrec "It cut " (fdel[p] - fadd[p]) " lines net out of " nm \
                         ", which is commons, past GR5&rsquo;s budget with nothing written down. "
-      } else if ((p in owner) && owner[p] != who && fdel[p] - fadd[p] > 25 && \
+      } else if ((src in owner) && owner[src] != who && fdel[p] - fadd[p] > 25 && \
                  toupper(overrides) !~ /GR4/)
-        unrec = unrec "It gutted " esc(owner[p]) "&rsquo;s " esc(p) " by " (fdel[p] - fadd[p]) \
+        unrec = unrec "It gutted " esc(owner[src]) "&rsquo;s " nm " by " (fdel[p] - fadd[p]) \
                       " lines net, past GR4&rsquo;s budget with nothing written down. "
     }
     sub(/[[:space:]]+$/, "", unrec)
