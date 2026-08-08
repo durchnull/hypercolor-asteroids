@@ -641,6 +641,84 @@ case_ GR10 "a screenshot the pilot actually staged still counts"
   stage; check pre-commit
   blocks GR10
 
+# --- refereeing a pilot who is not in the room --------------------------------
+#
+# Everything above is the referee reading a tree somebody is standing in front
+# of. --rev is the referee reading a commit that already exists, which is the
+# only reading available when the work arrives from a clone that never ran
+# --install. The interesting half is identity: the verdict has to follow the
+# commit's author and the commit's message, not whoever happens to be running
+# the check. These cases fly from Bo's seat and referee Ada's commits, so a
+# reading that quietly used the local git config would come out wrong rather
+# than come out empty.
+
+# what the room sees afterwards: a commit that already exists
+check_rev() {
+  sh tools/golden-check.sh --rev "$1" > "$OUT" 2>&1
+  CODE=$?
+}
+
+# a commit that went round the hooks entirely - which is every commit that
+# arrives from a fork, and the whole reason --rev exists
+sneak() {
+  git add -A >/dev/null 2>&1
+  git commit -q --no-verify -m "$1" >/dev/null 2>&1
+}
+
+case_ GR11 "another pilot's trap, caught after the fact"
+  printf '// Bo was here\n' >> "src/events/ada-vex.js"
+  sneak "A small tidy-up of the traps"
+  check_rev HEAD
+  blocks GR11
+
+case_ GR11 "the same file, by the pilot it belongs to, reads clean"
+  git config user.name "$OWNER"
+  printf '  // Ada retunes her own ring\n' >> "src/events/ada-vex.js"
+  sneak "The ring closes a little sooner"
+  git config user.name "$PILOT"          # back to Bo, who is running the check
+  check_rev HEAD
+  lands
+
+case_ GR10 "the rules and the game, one commit, read back later"
+  printf '\nA new paragraph of rules.\n' >> CLAUDE.md
+  printf '// and a tweak while I am here\n' >> src/entities/rock.js
+  sneak "Tidying"
+  check_rev HEAD
+  blocks GR10
+
+# Cut to 20 rather than to the bone, like the commit-msg cases above: rev mode
+# runs GR1 as well, and a file cut mid-object stops parsing, which would be a
+# different rule answering the question.
+case_ GR4 "a budget spent out loud is still spent out loud in rev mode"
+  truncate_to src/entities/rock.js 20
+  sneak "The rock loses its long tail
+
+Golden-Rule-Override: GR4 - Ada agreed the padding was dead weight"
+  check_rev HEAD
+  lands
+
+case_ GR4 "the same cut with nothing written down, found later"
+  truncate_to src/entities/rock.js 20
+  sneak "The rock loses its long tail"
+  check_rev HEAD
+  blocks GR4
+
+case_ GR1 "ordinary work in your own file is as quiet in rev mode as in the tree"
+  printf '// one more line\n' >> src/events/bo-renn.js
+  sneak "Bo keeps fiddling"
+  check_rev HEAD
+  lands
+
+case_ GR10 "a range is every commit in it, judged one at a time"
+  printf '// one more line\n' >> src/events/bo-renn.js
+  sneak "A quiet one"
+  printf '\nA new paragraph of rules.\n' >> CLAUDE.md
+  printf '// and the game too\n' >> src/entities/rock.js
+  sneak "A loud one"
+  sh tools/golden-check.sh --range HEAD~2..HEAD > "$OUT" 2>&1
+  CODE=$?
+  blocks GR10
+
 # --- the count ---------------------------------------------------------------
 
 cd "$ROOT" || exit 1

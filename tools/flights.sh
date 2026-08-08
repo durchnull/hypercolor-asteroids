@@ -15,6 +15,7 @@
 #   tools/flights.sh --per           versions one tape buys - GR14's constant
 #   tools/flights.sh --staged        ... counting a tape staged but not committed
 #   tools/flights.sh --dirty         ... counting one in the working tree
+#   tools/flights.sh --at REV        the meter as it stood when REV landed
 #
 # A flight is credited to the pilot the board line names, not to whoever held
 # the pen - the same way a GR8 breach names the pilot it is about. Couriering a
@@ -41,7 +42,9 @@ BOARD=docs/RANKINGS.md
 PER=3                  # versions one sealed tape buys. GR14, and its only home.
 MODE=roll
 WHO=""
-PEND=none              # none | staged | dirty
+PEND=none              # none | staged | dirty | at
+AT=""                  # the commit the meter is read as of, with --at
+HIST=HEAD              # the history to read it off
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -51,19 +54,33 @@ while [ $# -gt 0 ]; do
     --per)      printf '%s\n' "$PER"; exit 0 ;;
     --staged)   PEND=staged ;;
     --dirty)    PEND=dirty ;;
-    -h|--help)  sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --at)       PEND=at; AT="${2:-}"; shift ;;
+    -h|--help)  sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *)          printf 'flights: unknown option %s\n' "$1" >&2; exit 2 ;;
   esac
   shift
 done
 
-git rev-parse --verify -q HEAD >/dev/null 2>&1 || {
-  # No history, no meter. Whatever is being asked, the answer is nothing yet.
+# --at asks what the meter said to the pilot who was about to land REV, so the
+# history it reads is the one that existed then - everything up to REV's parent
+# - and REV's own board line is the pending tape, exactly as a staged one is.
+# That keeps the rule's own sentence true for a commit being read back later:
+# flying, ranking and landing in one sitting is one sitting.
+if [ "$PEND" = at ]; then
+  AT=$(git rev-parse --verify -q "$AT^{commit}") || {
+    printf 'flights: no such commit\n' >&2; exit 2; }
+  HIST=$(git rev-parse --verify -q "$AT^") || HIST=""
+fi
+
+if [ -z "$HIST" ] || ! git rev-parse --verify -q "$HIST" >/dev/null 2>&1; then
+  # No history, no meter. Whatever is being asked, the answer is nothing yet -
+  # and --at the very first commit lands here too, which is the right answer for
+  # the same reason: nothing had been landed before it.
   case "$MODE" in count) printf '0\n' ;; esac
   exit 0
-}
+fi
 
-EPOCH=$(git log --diff-filter=A --format='%H' -- tools/flights.sh 2>/dev/null | tail -1)
+EPOCH=$(git log "$HIST" --diff-filter=A --format='%H' -- tools/flights.sh 2>/dev/null | tail -1)
 
 # One row per tape ever put on the board, newest first: sha, pilot, and the
 # numbers the log line already carries. Read out of the diff rather than out of
@@ -74,7 +91,7 @@ EPOCH=$(git log --diff-filter=A --format='%H' -- tools/flights.sh 2>/dev/null | 
 # their last flight. That is all this is asked for; how many rows they have is
 # the board's business, not the meter's.
 board_flights() {
-  git log --format='%x1e%H' --unified=0 -p -- "$BOARD" 2>/dev/null | awk '
+  git log "$HIST" --format='%x1e%H' --unified=0 -p -- "$BOARD" 2>/dev/null | awk '
     substr($0, 1, 1) == "\036" { sha = substr($0, 2); next }
     /^\+\*\*/ {
       line = substr($0, 4)            # past the "+**"
@@ -92,11 +109,11 @@ board_flights() {
 # one sitting rather than a rule violation.
 pending_flight() {
   [ "$PEND" = none ] && return 1
-  if [ "$PEND" = staged ]; then
-    git diff --cached --unified=0 -- "$BOARD" 2>/dev/null
-  else
-    git diff --unified=0 HEAD -- "$BOARD" 2>/dev/null
-  fi | awk -v who="$1" '
+  case "$PEND" in
+    staged) git diff --cached --unified=0 -- "$BOARD" 2>/dev/null ;;
+    at)     git diff --unified=0 "$AT^" "$AT" -- "$BOARD" 2>/dev/null ;;
+    *)      git diff --unified=0 HEAD -- "$BOARD" 2>/dev/null ;;
+  esac | awk -v who="$1" '
     /^\+\*\*/ {
       line = substr($0, 4); sub(/\*\*.*$/, "", line)
       n = split(line, f, " · ")
@@ -117,7 +134,7 @@ pending_flight() {
 rows() {
   { board_flights | awk -F'\t' '
       { printf "\036FLIGHT\037%s\037%s\037%s\037%s\037%s\037%s", $1, $2, $3, $4, $5, $6 }'
-    git log --no-merges --format='%x1e%H%x1f%an%x1f' --name-only 2>/dev/null; } \
+    git log "$HIST" --no-merges --format='%x1e%H%x1f%an%x1f' --name-only 2>/dev/null; } \
   | awk -v epoch="$EPOCH" '
       BEGIN { RS = "\036"; FS = "\037" }
 

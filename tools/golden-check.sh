@@ -8,6 +8,8 @@
 #
 #   tools/golden-check.sh              what does the referee say about my work?
 #   tools/golden-check.sh --staged     ... about what is staged
+#   tools/golden-check.sh --rev SHA    ... about a commit that already exists
+#   tools/golden-check.sh --range A..B ... about every commit in a range
 #   tools/golden-check.sh --install    install the hooks in this clone
 #   tools/golden-check.sh --json       machine readable, for the editor hook
 #
@@ -16,13 +18,22 @@
 # Seven rules are red lines and cannot be overridden. Four are budgets: you may
 # spend past them, but only by saying so in the commit message, where everybody
 # can read it later. Two are nudges. One is on your honour.
+#
+# The first two modes referee a pilot who is present: their tree, their index,
+# their git config. --rev referees one who is not - a commit that already
+# exists, judged as its own author, against its own message, with the files as
+# that commit left them. Nothing else changes, and that is the point: a clone
+# that never installed the hooks gets the same reading as one that did, only
+# later, and in front of everybody. GR12 said so first.
 # ---------------------------------------------------------------------------
 set -u
 
-MODE=worktree          # worktree | staged
+MODE=worktree          # worktree | staged | rev | install
 STAGE=all              # all | pre-commit | commit-msg
 MSGFILE=""
 FORMAT=text            # text | json
+REV=""                 # the commit under review, in rev mode
+RANGE=""
 BLOCK=0
 WARNED=0
 HARD=0
@@ -32,9 +43,11 @@ while [ $# -gt 0 ]; do
     --staged)        MODE=staged ;;
     --stage)         STAGE="${2:-all}"; shift ;;
     --message-file)  MSGFILE="${2:-}"; MODE=staged; shift ;;
+    --rev)           MODE=rev; REV="${2:-}"; shift ;;
+    --range)         RANGE="${2:-}"; shift ;;
     --json)          FORMAT=json ;;
     --install)       MODE=install ;;
-    -h|--help)       sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)       sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *)               printf 'golden-check: unknown option %s\n' "$1" >&2; exit 2 ;;
   esac
   shift
@@ -53,6 +66,38 @@ if [ "$MODE" = install ]; then
   done
   printf 'referee installed: core.hooksPath = .githooks\n'
   exit 0
+fi
+
+# A range is not a bigger commit, it is several commits, and half the rulebook
+# only means anything one commit at a time: GR6 counts one surprise, GR10 keeps
+# the rules out of the same breath as the game, GR4 and GR11 ask who wrote the
+# file and the answer changes per author. Squash the range into one diff and
+# all four stop being checkable. So the range is a loop, and each pass is an
+# ordinary --rev with its own verdict.
+#
+# Merges are skipped for the reason the post-commit hook skips them: a merge is
+# nobody's work, and refereeing somebody for the shape of a branch point would
+# be a rule about git rather than about the game.
+if [ -n "$RANGE" ]; then
+  revs=$(git rev-list --reverse --no-merges "$RANGE" 2>/dev/null) || {
+    printf 'golden-check: %s is not a range git knows\n' "$RANGE" >&2; exit 2; }
+  if [ -z "$revs" ]; then
+    [ "$FORMAT" = text ] && printf 'no commits in %s. nothing to check.\n' "$RANGE"
+    exit 0
+  fi
+  status=0
+  for r in $revs; do
+    if [ "$FORMAT" = text ]; then
+      printf '\n%s  %s\n            %s\n' \
+        "$(git log -1 --format='%h' "$r")" \
+        "$(git log -1 --format='%s' "$r")" \
+        "$(git log -1 --format='%an' "$r")"
+      sh "$0" --rev "$r" || status=1
+    else
+      sh "$0" --rev "$r" --json || status=1
+    fi
+  done
+  exit $status
 fi
 
 TMP=$(mktemp -d 2>/dev/null) || exit 0
@@ -92,13 +137,33 @@ is_litter() {
 
 # --- the change under review ------------------------------------------------
 
+EMPTYTREE=$(git hash-object -t tree /dev/null)
+
 if git rev-parse --verify -q HEAD >/dev/null 2>&1; then
   BASE=HEAD
 else
-  BASE=$(git hash-object -t tree /dev/null)
+  BASE=$EMPTYTREE
 fi
 
+# Where to ask who owns a file. From HEAD when the pilot is here, and from the
+# commit under review when they are not - so a later commit on the same branch
+# cannot retroactively decide who owned what while an earlier one was landing.
+LOGREF=HEAD
+
 ME=$(git config user.name 2>/dev/null || true)
+
+if [ "$MODE" = rev ]; then
+  REV=$(git rev-parse --verify -q "$REV^{commit}") || {
+    printf 'golden-check: no such commit\n' >&2; exit 2; }
+  LOGREF=$REV
+  # Judged as its own author, not as whoever is running this. Everything GR4,
+  # GR11 and GR14 say about ownership hangs off this one line.
+  ME=$(git log -1 --format='%an' "$REV")
+  # ... and against its own message, which is where the budgets are spent.
+  MSGFILE="$TMP/msg"
+  git log -1 --format='%B' "$REV" > "$MSGFILE"
+  BASE=$(git rev-parse --verify -q "$REV^" 2>/dev/null) || BASE=$EMPTYTREE
+fi
 
 # A rename reaches the lists above as an add and nothing else - git is being
 # tactful about where the file came from. Everywhere else that tact is welcome.
@@ -106,7 +171,12 @@ ME=$(git config user.name 2>/dev/null || true)
 # kept: old path, tab, new path.
 renames() { awk -F'\t' '$1 ~ /^R/ { print $2 "\t" $3 }'; }
 
-if [ "$MODE" = staged ]; then
+if [ "$MODE" = rev ]; then
+  git diff --name-only --diff-filter=ACMR "$BASE" "$REV" > "$TMP/files"
+  git diff --name-only --diff-filter=D    "$BASE" "$REV" > "$TMP/gone"
+  git diff --numstat "$BASE" "$REV"                      > "$TMP/stat"
+  git diff --name-status --find-renames "$BASE" "$REV" | renames > "$TMP/moved"
+elif [ "$MODE" = staged ]; then
   git diff --cached --name-only --diff-filter=ACMR "$BASE" > "$TMP/files"
   git diff --cached --name-only --diff-filter=D    "$BASE" > "$TMP/gone"
   git diff --cached --numstat "$BASE"                      > "$TMP/stat"
@@ -134,15 +204,22 @@ if [ ! -s "$TMP/files" ] && [ ! -s "$TMP/gone" ] && [ -z "$MSGFILE" ]; then
   exit 0
 fi
 
-# content of a path as it will be committed
+# content of a path as it will be committed - or, in rev mode, as it was
 content() {
-  if [ "$MODE" = staged ]; then git show ":$1" 2>/dev/null; else cat "$1" 2>/dev/null; fi
+  case "$MODE" in
+    staged) git show ":$1" 2>/dev/null ;;
+    rev)    git show "$REV:$1" 2>/dev/null ;;
+    *)      cat "$1" 2>/dev/null ;;
+  esac
 }
 
 # will this path exist for the next person who clones?
 path_exists() {
-  if [ "$MODE" = staged ]; then git cat-file -e ":$1" 2>/dev/null
-  else [ -f "$1" ]; fi
+  case "$MODE" in
+    staged) git cat-file -e ":$1" 2>/dev/null ;;
+    rev)    git cat-file -e "$REV:$1" 2>/dev/null ;;
+    *)      [ -f "$1" ] ;;
+  esac
 }
 
 # the author of the commit that first added a file. empty means it is new,
@@ -157,7 +234,7 @@ path_exists() {
 # own trap, that it belonged to the pilot they had copied. GR11 has no
 # override, so there was no way out of it either.
 owner_of() {
-  o=$(git log --diff-filter=A --format='%an' -- "$1" 2>/dev/null | tail -1)
+  o=$(git log "$LOGREF" --diff-filter=A --format='%an' -- "$1" 2>/dev/null | tail -1)
   [ -n "$o" ] || o="$ME"
   printf '%s' "$o"
 }
@@ -567,8 +644,12 @@ check_gr14() {
   [ "$version" = 1 ] || return 0
 
   per=$(sh tools/flights.sh --per 2>/dev/null) || per=3
-  case "$MODE" in staged) pend=--staged ;; *) pend=--dirty ;; esac
-  n=$(sh tools/flights.sh --count "$ME" "$pend" 2>/dev/null) || return 0
+  case "$MODE" in
+    staged) set -- --staged ;;
+    rev)    set -- --at "$REV" ;;
+    *)      set -- --dirty ;;
+  esac
+  n=$(sh tools/flights.sh --count "$ME" "$@" 2>/dev/null) || return 0
   case "$n" in ''|*[!0-9]*) return 0 ;; esac    # no meter, no verdict
 
   if [ "$n" -ge "$per" ]; then
@@ -610,7 +691,19 @@ check_gr12() {
   [ -f tools/tally.sh ] || return 0
 
   content "$LEDGER" > "$TMP/ledger.mine"
-  if [ -n "$MSGFILE" ] && [ -f "$MSGFILE" ]; then
+  if [ "$MODE" = rev ]; then
+    # The ledger is a snapshot of the history behind it, and tools/tally.sh
+    # reads the history in front of it too. Compare an old commit's ledger
+    # against everything that has happened since and it is wrong every time -
+    # not because the pilot edited it, but because they landed before the rest
+    # of the evening did. So this half only runs where the two ends meet: the
+    # tip, which is the commit that would actually merge. Deleting the file is
+    # still refused above, on every commit, because that one does not depend on
+    # where in the history you are standing.
+    [ "$REV" = "$(git rev-parse HEAD)" ] || return 0
+    # ... and at the tip the message is already history, so nothing is pending.
+    sh tools/tally.sh --print > "$TMP/ledger.true" 2>/dev/null
+  elif [ -n "$MSGFILE" ] && [ -f "$MSGFILE" ]; then
     sh tools/tally.sh --print --plus "$MSGFILE" > "$TMP/ledger.true" 2>/dev/null
   else
     sh tools/tally.sh --print > "$TMP/ledger.true" 2>/dev/null
@@ -783,13 +876,17 @@ if [ "$FORMAT" = json ]; then
     | awk 'BEGIN{ORS="";print "{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\""}
            {print (NR>1?"\\n":"") $0}
            END{print "\"}}\n"}'
+  # Same parting of the ways as below: advisory for a tree, binding for a
+  # commit that already exists.
+  [ "$MODE" = rev ] && [ "$BLOCK" = 1 ] && exit 1
   exit 0
 fi
 
 case "$STAGE" in
   pre-commit) LABEL='red lines' ;;
   commit-msg) LABEL='budgets, and the ledger' ;;
-  *)          LABEL='all rules, advisory' ;;
+  *)          if [ "$MODE" = rev ]; then LABEL="all rules, as $ME landed them"
+              else LABEL='all rules, advisory'; fi ;;
 esac
 printf '\n  GOLDEN RULES  %s%s%s\n' "$D" "$LABEL" "$Z"
 cat "$TMP/out"
@@ -803,7 +900,20 @@ if [ "$BLOCK" = 1 ]; then
       else
         printf '\n  %sblocked.%s spend the budget if you mean it: add a line to the message\n           %sGolden-Rule-Override: GR4 - <why this is fair>%s\n\n' "$R" "$Z" "$D" "$Z"
       fi ;;
-    *)          printf '\n  %swould block at commit time.%s see GOLDEN_RULES.md\n\n' "$R" "$Z" ;;
+    *)
+      # The friendly reading and the late one part company here. A pilot
+      # asking the referee about their own tree is asking a question, and the
+      # referee answers it without biting - the hooks decide at commit time.
+      # A commit that already exists has had its commit time, and either the
+      # hooks were never there or they were told not to look. Somebody has to
+      # say so out loud, so this reading bites.
+      if [ "$MODE" = rev ]; then
+        printf '\n  %sthis one landed anyway.%s the hooks either were not installed or were\n' "$R" "$Z"
+        printf '                          told not to look. GR12 costs two for that,\n'
+        printf '                          and it is the room reading this, not a machine.\n\n'
+        exit 1
+      fi
+      printf '\n  %swould block at commit time.%s see GOLDEN_RULES.md\n\n' "$R" "$Z" ;;
   esac
   [ "$STAGE" = all ] && exit 0
   exit 1
