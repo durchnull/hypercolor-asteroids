@@ -93,11 +93,6 @@ set -u
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 cd "$ROOT" || exit 0
 
-# The same definition tools/chronicle.sh keeps, asked for rather than copied,
-# so a plate is painted for exactly the commits that get a chapter.
-GAME=$(sh tools/chronicle.sh --game-paths 2>/dev/null | tr '\n' ' ')
-[ -n "$GAME" ] || GAME='index.html src styles'
-
 DIR=docs/art
 MANIFEST=$DIR/index.tsv
 FDIR=docs/faces
@@ -596,7 +591,15 @@ if [ "$DO_PLATES" = 1 ]; then
   else
     # Oldest first, so the manifest reads in the order the versions happened and
     # a capped run always fills the earliest gap rather than a random one.
-    git rev-list --full-history --no-merges --reverse HEAD -- $GAME 2>/dev/null > "$LIST"
+    #
+    # Asked for outright rather than worked out from a path list, which is what
+    # this used to do. A path list is not the whole rule: it cannot say that the
+    # generated ledger under src/ is not the game, nor that nobody flew the
+    # commit a workflow authored, and this painted two plates for commits the
+    # book files no chapter for before it was asked the question properly. A
+    # plate is painted for exactly the commits that get a chapter, and there is
+    # one script that knows which those are.
+    sh tools/chronicle.sh --versions 2>/dev/null > "$LIST"
   fi
 
   while IFS= read -r h; do

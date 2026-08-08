@@ -7,16 +7,15 @@
   "use strict";
   A.CHRONICLE = {
     versions: 26,
-    latest: { v: 26, pilot: "David Friedrich", date: "08 August 2026", line: "Somebody rewrote a rule the game had been taking for granted.", plate: "43f55fb4.jpg", alt: "Somebody rewrote a rule the game had been taking for granted." },
+    latest: { v: 26, pilot: "David Friedrich", date: "08 August 2026", line: "The splash screen learned the difference between reading and pressing.", plate: "6b9065f4.jpg", alt: "The splash screen learned the difference between reading and pressing." },
     plates: [
-      { v: 26, file: "43f55fb4.jpg", alt: "Somebody rewrote a rule the game had been taking for granted.", line: "Somebody rewrote a rule the game had been taking for granted." },
-      { v: 25, file: "6b9065f4.jpg", alt: "The splash screen learned the difference between reading and pressing.", line: "The splash screen learned the difference between reading and pressing." },
-      { v: 24, file: "7fee65cc.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
-      { v: 23, file: "31479209.jpg", alt: "The plumbing was rerouted and nothing caught fire.", line: "The plumbing was rerouted and nothing caught fire." },
+      { v: 26, file: "6b9065f4.jpg", alt: "The splash screen learned the difference between reading and pressing.", line: "The splash screen learned the difference between reading and pressing." },
+      { v: 25, file: "31479209.jpg", alt: "The plumbing was rerouted and nothing caught fire.", line: "The plumbing was rerouted and nothing caught fire." },
+      { v: 24, file: "f31b98ce.jpg", alt: "The panels say something different now.", line: "The panels say something different now." },
+      { v: 23, file: "cddc9daf.jpg", alt: "The phosphor is a different colour of wrong now. The HUD says so, too.", line: "The phosphor is a different colour of wrong now. The HUD says so, too." },
     ],
     roster: {
-      "the book": 1,
-      "David Friedrich": 40,
+      "David Friedrich": 26,
     }
   };
   A.BOARD = [

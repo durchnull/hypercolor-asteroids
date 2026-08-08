@@ -144,14 +144,65 @@ GAME='index.html src styles'
 # in moved(): the count below is what names a version.
 NOTGAME=':!src/game/ledger.js'
 
+# And not every name in the history is somebody. A workflow files the book's own
+# paperwork after every push and has to author that commit as somebody, so an
+# account that is not a person is in the log - and read naively it flies versions
+# and sits on the roster like anybody else. It did both.
+#
+# tools/chronicle-art.sh got here first, where it matters most: a face is painted
+# once and never repainted, so a machine that slips into that list is in it for
+# good. There are three copies of this test now - the awk one here, the shell one
+# below, and the painter's - and they have to stay in lockstep, because the book
+# and the faces disagreeing about who is a pilot is how a machine ends up with a
+# portrait and no name to hang it on.
+#
+# Filtered on the address rather than the name, because the name is somebody's
+# free choice and the [bot] suffix is github's own mark. The literal name this
+# repository's workflow commits under is spelled out beside it, so that a future
+# reader can find both ends of the arrangement from either one.
+MACHINE='
+function is_machine(who, mail) {
+  # Where the address is the last field of a record it arrives carrying the
+  # newline that ended it, and the anchored form below would miss on that alone.
+  sub(/[[:space:]]+$/, "", mail)
+  return (who == "the book" ||                  # .github/workflows/book.yml
+          mail ~ /\[bot\]@/ ||                  # github marks its own
+          mail ~ /^actions@github\.com$/)
+}
+'
+
+# The same question in shell, for the places that ask it about one commit rather
+# than about a stream. Same three answers, same order.
+is_machine() {
+  case "$1" in "the book") return 0 ;; esac
+  case "$2" in *'[bot]@'* | actions@github.com) return 0 ;; esac
+  return 1
+}
+
 git rev-parse --verify -q HEAD >/dev/null 2>&1 || { echo "no history yet" >&2; exit 0; }
 
 # How many versions deep the history is. --full-history so that path limiting
-# does not quietly simplify a version out of the count.
-TOTAL=$(git rev-list --count --full-history --no-merges HEAD -- $GAME "$NOTGAME")
+# does not quietly simplify a version out of the count, and one pass through
+# is_machine because a version is something a person landed. The builder below
+# skips exactly the same commits: a counter that numbers what the builder
+# declines to file leaves a chapter that renders as nothing at all.
+TOTAL=$(git log --format='%an%x1f%ae' --full-history --no-merges HEAD -- $GAME "$NOTGAME" \
+        | awk -F'\037' "$MACHINE"'!is_machine($1, $2) { n++ } END { print n + 0 }')
 
 # Did this commit touch the game? With no argument: will the next one?
 moved() {
+  # Whoever is asking, a machine's commit is not a version. The count above
+  # leaves those out and the book declines to file them, so this has to agree or
+  # the hooks stamp a number onto a commit that never gets a chapter.
+  if [ -n "${1:-}" ]; then
+    flier=$(git log -1 --format='%an' "$1" 2>/dev/null)
+    flier_mail=$(git log -1 --format='%ae' "$1" 2>/dev/null)
+  else
+    flier=$(git config user.name 2>/dev/null)
+    flier_mail=$(git config user.email 2>/dev/null)
+  fi
+  is_machine "$flier" "$flier_mail" && return 1
+
   if [ -n "${1:-}" ]; then
     [ -n "$(git diff-tree --root -r --name-only --no-commit-id "$1" -- $GAME "$NOTGAME" 2>/dev/null)" ]
   elif [ -n "$(git diff --cached --name-only HEAD 2>/dev/null)" ]; then
@@ -169,6 +220,21 @@ moved() {
 case "${1:-}" in
   --game-paths) printf '%s\n' $GAME; exit 0 ;;
   --moved)      moved "${2:-}"; exit $? ;;
+  --versions)
+    # Every commit that gets a chapter, oldest first, which is the order a
+    # capped painting run wants: fill the earliest gap rather than a random one.
+    #
+    # This exists because --game-paths was being read as the answer to a
+    # different question. A path list says what the game is; it cannot say that
+    # the generated ledger under src/ is not the game, and it cannot say that
+    # nobody flew the commit a workflow authored. tools/chronicle-art.sh asked
+    # it anyway and painted a plate for two commits the book does not file -
+    # which is a Cloudflare call and a picture spent on a chapter that will
+    # never exist. One question, asked here, where the rule actually lives.
+    git log --format='%H%x1f%an%x1f%ae' --full-history --no-merges --reverse HEAD \
+            -- $GAME "$NOTGAME" 2>/dev/null \
+      | awk -F'\037' "$MACHINE"'!is_machine($2, $3) { print $1 }'
+    exit 0 ;;
   --version)    printf 'v%s\n' "$TOTAL"; exit 0 ;;
   --next)
     if moved; then printf 'v%s\n' "$((TOTAL + 1))"; else printf -- '-\n'; fi
@@ -233,8 +299,13 @@ faces() {
 #
 # %at rides along because a page says how long the cabinet waited for it, and
 # the gap between two versions is arithmetic nothing else in here can do.
+# %ae sits between %at and the body rather than beside the name it belongs to,
+# so that the four fields ahead of it keep their numbers in the three readers
+# below and only the body moves. It cannot go last, however tidy that looks:
+# --raw and --numstat print after the format string, so the final field is the
+# one that absorbs the diff, and the body has to be the field that does it.
 history() {
-  git log --format='%x1e%H%x1f%an%x1f%ad%x1f%s%x1f%at%x1f%b' \
+  git log --format='%x1e%H%x1f%an%x1f%ad%x1f%s%x1f%at%x1f%ae%x1f%b' \
           --date=format:"$1" --raw --numstat --no-renames --no-merges ${2:+-n "$2"}
 }
 
@@ -244,7 +315,7 @@ history() {
 # is_referee is the same list tools/golden-check.sh keeps, because the audit
 # below accuses people of breaking GR10 and an accusation has to use the
 # referee's own definition or it is just an opinion.
-LIB='
+LIB=$MACHINE'
 function is_game(p) {
   # The same exception NOTGAME makes above, and it has to be the same one or
   # the two halves disagree about what a version is: the counter would decline
@@ -305,9 +376,12 @@ case "${1:-}" in
       | awk -v RS='\036' -v FS='\037' -v ver="$TOTAL" "$LIB"'
           $1 == "TAG" { tag[$2] = $3; next }
           NF < 4 { next }
+          # Nobody flew it, so there is nothing to tell the next pilot about it.
+          # The book below keeps the same silence - change one, change both.
+          is_machine($2, $6) { next }
           {
             game = 0; line = ""; mode = 0; bookish = 0; offbook = 0; event = 0
-            n = split($6, b, "\n")
+            n = split($7, b, "\n")
             for (k = 1; k <= n; k++) {
               if (is_stat(b[k])) {
                 split(b[k], ns, "\t")
@@ -356,10 +430,16 @@ if [ "${1:-}" = "--skips" ]; then
   | awk -v RS='\036' -v FS='\037' -v rules="$RULES" "$LIB"'
       BEGIN { bound = (rules != "") }
       $1 == "OWN" { owner[$2] = $3; next }
-      NF < 6 { next }
+      NF < 7 { next }
+      # A machine has no seat, no hooks and nothing to confess. The runner that
+      # files the book never installed the referee and was never meant to: the
+      # push it files was already read a commit at a time on the way in. Charging
+      # it two for that would put a name in the ledger that cannot answer, and
+      # the ledger is what the field reads to decide how hard to be on somebody.
+      is_machine($2, $6) { next }
       {
         if (bound && $1 == rules) bound = 0
-        sha = $1; who = $2; rest = $6
+        sha = $1; who = $2; rest = $7
         overrides = ""; rulechange = 0; refstrict = 0; nonref = 0; stolen = 0
         acmr = 0; ins = 0; fpn = 0; mode = ""
         split("", deleted); split("", fseen); split("", fadd); split("", fdel)
@@ -851,12 +931,20 @@ NF < 4 { next }
   # Reading newest first, this is where the rules stop existing. The commit that
   # brought them is the last one nobody can be judged for.
   if (bound && $1 == rules) bound = 0
+
+  # Nobody flew it. A machine files the paperwork the book keeps about itself,
+  # and the book passes over that filing in silence everywhere it speaks - so it
+  # is not a version, not a mention, and not a name on the roster. Dropped here,
+  # before the version branch spends a number on it, because the count above has
+  # already left it out and the two have to arrive at the same total.
+  if (is_machine($2, $6)) next
+
   who  = $2
   split($3, dt, "|")
   when = dt[1]
   clock = dt[2]
   subj = $4
-  rest = $6
+  rest = $7
 
   # Trailers, including the wrapped ones: a line indented under a trailer is a
   # continuation of it, which is how anybody sane writes a two-line reason.
@@ -6187,9 +6275,9 @@ board() {
 }
 
 { taglines; plates; board
-  git log --format='%x1e%H%x1f%an%x1f%ad' --date=format:'%d %B %Y' \
-          --no-merges --full-history HEAD -- $GAME 2>/dev/null
-} | awk -v RS='\036' -v FS='\037' -v total="$TOTAL" '
+  git log --format='%x1e%H%x1f%an%x1f%ad%x1f%ae' --date=format:'%d %B %Y' \
+          --no-merges --full-history HEAD -- $GAME "$NOTGAME" 2>/dev/null
+} | awk -v RS='\036' -v FS='\037' -v total="$TOTAL" "$MACHINE"'
 # JS string literals, a character at a time. gsub would do it in two lines and
 # get the backslashes wrong on some awk somewhere; this cannot.
 function js(s,   i, c, o) {
@@ -6208,6 +6296,9 @@ BEGIN { v = total + 0 }
 $1 == "TAG"  { tag[$2] = $3; next }
 $1 == "ART"  { art[$2] = $3; alt[$2] = $4; next }
 $1 == "RANK" { rc++; for (k = 2; k <= 8; k++) R[rc, k] = $k; next }
+# The same silence the book keeps, in the window the splash screen reads through
+# it: a machine is not a pilot here either, and PC below is what counts them.
+is_machine($2, $4) { next }
 NF >= 3 {
   # a version, newest first, so the number counts down from the newest.
   # The last field of a git record carries the newline that ends it.
