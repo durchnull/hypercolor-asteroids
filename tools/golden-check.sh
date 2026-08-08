@@ -171,20 +171,46 @@ fi
 # kept: old path, tab, new path.
 renames() { awk -F'\t' '$1 ~ /^R/ { print $2 "\t" $3 }'; }
 
+# The same tact in the other list, and here it costs a budget rather than a red
+# line. numstat folds a renamed file's two paths into one field -
+# "src/entities/{planet.js => planetoid.js}" - so asking it how many lines that
+# file lost answers 0 however much the diff took out. The counts are already the
+# right ones; only the label is folded. Unfold it onto the path the file now has,
+# which is the path every check downstream is holding.
+unfold() {
+  awk -F'\t' -v OFS='\t' '
+    {
+      p = $3
+      if (match(p, /\{[^{}]* => [^{}]*\}/)) {          # src/{a.js => b.js}
+        head = substr(p, 1, RSTART - 1)
+        mid  = substr(p, RSTART + 1, RLENGTH - 2)
+        tail = substr(p, RSTART + RLENGTH)
+        sub(/^.* => /, "", mid)
+        p = head mid tail
+      } else if (index(p, " => ")) {                   # a.js => b.js
+        sub(/^.* => /, "", p)
+      }
+      print $1, $2, p
+    }'
+}
+
+# --find-renames is the default, and it is written down anyway: the pairs and
+# the counts have to be reading the same diff now that one is asked about the
+# other.
 if [ "$MODE" = rev ]; then
   git diff --name-only --diff-filter=ACMR "$BASE" "$REV" > "$TMP/files"
   git diff --name-only --diff-filter=D    "$BASE" "$REV" > "$TMP/gone"
-  git diff --numstat "$BASE" "$REV"                      > "$TMP/stat"
+  git diff --numstat --find-renames "$BASE" "$REV" | unfold > "$TMP/stat"
   git diff --name-status --find-renames "$BASE" "$REV" | renames > "$TMP/moved"
 elif [ "$MODE" = staged ]; then
   git diff --cached --name-only --diff-filter=ACMR "$BASE" > "$TMP/files"
   git diff --cached --name-only --diff-filter=D    "$BASE" > "$TMP/gone"
-  git diff --cached --numstat "$BASE"                      > "$TMP/stat"
+  git diff --cached --numstat --find-renames "$BASE" | unfold > "$TMP/stat"
   git diff --cached --name-status --find-renames "$BASE" | renames > "$TMP/moved"
 else
   git diff --name-only --diff-filter=ACMR "$BASE" > "$TMP/files"
   git diff --name-only --diff-filter=D    "$BASE" > "$TMP/gone"
-  git diff --numstat "$BASE"                      > "$TMP/stat"
+  git diff --numstat --find-renames "$BASE" | unfold > "$TMP/stat"
   git diff --name-status --find-renames "$BASE" | renames > "$TMP/moved"
   git ls-files --others --exclude-standard        > "$TMP/new"
   while IFS= read -r f; do
@@ -237,6 +263,18 @@ owner_of() {
   o=$(git log "$LOGREF" --diff-filter=A --format='%an' -- "$1" 2>/dev/null | tail -1)
   [ -n "$o" ] || o="$ME"
   printf '%s' "$o"
+}
+
+# where a path came from, when it came from somewhere. empty means it is new,
+# and new is the answer owner_of already knows what to do with.
+#
+# A rename is how a file gets a history it did not have: the new path has none,
+# a path with none is yours, and everything that asks who owns a file gets the
+# flattering answer. GR11 shut that door on event files by judging the pair
+# rather than the path. GR4 and GR5 had the same door, and a budget you can
+# step around by typing git mv is not one.
+came_from() {
+  awk -F'\t' -v n="$1" '$2 == n { print $1; exit }' "$TMP/moved"
 }
 
 # shared ground: everybody's, nobody's. the machinery every feature imports.
@@ -564,29 +602,36 @@ check_gr45() {
   while IFS= read -r f; do
     is_referee "$f" && continue
     is_generated "$f" && continue
-    case "$f" in src/events/*) continue ;; esac   # GR11's ground, and it has no budget
+    # Weighed as whatever it was before somebody moved it. A file arriving under
+    # a new name is a file with no history, and a file with no history is yours
+    # and outside the commons - so a rename was a way to gut somebody's feature
+    # while the referee watched a stranger's new file being quiet. Ask where it
+    # came from and both questions below get the answer they had yesterday.
+    from=$(came_from "$f"); from=${from:-$f}
+    if [ "$from" = "$f" ]; then name="$f"; else name="$f (was $from)"; fi
+    case "$from" in src/events/*) continue ;; esac   # GR11's ground, and it has no budget
     a=$(added_of "$f"); d=$(removed_of "$f"); net=$((d - a))
     # Net is a proxy, and a rewrite is its blind spot: replace 200 lines with
     # 210 different ones and net says almost nothing moved. The nudge below
     # does not block - the diff is public, this just makes the room look.
-    if is_commons "$f"; then
+    if is_commons "$from"; then
       if [ "$net" -gt 60 ]; then
         overridden GR5 || {
-          fail GR5 "$f loses $net lines net - the commons is shared ground"
+          fail GR5 "$name loses $net lines net - the commons is shared ground"
           note "keep it additive, or say why: Golden-Rule-Override: GR5 - <reason>"
         }
       elif [ "$d" -gt 240 ] && ! overridden GR5; then
-        warn GR5 "$f has $d lines rewritten in place - net says little moved, the diff says otherwise"
+        warn GR5 "$name has $d lines rewritten in place - net says little moved, the diff says otherwise"
       fi
     else
-      o=$(owner_of "$f")
+      o=$(owner_of "$from")
       if [ "$o" != "$ME" ] && [ "$net" -gt 25 ]; then
         overridden GR4 || {
-          fail GR4 "$f is $o's and loses $net lines net"
+          fail GR4 "$name is $o's and loses $net lines net"
           note "tune it freely, gut it never - or: Golden-Rule-Override: GR4 - <reason>"
         }
       elif [ "$o" != "$ME" ] && [ "$d" -gt 100 ] && ! overridden GR4; then
-        warn GR4 "$f is $o's and has $d lines rewritten in place - net hides a rewrite"
+        warn GR4 "$name is $o's and has $d lines rewritten in place - net hides a rewrite"
       fi
     fi
   done < "$TMP/files"
