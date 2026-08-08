@@ -11,5 +11,5 @@
 //
 // What the number does to a pilot's field is in src/game/tally.js. See GR12.
 ASTEROIDS.LEDGER = {
-  "David Friedrich": { bends: 5, clean: 17, last: "GR6" },
+  "David Friedrich": { bends: 5, clean: 18, last: "GR6" },
 };
