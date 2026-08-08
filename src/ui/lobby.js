@@ -28,17 +28,58 @@
           <path class="body" d="${path(A.SHIP_HULL, true)}"/>
         </svg>`;
 
+  // Who is in the flight that has not taken off yet.
+  //
+  // Pressing your own fire key on this screen used to start the game with you
+  // in it, which meant player two leaning over to say "I'm playing" launched
+  // the wave out from under player one mid-sentence. One press, two decisions,
+  // and only one of them had been made by anybody. So the press does the one
+  // thing it was ever asked to do — it takes the seat — and the card says so.
+  // ENTER opens the gate, and on this screen it is the only thing that does.
+  //
+  // Seat one is always down: somebody has to be flying, and the pilot standing
+  // at the cabinet is them.
+  const seated = new Set([0]);
+
+  const TAKEN = "READY";     // what a card says once somebody is in the chair
+
+  /** Sit a seat down for the flight to come. False if it was already down. */
+  A.takeSeat = function takeSeat(i) {
+    if (seated.has(i)) return false;
+    seated.add(i);
+    A.renderLobby();
+    return true;
+  };
+
+  /** Who flies when the gate opens, in seat order. */
+  A.seatedPilots = () => A.SEATS.map((_, i) => i).filter((i) => seated.has(i));
+
   A.renderLobby = function renderLobby() {
     const root = document.getElementById("seats");
-    root.innerHTML = A.SEATS.map((seat, i) => `
-      <div class="seat${i === 0 ? "" : " open"}" style="color:${seat.tint}">${ship()}
+    root.innerHTML = A.SEATS.map((seat, i) => {
+      const down = seated.has(i);
+      return `
+      <div class="seat${down ? "" : " open"}" style="color:${seat.tint}">${ship()}
         <div class="who">${seat.name}</div>
         <div class="binds">${
           seat.binds.map(([keys, what]) =>
             `<span>${keys.split(" ").map((k) => `<b>${k}</b>`).join("")} ${what}</span>`
           ).join("")
         }</div>
-        <div class="ready">${seat.lobby}</div>
-      </div>`).join("");
+        <div class="ready">${down ? TAKEN : seat.lobby}</div>
+      </div>`;
+    }).join("");
   };
+
+  A.register({
+    id: "ui:lobby",
+    // Back at the menu, everybody stands up again. A seat taken for a flight
+    // that has already been flown is not a seat anybody is sitting in.
+    reset(mode) {
+      if (mode !== "attract") return;
+      seated.clear();
+      seated.add(0);
+      A.renderLobby();
+    },
+  });
 })(ASTEROIDS);

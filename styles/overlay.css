@@ -159,8 +159,16 @@
   text-shadow: 0 0 8px currentColor;
 }
 /* The loudest thing on the screen, and the last — everything above it is
-   reading, this is the instruction. */
+   reading, this is the instruction. The four lines at the top are for the one
+   on the splash that is a real button now: a button brings a font, a border
+   and a background of its own, and none of them are wanted. */
 .overlay .prompt {
+  -webkit-appearance: none;
+  appearance: none;
+  font: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
   font-size: 1.05rem;
   letter-spacing: 0.32em;
   margin-right: -0.32em;
@@ -168,6 +176,22 @@
   text-shadow: 0 0 12px currentColor, 0 0 34px rgba(182, 255, 61, 0.4);
   animation: blink 1.2s step-end infinite;
 }
+/* And on the splash it says so under a hand. Nothing else on that screen
+   starts a flight any more — the deck is somewhere you read, scroll and click
+   about in, and a room where every stray press launches a wave is not a room
+   anybody can read in. So the one place that does starts wearing a hand,
+   answers a press, and carries enough hem around the words to be found with a
+   thumb. The hem grows the dock, and src/ui/splash.js measures the dock every
+   time it changes, so the deck holds itself off the new one on its own. */
+.splash .prompt {
+  cursor: pointer;
+  padding: 0.35rem 0.9rem;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.splash .prompt:hover, .splash .prompt:focus-visible { color: #eaffb8; }
+.splash .prompt:active { transform: translateY(1px); }
 .overlay .final {
   font-size: 1.1rem;
   letter-spacing: 0.15em;

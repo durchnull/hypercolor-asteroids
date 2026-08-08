@@ -11,6 +11,11 @@
   pointer-events: none;
 }
 body.has-touch .touch { display: flex; }
+/* ...and not while a menu is up. Both this and the dock are pinned to the foot
+   of the screen, so on a phone the bomb button lands on the words TAP TO
+   START, and src/input/input.js has nothing else on that screen that starts a
+   game. See src/ui/overlays.js for who puts the class on. */
+body.has-touch.menu .touch { display: none; }
 .touch .pad { display: flex; gap: 0.9rem; pointer-events: auto; }
 .touch button {
   width: 4.2rem;

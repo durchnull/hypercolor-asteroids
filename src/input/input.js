@@ -33,11 +33,19 @@
     if (!A.EDGE.has(action)) keys[seat][action] = false;
   }
 
-  // A seat's fire button on a menu screen starts a game with that seat in it,
-  // so player two can open the game rather than waiting to be let in.
+  // A seat's fire button on the game-over screen restarts with that seat in
+  // it, so player two can call for another round rather than waiting to be let
+  // in. On the splash it does not — see below, and src/ui/lobby.js.
   function startFrom(seat) {
     A.ensureAudio();
     A.startGame(seat > 0 ? [0, seat] : [0]);
+  }
+
+  /** The gate, and the two things allowed to open it: ENTER, and the button
+   *  in the dock that says so. Everybody the lobby has sat down goes in. */
+  function openTheGate() {
+    A.ensureAudio();
+    A.startGame(A.seatedPilots());
   }
 
   A.installInput = function installInput() {
@@ -47,13 +55,19 @@
         press(bind.seat, bind.action, e.repeat);
         e.preventDefault();
       }
-      const menu = A.game.phase !== "playing";
-      if (e.code === "Enter" || (menu && bind && bind.action === "fire")) {
-        if (A.game.phase === "start" || A.game.phase === "over") {
-          startFrom(bind && menu ? bind.seat : 0);
-        } else {
-          A.ensureAudio();
-        }
+      const phase = A.game.phase;
+      // On the splash a fire key takes its seat and stops there; the lobby
+      // holds the roster until ENTER asks for it. Seat one is already down, so
+      // its key has nothing left to do on this screen, which is the point:
+      // there is exactly one way into a flight from here.
+      if (phase === "start" && bind && bind.action === "fire") {
+        A.ensureAudio();
+        A.takeSeat(bind.seat);
+        e.preventDefault();
+      } else if (e.code === "Enter" || (phase === "over" && bind && bind.action === "fire")) {
+        if (phase === "start") openTheGate();
+        else if (phase === "over") startFrom(bind ? bind.seat : 0);
+        else A.ensureAudio();
         e.preventDefault();
       }
       if (e.code === "KeyP" && A.game.phase === "playing") A.game.paused = !A.game.paused;
@@ -65,10 +79,9 @@
       if (bind) release(bind.seat, bind.action);
     });
 
-    // Tapping an overlay is the same as pressing start — except on a link,
-    // which is a link. The splash has one out to the chronicle, and a door you
-    // cannot walk through because the room starts the game instead is not a
-    // door. Anything anybody puts on an overlay later gets the same courtesy.
+    // Tapping the game-over screen anywhere is the same as pressing start —
+    // except on a link, which is a link, and anything anybody puts on that
+    // overlay later gets the same courtesy.
     function tapToStart(phase) {
       return (e) => {
         if (e.target.closest("a")) return;
@@ -76,8 +89,18 @@
         if (A.game.phase === phase) A.startGame();
       };
     }
-    A.overlayEls.start.addEventListener("pointerdown", tapToStart("start"));
     A.overlayEls.over.addEventListener("pointerdown", tapToStart("over"));
+
+    // The splash is not that screen. It is six panels of reading with a door
+    // out to the book in it, a pilot to choose and a deck to scroll, and every
+    // one of those is a press somebody makes without meaning to launch
+    // anything. So the whole overlay does not answer a hand any more — one
+    // button in the dock does, and it is the button that says what it does.
+    A.overlayEls.startPrompt.addEventListener("pointerdown", (e) => {
+      if (A.game.phase !== "start") return;
+      openTheGate();
+      e.preventDefault();
+    });
 
     installTouch();
   };
