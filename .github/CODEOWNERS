@@ -1,0 +1,37 @@
+# Who github asks for a review. This is not the ownership the rules mean.
+#
+# GR11's ownership is per file and per pilot, decided by whose commit created
+# the file, and no list could keep up with it - a pilot writes their first trap
+# and owns it the moment it lands. The referee reads that off git, which is
+# why it is trustworthy. CODEOWNERS cannot, so it does not try.
+#
+# What it can do is make sure a human looks at the two places where a mistake
+# is expensive and a red line has no override: the machinery the rules stand
+# on, and the one corner of the project that belongs to one person.
+
+# GR10 - the rules, and everything that enforces them. Changing these is
+# allowed and lands in its own commit with a Rule-Change line. Somebody should
+# still read it.
+/GOLDEN_RULES.md          @durchnull
+/CLAUDE.md                @durchnull
+/tools/                   @durchnull
+/.githooks/               @durchnull
+/.github/                 @durchnull
+/.gitattributes           @durchnull
+/.claude/                 @durchnull
+
+# GR13 - the owner's ground. The orb, and the song it is listening to. No
+# budget and no override; the way through is to take the idea to the owner,
+# which is a minute of their evening and they will probably enjoy it.
+/docs/chronicle-song.js   @durchnull
+
+# GR11 - the traps. The referee already refuses a commit that touches somebody
+# else's, whoever sends it. This is the belt beside that brace.
+/src/events/              @durchnull
+
+# GR5 - the commons. Add to it freely; the review is for the things that are
+# not additions.
+/src/core/                @durchnull
+/src/game/events.js       @durchnull
+/src/game/profile.js      @durchnull
+/src/game/tally.js        @durchnull

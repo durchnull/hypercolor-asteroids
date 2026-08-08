@@ -1,0 +1,82 @@
+# The referee, for work that arrives from somewhere else.
+#
+# The hooks in .githooks/ referee a pilot who is present. A pull request comes
+# from a clone that may never have run  tools/golden-check.sh --install , so
+# until this runs, nothing has refereed it at all. This is the second reading,
+# not the first one: the first is still a pilot at a keyboard with claude and
+# the hooks, and it is the one that catches things early enough to fix them
+# cheaply.
+#
+# What it does is what GR12 always said would happen - a rule bent quietly gets
+# noticed afterwards, in the open, where the room reads. The summary is written
+# for people rather than for a log, because the people are the enforcement.
+#
+# GR2 applies here as much as anywhere: nothing is installed, nothing is
+# fetched, and every step is  sh tools/... . The one action used is checkout,
+# because a workflow cannot read the repository without it.
+#
+# Deliberately  pull_request  and not  pull_request_target : the latter would
+# run a fork's code with a writable token, which is how public repositories
+# hand their credentials to strangers.
+
+name: the referee
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: referee-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  inbound:
+    name: the referee, after the fact
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Every check here reads the history: who created a file (GR4, GR11),
+          # when a pilot last flew (GR14), what the ledger should say (GR12).
+          # A shallow clone would answer all of them wrong.
+          fetch-depth: 0
+          # The pull request's own tip, not the merge commit github invents for
+          # it. The merge commit has no author worth judging and a message
+          # nobody wrote.
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: read every commit in the pull request
+        env:
+          # Through the environment rather than interpolated into the script.
+          # These two are hexadecimal and harmless, but a workflow that pastes
+          # anything from an event straight into a shell is a habit worth not
+          # having.
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git fetch --no-tags --quiet origin "$BASE" 2>/dev/null || true
+          status=0
+          sh tools/inbound.sh --markdown "$BASE..$HEAD" > report.md || status=1
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+          cat report.md
+          exit $status
+
+  referee-test:
+    name: the referee, refereed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      # Both of the referee's failure modes are silent. A check that quietly
+      # stops firing turns a red line into a suggestion; a check that fires
+      # when it should not gets skimmed past, and then the true ones go unread
+      # with it. This builds a miniature cabinet in a temporary directory and
+      # asks the referee about it.
+      - name: the miniature cabinet
+        run: sh tools/referee-test.sh

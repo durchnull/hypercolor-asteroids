@@ -243,11 +243,17 @@ alongside a new feature is flagged; a missing <code>Chronicle:</code> line is me
 </p>
 <h2 id="gr10-changing-the-rules-is-its-own-commit-red-line">GR10 — Changing the rules is its own commit. <code>red line</code></h2>
 <p>
-<code>CLAUDE.md</code>, <code>GOLDEN_RULES.md</code>, <code>tools/</code>, <code>.githooks/</code>, <code>.gitattributes</code>,
-<code>.claude/settings.json</code> and <code>.claude/skills/</code> may not move in the same commit
-as game code, and a rule change needs a <code>Rule-Change: &lt;why&gt;</code> line. Widen your
-own permissions if you can convince people — but never in the same breath as
-using them.
+<code>CLAUDE.md</code>, <code>GOLDEN_RULES.md</code>, <code>tools/</code>, <code>.githooks/</code>, <code>.github/</code>,
+<code>.gitattributes</code>, <code>.claude/settings.json</code> and <code>.claude/skills/</code> may not move in
+the same commit as game code, and a rule change needs a <code>Rule-Change: &lt;why&gt;</code>
+line. Widen your own permissions if you can convince people — but never in the
+same breath as using them.
+</p>
+<p>
+<code>.github/</code> is on that list for the same reason <code>.githooks/</code> is. It is the
+second reading of these rules — the one that happens after work arrives from a
+clone that never installed the hooks — and a referee you can edit in the same
+commit as the thing it is refereeing is not one.
 </p>
 <p>
 Nobody may disable the referee for a commit. <code>--no-verify</code> is not a tool, it is

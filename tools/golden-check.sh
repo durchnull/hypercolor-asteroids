@@ -295,6 +295,10 @@ is_referee() {
   case "$1" in
     CLAUDE.md|GOLDEN_RULES.md|tools/*|.githooks/*|.claude/settings.json|.claude/skills/*) return 0 ;;
     .gitattributes|.env.example) return 0 ;;   # tool config travels with the tools
+    # The second reading, for work that arrives from a clone the hooks never
+    # reached. Same argument as .githooks/: a referee you can edit in the same
+    # commit as the thing it referees is not one.
+    .github/*) return 0 ;;
   esac
   return 1
 }

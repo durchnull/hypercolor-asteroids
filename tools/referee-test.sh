@@ -621,6 +621,13 @@ case_ GR11 "a trap started from somebody else's template is still yours"
   stage; check pre-commit
   lands
 
+case_ GR10 "the second reading is refereed by the first"
+  mkdir -p .github/workflows
+  printf 'name: the referee\non: [pull_request]\n' > .github/workflows/referee.yml
+  printf '// and a tweak while I am here\n' >> src/entities/rock.js
+  stage; check pre-commit
+  blocks GR10
+
 case_ GR10 "a stray screenshot in the root is not the game moving"
   printf '\nA new paragraph of rules.\n' >> CLAUDE.md
   printf 'not a real screenshot\n' > shot.png

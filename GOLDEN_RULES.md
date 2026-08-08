@@ -208,11 +208,16 @@ alongside a new feature is flagged; a missing `Chronicle:` line is mentioned.
 
 ## GR10 — Changing the rules is its own commit. `red line`
 
-`CLAUDE.md`, `GOLDEN_RULES.md`, `tools/`, `.githooks/`, `.gitattributes`,
-`.claude/settings.json` and `.claude/skills/` may not move in the same commit
-as game code, and a rule change needs a `Rule-Change: <why>` line. Widen your
-own permissions if you can convince people — but never in the same breath as
-using them.
+`CLAUDE.md`, `GOLDEN_RULES.md`, `tools/`, `.githooks/`, `.github/`,
+`.gitattributes`, `.claude/settings.json` and `.claude/skills/` may not move in
+the same commit as game code, and a rule change needs a `Rule-Change: <why>`
+line. Widen your own permissions if you can convince people — but never in the
+same breath as using them.
+
+`.github/` is on that list for the same reason `.githooks/` is. It is the
+second reading of these rules — the one that happens after work arrives from a
+clone that never installed the hooks — and a referee you can edit in the same
+commit as the thing it is refereeing is not one.
 
 Nobody may disable the referee for a commit. `--no-verify` is not a tool, it is
 a confession.

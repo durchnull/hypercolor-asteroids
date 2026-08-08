@@ -1,0 +1,81 @@
+# The book, after something lands on main.
+#
+# Every landing leaves docs/ a commit out of date. On one machine that is fine:
+# the post-commit hook rebuilds into the working tree and the pages ride along
+# with whatever the pilot commits next. With several people merging pull
+# requests there is no next commit to ride, and src/game/ledger.js is worse
+# than stale - if every branch carries its own copy, every branch conflicts
+# with every other one over a file nobody is allowed to edit by hand anyway.
+#
+# So the book is rebuilt here, once, after the merge, and pushed. Nobody's
+# branch has to carry it and nobody has to resolve it.
+#
+# Two things keep this honest:
+#
+#   - It only ever commits generated files. tools/chronicle.sh and
+#     tools/tally.sh both derive everything they write from the history, so
+#     this can be re-run at any time by anybody and arrives at the same answer.
+#     GR12 is not bent by a machine running the generator; it would be bent by
+#     a machine writing a number the history does not support, and it cannot.
+#   - The book passes over its own filing in silence, so these commits get no
+#     version, no chapter and no mention. They are the paperwork the chronicle
+#     already declines to narrate.
+#
+# There is no loop to worry about: a push made with the default GITHUB_TOKEN
+# does not trigger another workflow run. That is github's rule, not ours, and
+# it is the reason this does not need a guard.
+#
+# tools/chronicle-art.sh is not called here and could not do anything if it
+# were - the plates need credentials that live in one person's untracked .env
+# (GR2), and without them it exits quietly.
+
+name: the book
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: the-book
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    name: rewrite the chronicle and the ledger
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: rebuild
+        run: |
+          sh tools/chronicle.sh
+          sh tools/tally.sh
+
+      - name: land it, if anything actually moved
+        run: |
+          if git diff --quiet; then
+            echo "the book was already up to date."
+            exit 0
+          fi
+
+          # A name that says what it is. It never becomes a pilot: the roster
+          # and the flight meter only count commits that moved the game, and
+          # this one by construction never does.
+          git config user.name  "the book"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          git status --short
+
+          # --no-verify would be a confession anywhere a pilot was typing it
+          # (GR10). Here there is nothing to confess to and nothing to skip:
+          # the hooks are not installed on a runner, because nobody ran
+          # --install. The referee has already read this push, one commit at a
+          # time, on the pull request that produced it.
+          git commit -q -m "The paperwork from $(git rev-parse --short HEAD), filed"
+          git push
