@@ -1105,6 +1105,13 @@
     // explains why one press needs two events.
     addEventListener("pointerdown", prod, true);
     addEventListener("mousedown", bite, true);
+    // And a hand on its way in, which is a different question from a hand
+    // arriving — see the field. The third of these is for the reader who
+    // changes tab with the cursor sitting on the thing: there is no next frame
+    // in a tab nobody is looking at, so the departure has to be an event.
+    addEventListener("pointermove", feel, true);
+    addEventListener("pointerout", flee, true);
+    addEventListener("blur", flee);
   }
 
   function tear() {
@@ -1113,11 +1120,17 @@
     removeEventListener("resize", resize);
     removeEventListener("pointerdown", prod, true);
     removeEventListener("mousedown", bite, true);
+    removeEventListener("pointermove", feel, true);
+    removeEventListener("pointerout", flee, true);
+    removeEventListener("blur", flee);
     if (cv.parentNode) cv.parentNode.removeChild(cv);
     cv = null; cg = null; host = null; bins = null; lev = []; NEB = null;
     tr = []; wire = null; gauge = 0;
     life = 0; gone = 0; glow = 0;
     sz = 0; sx = sy = svx = svy = 0; gx = gy = gvx = gvy = 0;
+    // Nothing to be near any more, and the field goes with the object rather
+    // than outliving it in the graph.
+    hover = false; near = 0; charge(0);
   }
 
   // Half a ring of bands, spaced by ear rather than by bin — an octave is an
@@ -1421,14 +1434,43 @@
     // same thing a lamp on a dimmer says, and a ring that changes shape with
     // it says which music.
     var base = rr * (cfg.r + m * 0.14), sw = rr * SWING, spin = now * cfg.spin;
+    // And the hand, which is the one thing in this panel that is neither the
+    // music nor a press — see the field, below. The reach is in proportion to
+    // the ring's own radius, so three rings leaning at one cursor stay nested
+    // instead of crossing each other on the way out to it. And it flickers
+    // rather than holds, faster and deeper the closer the hand is, because a
+    // field that is merely bent is a dent and a field that is bent and
+    // unsteady is a charge.
+    var reach = near > 0
+      ? rr * BEND * cfg.r * near *
+        (1 + Math.sin(now * (0.01 + near * 0.05) + i * 2.1) * 0.09 * near)
+      : 0;
     for (k = 0; k < RING; k++) {
       var a = spin + k / RING * 6.28318;
       var d = base + T[band(k)] * sw;
+      // A cone pointing at the hand, and nothing at all on the far side of the
+      // ring: a shape that swells in every direction is a thing inflating and
+      // not a thing reaching. Two powers blended rather than one raised, which
+      // is a multiply where a pow would be — wide and soft while the hand is
+      // only in the neighbourhood, drawn to a point once it is on the rim,
+      // which is the difference between leaning and about to arc.
+      if (reach > 0) {
+        var w = Math.cos(a - bear);
+        if (w > 0) {
+          var w2 = w * w;
+          d += reach * (w2 + near * (w2 * w2 * w2 - w2));
+        }
+      }
       px[k] = cx + Math.cos(a) * d;
       py[k] = cy + Math.sin(a) * d;
     }
     loop();
-    shine(HUES[i], now, rr, al * DIMS[i], i * 0.7, Math.min(1, m * 2.2));
+    // The light gathers while the hand is near, and it does it by lifting the
+    // level the ring is already drawn at rather than by adding a second pass.
+    // What a reader sees is the same ring charged, not a ring with a highlight
+    // bolted onto it.
+    shine(HUES[i], now, rr, al * DIMS[i], i * 0.7,
+          Math.min(1, m * 2.2 + near * 0.3));
   }
 
   // The light inside it, in two parts. The wide one is the whole level and
@@ -2149,6 +2191,10 @@
     var bass = (lev[0][0] + lev[0][1] + lev[0][2] + lev[0][3]) / 4;
     var rr = R * grow * (1 + Math.sin(now * 0.00043) * 0.02 + bass * 0.13 + kick(dt));
     sz = rr;
+    // Where the hand is, asked once a frame and after the object has finished
+    // deciding where it is: the rings lean at a cursor measured off this
+    // frame's middle rather than off last frame's.
+    sense(dt);
     cg.globalCompositeOperation = "lighter";
     clouds(now, rr, al, 0);
     core(rr, al);
@@ -2484,6 +2530,270 @@
     // room and the reader at once, which is the only honest thing it could
     // carry.
     throw_(0.2 + fast, true);
+  }
+
+  // ---- the field ----------------------------------------------------------
+  // The poke answers a hand that has arrived. This answers one on its way,
+  // which is a different thing to be: a reader whose cursor wanders across the
+  // panel finds that the object knew about it before they got there, and finds
+  // out how close they are by how hard it is straining.
+  //
+  // It is drawn the way the rest of this object is drawn, which is to say as a
+  // shape rather than as a highlight. The three rings lean into a lobe pointing
+  // at the cursor, each in proportion to its own radius; the far side of them
+  // is left exactly where it was. What sells it as a charge rather than as
+  // jelly is that the lobe narrows as the hand closes and never quite holds
+  // still.
+  //
+  // And it is heard, which is where most of it actually lives. A field you can
+  // only see is a decoration; one you can find with your eyes shut is a field.
+  // The voice is built the first time a hand comes near and then never rebuilt:
+  // two sawtooths a few cents apart, so the pair beats slowly against itself
+  // instead of sitting there being a test tone, under a lowpass that is a hum
+  // at arm's length and a rasp at the rim; a narrow band of noise wandering
+  // above them, which is the crackle; and a square wave chopping the whole
+  // thing at a rate that belongs to a wire rather than to a key, which is the
+  // teeth. The filter carries nearly all of the word "closer" — the level
+  // barely moves next to four octaves of cutoff opening.
+  //
+  // The last inch is the loud one, on purpose. Every number here comes off the
+  // square or the cube of the reading rather than the reading itself, so across
+  // most of the field there is a hum a reader might not consciously notice, and
+  // the last third of the way in is where it turns into something. A field with
+  // a linear falloff announces exactly where its edge was, and an edge is the
+  // one thing this should not have.
+  //
+  // Tuned to the chord in the air, like everything else in this book a reader
+  // can cause: the drone sits an octave over the room's own bass note, in the
+  // hole this arrangement keeps between the bass and the chord, so a cursor
+  // parked over the panel for a minute is a note held in the key rather than an
+  // alarm going off. And it is downstream of the same gain everything else is,
+  // which means the one switch there is still switches it off. Somebody who
+  // silenced the room did not silence it in order to be buzzed at instead.
+  //
+  // A reader who asked for less motion gets the sound and not the lean, which
+  // is the bargain the poke already struck. There is no frame loop for them, so
+  // the hand is read where it is reported and the object holds the shape it was
+  // painted in.
+
+  var FIELD = 3.2;   // how far out a hand is felt, in drawn radii. Nearer than
+                     // three and the object only notices a cursor already on
+                     // top of it, which is a button; much further and the whole
+                     // panel hums at anybody merely reading the page
+  var BEND = 0.34;   // how far the lobe reaches past the ring at the rim, in
+                     // radii. About a third, because the rings already swing by
+                     // a third on the music, and a lean that dwarfs the wave
+                     // turns a readout into a puppet
+  var CHASE = 0.14;  // how fast the reading follows the hand, per frame at
+                     // sixty. Slower than the eye and quicker than the drift: a
+                     // cursor flicked across the panel leaves a lean trailing
+                     // after it rather than throwing a switch
+  var FIZZ = 0.05;   // and the ceiling on the whole voice, which is under the
+                     // growl and a long way under the pad
+
+  var tipx = 0, tipy = 0;                  // the hand, where the window keeps it
+  var hover = false;                       // and whether there is one at all
+  var near = 0, bear = 0;                  // the reading: how close, and which
+                                           // way
+  var fizz = null;                         // the voice, built once and kept
+
+  // Where the hand is in the object's own terms. The canvas box is measured
+  // every frame here rather than on place()'s once-a-second clock, and the
+  // difference between the two is the point: the berth the object hangs in is
+  // the same berth a second later, but the distance to a cursor is wrong the
+  // moment the page scrolls under it. One rect off a tree nothing has written
+  // to is a lookup rather than a layout, and it is only ever asked while a hand
+  // is in play — a reader on a phone, or one going through the book on the
+  // arrow keys, never pays for it at all.
+  function sense(dt) {
+    var want = 0, to = bear;
+    if (hover && cv && sz && gone <= 0) {
+      var b = cv.getBoundingClientRect();
+      var dx = tipx - (b.left + cx), dy = tipy - (b.top + cy);
+      var d = Math.sqrt(dx * dx + dy * dy);
+      var far = sz * FIELD;
+      if (d < far) {
+        want = Math.min(1, (far - d) / (sz * (FIELD - 1)));
+        // Eased at both ends, so there is no seam where the field begins and
+        // none where it stops getting closer either.
+        want = want * want * (3 - 2 * want);
+      }
+      // Dead centre has no direction in it, and an angle worked out from two
+      // pixels is a lobe that spins. It keeps the one it had.
+      if (d > 0.5) to = Math.atan2(dy, dx);
+    }
+    var k = dt > 0 ? 1 - Math.pow(1 - CHASE, dt * 60) : 0;
+    near += (want - near) * k;
+    if (near < 0.001) near = 0;
+    // The short way round. A cursor crossing behind the object would otherwise
+    // send the lean the long way, and the lobe would sweep the entire ring to
+    // get somewhere it could have reached over the top.
+    var da = to - bear;
+    while (da >  3.14159) da -= 6.28318;
+    while (da < -3.14159) da += 6.28318;
+    bear += da * k;
+    charge(near);
+  }
+
+  // A move, and only a real one. A finger dragged across a page is a scroll and
+  // not a hand hovering over anything, and whatever it happens to pass over
+  // should not start humming at it — the same line the tick on the furniture
+  // already draws.
+  function feel(e) {
+    if (e.pointerType === "touch") return;
+    hover = true;
+    tipx = e.clientX;
+    tipy = e.clientY;
+    // No frame loop to feel it in, so it is felt here instead, and without the
+    // lag: a lag is motion. Nothing is drifting for this reader either, which
+    // is the only thing a reading taken between moves could have missed.
+    if (still && cv) sense(9);
+  }
+
+  function flee(e) {
+    // pointerout fires for every element a cursor crosses on its way over a
+    // page. The one that means the hand has gone is the one with nothing on the
+    // other side of it.
+    if (e && e.type === "pointerout" && e.relatedTarget) return;
+    hover = false;
+    // Down at once rather than on the next frame. A window losing focus is
+    // usually a reader who has gone somewhere else, and there is no next frame
+    // in a hidden tab to notice with; where the frames do keep coming, the
+    // reading eases out over the next third of a second and this write is
+    // overtaken before anybody hears it.
+    charge(0);
+    if (still && cv) sense(9);
+  }
+
+  // Built the first time a hand comes near enough to be worth building for, and
+  // then kept for as long as the room is. Nothing in here is created on a move:
+  // it is four oscillators and a loop of noise that start once and never stop,
+  // and what a cursor changes is six numbers.
+  function spark() {
+    var t = ctx.currentTime;
+    var lvl = ctx.createGain();
+    lvl.gain.value = 0;
+
+    // The teeth. A square rather than a sine, and at a rate that belongs to a
+    // wire rather than to the key: this is the one sound in the book allowed to
+    // be electrical instead of instrumental, and being chopped is most of what
+    // makes a tone read that way. The depth starts shut, so the far half of the
+    // field is a smooth low drone and only the near half has anything in it.
+    var teeth = ctx.createGain();
+    teeth.gain.value = 0.7;
+    var chop = ctx.createOscillator();
+    chop.type = "square";
+    chop.frequency.value = 41;
+    var bit = ctx.createGain();
+    bit.gain.value = 0;
+    chop.connect(bit);
+    bit.connect(teeth.gain);
+    chop.start(t);
+
+    // The drone under it. Two sawtooths about three cents apart, which is one
+    // slow beat every couple of seconds and is heard as the thing being alive
+    // rather than as two notes. The filter above them does the work; the notes
+    // themselves never move except when the chord does.
+    var lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 220;
+    lp.Q.value = 0.8;
+    var a = ctx.createOscillator();
+    var b = ctx.createOscillator();
+    a.type = "sawtooth";
+    b.type = "sawtooth";
+    a.frequency.value = 110;
+    b.frequency.value = 110.2;
+    a.connect(lp);
+    b.connect(lp);
+    a.start(t);
+    b.start(t);
+    lp.connect(teeth);
+
+    // The crackle: a narrow band of noise wandering up and down on a clock of
+    // its own, because a band sitting still is a kettle and a band that moves
+    // is a discharge.
+    var arc = ctx.createGain();
+    arc.gain.value = 0;
+    var bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = 2600;
+    bp.Q.value = 7;
+    var roam = ctx.createOscillator();
+    roam.type = "triangle";
+    roam.frequency.value = 1.7;
+    var ra = ctx.createGain();
+    ra.gain.value = 1300;
+    roam.connect(ra);
+    ra.connect(bp.frequency);
+    roam.start(t);
+    var n = ctx.createBufferSource();
+    n.buffer = noise;
+    n.loop = true;
+    n.connect(bp);
+    bp.connect(arc);
+    arc.connect(teeth);
+    n.start(t);
+
+    teeth.connect(lvl);
+    lvl.connect(dry);
+    // A little room on it and no more. A thing you can feel from three inches
+    // away is not at the other end of a hall, and the reverb in here is what
+    // makes everything else sound like it is.
+    var wet = ctx.createGain();
+    wet.gain.value = 0.22;
+    lvl.connect(wet);
+    wet.connect(send);
+
+    fizz = { lvl: lvl.gain, lp: lp.frequency, q: lp.Q, bit: bit.gain,
+             chop: chop.frequency, arc: arc.gain, a: a.frequency, b: b.frequency,
+             root: -1, at: -9, was: -1 };
+  }
+
+  // Six numbers off one reading, glided in the audio thread rather than
+  // stepped, because a gain written once a frame is a gain that zippers.
+  //
+  // Three gates in front of them, in the order that costs least. An object
+  // nobody is anywhere near does not reach this line at all; a reader with the
+  // cursor resting on the panel pays for the chord it is tuned to and nothing
+  // else; and a hand actually moving is bounded at thirty writes a second,
+  // which is under a frame's worth and above anything an ear could pick out.
+  function charge(p) {
+    if (!ctx || ctx.state !== "running" || !noise || !dry) return;
+    if (!fizz) {
+      if (p < 0.02) return;
+      spark();
+    }
+    if (p === 0 && fizz.was === 0) return;
+    var t = ctx.currentTime;
+    if (t - fizz.at < 0.03) return;
+    fizz.at = t;
+    // Asked every time rather than when the hand moves, because the chord
+    // changes on its own clock and a drone left on the last one is the only
+    // wrong note this could put in the room. In the key, like everything else a
+    // reader can cause in here, and in the hole the growl found: over the bass,
+    // under the chord, where nothing else in the arrangement is standing.
+    var c = chord(Math.floor((((step % CYCLE) + CYCLE) % CYCLE) / 16));
+    if (c.root !== fizz.root) {
+      fizz.root = c.root;
+      var f = mtof(low(c.root) + 12);
+      fizz.a.setTargetAtTime(f, t, 0.25);
+      fizz.b.setTargetAtTime(f * 1.0018, t, 0.25);
+    }
+    // And a hand holding still moves none of the rest. The threshold is well
+    // under what a glide of sixty milliseconds would smooth out anyway, so what
+    // it saves is writes and not detail.
+    if (Math.abs(p - fizz.was) < 0.004) return;
+    fizz.was = p;
+    var p2 = p * p;
+    fizz.lvl.setTargetAtTime(p2 * FIZZ, t, 0.06);
+    fizz.lp.setTargetAtTime(220 + p2 * 3600, t, 0.06);
+    fizz.q.setTargetAtTime(0.8 + p * 4, t, 0.06);
+    fizz.bit.setTargetAtTime(p2 * 0.62, t, 0.06);
+    fizz.chop.setTargetAtTime(41 + p * 26, t, 0.08);
+    // The crackle arrives last of all, on the cube, so it is a thing that
+    // happens in the final inch and not a hiss laid over the whole approach.
+    fizz.arc.setTargetAtTime(p2 * p * 0.22, t, 0.06);
   }
 
   // ---- the voice ----------------------------------------------------------
