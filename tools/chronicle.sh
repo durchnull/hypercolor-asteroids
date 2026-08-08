@@ -130,25 +130,39 @@ cd "$ROOT" || exit 0
 # keeping a second copy that can drift.
 GAME='index.html src styles'
 
+# ... except for one file that lives under src/ and is not the game.
+# src/game/ledger.js is generated from the history by tools/tally.sh and rides
+# along with whatever commit comes next, so it turns up in filing commits that
+# changed nothing anybody can play - and one line of it was enough to make such
+# a commit a version, with a chapter and a painted plate to itself. Worse, a
+# workflow files the book after every push, so the count grew by one per push
+# rather than by one per idea.
+#
+# tools/flights.sh and tools/tally.sh both already made exactly this judgement,
+# each with a comment saying so. This is the third reader agreeing with them,
+# and it has to be applied everywhere the list above is used rather than only
+# in moved(): the count below is what names a version.
+NOTGAME=':!src/game/ledger.js'
+
 git rev-parse --verify -q HEAD >/dev/null 2>&1 || { echo "no history yet" >&2; exit 0; }
 
 # How many versions deep the history is. --full-history so that path limiting
 # does not quietly simplify a version out of the count.
-TOTAL=$(git rev-list --count --full-history --no-merges HEAD -- $GAME)
+TOTAL=$(git rev-list --count --full-history --no-merges HEAD -- $GAME "$NOTGAME")
 
 # Did this commit touch the game? With no argument: will the next one?
 moved() {
   if [ -n "${1:-}" ]; then
-    [ -n "$(git diff-tree --root -r --name-only --no-commit-id "$1" -- $GAME 2>/dev/null)" ]
+    [ -n "$(git diff-tree --root -r --name-only --no-commit-id "$1" -- $GAME "$NOTGAME" 2>/dev/null)" ]
   elif [ -n "$(git diff --cached --name-only HEAD 2>/dev/null)" ]; then
     # Something is staged, so the index is the question being asked - which is
     # also the case inside the hooks, including for git commit -a.
-    [ -n "$(git diff --cached --name-only HEAD -- $GAME 2>/dev/null)" ]
+    [ -n "$(git diff --cached --name-only HEAD -- $GAME "$NOTGAME" 2>/dev/null)" ]
   else
     # Nobody is committing; a pilot is asking mid-flight. Answer about the
     # worktree, untracked files included - a brand new feature is a file git
     # has never heard of.
-    [ -n "$(git status --porcelain -- $GAME 2>/dev/null)" ]
+    [ -n "$(git status --porcelain -- $GAME "$NOTGAME" 2>/dev/null)" ]
   fi
 }
 
@@ -231,7 +245,16 @@ history() {
 # below accuses people of breaking GR10 and an accusation has to use the
 # referee's own definition or it is just an opinion.
 LIB='
-function is_game(p) { return (p == "index.html" || p ~ /^src\// || p ~ /^styles\//) }
+function is_game(p) {
+  # The same exception NOTGAME makes above, and it has to be the same one or
+  # the two halves disagree about what a version is: the counter would decline
+  # to number a commit while the builder still filed it as one, and a commit
+  # classed as a version with no number to its name renders as nothing at all.
+  # That is how three ledger receipts - the record of somebody bending a rule -
+  # went missing from the book on the first attempt at this.
+  if (p == "src/game/ledger.js") return 0
+  return (p == "index.html" || p ~ /^src\// || p ~ /^styles\//)
+}
 function is_book(p) {
   return (p == "docs/index.html" || p == "docs/chronicle.css" ||
           p == "docs/chronicle.js" || p == "docs/chronicle-song.js" ||
