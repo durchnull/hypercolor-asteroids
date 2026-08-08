@@ -276,8 +276,28 @@ seed_of_name() {
 # Everybody the history has ever heard of, which is the same roster the book
 # puts on the cover - a pilot who has only ever changed the rules has flown no
 # versions and still has a name in here, so they still get a face.
+# Everybody who has ever authored a commit here, machines excepted.
+#
+# A workflow files the book's own paperwork after a push, and it has to author
+# that commit as somebody - so an account that is not a person now appears in
+# the history and, read naively, asks for a portrait like anybody else. It got
+# one, once, before this line existed. That matters more here than anywhere
+# else in the book: a plate can be repainted and a face cannot, by anybody,
+# ever, so a machine that slips into this list is in it for good.
+#
+# Filtered on the address rather than the name, because the name is somebody's
+# free choice and the [bot] suffix is github's own mark. The literal name this
+# repository's workflow commits under is spelled out beside it, so that a
+# future reader can find both ends of the arrangement from either one.
 pilots() {
-  git log --format='%an' 2>/dev/null | sed '/^[[:space:]]*$/d' | sort -u
+  git log --format='%an%x1f%ae' 2>/dev/null \
+  | awk -F'\037' '
+      $1 == "" { next }
+      $1 == "the book" { next }                 # .github/workflows/book.yml
+      $2 ~ /\[bot\]@/ { next }                  # github marks its own
+      $2 ~ /^actions@github\.com$/ { next }
+      { print $1 }' \
+  | sort -u
 }
 
 slug_of() {
