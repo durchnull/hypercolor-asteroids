@@ -17,7 +17,7 @@
 # against a name that does not exist, force-pushing the scoreboard - and the
 # assertion is that the machinery answers the way the rules say it does.
 #
-# Four parts:
+# Five parts:
 #
 #   the price       tools/tally.sh, against scripted histories. Bends cost
 #                   one, skips cost two, receipts do not stack with the audit,
@@ -26,6 +26,10 @@
 #                   lands on its own, says the right number, and does not
 #                   tally itself.
 #   the scoreboard  .githooks/pre-push. main moves forward or not at all.
+#   the readers     tools/lockstep.sh, which is what stops the book, the meter
+#                   and the ledger disagreeing about what a version is. One
+#                   reader is bent in a scratch copy and it has to object;
+#                   unbent, it has to not.
 #   the field       node, loading src/game/tally.js and src/game/events.js -
 #                   the real files, not copies - and asking them the GR12
 #                   table line by line.
@@ -427,6 +431,38 @@ case_ GR7 "your own branch is your own business"
   OLD=$(git rev-parse HEAD~1); NEW=$(git rev-parse HEAD)
   push refs/heads/lab "$OLD" refs/heads/lab "$NEW"
   expect "$?" "0"
+
+# --- the readers: tools/lockstep.sh, with one of them quietly bent -------------
+#
+# Everything above prices a verdict. This is about the question underneath all
+# of them: which commits are versions. Two readers answer it, both inside
+# tools/chronicle.sh, and tools/lockstep.sh is the only thing that puts the same
+# commits to both - so it decides whether the clean-landing count on the ledger
+# and the meter under GR14 are counting the same evenings.
+#
+# It runs on every landing, through check_lockstep in the referee, which means
+# a *broken* comparison fails loudly on the next commit. The silent one is the
+# other direction: a lockstep edited until it always passes takes the whole
+# alarm out with it, every reader is then free to drift, and nothing anywhere
+# says so. A trigger with no case that can fail is an empty toll.
+#
+# So: bend one reader in a scratch copy and it has to object. NOTGAME is the
+# cheap one - the exception that keeps the generated ledger from counting as a
+# version, which the pathspec knows about and the awk knows about separately -
+# and pointing it at a file nobody has makes the two disagree about exactly one
+# commit. Then the mirror, because a check that always fails reads as a check
+# that works right up until somebody reads what it said.
+
+case_ GR12 "a bent reader does not get past lockstep"
+  sed "s|^NOTGAME=.*|NOTGAME=':!src/game/nothing.js'|" tools/chronicle.sh > c.new \
+    && mv c.new tools/chronicle.sh
+  sh tools/lockstep.sh > "$OUT" 2>&1; X=$?
+  expect "bent=$(grep -c "^NOTGAME=':!src/game/nothing.js'\$" tools/chronicle.sh) exit=$X said=$(grep -c 'readers disagree' "$OUT")" \
+         "bent=1 exit=1 said=1"
+
+case_ GR12 "and an unbent one still comes back in lockstep"
+  sh tools/lockstep.sh > "$OUT" 2>&1
+  expect "exit=$? said=$(grep -c 'in lockstep' "$OUT")" "exit=0 said=1"
 
 # --- the field: what the number does, in the code that ships -------------------
 #

@@ -43,8 +43,9 @@ fi
 # golden-check.sh itself, its own tests, and the two tools it leans on to
 # decide what is generated and what the ledger should say. And nothing checks
 # the sentence except tools/tally-test.sh - what a bend costs, who a breach
-# charges, the receipts these hooks write, and what the ledger does to a
-# pilot's field - so that one runs when any of that machinery moves. Each
+# charges, the receipts these hooks write, what the ledger does to a pilot's
+# field, and whether tools/lockstep.sh still objects when a reader of "is this
+# a version" is bent - so that one runs when any of that machinery moves. Each
 # suite takes a minute or two, which is why neither is on the path of an
 # ordinary landing.
 if git diff --cached --name-only --diff-filter=ACMRD |
@@ -57,7 +58,7 @@ if git diff --cached --name-only --diff-filter=ACMRD |
 fi
 
 if git diff --cached --name-only --diff-filter=ACMRD |
-   grep -Eq '^tools/(tally|tally-test|chronicle)\.sh$|^\.githooks/|^src/game/(tally|events)\.js$'; then
+   grep -Eq '^tools/(tally|tally-test|chronicle|lockstep)\.sh$|^\.githooks/|^src/game/(tally|events)\.js$'; then
   if ! sh tools/tally-test.sh; then
     printf '\n  a bend no longer costs what the rules say. nothing was committed.\n' >&2
     printf '  tools/tally-test.sh says which part of the sentence stopped landing.\n\n' >&2
