@@ -104,7 +104,8 @@ registry-shaped solution instead.
 <li>Add hooks, fields, tokens and helpers to the commons — additively.</li>
 <li>Tune numbers anywhere, including in other people's features. Balance is everybody's business and it costs a few lines.</li>
 <li>Fix an outright bug in anyone's feature, small and surgical.</li>
-<li>Run the referee, regenerate the chronicle, read any history you like.</li></ul>
+<li>Run the referee, regenerate the chronicle, read any history you like.</li>
+<li>Write down how the game behind the game could be better — a rule that is not pulling its weight, a meter that reads wrong, an unfairness nobody has priced — in <code>.dev/IMPROVEMENTS.md</code>, newest first, one entry per idea: date, title, what you saw, what might be done. That directory is gitignored and per machine on purpose; it is where a candidate waits until somebody decides to spend a rule-change commit on it. Note what came of an entry rather than deleting it.</li></ul>
 <p>
 <b>Ask the pilot first:</b>
 </p>
@@ -127,11 +128,11 @@ Say it in one sentence, offer the legitimate route, and move on.
 </p>
 <h2 id="how-a-session-goes">How a session goes</h2>
 <ol>
-<li><b>Look around.</b> <code>tools/chronicle.sh --recent 8</code>, then <code>git log --oneline -10</code>. Play the current build if there is any doubt about what state it is in.</li>
+<li><b>Look around.</b> <code>tools/chronicle.sh --recent 8</code>, then <code>git log --oneline -10</code>. Play the current build if there is any doubt about what state it is in. More than one session is often flying this same working tree at once, so the status you were handed at the start goes stale while you read it: check for live peers and run <code>git status</code> again before you touch a shared generator (<code>tools/chronicle.sh</code>, <code>tools/golden-check.sh</code>) or rebuild <code>docs/</code>, and say which regions you are taking. Three sessions once collided in the middle of that one file and it only came apart cleanly because they were talking.</li>
 <li><b>Build it in its own file.</b> GR3. Register it, give it a <code>guide</code> entry so the next player can discover it — or a <code>No guide tile:</code> line if it is the kind of thing the guide turns away.</li>
 <li><b>Check the fairness of the idea, not just the code</b> — GR8. Cost, cooldown or finite count for every new power; both seats equal; nothing invincible.</li>
 <li><b>Run the referee.</b> <code>tools/golden-check.sh</code>. Fix what it flags. If it flags a budget, take it to the pilot.</li>
-<li><b>Try it.</b> Open <code>index.html</code> (or <code>python3 -m http.server 8000</code>) and actually play. GR1 is a promise to somebody who is not here. Die, copy the tape off the game-over screen, and <code>/blackbox</code> puts it on the board — that is what GR14 counts, and one tape covers three landings.</li>
+<li><b>Try it.</b> Open <code>index.html</code> (or <code>python3 -m http.server 8000</code>) and actually play. GR1 is a promise to somebody who is not here. Die, copy the tape off the game-over screen, and <code>/blackbox</code> puts it on the board — that is what GR14 counts, and one tape covers three landings. If you drove a browser to do it, close it before you report: a window left open outlives the turn on somebody's desktop, and the next run inherits whatever state it was in.</li>
 <li><b>Land it, on a branch.</b> <code>git switch -c &lt;name&gt;</code> — <code>main</code> takes pull requests and nothing else (GR7), so the branch is where a version lives until the room has seen it. Subject line written from the next pilot's seat, plus a <code>Chronicle:</code> line for the book:</li></ol>
 <pre><code>
 Comets, and they come in threes
@@ -152,7 +153,7 @@ The hooks show you which shape of commit this is, check the red lines, check
 the budgets, and rebuild <code>docs/index.html</code> after the commit lands.
 </p>
 <ol>
-<li><b>Open the pull request.</b> <code>git push -u origin &lt;name&gt;</code> then <code>gh pr create</code>, and <code>.github/PULL_REQUEST_TEMPLATE.md</code> is already in the box waiting for you. Fill it the way a turn ends — a ship, then what the next pilot finds out by playing, then what it does to everybody else — because a pull request here is public and somebody who has never opened this repository may read it before anyone in the room does. Merge it on github, <b>merge commit only</b>: squashing collapses several versions into one and rebasing hands every commit a new sha, and the book counts versions off commits (GR7). The referee reads the branch on the way in; the ground crew files the book on the way out.</li></ol>
+<li><b>Open the pull request — you, not them.</b> <code>git push -u origin &lt;name&gt;</code> then <code>gh pr create</code>, and <code>.github/PULL_REQUEST_TEMPLATE.md</code> is already in the box waiting for you. Both of those are yours to run and they happen before the turn ends; a branch sitting on a laptop is not a turn that finished, and a command handed over to be pasted is a chore rather than a decision. What is left for the pilot is the merge button, which is the review gate and is genuinely theirs. Fill the template the way a turn ends — a ship, then what the next pilot finds out by playing, then what it does to everybody else — because a pull request here is public and somebody who has never opened this repository may read it before anyone in the room does. Merge it on github, <b>merge commit only</b>: squashing collapses several versions into one and rebasing hands every commit a new sha, and the book counts versions off commits (GR7). The referee reads the branch on the way in; the ground crew files the book on the way out.</li></ol>
 <h2 id="ending-a-turn">Ending a turn</h2>
 <p>
 A turn ends with the same facts the splash screen shows a pilot before they
@@ -242,8 +243,14 @@ scolding, and GR12 is not improved by being read out sternly.
 <p>
 <b>YOUR MOVE</b> — three lines at most, one verb each, the command in the line
 and copy-pasteable. Only things the pilot does: if a tool could have run it, it
-ran already, so never ask them to run the referee "to check". Anything that
-costs them something says so in one clause. A decision is a question with the
+ran already, so never ask them to run the referee "to check", and never hand
+over <code>git push</code> or <code>gh pr create</code> — those are yours and they have already
+happened by the time this prints. What is genuinely theirs is a short list:
+flying for a tape (GR16 leaves you no honest way to produce one), pressing
+merge, and answering a question that changes what gets built next. If the only
+thing you can think of to write here is a command you could have run, the block
+does not belong on this turn. Anything that costs them something says so in one
+clause. A decision is a question with the
 options in it, not "let me know how you would like to proceed". If the turn
 ended blocked, this block says what is blocking it and both ways out.
 </p>
@@ -330,6 +337,7 @@ Use them; they exist so this stays fun rather than procedural.
 <tr><td><code>/chronicle</code></td><td>rebuild the book, or write a chapter worth reading</td></tr>
 <tr><td><code>/fairplay</code></td><td>who has landed what, who has bent which rules, is the game still balanced</td></tr>
 <tr><td><code>/blackbox</code></td><td>a pasted flight tape — verify the seal, rank it in docs/RANKINGS.md</td></tr>
+<tr><td><code>/shoot</code></td><td>stage the cabinet from the console and reshoot <code>media/</code></td></tr>
 </tbody>
 </table></div>
 <h2 id="style">Style</h2>

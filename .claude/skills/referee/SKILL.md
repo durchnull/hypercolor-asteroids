@@ -127,6 +127,34 @@ and never suggest committing under another name to reset the count. If the
 pilot is genuinely working alone, the honest answer is "yes, still you" and the
 line has done its whole job.
 
+## Rehearsing from another seat
+
+The ownership rules — GR4, GR5, GR11, GR14 — all read `git config user.name`
+into the referee's `ME`, and this cabinet has effectively one author, so every
+file in it is yours and none of those branches ever runs. To see what another
+pilot would be told, hand git a seat through its environment rather than
+editing anything:
+
+```sh
+GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=user.name GIT_CONFIG_VALUE_0="Mira Vance" \
+  tools/golden-check.sh --staged
+```
+
+Every existing file is now somebody else's work, and nothing is left behind if
+the shell dies. Never do this by editing `user.name` in the clone: a commit
+that lands under the wrong name is GR7, which is a red line and is not
+repairable afterwards.
+
+It is for the throwaway rehearsal only. Permanent coverage belongs in
+`tools/referee-test.sh` as a `case_`, which deliberately unsets
+`GIT_CONFIG_COUNT` and the rest of git's environment at the top so its lab
+builds real seats of its own. To see whether your change to the referee
+actually changed the verdict, run the old one beside it out of the scratchpad:
+
+```sh
+git show HEAD:tools/golden-check.sh > "$S/old-check.sh" && sh "$S/old-check.sh" --staged
+```
+
 ## Never
 
 Disabling the check is not a fix. `--no-verify`, unsetting `core.hooksPath`,
