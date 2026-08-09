@@ -26,11 +26,17 @@
 # clone that never installed the hooks arrives at the same numbers as everybody
 # else.
 #
-# A line on the board is taken as a flight, and anybody willing to type one by
-# hand can clear their own meter. That is the same posture the seal has
-# (tools/blackbox.sh): honesty rather than security. They would be writing
-# themselves a receipt for an evening they did not spend, in a public file, in a
-# repository that remembers who wrote every line of it.
+# A line on the board counts as a flight when it carries the tape's own
+# checksum under it - `<!-- crc xxxxxxxx -->`, which tools/blackbox.sh prints
+# and the ranking ritual files - and only the first time that checksum reaches
+# the board. Two evenings cannot be one tape and one tape cannot be two
+# evenings.
+#
+# That is still honesty rather than security, the same posture the seal has:
+# eight hex digits are eight hex digits, and anybody who can read this file can
+# see what shape one is. What it buys is that a receipt for an evening nobody
+# spent has to be a number nobody has used, in a public file, in a repository
+# that remembers who wrote every line of it - rather than a sentence.
 # ---------------------------------------------------------------------------
 set -u
 
@@ -82,17 +88,44 @@ fi
 
 EPOCH=$(git log "$HIST" --diff-filter=A --format='%H' -- tools/flights.sh 2>/dev/null | tail -1)
 
-# One row per tape ever put on the board, newest first: sha, pilot, and the
-# numbers the log line already carries. Read out of the diff rather than out of
-# the file as it stands, because when a tape landed is the whole question - and
-# the board line is the record, so nothing has to be trusted twice.
+# One row per tape ever put on the board, newest first: sha, pilot, the numbers
+# the log line already carries, and the crc of the tape it came off. Read out of
+# the diff rather than out of the file as it stands, because when a tape landed
+# is the whole question - and the board line is the record, so nothing has to be
+# trusted twice.
 #
 # The log is append-only and one line is one tape, so a pilot's newest row is
 # their last flight. That is all this is asked for; how many rows they have is
 # the board's business, not the meter's.
+#
+# An entry counts only with a `<!-- crc xxxxxxxx -->` marker under it, and only
+# the first time that crc reaches the board. The ritual has always written the
+# marker (tools/blackbox.sh prints the sum, the skill files it, and it is what
+# stops one evening being pasted twice); until now nothing read it, so a pilot
+# who could not be bothered to play could clear their own meter by typing a
+# sentence. It is still not security - anybody who can read this file can read
+# eight hex digits off somebody else's row - but a forged receipt now has to
+# invent a number that is not on the board rather than write itself a line, and
+# re-using one is visible to everybody who looks.
 board_flights() {
   git log "$HIST" --format='%x1e%H' --unified=0 -p -- "$BOARD" 2>/dev/null | awk '
-    substr($0, 1, 1) == "\036" { sha = substr($0, 2); next }
+    # An entry and its receipt are matched by commit and not by adjacency. They
+    # are written adjacent and they read that way in the file, but the log is
+    # append-only at the top and every entry looks like every other entry, so
+    # git is entitled to describe a second one as a receipt inserted above the
+    # first - and it does. Pairing them in the order each arrives leaves the
+    # meter reading a flight as unsealed because a diff was minimal.
+    function close_out(   i, n) {
+      n = (ne < nc ? ne : nc)     # an entry with no receipt is a sentence
+      for (i = 1; i <= n; i++) {  # somebody typed; a receipt with no entry is
+        row[++rows] = ent[i] "\t" crc[i]   # a comment. Neither is an evening.
+        seal[rows] = crc[i]
+      }
+      ne = 0; nc = 0
+    }
+
+    substr($0, 1, 1) == "\036" { close_out(); sha = substr($0, 2); next }
+
     /^\+\*\*/ {
       line = substr($0, 4)            # past the "+**"
       sub(/\*\*.*$/, "", line)        # and stopping at the closing stars
@@ -100,28 +133,60 @@ board_flights() {
       if (n < 5) next
       for (i = 1; i <= 5; i++) gsub(/^[ \t]+|[ \t]+$/, "", f[i])
       if (f[2] == "") next
-      printf "%s\t%s\t%s\t%s\t%s\t%s\n", sha, f[2], f[1], f[3], f[4], f[5]
+      ent[++ne] = sha "\t" f[2] "\t" f[1] "\t" f[3] "\t" f[4] "\t" f[5]
+      next
+    }
+
+    /^\+<!-- crc [0-9a-f]+ -->/ { crc[++nc] = $3 }
+
+    END {
+      close_out()
+
+      # Newest first is the order everything downstream wants, but which
+      # landing owns a crc is decided oldest first: the evening is the first
+      # time that sum reached the board, and every appearance after it is the
+      # same evening being read out again.
+      for (i = rows; i >= 1; i--) {
+        if (seal[i] in taken) continue
+        taken[seal[i]] = 1
+        keep[i] = 1
+      }
+      for (i = 1; i <= rows; i++) if (i in keep) print row[i]
     }'
 }
 
 # Does the change nobody has committed yet put a tape on the board for a pilot?
 # The referee asks this so that flying, ranking and landing in one sitting is
 # one sitting rather than a rule violation.
+#
+# Same two conditions the committed rows are held to, because a receipt that
+# only had to be honest after the fact would be no receipt at the one moment it
+# is being spent.
 pending_flight() {
   [ "$PEND" = none ] && return 1
+  taken=$(board_flights | awk -F'\t' '$7 != "" { printf " %s", $7 }')
   case "$PEND" in
     staged) git diff --cached --unified=0 -- "$BOARD" 2>/dev/null ;;
     at)     git diff --unified=0 "$AT^" "$AT" -- "$BOARD" 2>/dev/null ;;
     *)      git diff --unified=0 HEAD -- "$BOARD" 2>/dev/null ;;
-  esac | awk -v who="$1" '
+  esac | awk -v who="$1" -v taken="$taken " '
     /^\+\*\*/ {
       line = substr($0, 4); sub(/\*\*.*$/, "", line)
       n = split(line, f, " · ")
       if (n < 2) next
       gsub(/^[ \t]+|[ \t]+$/, "", f[2])
-      if (f[2] == who) found = 1
+      ent[++ne] = f[2]
+      next
     }
-    END { exit(found ? 0 : 1) }'
+    /^\+<!-- crc [0-9a-f]+ -->/ { crc[++nc] = $3 }
+    END {
+      # Zipped, not paired off as they arrive - same reason as above, and one
+      # diff rather than a log of them, so this is the whole of it.
+      n = (ne < nc ? ne : nc)
+      for (i = 1; i <= n; i++)
+        if (ent[i] == who && index(taken, " " crc[i] " ") == 0) found = 1
+      exit(found ? 0 : 1)
+    }'
 }
 
 # pilot, versions since they last flew, then the last flight itself: date,

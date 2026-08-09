@@ -485,8 +485,21 @@ only reason it needed writing down.
 - Fly under your own name. A tape sealed to somebody else's seat ranks nowhere
   (GR12), a run flown as GUEST is GUEST's flight, and neither clears anybody's
   meter. Couriering a friend's real tape is fine and lands on theirs.
+- **An entry carries the tape's own checksum, and spends it once.** The reader
+  prints `SEAL INTACT (crc a6bfaee1)` and the ritual files that sum under the
+  log entry as `<!-- crc a6bfaee1 -->`. A line with no sum under it is a
+  sentence somebody typed, and a sum the board has already accepted is the same
+  evening being read out twice. Neither moves the meter.
 - A tape is a flight, not a keypress. No machine can tell the difference — but
   the log prints how long you lasted, beside your name, for good.
+
+The checksum is honesty rather than security, exactly like the seal it comes
+off: eight hex digits are eight hex digits, and nothing stops somebody making
+one up. What it costs is the difference between writing yourself a receipt and
+inventing a number that has to not already be on the board — in a public file,
+in a repository that remembers who wrote every line of it. The board format was
+load-bearing for a page people read; now it is load-bearing for a rule, which
+is why the marker is written down here rather than left to a habit.
 
 The order is the order the ritual already had: build it, play it, paste the
 tape, land the version. Flying, ranking and landing in one sitting is one
@@ -501,7 +514,9 @@ have flown. That loop is deliberate.
 last taped flight needs `Golden-Rule-Override: GR14 - <why>`; the one before it
 gets a nudge. `tools/flights.sh` reads the meter off the history the way
 `tools/tally.sh` reads the ledger — credited to the pilot the board line names,
-never to whoever held the pen — and `tools/flights.sh --roll` shows the room.
+never to whoever held the pen, counted only where a checksum backs it and only
+the first time that checksum lands — and `tools/flights.sh --roll` shows the
+room.
 The meter starts where this rule did: nothing before the commit that added it
 is counted, because before it there was no promise to keep.
 

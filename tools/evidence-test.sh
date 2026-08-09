@@ -340,11 +340,16 @@ paperwork() { printf '%s\n' "$1" >> README.md; land -m "$1"; }
 
 # A line on the board naming a pilot, written but not landed - so a case can
 # choose whether it rides in its own commit or alongside a version.
+#
+# The tape's checksum goes under it the way the ritual files it. A case that
+# wants to know what an unsealed sentence buys passes an empty second argument;
+# one that wants to paste somebody's evening twice passes the same one twice.
 board() {
-  awk -v who="$1" '
+  awk -v who="$1" -v crc="${2-deadbeef}" '
     { print }
     /<!-- log -->/ && !done {
       printf "**2026-08-09 · %s · 4200 · wave 3 · 2:11** — a short evening, honestly flown.\n", who
+      if (crc != "") printf "<!-- crc %s -->\n", crc
       done = 1
     }' "$BOARD" > "$BOARD.new" && mv "$BOARD.new" "$BOARD"
 }
@@ -432,6 +437,58 @@ lab GR14 "flying, ranking and landing in one sitting is one sitting"
   board "$PILOT"
   land -m "Flew it, ranked it, landed it"
   expect "$(count "$PILOT")" "0"
+
+# The crime the meter was built without an answer to: a pilot who cannot be
+# bothered to fly writing themselves a receipt. The seal has never been
+# checkable from the board - the tape itself is not kept - but the sum it
+# printed is, and the ritual has always written it down. These four are what
+# reading it turns out to be worth.
+lab GR14 "a sentence with no seal under it is not a flight"
+  seat "$PILOT"
+  version "The rock, elaborated"
+  version "The rock, again"
+  version "The rock, once more"
+  board "$PILOT" ""
+  land -m "An evening I would like credit for"
+  sh tools/flights.sh --last "$PILOT" > "$OUT" 2>&1
+  expect "last=$? after=$(count "$PILOT") said=[$(cat "$OUT")]" "last=1 after=3 said=[]"
+
+lab GR14 "the same tape pasted twice is one evening, not two"
+  seat "$PILOT"
+  board "$PILOT" c0ffee01
+  land -m "Flew it and ranked it"
+  version "The rock, elaborated"
+  version "The rock, again"
+  version "The rock, once more"
+  board "$PILOT" c0ffee01
+  land -m "The same evening, read out again"
+  expect "$(count "$PILOT")" "3"
+
+lab GR14 "a second evening is a second tape"
+  seat "$PILOT"
+  board "$PILOT" c0ffee01
+  land -m "Flew it and ranked it"
+  version "The rock, elaborated"
+  version "The rock, again"
+  version "The rock, once more"
+  board "$PILOT" c0ffee02
+  land -m "Flew it again, and this one is its own"
+  expect "$(count "$PILOT")" "0"
+
+lab GR14 "a receipt already spent buys nothing at the moment of a landing"
+  # The one that matters most, because it is the one a pilot would actually
+  # try: not a forged evening in the history, but an old crc re-pasted into
+  # the commit that is about to be blocked. The referee asks about the index,
+  # so the index is where the answer has to hold.
+  seat "$PILOT"
+  board "$PILOT" c0ffee03
+  land -m "Flew it and ranked it"
+  version "The rock, elaborated"
+  version "The rock, again"
+  version "The rock, once more"
+  board "$PILOT" c0ffee03
+  git add "$BOARD" >/dev/null 2>&1
+  expect "staged=$(sh tools/flights.sh --staged --count "$PILOT")" "staged=3"
 
 lab GR14 "a tape staged but not committed already counts"
   # What the referee asks at the moment of a landing, so that the sitting above

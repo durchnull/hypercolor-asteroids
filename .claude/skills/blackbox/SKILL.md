@@ -32,6 +32,9 @@ is what makes the board worth reading.
 3. **Already on the record?** Grep `docs/RANKINGS.md` for the tape's crc.
    A hit means this exact flight already landed — point at its row and stop,
    because one flight is one entry no matter how many times it is pasted.
+   `tools/flights.sh` reads the same marker and would refuse the second one
+   anyway (GR14), so a duplicate ranked here buys its pilot nothing and puts a
+   confusing row on a page people read.
 
 4. **Whose name is in the seat?** The reader prints a seat verdict under the
    seal. `SEAT CONFIRMED` — carry on. `SEAT MISMATCH` — the run was flown
@@ -62,8 +65,11 @@ is what makes the board worth reading.
    twenty rows; THE FLIGHT LOG below keeps every tape, newest first. A board
    row ends with the flight in one line — dry, specific, written from the
    numbers ("died with the bomb still in the rack" beats "great game"). Tag
-   the log entry with an HTML comment holding the crc, which is what step 3
-   greps for. A two-seat tape lands once, under the tape's pilot, and the
+   the log entry with an HTML comment holding the crc — `<!-- crc a6bfaee1 -->`
+   on its own line directly under the entry, exactly the sum the reader
+   printed. That marker is not decoration and it is not optional: step 3 greps
+   for it, and GR14's meter counts an entry without one as a sentence somebody
+   typed. A two-seat tape lands once, under the tape's pilot, and the
    line mentions the wingmate. When the tape carries an ambush reel, the
    flight log entry names each event with its author and outcome — cleared
    or fatal — so an author's public kills and clears read straight off the

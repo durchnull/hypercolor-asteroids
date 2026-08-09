@@ -629,6 +629,10 @@ case_ GR14 "flying it, ranking it and landing it is one sitting"
   printf '# THE FLIGHT RECORDS\n\n<!-- log -->\n' > docs/RANKINGS.md
   printf '**2026-08-08 · Bo Renn · 8400 · wave 5 · 5:03** — flew its own trap.\n' \
     >> docs/RANKINGS.md
+  # The receipt off the tape. Without it the line is a sentence somebody typed
+  # and the meter does not read it - tools/evidence-test.sh is where that is
+  # examined; here it just has to be a flight.
+  printf '<!-- crc 5eaf00d1 -->\n' >> docs/RANKINGS.md
   stage; message "The trap moves once more, and its author survived it"
   check commit-msg --message-file "$MSG"
   lands
