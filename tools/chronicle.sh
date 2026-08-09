@@ -90,7 +90,8 @@
 #   tools/chronicle.sh --version      the version on the cabinet now
 #   tools/chronicle.sh --next         the version the next commit becomes, or
 #                                     "-" if what is staged leaves the game alone
-#   tools/chronicle.sh --recent N     plain text digest of the last N commits
+#   tools/chronicle.sh --recent N     plain text digest of the last N stories,
+#                                     walking back however far that takes
 #   tools/chronicle.sh --moved [rev]  quietly: did that touch the game?
 #   tools/chronicle.sh --game-paths   what counts as the game, one path a line
 #   tools/chronicle.sh --versions [r] every version, oldest first, as sha
@@ -540,8 +541,21 @@ case "${1:-}" in
 
   --recent)
     n=${2:-5}
-    { taglines; history '%d %b %Y' "$n"; } \
-      | awk -v RS='\036' -v FS='\037' -v ver="$TOTAL" "$LIB"'
+    # A number, because the awk below counts rows against it now rather than
+    # git counting records against it.
+    case $n in ''|*[!0-9]*|0) n=5 ;; esac
+    # Ask for eight and get five. The digest drops the commits that are not
+    # stories - a machine filing the book, the paperwork behind a landing - and
+    # it used to drop them out of a window of exactly N records, so a busy
+    # filing day ate the answer. What a reader asking for eight wants is eight
+    # things that happened, however far back that is.
+    #
+    # So the walk is the whole log and the awk stops when it has enough: git is
+    # writing into a pipe, and the reader closing it is what ends the walk. The
+    # test for what prints is untouched below, deliberately - this changes how
+    # far the digest looks, not what it thinks a story is.
+    { taglines; history '%d %b %Y'; } \
+      | awk -v RS='\036' -v FS='\037' -v ver="$TOTAL" -v want="$n" "$LIB"'
           $1 == "TAG" { tag[$2] = $3; next }
           NF < 4 { next }
           # Nobody flew it, so there is nothing to tell the next pilot about it.
@@ -580,6 +594,7 @@ case "${1:-}" in
             if (line == "") line = $4
             printf "  %-5s %-16s %s\n", (game ? "v" ver : "--"), $2, line
             if (game) ver--
+            if (++shown == want) exit
           }'
     exit 0 ;;
 esac
@@ -1267,6 +1282,7 @@ NF < 4 { next }
   line = ""; overrides = ""; rulechange = ""; tallyline = ""; breach = ""; mode = ""
   gamefiles = 0; files = 0; acmr = 0; ins = 0; del = 0; kc = 0; fpn = 0
   refmoved = 0; docmoved = 0; bookmoved = 0; readmemoved = 0; elsemoved = 0
+  rankmoved = 0
   refstrict = 0; nonref = 0; stolen = 0
   split("", deleted); split("", arrived); split("", fseen); split("", fadd); split("", fdel)
   split("", mkseen)
@@ -1294,7 +1310,16 @@ NF < 4 { next }
                p ~ /^\.github\// ||
                p == "CLAUDE.md" || p == "GOLDEN_RULES.md") refmoved = 1
       else if (is_book(p)) bookmoved = 1
-      else if (p ~ /^docs\//) docmoved = 1
+      else if (p ~ /^docs\//) {
+        docmoved = 1
+        # And a narrower name for one of them, read by the deed below and by
+        # nothing else. The board is docs but not the book, so a ranked flight
+        # has always landed in docmoved and read as the book being rebuilt.
+        # Set beside docmoved rather than instead of it, so that the paperwork
+        # silence a few lines down - which asks !docmoved and is the one pair
+        # of readers in here nothing checks - sees exactly what it always saw.
+        if (p == "docs/RANKINGS.md") rankmoved = 1
+      }
       else if (p == "README.md") readmemoved = 1
       else elsemoved = 1
       # For the audit, and only for it: the two sides GR10 keeps apart. docs/ is
@@ -1439,6 +1464,10 @@ NF < 4 { next }
 
     if (rulechange != "" || refmoved) deed = "changed the rules"
     else if (readmemoved)             deed = "rewrote the notes on the cabinet"
+    # Above the book branch, because a flight lands on the board and the book
+    # is rebuilt on top of it in the same commit - and of the two things that
+    # happened, only one of them is somebody having played the game.
+    else if (rankmoved && !elsemoved) deed = "put a flight on the board"
     else if ((docmoved || bookmoved) && !elsemoved)
                                       deed = "rebuilt the book"
     else                              deed = "did some housekeeping"
@@ -1463,7 +1492,7 @@ NF < 4 { next }
     IB[ver] = IB[ver] "<article class=\"interlude\">\n" note "</article>\n"
     IBN[ver]++
     # The subject travels to the cover as well as the chapter. A deed is one of
-    # four sentences, so two rule changes in a row read as the same line twice -
+    # five sentences, so two rule changes in a row read as the same line twice -
     # which is exactly how the book writing itself four times went unnoticed.
     # The version on the cabinet at the time rides along too: it is what puts
     # an interlude on the right shelf below, in the book that was being written
