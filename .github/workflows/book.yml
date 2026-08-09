@@ -14,12 +14,18 @@
 # requests and nothing else now (GR7), and the honest reading of that is that
 # it holds for the machines too - a rule the machinery is exempt from is a rule
 # with a door in it, and the door would be the one place nobody is watching.
-# So the crew branches, files, opens a pull request and merges its own, which
-# is exactly what a pilot does with one difference: nobody has to read it.
+# So the crew branches, files and opens a pull request, which is exactly what a
+# pilot does with one difference: nobody has to read it.
 #
-# The alternative was a bypass on the ruleset, and github would not have given
-# us one anyway - the GitHub Actions integration cannot be a bypass actor on a
-# user-owned repository. That refusal turned out to be the better design.
+# **It no longer merges its own.** main asks for one approval now, and an
+# approval is a thing a person gives. There is no arrangement that ends with
+# the crew pressing its own button either: the GitHub Actions integration
+# cannot be a bypass actor on a user-owned repository, which was true when this
+# file first said so and is now the reason the last step is missing rather than
+# a footnote about a road not taken. The owner presses it. The cost is that the
+# book sits stale between the landing and the click, which is the same
+# staleness this workflow exists to fix, shortened from permanent to however
+# long somebody takes to notice.
 #
 # Three things keep this honest:
 #
@@ -31,13 +37,21 @@
 #   - The book passes over its own filing in silence, so these commits get no
 #     version, no chapter and no mention. They are the paperwork the chronicle
 #     already declines to narrate - and now so are the pull requests.
-#   - It merges nothing but its own. The pull request it opens has one commit
-#     in it, written four lines earlier, on a branch that exists for ninety
-#     seconds and is deleted on the way out.
+#   - It opens nothing but its own, and only ever one. The pull request has a
+#     single commit in it, written four lines earlier. If a landing arrives
+#     before anybody has pressed merge, the crew closes the older one on its
+#     way past: each of these is generated from the whole history, so the
+#     newest supersedes every earlier one outright, and a queue of them would
+#     conflict with each other over docs/ and src/game/ledger.js - which is the
+#     mess this workflow was written to prevent.
 #
-# There is no loop to worry about: neither a push nor a merge made with the
-# default GITHUB_TOKEN triggers another workflow run. That is github's rule,
-# not ours, and it is the reason this does not need a guard.
+# The loop closes on its own. Somebody merging the paperwork is a push to main
+# like any other and starts this workflow again, but the book it rebuilds is
+# the one that just landed, so the diff is empty and the run exits four lines
+# in. Github's own rule - that nothing done with the default GITHUB_TOKEN
+# triggers another run - used to be what stopped this, and is now only the
+# reason the crew's pull request arrives with no referee and no flight strip on
+# it.
 #
 # tools/chronicle-art.sh is not called here and could not do anything if it
 # were - the plates need credentials that live in one person's untracked .env
@@ -131,21 +145,27 @@ jobs:
           plate. It arrives as a pull request because main takes pull requests
           and nothing else (GR7) — and a rule the machines are exempt from is a
           rule with a door in it.
+
+          **Somebody has to press merge.** main asks for an approval now, and
+          the crew cannot give itself one — so the book stays as it was until
+          this lands. If another version arrives first, this one is closed and
+          a newer one takes its place; the paperwork is always regenerated from
+          the whole history, so nothing is lost by letting it go.
           EOF
 
           gh pr create --base main --head "$BRANCH" \
                        --title "$SUBJECT" --body-file "$RUNNER_TEMP/body.md"
 
-          # github works out whether a pull request can be merged after it has
-          # answered the call that created it, so the first ask is sometimes
-          # too early. Five tries at ten seconds, and then it is a real
-          # failure worth a red run rather than a spin.
-          n=1
-          until gh pr merge "$BRANCH" --merge --delete-branch; do
-            if [ "$n" -ge 5 ]; then
-              echo "the crew could not file its own paperwork. the book is one commit stale."
-              exit 1
-            fi
-            n=$((n + 1))
-            sleep 10
-          done
+          # Older paperwork, closed after the new one exists rather than
+          # before: a run that fails to open its own leaves the previous one
+          # standing, which is a stale book rather than no book at all.
+          gh pr list --state open --json number,headRefName \
+            --jq '.[] | select(.headRefName | startswith("ground-crew/")) | "\(.number) \(.headRefName)"' \
+          | while read -r old ref; do
+              if [ "$ref" != "$BRANCH" ]; then
+                gh pr close "$old" --delete-branch \
+                  --comment "Superseded by the paperwork from a later landing."
+              fi
+            done
+
+          echo "filed. the book is on the board and lands when somebody merges it."
