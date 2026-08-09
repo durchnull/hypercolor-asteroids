@@ -102,6 +102,9 @@
 #   tools/chronicle.sh --run [r]      how many versions in a row one pilot has
 #                                     landed, and who - GR15's spine
 #   tools/chronicle.sh --is-game P... which of those paths are the game
+#   tools/chronicle.sh --marks P...   what a commit touching those paths moved,
+#                                     as the badges say it - what a pull
+#                                     request gets labelled with
 #   tools/chronicle.sh --skips        every commit the referee provably never
 #                                     saw, as the ledger reads it
 #   tools/chronicle.sh --audit        the same list as the chapters read it,
@@ -599,6 +602,59 @@ function is_filing(game, bookish, offbook, event) {
 #          instead of a whole file deleted and a whole file added
 function came(sha, p,   k) { k = sha SUBSEP p; return (k in cameto) ? cameto[k] : p }
 function went(sha, p,   k) { k = sha SUBSEP p; return (k in moveto) ? moveto[k] : p }
+
+# --- the marks --------------------------------------------------------------
+# What a commit moved, as a reader would name it. sector() in the builder asks
+# a different question - where a path sits - and gets a different answer for
+# the same file: src/ui/debrief.js sits among the panels and belongs to the
+# game within the game. This one is the one a badge is printed from, so it
+# answers in the vocabulary the book already uses out loud.
+#
+# It is down here in the library rather than up in the builder because a second
+# reader turned up. --marks below hands it to tools/labels.sh, which prints the
+# labels on a pull request; the badge on the chapter and the label on the strip
+# are now the same word by construction, which is the only arrangement in which
+# two vocabularies stay one. Where they disagreed, they disagreed for a whole
+# year and nobody could have noticed from either end.
+function markof(p) {
+  # The book files its own pages onto every commit there is, so a mark for
+  # that would be a mark on everything and would say nothing. Only the hand
+  # that writes the generator counts as work on the chronicle.
+  if (is_book(p)) return ""
+  if (p ~ /^src\/events\// ||
+      p == "src/game/events.js"   || p == "src/game/profile.js" ||
+      p == "src/game/ledger.js"   || p == "src/game/tally.js" ||
+      p == "src/game/blackbox.js" || p == "src/ui/debrief.js")   return "meta"
+  if (p ~ /^src\/audio\//)  return "music"
+  if (p ~ /^src\/input\//)  return "hands"
+  if (p ~ /^src\/core\//)   return "engine"
+  if (p ~ /^src\/ui\// || p ~ /^src\/render\// || p ~ /^styles\// ||
+      p == "index.html")    return "ui"
+  if (p ~ /^src\//)         return "game"
+  if (p ~ /^tools\/chronicle/) return "book"
+  if (is_referee(p))        return "rules"
+  return "notes"
+}
+# What a badge says. Bare, because badges arrive in rows of three and four and
+# nine articles in a row is nine words of nothing - the picture and one noun is
+# the whole of what a badge is for. A pull request wants the same bare word for
+# the same reason: a label reading "the game within" is a sentence fragment
+# sitting in a list of nouns.
+function markname(k) {
+  if (k == "game")   return "game"
+  if (k == "meta")   return "game within"
+  if (k == "ui")     return "ui"
+  if (k == "music")  return "music"
+  if (k == "hands")  return "controls"
+  if (k == "engine") return "engine"
+  if (k == "book")   return "chronicle"
+  if (k == "rules")  return "rules"
+  return "notes"
+}
+# The order they are printed in, everywhere, so two chapters wearing the same
+# three marks wear them in the same three places - and so a pull request lists
+# them the way the chapter it becomes will.
+function markorder() { return "game meta ui music hands engine book rules notes" }
 '
 
 case "${1:-}" in
@@ -610,6 +666,24 @@ case "${1:-}" in
     shift
     if [ $# -gt 0 ]; then printf '%s\n' "$@"; else cat; fi \
       | awk "$LIB"'$0 != "" && is_game($0) { print }'
+    exit 0 ;;
+
+  # What the book would put on a chapter built out of these paths, as the badge
+  # says it: one word a line, each mark once, in the order the book prints them
+  # in. tools/labels.sh is the caller - a pull request wants the same answer in
+  # a form github can colour, and this is it being asked for rather than
+  # answered a second time somewhere else.
+  #
+  # A path the book gives no mark to prints nothing, and that includes every
+  # page the book writes about itself. A pull request that only moved those is
+  # correctly bare: the paperwork is not a thing that happened.
+  --marks)
+    shift
+    if [ $# -gt 0 ]; then printf '%s\n' "$@"; else cat; fi \
+      | awk "$LIB"'
+          $0 != "" { m = markof($0); if (m != "") seen[m] = 1 }
+          END { n = split(markorder(), a, " ")
+                for (i = 1; i <= n; i++) if (a[i] in seen) print markname(a[i]) }'
     exit 0 ;;
 
   # The digest, and the digest's own silence printed back. Two modes of one
@@ -1327,50 +1401,14 @@ function ico(n,   p) {
   return "<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\">" p "</svg>"
 }
 
-# --- the marks --------------------------------------------------------------
-# What a commit moved, as a reader would name it. sector() further up asks a
-# different question - where a path sits - and gets a different answer for the
-# same file: src/ui/debrief.js sits among the panels and belongs to the game
-# within the game. This one is the one a badge is printed from, so it answers
-# in the vocabulary the book already uses out loud.
+# --- the marks, drawn ---------------------------------------------------------
+# markof() and markname() are not here any more: they are in the library at the
+# top of this file, where tools/labels.sh can reach them through --marks. What
+# is left down here is how a mark is drawn and how it reads in a sentence,
+# which is the half of it nobody outside the book has any use for.
 #
-# The order is the order they are printed in, everywhere, so two chapters
-# wearing the same three marks wear them in the same three places.
-function markof(p) {
-  # The book files its own pages onto every commit there is, so a mark for
-  # that would be a mark on everything and would say nothing. Only the hand
-  # that writes the generator counts as work on the chronicle.
-  if (is_book(p)) return ""
-  if (p ~ /^src\/events\// ||
-      p == "src/game/events.js"   || p == "src/game/profile.js" ||
-      p == "src/game/ledger.js"   || p == "src/game/tally.js" ||
-      p == "src/game/blackbox.js" || p == "src/ui/debrief.js")   return "meta"
-  if (p ~ /^src\/audio\//)  return "music"
-  if (p ~ /^src\/input\//)  return "hands"
-  if (p ~ /^src\/core\//)   return "engine"
-  if (p ~ /^src\/ui\// || p ~ /^src\/render\// || p ~ /^styles\// ||
-      p == "index.html")    return "ui"
-  if (p ~ /^src\//)         return "game"
-  if (p ~ /^tools\/chronicle/) return "book"
-  if (is_referee(p))        return "rules"
-  return "notes"
-}
-# What a badge says. Bare, because badges arrive in rows of three and four and
-# nine articles in a row is nine words of nothing - the picture and one noun is
-# the whole of what a badge is for.
-function markname(k) {
-  if (k == "game")   return "game"
-  if (k == "meta")   return "game within"
-  if (k == "ui")     return "ui"
-  if (k == "music")  return "music"
-  if (k == "hands")  return "controls"
-  if (k == "engine") return "engine"
-  if (k == "book")   return "chronicle"
-  if (k == "rules")  return "rules"
-  return "notes"
-}
 # The same thing in a sentence, where the article is doing work. Only the prose
-# uses this; every badge in the book uses the bare name above.
+# uses this; every badge in the book uses the bare word markname() gives.
 function marklabel(k) { return "the " markname(k) }
 function markglyph(k) {
   # The two loudest parts of the cabinet get the two glyphs the game itself is
@@ -1452,7 +1490,7 @@ function grwhy(s) {
 }
 
 BEGIN { ver = total; bound = (rules != "")
-        MARKS = "game meta ui music hands engine book rules notes" }
+        MARKS = markorder() }
 $1 == "TAG" { tag[$2] = $3; next }
 $1 == "OWN" { owner[$2] = $3; next }
 $1 == "REN" { moveto[$2 SUBSEP $3] = $4; cameto[$2 SUBSEP $4] = $3; next }

@@ -2,108 +2,93 @@
 # ---------------------------------------------------------------------------
 # labels.sh - what a change is about, in the words the book already uses.
 #
-# tools/chronicle.sh has a function called kindof() that decides what to draw
-# for a path: a trap is a mine, the song is a note, a panel is a panel, a rule
-# is a wrench. That is the only classification this project has ever had, and
-# it is a good one, because it is about what a path *is* rather than where it
-# happens to sit.
+# The book puts marks on a chapter: nine small badges saying what that commit
+# moved - the game, the game within it, the ui, the music, the controls, the
+# engine, the chronicle, the rules, the notes. They are the first thing a
+# reader sees on the cover and the first thing a pilot sees on a chapter.
 #
 # A pull request wants the same answer in a form github can colour, so this
-# reads the same buckets and prints label names for them. The flight strip
-# workflow puts them on. Nothing here keeps a second opinion about what a path
-# is - if a bucket ever moves, it moves in kindof() and then here, and the two
-# lists sit ten lines apart in this file so nobody can pretend not to have seen
-# it.
+# asks for it and prints label names. It does not classify anything: the
+# question lives in tools/chronicle.sh, --marks is the handle on it, and this
+# file is a colour chart and a gh call. The badge on the chapter and the label
+# on the strip are therefore the same word, which they were not for the first
+# thirty-two versions - this used to mirror kindof(), the function that picks
+# the silhouette for the plate art, and kindof() answers where a path sits
+# rather than what a commit moved. Two vocabularies, both defensible, quietly
+# disagreeing about src/render/ on every pull request that touched it.
 #
 #   tools/labels.sh                what the working tree's changes are about
 #   tools/labels.sh <range>        the same question about a range of commits
 #   tools/labels.sh --paths        paths on stdin, one per line
 #   tools/labels.sh --list         every label, its colour and what it means
 #   tools/labels.sh --install      create them on the remote (needs gh)
-#
-# The label names are the pilot's words rather than the book's glyph names. A
-# label reading "gear" tells a reader nothing and "game" tells them where to
-# look; the glyph is kept in the description so the two readings stay tied to
-# each other rather than drifting into two vocabularies.
+#   tools/labels.sh --retired      labels this file no longer prints, for
+#                                  somebody deciding what to delete
 # ---------------------------------------------------------------------------
 set -u
 
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && cd "$ROOT" || :
 
-# name  colour  description. The colours are the cabinet's, roughly - a trap is
-# the red the mines flash, the book is the brown of a thing on a shelf.
+# name  colour  description, and the names are markname() in tools/chronicle.sh
+# - a label this file spells differently is a label the strip cannot add.
+#
+# The colours are the cabinet's own, out of styles/tokens.css, so a mark is the
+# same colour on the chapter and on the pull request. Two of them are the same
+# grey on purpose: the rules and the notes are real work and not the game, and
+# the book has drawn that distinction in exactly this colour since the marks
+# existed. Descriptions stay under a hundred characters, which is all github
+# keeps.
 table() {
   cat <<'EOF'
-events	e8175d	src/events/ - somebody's trap. The book draws it as a mine.
-entities	ff7a18	src/entities/ - things in the field. Rocks, kraken, portals, the Falcon.
-game	ffd23f	src/game/ - the rules of a flight. The book draws it as a gear.
-ui	2ee6a8	src/ui/ - panels. Hud, lobby, overlays, the field guide.
-core	1fb6ff	src/core/ - the registry, the loop, the state, the manifest. An atom.
-render	8b5cf6	src/render/ - phosphor, bloom, palette, the CRT. A prism.
-audio	ff4ecd	src/audio/ - the graph, the song, the one-shots. A note.
-input	a3e635	src/input/ - both seats and the touch buttons. A keycap.
-screen	00c9b1	The page the cabinet opens as, and the sheet that dresses it.
-rules	4b5563	The rules and everything that enforces them. GR10 territory.
-book	b08968	docs/ - the chronicle, the plates, the rankings, the paperwork.
+game	ff3ec8	src/ - the field and the rules of a flight. The book draws it as the ship you fly.
+game within	b6ff3d	The traps, the seat, the tally, the tape. The game the pilots play on each other.
+ui	21f3ff	Panels, phosphor, the palette, the page itself. What the pilot actually looks at.
+music	ffb020	src/audio/ - the graph, the song, the one-shots.
+controls	a04bff	src/input/ - both seats and the touch buttons.
+engine	3dffb0	src/core/ - the registry, the loop, the state everything else hangs off.
+chronicle	f2e9ff	The hand that writes the book. Not the pages it wrote - those are not an event.
+rules	9a86bd	The rules and everything that enforces them. GR10 territory.
+notes	9a86bd	Real work that is neither the game nor the book. The readme, the plans, the rest.
 EOF
 }
 
-# The same buckets kindof() draws, in the same order, answering with a word a
-# reader can act on. A path nobody classified gets nothing rather than a
-# catch-all: an "other" label on half the pull requests is noise wearing a
-# colour.
-bucket() {
-  case "$1" in
-    src/events/*)    printf 'events\n' ;;
-    src/entities/*)  printf 'entities\n' ;;
-    src/game/*)      printf 'game\n' ;;
-    src/core/*)      printf 'core\n' ;;
-    src/render/*)    printf 'render\n' ;;
-    src/audio/*)     printf 'audio\n' ;;
-    src/input/*)     printf 'input\n' ;;
-    src/ui/*)        printf 'ui\n' ;;
-    # The manifest and the loader. kindof() calls them a wrench because they
-    # are not in a subdirectory; a reviewer reading "core" is better served,
-    # and CLAUDE.md describes them in the same breath as src/core/ anyway.
-    src/*.js)        printf 'core\n' ;;
-    # A bucket nobody has drawn yet. Nothing, rather than a guess that would
-    # read as certainty on the pull request.
-    src/*)           ;;
-    docs/*)          printf 'book\n' ;;
-    CLAUDE.md|GOLDEN_RULES.md|.gitattributes) printf 'rules\n' ;;
-    tools/*|.githooks/*|.github/*|.claude/*)  printf 'rules\n' ;;
-    # Whatever is left of the game surface once everything under src/ has been
-    # answered above: the page the cabinet opens as, and what dresses it.
-    #
-    # Which paths those *are* is not this file's question. tools/chronicle.sh
-    # owns it, GAME below is it asking rather than remembering, and
-    # tools/lockstep.sh is the reason nobody here gets to keep a second copy -
-    # it caught the first draft of this line doing exactly that.
-    *)
-      for g in $GAME; do
-        case "$1" in "$g"|"$g"/*) printf 'screen\n'; return ;; esac
-      done
-      ;;
-  esac
+# What the eleven buckets this file used to print were called. Kept because a
+# label is not only a colour on a list - it is on every pull request that ever
+# wore it, and deleting one is a decision somebody should make while looking at
+# the names rather than from memory. Nothing reads this but a person.
+retired() {
+  cat <<'EOF'
+events
+entities
+core
+render
+audio
+input
+screen
+book
+EOF
 }
 
-GAME=$(sh tools/chronicle.sh --game-paths 2>/dev/null || :)
-
+# The one question, asked. Paths in, marks out, already deduplicated and in the
+# order the book prints them - so a pull request lists them the way the chapter
+# it becomes will.
 from_stdin() {
-  while IFS= read -r p; do
-    [ -n "$p" ] && bucket "$p"
-  done | sort -u
+  sh tools/chronicle.sh --marks
 }
 
 case "${1:---worktree}" in
   -h|--help)
-    sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'
     ;;
 
   --list)
     table | while IFS='	' read -r name colour desc; do
-      printf '  %-10s #%s  %s\n' "$name" "$colour" "$desc"
+      printf '  %-12s #%s  %s\n' "$name" "$colour" "$desc"
     done
+    ;;
+
+  --retired)
+    retired | while IFS= read -r name; do printf '  %s\n' "$name"; done
     ;;
 
   # Once per repository, and safe to run again - --force updates a label that
