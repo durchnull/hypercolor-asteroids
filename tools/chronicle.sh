@@ -101,8 +101,12 @@
 #                                     saw, as the ledger reads it
 #   tools/chronicle.sh --audit        the same list as the chapters read it,
 #                                     and nothing else the builder does
+#   tools/chronicle.sh --digest-silence  every commit the digest walks past as
+#                                     the book's own filing
+#   tools/chronicle.sh --book-silence the same question the builder answers,
+#                                     and nothing else the builder does
 #
-# The last four are the same question in four shapes, and this file is the only
+# The last six are the same two questions in six shapes, and this file is the only
 # place any of it is answered - tools/flights.sh, tools/tally.sh,
 # tools/chronicle-art.sh and tools/tagline.sh all ask rather than keeping a copy.
 # tools/lockstep.sh is what makes that a fact rather than a promise.
@@ -223,9 +227,13 @@ is_machine() {
     | awk -F'\037' "$MACHINE"'{ found = is_machine($1, $2) } END { exit !found }'
 }
 
-# --audit below, which cannot exit where it is asked for. Set here so that the
-# guards on the build have something to read whichever way this was run.
+# --audit and --book-silence below, neither of which can exit where it is asked
+# for: both want a decision that lives inside the builder and none of what the
+# builder is for. Set here so that the guards on the build have something to
+# read whichever way this was run. QUIET is the pair of them, and it is what
+# every step that would leave something behind asks.
 AUDIT=0
+SILENCE=0
 
 git rev-parse --verify -q HEAD >/dev/null 2>&1 || { echo "no history yet" >&2; exit 0; }
 
@@ -328,7 +336,13 @@ case "${1:-}" in
   # (GR12) while the other accuses somebody in prose, and until this they were
   # kept together by a comment.
   --audit)      AUDIT=1 ;;
+  # And the builder's other decision, got at the same way and for the same
+  # reason: which commits it passes over in silence as the book's own filing.
+  # The digest answers that question too, out of different variables, and
+  # tools/lockstep.sh is what stops the two drifting.
+  --book-silence) SILENCE=1 ;;
 esac
+if [ "$AUDIT" = 1 ] || [ "$SILENCE" = 1 ]; then QUIET=1; else QUIET=0; fi
 
 # How many versions deep the history is. The builder below skips exactly the
 # commits this leaves out: a counter that numbers what the builder declines to
@@ -513,6 +527,27 @@ function is_gutted_ground(p) {
   return (!is_referee(p) && p !~ /^docs\// && p != "src/game/ledger.js" &&
           p !~ /^src\/events\//)
 }
+# The book filing its own pages is not a story. A commit that touched nothing
+# but the generated pages is passed over in silence, on the cover and in the
+# digest alike - unless it carries an override, a rule change, a ledger receipt
+# or a breach, which keeps its line whatever files it rode in on.
+#
+# One rule, one function, two callers: the digest below and the interlude branch
+# in the builder. They used to be two spellings of it in different variables -
+# bookish and offbook at one end, five moved flags at the other - held together
+# by a comment at each end asking the other to keep up. --digest-silence and
+# --book-silence are the handles now, and tools/lockstep.sh puts the same commits
+# to both.
+#
+# The arguments are what each caller can see for itself; the answer is not. That
+# matters at the builder end, which folds one extra term into "event" that the
+# digest has no way to answer: its own audit verdict. Unreachable rather than
+# harmless - the audit measures nothing under docs/, so a commit whose every
+# path is a book file can never carry a verdict - and it stays in as the belt to
+# the braces, where the fixture can watch it.
+function is_filing(game, bookish, offbook, event) {
+  return (!game && bookish && !offbook && !event)
+}
 # The two halves of a move, put back together. renames() above folds the pairs
 # git handed it into the stream and the audits below fill these two arrays from
 # them; where a commit moved nothing, both answers are the path itself and
@@ -539,11 +574,20 @@ case "${1:-}" in
       | awk "$LIB"'$0 != "" && is_game($0) { print }'
     exit 0 ;;
 
-  --recent)
-    n=${2:-5}
-    # A number, because the awk below counts rows against it now rather than
-    # git counting records against it.
-    case $n in ''|*[!0-9]*|0) n=5 ;; esac
+  # The digest, and the digest's own silence printed back. Two modes of one
+  # walk on purpose: a handle that ran a second copy of the test would be a
+  # handle on nothing. --recent prints rows for a reader; --digest-silence
+  # prints the commits that never became a row because they were the book
+  # filing itself, as sha and pilot, the shape --skips and --audit print.
+  --recent|--digest-silence)
+    if [ "${1:-}" = "--digest-silence" ]; then
+      n=0; sil=1                      # no window: the whole log, and no rows
+    else
+      n=${2:-5}; sil=0
+      # A number, because the awk below counts rows against it now rather than
+      # git counting records against it.
+      case $n in ''|*[!0-9]*|0) n=5 ;; esac
+    fi
     # Ask for eight and get five. The digest drops the commits that are not
     # stories - a machine filing the book, the paperwork behind a landing - and
     # it used to drop them out of a window of exactly N records, so a busy
@@ -555,11 +599,12 @@ case "${1:-}" in
     # test for what prints is untouched below, deliberately - this changes how
     # far the digest looks, not what it thinks a story is.
     { taglines; history '%d %b %Y'; } \
-      | awk -v RS='\036' -v FS='\037' -v ver="$TOTAL" -v want="$n" "$LIB"'
+      | awk -v RS='\036' -v FS='\037' -v ver="$TOTAL" -v want="$n" -v sil="$sil" "$LIB"'
           $1 == "TAG" { tag[$2] = $3; next }
           NF < 4 { next }
           # Nobody flew it, so there is nothing to tell the next pilot about it.
-          # The book below keeps the same silence - change one, change both.
+          # The builder drops the machines in the same place, before either of
+          # them asks about the book filing itself.
           is_machine($2, $6) { next }
           {
             game = 0; line = ""; mode = 0; bookish = 0; offbook = 0; event = 0
@@ -580,15 +625,14 @@ case "${1:-}" in
               } else mode = 0
             }
             # The book filing its own pages is not a story, in the digest any
-            # more than on the cover. Keep this in lockstep with the interlude
-            # skip in the book builder below - same test, same exceptions: an
-            # override, a rule change, a ledger receipt or a breach keeps its
-            # line whatever files it rode in on.
-            #
-            # This pair is still on trust. tools/lockstep.sh holds the version
-            # question and the audits; the two silences are the same rule
-            # written in different variables, and nobody puts a commit to both.
-            if (!game && bookish && !offbook && !event) next
+            # more than on the cover. is_filing above is the rule, said once;
+            # the builder asks it the same question out of its own variables,
+            # and tools/lockstep.sh puts the same commits to both.
+            if (is_filing(game, bookish, offbook, event)) {
+              if (sil) printf "%s\t%s\n", $1, $2
+              next
+            }
+            if (sil) next
             # The pilot wrote it, or the tagline says it, or the subject has to do.
             if (line == "" && game && $1 in tag) line = tag[$1]
             if (line == "") line = $4
@@ -707,19 +751,19 @@ fi
 # Every version that does not have a line yet gets one now. This is what makes
 # the whole arrangement work for a pilot who never ran --install: the hooks are
 # a convenience, and a rebuild is the repair.
-[ "$AUDIT" = 1 ] || sh tools/tagline.sh --backfill >/dev/null 2>&1 || true
+[ "$QUIET" = 1 ] || sh tools/tagline.sh --backfill >/dev/null 2>&1 || true
 
 # And every version that has no plate yet gets asked for one - after the
 # taglines, because the tagline is what the plate is a picture of. It is capped,
 # it keeps what it painted, and it exits without a word on a machine that has no
 # credentials for it, which is most of them. Nothing below waits on the result.
-[ "$AUDIT" = 1 ] || [ -n "${ASTEROIDS_NO_ART:-}" ] || sh tools/chronicle-art.sh --auto 2>/dev/null || true
+[ "$QUIET" = 1 ] || [ -n "${ASTEROIDS_NO_ART:-}" ] || sh tools/chronicle-art.sh --auto 2>/dev/null || true
 
-[ "$AUDIT" = 1 ] || mkdir -p docs
+[ "$QUIET" = 1 ] || mkdir -p docs
 
 # Every page is written fresh on every rebuild, so a chapter somebody deleted
 # comes back and a chapter for a version that no longer exists does not.
-[ "$AUDIT" = 1 ] || rm -f docs/v[0-9]*.html
+[ "$QUIET" = 1 ] || rm -f docs/v[0-9]*.html
 
 # The tab wears the signet, and the drawing is not copied here: the rock, its
 # box, the three lobes and the flat hues are read off src/ui/logo.js - the one
@@ -728,7 +772,7 @@ fi
 # the book builds with no tab icon rather than a wrong one, and head() leaves
 # the link out.
 FAV=""
-if [ "$AUDIT" = 0 ] && [ -f src/ui/logo.js ]; then
+if [ "$QUIET" = 0 ] && [ -f src/ui/logo.js ]; then
   awk '
     # the rock spans concatenated string literals; collect until the path closes
     /const ROCK/ { grab = 1 }
@@ -779,7 +823,7 @@ fi
 
 { taglines; owners; renames; plates; faces; history '%d %B %Y|%H:%M'; } \
   | awk -v RS='\036' -v FS='\037' -v total="$TOTAL" -v rules="$RULES" -v fav="$FAV" \
-        -v auditonly="$AUDIT" "$LIB"'
+        -v auditonly="$AUDIT" -v silenceonly="$SILENCE" "$LIB"'
 function esc(s) { gsub(/&/,"\\&amp;",s); gsub(/</,"\\&lt;",s); gsub(/>/,"\\&gt;",s); return s }
 function att(s) { s = esc(s); gsub(/"/, "\\&quot;", s); return s }
 # JS string literals, a character at a time - the same function the digest at
@@ -1316,8 +1360,8 @@ NF < 4 { next }
         # nothing else. The board is docs but not the book, so a ranked flight
         # has always landed in docmoved and read as the book being rebuilt.
         # Set beside docmoved rather than instead of it, so that the paperwork
-        # silence a few lines down - which asks !docmoved and is the one pair
-        # of readers in here nothing checks - sees exactly what it always saw.
+        # silence a few lines down - which asks !docmoved - sees exactly what
+        # it always saw.
         if (p == "docs/RANKINGS.md") rankmoved = 1
       }
       else if (p == "README.md") readmemoved = 1
@@ -1441,27 +1485,41 @@ NF < 4 { next }
   if (overrides != "") bent[who]++
   if (unrec != "")     cheat[who]++
 
+  # ---- the filing the book does about itself, passed over in silence --------
+  # The book rebuilding itself is not a thing that happened. Every commit leaves
+  # docs/ a commit out of date, so the next one carries the rebuilt book - and
+  # if that counted as an interlude it would leave the book out of date again,
+  # one identical line longer every time, for ever. Nothing is lost by passing
+  # over it: the pages it wrote are the book you are reading. A commit that
+  # spent an override, altered a rule, went round the referee or was written up
+  # by the ledger is still an event, whatever else it touched, and it keeps its
+  # note.
+  #
+  # is_filing above is that rule, and the digest asks it the same question out
+  # of its own variables. It used to live inside the interlude branch below,
+  # spelled a second way; it is out here now so that both callers can be handed
+  # the same commits - --book-silence is this line, printed, and
+  # tools/lockstep.sh puts them side by side.
+  #
+  # unrec is the one term the digest has nothing to answer with, and it cannot
+  # change the verdict: the audit measures nothing under docs/, so a commit
+  # whose every path is a book file never has one. It is in because a guard
+  # that costs nothing and would matter if that ever stopped being true is
+  # worth keeping where the fixture can watch it.
+  if (is_filing(gamefiles, bookmoved,
+                (docmoved || refmoved || readmemoved || elsemoved),
+                (overrides != "" || rulechange != "" || tallyline != "" ||
+                 breach != "" || unrec != ""))) {
+    if (silenceonly) printf "%s\t%s\n", $1, who
+    next
+  }
+  if (silenceonly) next
+
   # ---- an interlude: a commit that left the game exactly as it found it -----
   # A line on the cover, and a note in the margin of whichever version was on
   # the cabinet while it happened. That is the whole of what a mention is: it
   # never gets a number, so it never gets a page.
   if (gamefiles == 0) {
-    # The book rebuilding itself is not a thing that happened. Every commit
-    # leaves docs/ a commit out of date, so the next one carries the rebuilt
-    # book - and if that counted as an interlude it would leave the book out of
-    # date again, one identical line longer every time, for ever. Nothing is
-    # lost by passing over it: the pages it wrote are the book you are reading.
-    # A commit that spent an override, altered a rule, went round the referee or
-    # was written up by the ledger is still an event, whatever else it touched,
-    # and it keeps its note. The digest above keeps the same silence - change
-    # one, change both, and note that this is the one pair of readers in here
-    # nothing checks: the test is spelled differently at each end, and this end
-    # consults the audit while the other cannot.
-    if (bookmoved && !docmoved && !refmoved && !readmemoved && !elsemoved &&
-        overrides == "" && rulechange == "" && unrec == "" && tallyline == "" &&
-        breach == "")
-      next
-
     if (rulechange != "" || refmoved) deed = "changed the rules"
     else if (readmemoved)             deed = "rewrote the notes on the cabinet"
     # Above the book branch, because a flight lands on the board and the book
@@ -1564,9 +1622,10 @@ function head(f, ttl, cls,   b) {
   print "<div class=\"crt roll\"></div>" > f
 }
 END {
-  # --audit has already said everything it was asked for, a commit at a time.
-  # Nothing below it opens a file that is not a page of the book.
-  if (auditonly) exit 0
+  # --audit and --book-silence have already said everything they were asked
+  # for, a commit at a time. Nothing below them opens a file that is not a page
+  # of the book.
+  if (auditonly || silenceonly) exit 0
 
   # The roster counts versions, not commits. A pilot who has only ever changed
   # the rules has flown none, and the table says so, which is fair and which is
@@ -2140,7 +2199,7 @@ END {
 # and the sidecar below all write files. Out here rather than at the top of the
 # script because the audit is inside the builder and there is no reaching it
 # without coming this far.
-[ "$AUDIT" = 1 ] && exit 0
+[ "$QUIET" = 1 ] && exit 0
 
 cat > docs/chronicle.css <<'CSS'
 /* THE CHRONICLE.

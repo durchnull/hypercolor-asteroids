@@ -24,6 +24,14 @@
 # other. So the same treatment: --audit is the handle on the second, and this
 # puts the same commits to both.
 #
+# And a third, the smallest of them: "is this commit the book filing its own
+# pages, and therefore not a thing that happened?" The cover answers it in the
+# builder, the digest answers it again on its own walk, and that one was a rule
+# written twice in different variables rather than one audit written twice. It
+# is one function now - is_filing, which both ends call - so what is left to
+# drift is the arguments each end hands it, and --digest-silence and
+# --book-silence are the handles that put the same commits to both.
+#
 #   tools/lockstep.sh              the fixture, then this history
 #   tools/lockstep.sh --history    ... and ask --moved about every commit, which
 #                                  is a fork per commit and takes a moment
@@ -34,7 +42,7 @@
 #
 # Three parts, cheapest first:
 #
-#   one home    nothing outside chronicle.sh answers either question any more.
+#   one home    nothing outside chronicle.sh answers any of the three any more.
 #               A grep, because the failure this catches is somebody writing a
 #               fresh copy rather than an existing copy going stale.
 #   the fixture a scripted cabinet whose commits separate every clause of the
@@ -74,7 +82,7 @@ for a in "$@"; do
   case "$a" in
     -v|--verbose) VERBOSE=1 ;;
     --history)    DEEP=1 ;;
-    -h|--help)    sed -n '2,25p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)    sed -n '2,41p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *)            printf 'lockstep: unknown option %s\n' "$a" >&2; exit 2 ;;
   esac
 done
@@ -172,10 +180,11 @@ machine_seat() {
   printf '%s\037%s\n' "$mn" "$me"
 }
 
-# expected | author | email | paths | gone | blob | audit
+# expected | author | email | paths | gone | blob | audit | silent
 #
-# The last three are empty on almost every line and mean: a fresh blob of its
-# own, nothing removed, and the audits are to say nothing about it.
+# The last four are empty on almost every line and mean: a fresh blob of its
+# own, nothing removed, the audits are to say nothing about it, and both ends
+# of the book are to speak about it.
 #
 #   gone   paths this commit deletes
 #   blob   the case whose content this one carries, rather than a new blob.
@@ -185,6 +194,9 @@ machine_seat() {
 #   audit  "flag" where the two audits must accuse this commit. Empty is a
 #          claim as well - the fixture would rather say clear and be wrong than
 #          say nothing and pass.
+#   silent "yes" where the digest and the builder must both pass over this
+#          commit without a word, as the book filing its own pages. Empty is a
+#          claim in the same way: it says the commit gets a line at both ends.
 #
 # Every clause of the rule gets a line, and the lines that look pointless are
 # the ones that were not: src2/ is there because ^src/ and a pathspec of "src"
@@ -219,7 +231,7 @@ yes|Ada Vex|ada@example.com|src/entities/rock.js
 yes|Ada Vex|ada@example.com|styles/tokens.css
 no|Ada Vex|ada@example.com|src/game/ledger.js
 yes|Ada Vex|ada@example.com|src/game/ledger.js src/game/waves.js
-no|Ada Vex|ada@example.com|docs/index.html docs/v1.html
+no|Ada Vex|ada@example.com|docs/index.html docs/v1.html||||yes
 no|Ada Vex|ada@example.com|src2/nothing.js srcish.txt
 no|Ada Vex|ada@example.com|tools/whatever.sh
 yes|Ada Vex|ada@example.com|src/events/ada.js docs/index.html
@@ -233,6 +245,7 @@ no|the book|thebook@example.com|src/render/bloom.js
 no|Ground Crew|crew@example.com|src/audio/riff.js
 yes|Bo Renn|bo@example.com||index.html||flag
 yes|Bo Renn|bo@example.com|src/entities/boulder.js|src/entities/rock.js|4|
+no|Ada Vex|ada@example.com|docs/index.html docs/v2.html
 EOF
 }
 
@@ -241,6 +254,19 @@ EOF
 # fixture's own paperwork and not part of the question being asked.
 rule_change_case() {
   case "$1" in 1 | 10) return 0 ;; esac
+  return 1
+}
+
+# And which case carries a ledger receipt. Same reason it is out here, and it
+# exists for one clause of one rule: the silence over the book filing itself
+# lifts for a commit that spent an override, altered a rule, went round the
+# referee or was written up by the ledger, whatever files it rode in on. The
+# case above it is the identical shape of commit without the trailer, so the
+# pair says both halves of the clause rather than half of it. A receipt on a
+# docs-only commit is contrived, which is the point: a fixture that only ever
+# showed the reachable shapes would leave the exception untested.
+tally_case() {
+  case "$1" in 22) return 0 ;; esac
   return 1
 }
 
@@ -263,7 +289,7 @@ build_cabinet() {
   # fixture's own pilot two and moves every number the ledger check counts.
   {
     n=0
-    cases | while IFS='|' read -r want who mail paths gone blob audit; do
+    cases | while IFS='|' read -r want who mail paths gone blob audit silent; do
       n=$((n + 1))
       when=$((1750000000 + n * 3600))
       # A case that names another case's blob is carrying that content rather
@@ -280,13 +306,14 @@ build_cabinet() {
       # versions can be counted. Near the bottom, so most of Ada's are above it.
       [ "$n" = 2 ] && printf '\nGolden-Rule-Override: GR6 - the fixture needs a pilot on the ledger\n'
       rule_change_case "$n" && printf '\nRule-Change: the fixture own scaffolding\n'
+      tally_case "$n" && printf '\nTally: Ada Vex - 1\n'
       printf 'LOCKSTEP\n'
       for p in $paths; do printf 'M 100644 :%d %s\n' "${blob:-$n}" "$p"; done
       for p in $gone; do printf 'D %s\n' "$p"; done
       printf '\n'
       # A deleted path is a path the commit touched, and every reader below has
       # to be asked about the same list the log will hand it.
-      printf '%d\t%s\t%s\t%s\t%s\n' "$n" "$want" "$who" "$paths $gone" "$audit" \
+      printf '%d\t%s\t%s\t%s\t%s\t%s\n' "$n" "$want" "$who" "$paths $gone" "$audit" "$silent" \
         >> "$WORK/cases.idx"
     done
   } > "$WORK/stream"
@@ -302,7 +329,7 @@ build_cabinet() {
   # The marks file is how the stream says which commit each case became.
   awk -F'\t' '
       NR == FNR { split($0, a, " "); m = a[1]; sub(/^:/, "", m); sha[m] = a[2]; next }
-      { print sha[100 + $1] "\t" $2 "\t" $3 "\t" $4 "\t" $5 }
+      { print sha[100 + $1] "\t" $2 "\t" $3 "\t" $4 "\t" $5 "\t" $6 }
   ' "$WORK/marks" "$WORK/cases.idx" > "$WORK/expected"
   [ -s "$WORK/expected" ]
 }
@@ -399,6 +426,7 @@ fixture() {
   else bad "--version says ${got:-nothing} where the versions list has $want in it"; fi
 
   audits "$WORK/cabinet" "$WORK/expected"
+  silences "$WORK/cabinet" "$WORK/expected"
   meter
   ledger
 }
@@ -466,6 +494,47 @@ audits() {
       bad "--skips says $a and --audit says $b   -   $label"
     fi
   done < "$WORK/a.rows"
+}
+
+# The third pair, and the smallest question of the three: which commits the book
+# passes over without a word, being nothing but the pages it wrote about itself.
+# The cover answers it in the builder and the digest answers it again on its own
+# walk, and until this they were one rule spelled twice - bookish and offbook at
+# one end, five moved flags and five trailer tests at the other - with a comment
+# at each end asking the other to keep up.
+#
+# The rule is one function now, so what is left to drift is the arguments each
+# end hands it, and that is what this compares. The expectation is checked too,
+# for the reason the audits are: one rule called twice with the same wrong
+# argument agrees with itself perfectly.
+silences() {
+  cab=$1; expected=$2
+  ( cd "$cab" || exit 1
+    # shellcheck disable=SC2086
+    unset $GIT_ENV_UNSET 2>/dev/null || true
+    sh "$ROOT/$BOOK" --digest-silence > "$WORK/s.digest" 2>/dev/null
+    sh "$ROOT/$BOOK" --book-silence   > "$WORK/s.book"   2>/dev/null
+  )
+  awk -F'\t' -v d="$WORK/s.digest" -v b="$WORK/s.book" '
+      FILENAME == d { digest[$1] = 1; next }
+      FILENAME == b { book[$1]   = 1; next }
+      {
+        printf "%s\t%s\t%s\t%s\t%s\n",
+               (($1 in digest) ? "quiet " : "spoken"), (($1 in book) ? "quiet " : "spoken"),
+               ($6 == "yes" ? "quiet " : "spoken"), $3, $4
+      }
+  ' "$WORK/s.digest" "$WORK/s.book" "$expected" > "$WORK/s.rows"
+
+  while IFS="$(printf '\t')" read -r a b want who paths; do
+    label="$who:$paths"
+    if [ "$a" = "$b" ] && [ "$b" = "$want" ]; then
+      ok "$want $label"
+    elif [ "$a" = "$b" ]; then
+      bad "both ends say $a, the rule says $want   -   $label"
+    else
+      bad "the digest says $a and the book says $b   -   $label"
+    fi
+  done < "$WORK/s.rows"
 }
 
 # The same again for tools/tally.sh, which counts clean landings off the same
@@ -557,6 +626,23 @@ this_history() {
           bad "$(printf '%.8s' "$sha") - flagged by $which   $who: $(git log -1 --format='%s' "$sha" 2>/dev/null)"
         done
     BAD=$((BAD + $(comm -3 "$WORK/h.skips" "$WORK/h.audit" | grep -c .)))
+  fi
+
+  # And the third pair, the same way. Nothing to check the answer against out
+  # here either: whether a commit was the book filing itself is a fact about
+  # what it touched, and both ends are looking at the same commit.
+  sh "$BOOK" --digest-silence 2>/dev/null | sort > "$WORK/h.digest"
+  sh "$BOOK" --book-silence   2>/dev/null | sort > "$WORK/h.book"
+  if cmp -s "$WORK/h.digest" "$WORK/h.book"; then
+    ok "both ends passed over the same $(awk 'END { print NR + 0 }' "$WORK/h.digest") of them in silence"
+  else
+    comm -3 "$WORK/h.digest" "$WORK/h.book" \
+      | while IFS="$(printf '\t')" read -r one two three; do
+          if [ -n "$three" ]; then sha=$two; who=$three; which='the book alone'
+          else                     sha=$one; who=$two;   which='the digest alone'; fi
+          bad "$(printf '%.8s' "$sha") - passed over by $which   $who: $(git log -1 --format='%s' "$sha" 2>/dev/null)"
+        done
+    BAD=$((BAD + $(comm -3 "$WORK/h.digest" "$WORK/h.book" | grep -c .)))
   fi
 
   [ "$DEEP" = 1 ] || return 0
