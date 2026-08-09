@@ -27,6 +27,7 @@
 //     name: "PINCER",            // the banner the victim gets
 //     blurb: "From three sides", // the small line under it
 //     for: "Mira Vogel",         // optional. a dedication, and nothing else.
+//     pact: "Dana Ilves",        // optional. a duel, if she says your name back.
 //     minWave: 4,                // earliest wave it may fire on
 //     weight: 2,                 // relative likelihood within your own arsenal
 //     cooldown: 3,               // waves before it may repeat
@@ -52,6 +53,14 @@
 // moment a `for:` decides who an event is eligible for, it is targeting by
 // name, and that is GR11 with no override in it. If somebody wants that, it is
 // one commit changing the rule in the open, and it is not this.
+//
+// `pact:` is the other half of that thought and stays on the right side of the
+// same line. It calls a pilot out for a duel, and it does nothing whatsoever
+// until one of their events calls you back — at which point both of you spend
+// the evening mostly meeting each other's work, and waiting less for it. Still
+// nothing about eligibility: your own traps still never come for you, theirs
+// still do. game/pact.js is where the arithmetic is, and where the argument
+// for it is written out.
 //
 // `by: A.HOUSE` means the event belongs to nobody and fires for everyone,
 // author included. Use it when you want a thing in the game more than you want
@@ -115,6 +124,30 @@
   // The tally, if it is loaded, decides whether a pilot's own traps are still
   // making an exception for them. Three bends and they are not. GR11 and GR12.
   const mineToo = () => !!(A.ownEventsArmed && A.ownEventsArmed());
+
+  /**
+   * Who has called whom out for a duel, read off the `pact:` beside an
+   * event's `by:`. A call is a standing offer and nothing more; game/pact.js
+   * is what decides which of them were answered, and only an answered one
+   * does anything to anybody's evening.
+   *
+   * The declaration rides on `by:` on purpose. That is the one identity claim
+   * the referee already polices (GR11), so signing somebody else into a duel
+   * is exactly as hard as forging their name on a trap, which is to say
+   * refused in front of everybody.
+   */
+  A.pactCalls = function pactCalls() {
+    const calls = new Map();
+    for (const e of events) {
+      if (!e.pact || e.by === A.HOUSE) continue;
+      for (const them of [].concat(e.pact)) {
+        if (!them || them === e.by) continue;   // duelling yourself is not a duel
+        if (!calls.has(e.by)) calls.set(e.by, new Set());
+        calls.get(e.by).add(them);
+      }
+    }
+    return calls;
+  };
 
   /** The pilots who have laid traps, and how many each. For the picker. */
   A.eventPilots = function eventPilots() {
@@ -226,13 +259,18 @@
   //
   // Whoever tops the board waits less as well, for a reason that has nothing
   // to do with the ledger — game/bounty.js, and it is a share of the gap like
-  // the other one. Two impatiences multiply, so they get a floor of their own:
-  // a pilot who has bent four rules while sitting on the high score is still
-  // playing a wave somebody can read and survive. GR8 is why the floor is
-  // here rather than in either of the things it caps.
+  // the other one. So does a pilot in a live duel, who asked for it in writing
+  // and whose opponent asked for the same thing back — game/pact.js.
+  //
+  // Three impatiences multiply, so they get a floor of their own: a pilot who
+  // has bent four rules while sitting on the high score in the middle of a
+  // duel is still playing a wave somebody can read and survive. GR8 is why the
+  // floor is here rather than in any of the things it caps.
   const HEAT_FLOOR = 0.45;
   const heat = () => Math.max(HEAT_FLOOR,
-    (A.eventHeat ? A.eventHeat() : 1) * (A.bountyHeat ? A.bountyHeat() : 1));
+    (A.eventHeat ? A.eventHeat() : 1) *
+    (A.bountyHeat ? A.bountyHeat() : 1) *
+    (A.pactHeat ? A.pactHeat() : 1));
   const quota = () => MAX_PER_WAVE + (A.eventQuotaBonus ? A.eventQuotaBonus() : 0);
 
   const gap = () => Math.max(9, A.rand(GAP[0], GAP[1]) - A.game.level * 0.7) * heat();
@@ -249,6 +287,12 @@
     });
   }
 
+  // A duel is the one thing in the cabinet that buys an arsenal airtime
+  // against the rest of the room, and it costs both pilots the same because
+  // neither of them has one until both of them signed. Everybody else's share
+  // is one, which is what this said before there were pacts. game/pact.js.
+  const share = (by) => (A.pactShare ? A.pactShare(by) : 1);
+
   function pick(pool) {
     // Airtime is dealt per author first, then per event within the arsenal -
     // a pilot who laid ten traps owns no more of anybody's evening than one
@@ -259,8 +303,15 @@
       if (!arsenals.has(e.by)) arsenals.set(e.by, []);
       arsenals.get(e.by).push(e);
     }
-    const authors = [...arsenals.values()];
-    const traps = authors[Math.floor(Math.random() * authors.length)];
+    const authors = [...arsenals];
+    let pot = 0;
+    for (const [by] of authors) pot += share(by);
+    let m = Math.random() * pot;
+    let traps = authors[authors.length - 1][1];
+    for (const [by, arsenal] of authors) {
+      m -= share(by);
+      if (m <= 0) { traps = arsenal; break; }
+    }
     let total = 0;
     for (const e of traps) total += e.weight || 1;
     let n = Math.random() * total;
