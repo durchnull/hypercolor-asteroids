@@ -549,4 +549,13 @@ so a clone that never installed the hooks arrives at exactly the same numbers
 as everybody else — and writes `docs/index.html`, one chapter per version. Your
 `Chronicle:` line is what it quotes.
 
+Which is why a number can move, and has. A `Version:` line in an old commit
+message records what the number was on the evening, not what it is: the count is
+read off the history, so changing what the history counts changes all of it at
+once, and the day the generated ledger stopped counting, thirty-eight recorded
+numbers went stale together. The hooks stopped writing that line for the same
+reason nobody writes their own tally — a derived number kept in two places is a
+number that disagrees with itself, and a commit message is the one thing here
+nobody may go back and correct (GR7). The sha is the fact. Everything else asks.
+
 Read the book. Then go and do something to annoy the others.

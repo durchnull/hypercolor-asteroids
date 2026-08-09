@@ -135,17 +135,18 @@ Comets, and they come in threes
 
 Chronicle: Dave added comets on a Tuesday, then made them faster than the
            blaster, apparently on purpose.
-Version: v42
 </code></pre>
 <p>
 <code>Tagline:</code> is optional and the commit template offers you one — leave it out
 and <code>tools/tagline.sh</code> writes the line, kept for good in <code>docs/taglines.tsv</code>. A
-commit that leaves the game alone gets no <code>Version:</code> at all; it needs a
-<code>Rule-Change:</code> line instead if it moved the rules.
+commit that leaves the game alone needs a <code>Rule-Change:</code> line instead if it
+moved the rules. No version number goes in the message: it is counted off the
+history, it can move, and <code>tools/chronicle.sh --next</code> will tell you what this
+one becomes.
 </p>
 <p>
-The hooks stamp the version, check the red lines, check the budgets, and
-rebuild <code>docs/index.html</code> after the commit lands.
+The hooks show you which shape of commit this is, check the red lines, check
+the budgets, and rebuild <code>docs/index.html</code> after the commit lands.
 </p>
 <h2 id="skills">Skills</h2>
 <p>

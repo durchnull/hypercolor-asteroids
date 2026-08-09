@@ -773,6 +773,31 @@ Rule-Change: to see whether both readers agree that is all this commit is" \
     verdict yes
   fi
 
+case_ GR7 "the message the hooks prepare carries no number that can move"
+  # Not tools/golden-check.sh, like the case above it: this is
+  # .githooks/prepare-commit-msg, which writes what a pilot commits against. It
+  # used to stamp Version: vN there, and a version number is counted off the
+  # history rather than assigned - so the stamp was a second copy of a derived
+  # number, written into the one place nobody may go back and correct (GR7).
+  # The count has already moved once and left thirty-eight of them stale.
+  #
+  # The hook under test is the one in this working tree; it finds the lab for
+  # itself, because it asks git where the root is and the lab is where this
+  # runs. What is checked is both halves: no number, and the template it was
+  # sharing a block with still arriving.
+  printf '// one more line\n' >> src/entities/rock.js
+  stage
+  message "The rock grows a line"
+  sh "$ROOT/.githooks/prepare-commit-msg" "$MSG" >/dev/null 2>&1
+  cp "$MSG" "$OUT"
+  if grep -qi '^Version:' "$MSG"; then
+    verdict no "the hook wrote a number into a message nobody may rewrite"
+  elif ! grep -q 'Tagline:' "$MSG"; then
+    verdict no "the template lost the tagline offer along with the number"
+  else
+    verdict yes
+  fi
+
 # --- refereeing a pilot who is not in the room --------------------------------
 #
 # Everything above is the referee reading a tree somebody is standing in front

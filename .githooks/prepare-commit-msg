@@ -1,12 +1,26 @@
 #!/bin/sh
-# Stamps the version this commit is about to become - if it is about to become
-# one at all. A commit that leaves index.html, src/ and styles/ alone changes
-# the scaffolding around the cabinet, not the cabinet: no version, no chapter,
-# and nothing for the next pilot to find out by playing. It still goes in the
-# book, as an interlude, because everything goes in the book.
+# Writes the template a pilot commits against, in whichever of the two shapes
+# this commit is. A commit that leaves index.html, src/ and styles/ alone
+# changes the scaffolding around the cabinet, not the cabinet: no version, no
+# chapter, and nothing for the next pilot to find out by playing. It still goes
+# in the book, as an interlude, because everything goes in the book.
 #
-# Also shows the tagline the version would land under, so a pilot who does not
-# care for it can write their own before it is kept for good.
+# For a version it also shows the tagline it would land under, so a pilot who
+# does not care for it can write their own before it is kept for good.
+#
+# It used to stamp Version: vN into the message itself, and does not any more.
+# The number is counted off the history rather than assigned, so it is a view of
+# the history and not a fact about the commit - and a commit message is the one
+# thing here nobody may rewrite (GR7). The two part company the moment the count
+# moves: what was stamped v40 one evening the book now calls v26, and
+# thirty-eight recorded numbers went stale in a single commit. Nothing ever read
+# the trailer; everything that wants the number asks tools/chronicle.sh, which
+# is the same argument this project has already made about every other derived
+# number. The sha is the fact. The lines already written stay written, because
+# GR7, and GOLDEN_RULES.md says under Versions what they mean now.
+#
+# Everything below the comment marker is stripped by git, so what this writes
+# about the version is said where it cannot become a record of anything.
 set -u
 MSG=$1
 SOURCE=${2:-}
@@ -15,8 +29,6 @@ ROOT=$(git rev-parse --show-toplevel) || exit 0
 VER=$(sh "$ROOT/tools/chronicle.sh" --next 2>/dev/null) || exit 0
 NOW=$(sh "$ROOT/tools/chronicle.sh" --version 2>/dev/null) || exit 0
 
-grep -qi '^Version:' "$MSG" 2>/dev/null && exit 0
-
 case "$SOURCE" in
   merge|squash|commit) exit 0 ;;
 esac
@@ -24,14 +36,15 @@ esac
 TMP=$(mktemp) || exit 0
 {
   cat "$MSG"
-  [ "$VER" != "-" ] && printf '\nVersion: %s\n' "$VER"
 
   if [ -z "$SOURCE" ] && [ "$VER" != "-" ]; then
     TAG=$(sh "$ROOT/tools/tagline.sh" 2>/dev/null)
     cat <<EOF
 #
-# This commit becomes $VER. The subject line is what the next pilot reads
-# before they press ENTER, so write it from their seat, not from the diff.
+# This commit becomes $VER - counted off the history rather than written into
+# the message, so it is worked out fresh every time anybody asks. The subject
+# line is what the next pilot reads before they press ENTER, so write it from
+# their seat, not from the diff.
 #
 # Optional, and read by tools/chronicle.sh into docs/index.html:
 #

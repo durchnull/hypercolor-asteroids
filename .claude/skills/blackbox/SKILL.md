@@ -77,7 +77,7 @@ is what makes the board worth reading.
    in the same breath as ranking. No confirmation round, no "shall I land
    this?" — the only stops in this ritual are steps 2, 3 and 4, and a tape
    that got past those is going on the board. A ranking does not change the
-   game, so it gets no `Version:` line; it gets a subject worth reading and a
+   game, so it is not a version at all; it gets a subject worth reading and a
    `Chronicle:` line like everything else. Example:
 
    ```

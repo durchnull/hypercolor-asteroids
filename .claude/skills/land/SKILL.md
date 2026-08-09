@@ -90,14 +90,18 @@ their chapter, not yours.
 git add -A && git commit
 ```
 
-The hooks stamp `Version: vN`, check the red lines, check the budgets against
-your overrides, and rebuild the book afterwards. Report the version number and
-what the next pilot will see.
+The hooks check the red lines, check the budgets against your overrides, and
+rebuild the book afterwards. The version number is not written into the message
+— it is counted off the history, so it can move, and the template shows you
+what this one becomes without recording it. Report the version number and what
+the next pilot will see; `tools/chronicle.sh --version` is the answer after the
+commit lands.
 
 If the commit leaves `index.html`, `src/` and `styles/` alone — a rule change,
-a rebuilt book, a line in the README — it is not a version and gets no
-`Version:` stamp. That is correct, not a failure. Say which version is still on
-the cabinet rather than announcing a new one.
+a rebuilt book, a line in the README — it is not a version at all, and the
+template says so instead of offering you a tagline. That is correct, not a
+failure. Say which version is still on the cabinet rather than announcing a new
+one.
 
 The template also shows you the **tagline** the version will land under, and
 you can replace it in the message:
