@@ -11,6 +11,11 @@ them all — which is also what makes this page the flight meter. A tape here
 buys its pilot three landings, and the fourth one has to explain itself
 (GR14). A bad evening ranks low and counts the same.
 
+Every log entry carries the checksum its tape sealed itself with, in an HTML
+comment underneath. That is the part the meter reads: an entry with no sum is a
+sentence somebody typed, and a sum that has been on this page before is the
+same evening being read out twice. Neither one buys a landing.
+
 ## THE BOARD
 
 | # | pilot | score | wave | time | accuracy | the flight in one line |

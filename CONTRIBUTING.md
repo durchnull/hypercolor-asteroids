@@ -97,7 +97,7 @@ that cannot be refereed.
 ## The rules
 
 [GOLDEN_RULES.md](GOLDEN_RULES.md) is the whole rulebook and it is one page.
-Fourteen rules in four weights:
+Fifteen rules in four weights:
 
 | weight | what it means |
 |---|---|
