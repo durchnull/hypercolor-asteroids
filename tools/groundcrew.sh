@@ -8,10 +8,9 @@
 # passes over them in silence. Nobody reads them and nobody should have to.
 #
 # But they land on main while a pilot is working, and then the pilot is behind
-# by a commit nobody wrote. Pulling it is a rebase; a rebase over generated
-# files is a pile of union merges that mean nothing until the book is rebuilt;
-# and the rebuild only settles once the replay is finished. Three steps, none
-# of them interesting, all of them in the way of landing a version.
+# by a commit nobody wrote. Collecting it is three uninteresting steps: take
+# it, settle the generated files it argues with, file the result. All three are
+# in the way of landing a version and none of them is anybody's work.
 #
 # So: this does the three steps.
 #
@@ -22,6 +21,20 @@
 # Exit 0 = clear, whether or not anything was waiting. Exit 1 = something is
 # waiting that this must not touch, and the pilot has to look at it.
 #
+# **It merges rather than rebases, and that is not a preference.** A rebase
+# checks the worktree out to each commit it replays, hooks included - so an old
+# commit gets the .githooks/post-commit *it* shipped with, which rebuilds the
+# book, which dirties the tree, which stops the replay dead on the next commit.
+# The guard that now sits at the top of that hook cannot fix a copy that landed
+# before it was written, and never will. A merge touches the hooks once, at the
+# end, from the tip, where the fixed one lives. The union merge drivers in
+# .gitattributes make the generated files land without a question, and the
+# rebuild below throws away whatever nonsense they landed as.
+#
+# The merge commit is the price and it is a fair one: nobody's history is
+# rewritten, and the book passes over a merge in silence the way it passes over
+# every other piece of its own filing.
+#
 # What it will not do, and this is the whole of its judgement: **it only ever
 # rebases over commits the book does not call a person's.** tools/chronicle.sh
 # --pilots is the roster and it already knows a machine from a pilot; anything
@@ -29,10 +42,9 @@
 # that you do not build on somebody's fresh work without reading it. So a
 # person's commit stops this dead and prints their subject line instead.
 #
-# GR7 is not bent by the rebase. Rebasing onto origin/main rewrites exactly the
-# commits that are not on origin/main - the ones nobody else has - and leaves
-# every commit anybody else could be holding exactly where it is. The pre-push
-# hook checks that independently and would refuse if this were wrong.
+# GR7 is not in play at all, which is the other quiet advantage of merging: not
+# one existing commit changes its sha, so there is nothing here that could
+# rewrite a history somebody else is already holding.
 #
 # GR2's ban on the network is about the cabinet, not about git: this talks to
 # the same remote `git push` does, and to nothing else. Offline is not an error
@@ -116,34 +128,37 @@ fi
 
 # --- take it ----------------------------------------------------------------
 
-# Their work is theirs. This replays commits; it does not get to carry
-# somebody's half-finished edit through a rebase with them.
+# Their work is theirs. A merge that has to stop and ask about a generated file
+# should not also be holding somebody's half-finished edit hostage.
 if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
-  printf '\n  the working tree is dirty, and a replay would drag it along.\n'
+  printf '\n  the working tree is dirty, and the merge would take it along.\n'
   printf '  commit or stash first, then run this again.\n\n'
   exit 1
 fi
 
-AHEAD=$(git rev-list --count "$UP..HEAD" 2>/dev/null) || AHEAD=0
+WAS=$(git rev-parse HEAD)
 say '\n  the ground crew filed %s while you were flying. taking it.\n' "$BEHIND"
 
-if ! git rebase "$UP" >/dev/null 2>&1; then
-  git rebase --abort >/dev/null 2>&1
-  printf '\n  the replay did not go through, and nothing was changed - you are\n'
-  printf '  exactly where you started. git rebase origin/%s by hand to see why.\n\n' "$BRANCH"
+if ! git merge --no-edit --no-ff \
+       -m "The ground crew's paperwork, collected" "$UP" >/dev/null 2>&1; then
+  git merge --abort >/dev/null 2>&1
+  git reset --hard "$WAS" >/dev/null 2>&1
+  printf '\n  the merge did not go through, and nothing was changed - you are\n'
+  printf '  exactly where you started. git merge origin/%s by hand to see why.\n\n' "$BRANCH"
   exit 1
 fi
 
-# The pages the replay walked past. post-commit deliberately writes nothing
-# mid-rebase, so this is the one rebuild, against a history that is now true.
+# Whatever the union drivers just made of the generated files, thrown away and
+# written again from a history that is now whole. This is the one rebuild, and
+# it is why a conflict in docs/ was never worth stopping anybody for.
 sh "$BOOK" >/dev/null 2>&1 || :
 sh tools/tally.sh >/dev/null 2>&1 || :
 
 if [ -n "$(git status --porcelain -- docs src/game/ledger.js 2>/dev/null)" ]; then
   git add -A -- docs src/game/ledger.js >/dev/null 2>&1
-  git commit -q -m "The paperwork from the ground crew's $BEHIND, filed" >/dev/null 2>&1 || :
+  git commit -q -m "The paperwork from the ground crew's filing, filed" >/dev/null 2>&1 || :
   say '  the book was rebuilt over the top and filed.\n'
 fi
 
-say '  %s of your own commits replayed. clear to push.\n\n' "$AHEAD"
+say '  collected, and nothing of yours moved. clear to push.\n\n'
 exit 0

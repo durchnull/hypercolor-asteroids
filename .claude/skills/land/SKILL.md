@@ -25,8 +25,15 @@ reasons that have nothing to do with the pilot. Run this first and the landing
 is built on top of the remote instead.
 
 It is quiet when there is nothing waiting, quiet when there is no network, and
-it takes the paperwork itself when there is any: fetch, replay your commits
-over it, rebuild the book once at the end, file that.
+it takes the paperwork itself when there is any: fetch, merge it, rebuild the
+book over whatever the union drivers made of the generated files, file that.
+
+It merges rather than rebases on purpose. A rebase checks the worktree out to
+each commit it replays, `.githooks/` included, so an old commit runs the
+`post-commit` it shipped with — which rebuilds the book, dirties the tree and
+stops the replay on the next commit. No fix to that hook can reach a copy that
+landed before the fix existed. Nothing of the pilot's moves, either, which is
+GR7 kept rather than argued with.
 
 It stops and hands back, exit 1, in two cases, and neither is a thing to work
 around:
