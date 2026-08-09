@@ -22,12 +22,21 @@ same evening being read out twice. Neither one buys a landing.
 |---|-------|-------|------|------|----------|------------------------|
 | 1 | David Friedrich | 16530 | 4 | 4:42 | 17% | Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end. |
 | 2 | David Friedrich | 15170 | 4 | 4:16 | 19% | Three house traps walked through, and then PINCER took the last two ships at wave 4. |
+| 3 | David Friedrich | 0 | 1 | 0:16 | — | Three ships in sixteen seconds without the trigger ever being pressed. |
 
 ## THE FLIGHT LOG
 
 Newest first. One line per tape, so the same evening is readable as an evening.
 
 <!-- log -->
+**2026-08-09 · David Friedrich · 0 · wave 1 · 0:16** — No shots, so no accuracy
+to report, and no rocks: nothing on this tape was hit by anything the pilot did.
+Three ships gone in sixteen seconds, 1.3 klicks flown at up to 236, eight and a
+half of those seconds on the throttle. Three close shaves and three deaths, so
+each near miss was followed shortly by the other kind. No bomb, no grapple, no
+kraken, and the field never fired an ambush — wave 1 was over before anything
+was armed to happen. 16800 short of their own best.
+<!-- crc e9a2e7c5 -->
 **2026-08-09 · David Friedrich · 15170 · wave 4 · 4:16** — 862 shots for 164
 rocks (21 large, 46 medium, 97 small), 19 percent accuracy, best flurry of 16.
 Went kraken hunting again: 30 hits, 11 killed. One grapple throw, 27.0 klicks
