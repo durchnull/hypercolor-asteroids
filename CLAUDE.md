@@ -95,6 +95,14 @@ Everything hangs off a feature registry, and that is the one idea you need.
   each replayed commit's *own* `post-commit`, which rebuilds the book mid-replay
   and stops it. It refuses to take a *person's* commit — that is somebody's
   work and you read it before you build on it — and refuses a dirty tree.
+- `tools/labels.sh` — what a change is *about*, in the same buckets the book's
+  `kindof()` draws with: `events`, `entities`, `game`, `ui`, `core`, `render`,
+  `audio`, `input`, `screen`, `rules`, `book`. `--list` shows them with their
+  colours, `--install` creates them on the remote once, and running it bare
+  answers for the working tree. `.github/workflows/strip.yml` is what puts them
+  on a pull request, along with the author as assignee and the owner as
+  reviewer — the last of which github refuses whenever the owner is also the
+  author, which is most of the time here and is not worth working around.
 - **What counts as a version is one question with one answer, and it lives in
   `tools/chronicle.sh`.** `--versions` lists them, `--moved` asks about one,
   `--pilots` says who is a person rather than a workflow, `--run` says how long

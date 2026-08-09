@@ -225,6 +225,13 @@ here may read it first.
 Do not spoil the surprise in it (GR9). Tease the thing; the reveal belongs in
 the game.
 
+Do not fill in assignees, reviewers or labels. `.github/workflows/strip.yml`
+does all three the moment the pull request opens — the author is assigned to
+their own, the owner is asked for a review unless they wrote it, and the labels
+come out of `tools/labels.sh`, which reads the same buckets the book draws
+with. `tools/labels.sh main..HEAD` shows you what they will be if you want to
+know first.
+
 The merge is the pilot's, on github, and it is a **merge commit** — squashing
 collapses several versions into one and rebasing hands every commit a new sha,
 and the book counts versions off commits. Say so once if they ask which button.

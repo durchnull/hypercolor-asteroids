@@ -1,0 +1,109 @@
+# The flight strip.
+#
+# A pull request arrives as a title and a diff, and three things about it are
+# worth knowing before anybody opens the files: who is flying it, who has been
+# asked to look, and what it is about. All three are knowable without a human
+# typing them, so a human should not have to.
+#
+#   the pilot     assigned to their own pull request, so the list says who is
+#                 holding what rather than who happened to click new.
+#   the reviewer  david@durchnull.de, who owns the cabinet - except when they
+#                 are the author, because github refuses to let anybody request
+#                 a review from themselves, and today that is nearly every pull
+#                 request here. That is not a bug in this file and it is not
+#                 worth working around: the moment a second pilot lands
+#                 something, this starts firing and the owner gets asked.
+#   the labels    tools/labels.sh, which reads the same buckets the book's
+#                 kindof() draws with. One question, one answer - the labels on
+#                 a pull request and the glyphs on its chapter cannot disagree,
+#                 because neither of them keeps its own copy of the mapping.
+#
+# **Why pull_request_target, when the referee deliberately refuses it.**
+# .github/workflows/referee.yml runs the branch's own code, so a writable token
+# would be this repository handing its credentials to whoever opened the pull
+# request - it uses  pull_request  and says so at length. This one runs no code
+# from the branch at all. It checks out the base, runs the base's copy of
+# tools/labels.sh, and feeds it a list of filenames read from github's api. A
+# fork cannot reach any of that, and a  pull_request  token could not write a
+# label from a fork anyway, which would make this quietly useless exactly when
+# a stranger showed up. Different job, different trigger, same argument.
+#
+# Everything it writes is furniture. It never approves, never merges, never
+# touches a file in the branch, and a red run here costs nothing but the
+# labels.
+
+name: the flight strip
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: strip-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  strip:
+    name: who is flying it, and what it is about
+    runs-on: ubuntu-latest
+    steps:
+      # The base branch, on purpose and by default. The branch under review is
+      # never checked out here - see the note above.
+      - uses: actions/checkout@v7
+
+      - name: fill in the strip
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          AUTHOR_TYPE: ${{ github.event.pull_request.user.type }}
+          ACTION: ${{ github.event.action }}
+          # The reviewer, by the email the cabinet's owner signs with. The
+          # login is what the api wants; the address is here so the next person
+          # to read this knows which human it means.
+          REVIEWER: durchnull
+        run: |
+          # The ground crew files its own paperwork through a pull request like
+          # everybody else (see book.yml). It is generated, nobody reads it and
+          # nobody reviews it, so it gets one honest label and is left alone.
+          if [ "$AUTHOR_TYPE" = "Bot" ]; then
+            echo "the ground crew's own paperwork. one label, no reviewer."
+            gh pr edit "$NUMBER" --add-label book
+            exit 0
+          fi
+
+          # Only on the way in. A pilot who takes themselves off a pull request
+          # or dismisses a review has made a decision, and a workflow that puts
+          # it back on every push is arguing with them.
+          if [ "$ACTION" != "synchronize" ]; then
+            gh pr edit "$NUMBER" --add-assignee "$AUTHOR"
+            echo "assigned to $AUTHOR."
+
+            if [ "$AUTHOR" = "$REVIEWER" ]; then
+              echo "$REVIEWER wrote it, and github will not let anybody review their own. skipped."
+            else
+              gh pr edit "$NUMBER" --add-reviewer "$REVIEWER"
+              echo "review requested from $REVIEWER."
+            fi
+          fi
+
+          # Every filename, not the first hundred - a branch that moved a
+          # directory is exactly the one whose labels matter.
+          gh api --paginate "repos/$REPO/pulls/$NUMBER/files" --jq '.[].filename' \
+            > "$RUNNER_TEMP/paths"
+
+          LABELS=$(sh tools/labels.sh --paths < "$RUNNER_TEMP/paths" | paste -sd, -)
+
+          if [ -z "$LABELS" ]; then
+            echo "nothing here falls in a bucket the book draws. no labels."
+            exit 0
+          fi
+
+          echo "labels: $LABELS"
+          gh pr edit "$NUMBER" --add-label "$LABELS"
