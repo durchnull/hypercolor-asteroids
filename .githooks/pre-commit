@@ -66,4 +66,19 @@ if git diff --cached --name-only --diff-filter=ACMRD |
   fi
 fi
 
+# And nothing checks GR14's evidence chain except tools/evidence-test.sh: the
+# seal that makes a tape a flight rather than a line somebody typed, and the
+# meter that reads the board. src/game/blackbox.js is on the list because it is
+# the other half of the seal - the two of them drifting apart would make every
+# tape ever sealed read as forged, and nothing else would notice. A few seconds
+# rather than a minute, which is why this one can afford a longer list.
+if git diff --cached --name-only --diff-filter=ACMRD |
+   grep -Eq '^tools/(blackbox|flights|evidence-test)\.sh$|^src/game/blackbox\.js$'; then
+  if ! sh tools/evidence-test.sh; then
+    printf '\n  the evidence GR14 runs on no longer holds. nothing was committed.\n' >&2
+    printf '  tools/evidence-test.sh says whether it is the seal or the meter.\n\n' >&2
+    exit 1
+  fi
+fi
+
 exec tools/golden-check.sh --staged --stage pre-commit
