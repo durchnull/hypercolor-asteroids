@@ -29,7 +29,10 @@
 # before it was written, and never will. A merge touches the hooks once, at the
 # end, from the tip, where the fixed one lives. The union merge drivers in
 # .gitattributes make the generated files land without a question, and the
-# rebuild below throws away whatever nonsense they landed as.
+# rebuild below throws away whatever nonsense they landed as - before the merge
+# is sealed rather than after, because the referee reads a merge's ledger as
+# strictly as anybody else's and a union of two ledgers is not what the history
+# says (GR12).
 #
 # The merge commit is the price and it is a fair one: nobody's history is
 # rewritten, and the book passes over a merge in silence the way it passes over
@@ -114,8 +117,10 @@ if [ -n "$PEOPLE" ]; then
          "$BEHIND" "$BRANCH"
   git log "HEAD..$UP" --no-merges --format='    %h  %an%n          %s' 2>/dev/null
   printf '\n  Somebody flew that. Read it before you build on top of it - then\n'
-  printf '  git pull --rebase yourself, because this tool does not get to\n'
-  printf '  replay another pilot'\''s work behind your back.\n\n'
+  printf '  git pull yourself, because this tool does not get to take another\n'
+  printf '  pilot'\''s work on your behalf without you having read a line of it.\n'
+  printf '  Not --rebase: replaying anything here runs old post-commit hooks\n'
+  printf '  that rebuild the book and stop the replay dead. This house merges.\n\n'
   exit 1
 fi
 
@@ -139,8 +144,16 @@ fi
 WAS=$(git rev-parse HEAD)
 say '\n  the ground crew filed %s while you were flying. taking it.\n' "$BEHIND"
 
-if ! git merge --no-edit --no-ff \
-       -m "The ground crew's paperwork, collected" "$UP" >/dev/null 2>&1; then
+# Staged rather than sealed, and the rebuild goes in before the seal. What the
+# union drivers make of a generated file is not something to commit and then
+# apologise for one commit later: the ledger in particular comes out of a union
+# with two lines where the history says one, and the referee reads a merge's
+# ledger exactly as strictly as anybody else's (GR12) - so the old order got
+# the merge refused by the commit-msg hook every single time, with a red line,
+# after the working tree had already been changed.
+#
+# Rebuild first and the merge lands already saying what the history says.
+if ! git merge --no-commit --no-ff "$UP" >/dev/null 2>&1; then
   git merge --abort >/dev/null 2>&1
   git reset --hard "$WAS" >/dev/null 2>&1
   printf '\n  the merge did not go through, and nothing was changed - you are\n'
@@ -149,11 +162,26 @@ if ! git merge --no-edit --no-ff \
 fi
 
 # Whatever the union drivers just made of the generated files, thrown away and
-# written again from a history that is now whole. This is the one rebuild, and
-# it is why a conflict in docs/ was never worth stopping anybody for.
+# written again. This is the one rebuild, and it is why a conflict in docs/ was
+# never worth stopping anybody for.
 sh "$BOOK" >/dev/null 2>&1 || :
 sh tools/tally.sh >/dev/null 2>&1 || :
+git add -A -- docs src/game/ledger.js >/dev/null 2>&1 || :
 
+if ! git commit -q --no-edit -m "The ground crew's paperwork, collected" >/dev/null 2>&1; then
+  git merge --abort >/dev/null 2>&1
+  git reset --hard "$WAS" >/dev/null 2>&1
+  printf '\n  the merge was taken and the referee would not seal it, so nothing\n'
+  printf '  was changed - you are exactly where you started. git merge\n'
+  printf '  origin/%s by hand to see what it objected to.\n\n' "$BRANCH"
+  exit 1
+fi
+
+# And the merge commit is a commit, so the book is a commit out of date again
+# the moment it lands - the post-commit hook says so by leaving the pages in
+# the tree. That is the ordinary state of every landing here and it files the
+# same way. Often there is nothing: a merge that changed no generated file
+# leaves nothing to file.
 if [ -n "$(git status --porcelain -- docs src/game/ledger.js 2>/dev/null)" ]; then
   git add -A -- docs src/game/ledger.js >/dev/null 2>&1
   git commit -q -m "The paperwork from the ground crew's filing, filed" >/dev/null 2>&1 || :
