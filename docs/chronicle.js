@@ -6,16 +6,16 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 31,
-    latest: { v: 31, pilot: "David Friedrich", date: "09 August 2026", line: "Somebody rewrote what the cabinet tells you.", plate: "d839684c.jpg", alt: "Somebody rewrote what the cabinet tells you." },
+    versions: 32,
+    latest: { v: 32, pilot: "David Friedrich", date: "09 August 2026", line: "The scoreboard climbed down off the wall and into the field.", plate: "84359a28.jpg", alt: "The scoreboard climbed down off the wall and into the field." },
     plates: [
+      { v: 32, file: "84359a28.jpg", alt: "The scoreboard climbed down off the wall and into the field.", line: "The scoreboard climbed down off the wall and into the field." },
       { v: 31, file: "d839684c.jpg", alt: "Somebody rewrote what the cabinet tells you.", line: "Somebody rewrote what the cabinet tells you." },
       { v: 30, file: "d4dc5431.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
       { v: 29, file: "2ec32929.jpg", alt: "The cabinet keeps score with slightly different arithmetic now.", line: "The cabinet keeps score with slightly different arithmetic now." },
-      { v: 28, file: "bb2a685e.jpg", alt: "A rule was taken out, looked at, and put back differently.", line: "A rule was taken out, looked at, and put back differently." },
     ],
     roster: {
-      "David Friedrich": 31,
+      "David Friedrich": 32,
     }
   };
   A.BOARD = [
