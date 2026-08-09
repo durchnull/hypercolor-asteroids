@@ -6,8 +6,8 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 28,
-    latest: { v: 28, pilot: "David Friedrich", date: "09 August 2026", line: "A rule was taken out, looked at, and put back differently.", plate: "bb2a685e.jpg", alt: "A rule was taken out, looked at, and put back differently." },
+    versions: 29,
+    latest: { v: 29, pilot: "David Friedrich", date: "09 August 2026", line: "The cabinet keeps score with slightly different arithmetic now." },
     plates: [
       { v: 28, file: "bb2a685e.jpg", alt: "A rule was taken out, looked at, and put back differently.", line: "A rule was taken out, looked at, and put back differently." },
       { v: 27, file: "9b3013af.jpg", alt: "The HUD is more forthcoming than it used to be.", line: "The HUD is more forthcoming than it used to be." },
@@ -15,7 +15,7 @@
       { v: 25, file: "31479209.jpg", alt: "The plumbing was rerouted and nothing caught fire.", line: "The plumbing was rerouted and nothing caught fire." },
     ],
     roster: {
-      "David Friedrich": 28,
+      "David Friedrich": 29,
     }
   };
   A.BOARD = [
