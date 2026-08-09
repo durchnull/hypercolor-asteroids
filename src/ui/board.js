@@ -8,9 +8,16 @@
 //
 // The numbers arrive in docs/chronicle.js, written by tools/chronicle.sh out of
 // the same markdown the rankings page renders. A clone that has never run that
-// tool has no such file, which is the ordinary case and not a broken one — the
-// panel says the board is empty, which is also what it says when the board is
-// empty, and both are an invitation.
+// tool has no such file, which is the ordinary case and not a broken one.
+//
+// It used to say the same thing about that as it says about a board with
+// nothing on it, and the two stopped meaning the same thing the day
+// game/bounty.js started reading the top row. An empty board is a cabinet
+// nobody has flown yet, and everybody in it is playing the same field. An
+// unbuilt one is a cabinet where somebody is wearing a crown they cannot see
+// and nobody is being hurried along by it — the same repository, two
+// measurably different evenings, and until now no way to tell from the screen
+// which one you were having. So it says which.
 
 (function (A) {
   "use strict";
@@ -21,10 +28,16 @@
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+  // Whether docs/chronicle.js has had its go, hit or miss. Until it has, the
+  // absence of A.BOARD says nothing at all, and a panel that announced an
+  // unbuilt book for one frame and then filled with rows would be lying twice.
+  let asked = false;
+
   A.renderBoard = function renderBoard() {
     const root = document.getElementById("board");
     if (!root) return;
 
+    const unbuilt = asked && !A.BOARD;
     const rows = (A.BOARD || []).slice(0, TOP);
     const flying = A.activePilot ? A.activePilot() : "";
 
@@ -39,6 +52,11 @@
           <span class="rwv">w${esc(r.wave)}</span>
         </li>`).join("")}
       </ol>`
+      : unbuilt ? `<p class="boardnone">No board in this clone. The records are
+         all still there &mdash; nobody has run tools/chronicle.sh to write them
+         out for this screen, which takes a second and needs nothing installed.
+         Worth doing: the field watches whoever is on the top row, and until
+         this is built it is not watching anybody.</p>`
       : `<p class="boardnone">Nothing on the record yet. The first flight anybody
          seals is the one everybody else has to beat, which is the cheapest
          high score this cabinet will ever hand out.</p>`}
@@ -55,5 +73,5 @@
     },
   });
 
-  A.sidecar("docs/chronicle.js", () => A.renderBoard());
+  A.sidecar("docs/chronicle.js", () => { asked = true; A.renderBoard(); });
 })(ASTEROIDS);
