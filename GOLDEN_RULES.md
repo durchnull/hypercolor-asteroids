@@ -2,7 +2,7 @@
 
 Many hands, one cabinet. Somebody lands a version, and the next person to pull
 and press ENTER finds out what happened by playing. That is the entire game
-behind the game, and these fourteen rules exist to keep it playable for everyone
+behind the game, and these fifteen rules exist to keep it playable for everyone
 — not to slow anybody down.
 
 They are enforced three times: while you work (your editor tells you), when you
@@ -20,7 +20,7 @@ Rules come in four weights, and the weight is the whole fairness argument:
 |---|---|---|
 | **red line** | cannot be overridden by anyone. To change one, change this file — in its own commit, in front of everybody. | GR1, GR2, GR7, GR10, GR11, GR12, GR13 |
 | **budget** | you may spend past it, but only in writing. One line in the commit message and you are through. That line stays in the book forever. | GR4, GR5, GR6, GR14 |
-| **nudge** | the referee mentions it and gets out of your way. | GR3, GR9 |
+| **nudge** | the referee mentions it and gets out of your way. | GR3, GR9, GR15 |
 | **on your honour** | no check exists and none could. It is the rule that decides whether the game is any good. | GR8 |
 
 The point of a budget is not to stop you. It is that **nobody can do anything
@@ -504,6 +504,42 @@ gets a nudge. `tools/flights.sh` reads the meter off the history the way
 never to whoever held the pen — and `tools/flights.sh --roll` shows the room.
 The meter starts where this rule did: nothing before the commit that added it
 is counted, because before it there was no promise to keep.
+
+## GR15 — Somebody else's turn. `nudge`
+
+Every other rule in this file is about restraint: what not to gut, what not to
+spend, what not to disarm. This one is the opposite, and it is the only rule
+here nobody can break.
+
+The book shelves the history into **books** — a run of chapters one pilot flew
+with nobody else landing in between. Grouped that way, a cabinet several people
+share reads as a shelf, and a cabinet one person has been holding reads as a
+single very long spine. That picture is accurate, and until now nothing in the
+project drew it: GR14 counts your flights and GR12 counts your bends, so a
+pilot who flies everything they land and bends nothing can hold the keyboard
+for a year with every check in here saying clear.
+
+So the fifth version in a row by one pilot gets a sentence, and every fifth
+after that gets it again:
+
+```
+? GR15  10 versions in a row with one name on them - has anybody else had a turn?
+```
+
+Every fifth rather than every landing past the fifth, because a nudge that
+fires on every commit is wallpaper by the third one and the true ones get
+skimmed past along with it.
+
+It is a nudge, it stays one at any number, and it costs nothing on the tally.
+Working alone is how most of this gets built, and a hard limit would punish the
+ordinary evening to make a point about a rare one. The person best placed to
+know whether anybody else actually wanted a turn is the one reading the line.
+
+*Checked:* the run ending at this commit is asked of `tools/chronicle.sh --run`
+— the same reader that shelves the book — so the referee and the cover are
+never counting different spines. A commit that leaves the cabinet alone is not
+a turn at all, and a landing by somebody new is a handover, which is the thing
+this rule wants rather than the thing it mentions.
 
 ---
 

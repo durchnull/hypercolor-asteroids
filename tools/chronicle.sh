@@ -99,6 +99,8 @@
 #   tools/chronicle.sh --game-paths   what counts as the game, one path a line
 #   tools/chronicle.sh --versions [r] every version, oldest first, as sha
 #   tools/chronicle.sh --pilots [r]   everybody the history calls a person
+#   tools/chronicle.sh --run [r]      how many versions in a row one pilot has
+#                                     landed, and who - GR15's spine
 #   tools/chronicle.sh --is-game P... which of those paths are the game
 #   tools/chronicle.sh --skips        every commit the referee provably never
 #                                     saw, as the ledger reads it
@@ -260,6 +262,36 @@ versions() {
     | awk -F'\037' "$MACHINE"'!is_machine($2, $3) { print $1 }'
 }
 
+# The run the cabinet is in: how many versions in a row the pilot who landed
+# the newest one has landed, and their name, tab separated.
+#
+# The book already shelves the history exactly this way - a book is a run of
+# chapters one pilot flew with nobody else landing in between - and GR15 asks
+# the same question of the referee. So it is asked here rather than counted a
+# second time in tools/golden-check.sh, which is the arrangement every other
+# derived number in this project is under.
+#
+# One pass, with the versions folded into the same stream the log comes down,
+# the way tools/flights.sh reads its meter: the alternative is a fork per
+# commit to ask who wrote it, in a hook, on every landing.
+run_of() {
+  { versions "${1:-HEAD}" | awk '{ printf "\036V\037%s", $1 }'
+    git log "${1:-HEAD}" --no-merges --format='%x1e%H%x1f%an%x1f' 2>/dev/null; } \
+  | awk 'BEGIN { RS = "\036"; FS = "\037" }
+      $1 == "V" { ver[$2] = 1; next }
+
+      # sha, author, and the newline the trailing separator parks in $3. The
+      # log arrives newest first, so the first version down it is the head of
+      # the run and the first different name ends it.
+      NF >= 3 {
+        if (!($1 in ver)) next
+        if (who == "") who = $2
+        else if ($2 != who) exit
+        n++
+      }
+      END { printf "%d\t%s\n", n + 0, who }'
+}
+
 # Everybody the history has ever heard of, machines excepted. The roster on the
 # cover, and the list tools/chronicle-art.sh paints a face from.
 pilots() {
@@ -327,6 +359,9 @@ case "${1:-}" in
   # and a picture spent on a chapter that will never exist.
   --versions)   versions "${2:-HEAD}"; exit 0 ;;
   --pilots)     pilots "${2:-HEAD}"; exit 0 ;;
+  # How long the current spine is, and whose name is on it. GR15's whole
+  # arithmetic, and the referee's only question about it.
+  --run)        run_of "${2:-HEAD}"; exit 0 ;;
   # The book builder run for its audit and nothing else: one line per commit it
   # would accuse in a chapter, in the same shape --skips prints. It does not
   # exit here because the audit lives inside the builder, which is most of this

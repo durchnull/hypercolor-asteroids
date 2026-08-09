@@ -107,10 +107,19 @@ any other bend. Do not ask twice, and never suggest a token flight to clear a
 number: a tape that was not a flight is worse than the override, because the
 override is at least honest.
 
-## Nudges: GR3, GR9
+## Nudges: GR3, GR9, GR15
 
 Mention them once. A feature outside `src/features/`, a missing `guide` entry,
-a README edit that spoils the surprise. None of it blocks anything.
+a README edit that spoils the surprise, pictures in `media/` eight versions
+stale. None of it blocks anything.
+
+GR15 is the odd one and is worth reading out rather than summarising: it fires
+on the fifth version in a row by one pilot, and every fifth after that, and it
+is asking whether anybody else wanted a turn. There is nothing to fix and
+nothing to override — do not offer a workaround, do not treat it as a finding,
+and never suggest committing under another name to reset the count. If the
+pilot is genuinely working alone, the honest answer is "yes, still you" and the
+line has done its whole job.
 
 ## Never
 

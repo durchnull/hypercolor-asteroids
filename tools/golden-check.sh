@@ -17,7 +17,7 @@
 #
 # Seven rules are red lines and cannot be overridden. Four are budgets: you may
 # spend past them, but only by saying so in the commit message, where everybody
-# can read it later. Two are nudges. One is on your honour.
+# can read it later. Three are nudges. One is on your honour.
 #
 # The first two modes referee a pilot who is present: their tree, their index,
 # their git config. --rev referees one who is not - a commit that already
@@ -944,6 +944,57 @@ check_media() {
 }
 
 # ---------------------------------------------------------------------------
+# GR15  Somebody else's turn.
+#
+# Every other rule in this file is about restraint. This one is about the
+# opposite, and it is the only one nobody can break: a pilot working alone has
+# done nothing wrong and the referee is not about to tell them they have.
+#
+# What it notices is the shape the book already draws. The cover shelves the
+# history into books - a run of chapters one pilot flew with nobody else
+# landing in between - and a cabinet that has never been handed over reads as
+# one very long spine. GR14 counts your flights and GR12 counts your bends;
+# neither has ever had an opinion about a run, so a pilot who flies everything
+# they land and bends nothing can hold the keyboard forever with every check in
+# here saying clear.
+#
+# Every fifth landing rather than every landing past the fifth. A nudge that
+# fires on every commit is wallpaper by the third one, and then the true ones
+# get skimmed past along with it - the same worry is_litter() came out of.
+#
+# The run itself is not counted here. $BOOK counts it, the way GR14 asks rather
+# than keeping a copy of the meter, because a referee whose spine is a
+# different length from the cover's is two answers to one question.
+# ---------------------------------------------------------------------------
+check_turns() {
+  [ -f "$BOOK" ] || return 0
+
+  # Only a landing is a turn at the keyboard. Rewriting these rules, ranking a
+  # tape, filing the book: real work, and it hands nobody anything.
+  case "$MODE" in
+    rev) sh "$BOOK" --moved "$REV" 2>/dev/null || return 0 ;;
+    *)   sh "$BOOK" --moved 2>/dev/null || return 0 ;;
+  esac
+
+  # As of $BASE - HEAD for a pilot at work, the parent for a commit being read
+  # back - so what comes out is the run this landing is about to extend.
+  run=$(sh "$BOOK" --run "$BASE" 2>/dev/null) || return 0
+  n=$(printf '%s' "$run" | cut -f1)
+  who=$(printf '%s' "$run" | cut -f2)
+  case "$n" in ''|*[!0-9]*) return 0 ;; esac
+
+  # Somebody else landed the last one. That is a handover, and a handover is
+  # the thing this rule wants rather than the thing it mentions.
+  [ "$who" = "$ME" ] || return 0
+
+  n=$((n + 1))
+  [ "$n" -ge 5 ] && [ "$((n % 5))" -eq 0 ] || return 0
+
+  warn GR15 "$n versions in a row with one name on them - has anybody else had a turn?"
+  note "a nudge at any number, and nothing goes on the tally: an evening alone is not an offence"
+}
+
+# ---------------------------------------------------------------------------
 # the commit message is the changelog
 # ---------------------------------------------------------------------------
 check_message() {
@@ -992,12 +1043,12 @@ check_lockstep() {
 
 case "$STAGE" in
   pre-commit) check_gr1; check_gr2; check_gr7; check_gr10; check_gr11; check_gr12
-              check_gr13; check_gr39; check_media; check_lockstep ;;
+              check_gr13; check_gr39; check_media; check_turns; check_lockstep ;;
   commit-msg) check_gr45; check_gr6; check_gr10; check_gr12; check_gr14
               check_breach; check_message ;;
   *)          check_gr1; check_gr2; check_gr7; check_gr10; check_gr11
               check_gr45; check_gr6; check_gr12; check_gr13; check_gr14
-              check_breach; check_gr39; check_media; check_lockstep ;;
+              check_breach; check_gr39; check_media; check_turns; check_lockstep ;;
 esac
 
 if [ ! -s "$TMP/out" ]; then

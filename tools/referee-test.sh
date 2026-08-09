@@ -710,6 +710,56 @@ case_ GR9 "work that leaves the cabinet alone leaves the poster alone"
   stage; check pre-commit
   silent GR9
 
+# The spine. Bo already has one landing in the fixture - the trap they arrived
+# with - so `landings N` leaves them on N + 1, and the case stages the one
+# after that. Ada takes her turn in src/entities/rock.js rather than in Bo's
+# event file, because a handover that trips GR11 on the way past would be
+# testing the wrong rule.
+elsewhere() { git config user.name "$OWNER"; }
+backagain()  { git config user.name "$PILOT"; }
+
+case_ GR15 "four in a row is nobody's business"
+  landings 2
+  fly 9
+  stage; check pre-commit
+  silent GR15
+
+case_ GR15 "the fifth version in a row gets a sentence"
+  landings 3
+  fly 9
+  stage; check pre-commit
+  nudges GR15
+
+case_ GR15 "the sixth does not get it again"
+  landings 4
+  fly 9
+  stage; check pre-commit
+  silent GR15
+
+case_ GR15 "the tenth does"
+  landings 8
+  fly 9
+  stage; check pre-commit
+  nudges GR15
+
+# The thing the rule is actually for. Somebody else landing one breaks the run,
+# and the pilot who picks the keyboard back up starts a spine of their own.
+case_ GR15 "a handover starts the count again"
+  landings 3
+  elsewhere
+  printf '// Ada takes a turn\n' >> src/entities/rock.js
+  land "Ada has a go at the rock"
+  backagain
+  fly 9
+  stage; check pre-commit
+  silent GR15
+
+case_ GR15 "work that leaves the cabinet alone is not a turn at the keyboard"
+  landings 8
+  printf '\nA paragraph about the cabinet.\n' >> README.md
+  stage; check pre-commit
+  silent GR15
+
 case_ GR11 "a trap started from somebody else's template is still yours"
   sed 's/closing-ring/quiet-ring/; s/Ada Vex/Bo Renn/; s/at: 4/at: 7/' \
     "src/events/ada-vex.js" > "src/events/bo-renn-two.js"
