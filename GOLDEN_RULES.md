@@ -224,15 +224,28 @@ Both are the same promise kept two ways, and the second one matters as much as
 the first: without it the next reader cannot tell a decision from an oversight,
 and the referee cannot either.
 
+One thing on the front door is not about the diff at all: the pictures in
+`media/`. They are the only description of this cabinet anybody reads without
+opening it, and they go stale in silence — the last set ran eleven versions
+behind, advertising a splash screen with no logo, no pilot card, no board and
+no seats on it, while every check in the referee said clear. So the referee
+keeps the same shape of meter GR14 keeps for flights, counts the versions since
+`media/` last moved, and mentions it past eight. Reshooting is twenty minutes
+rather than an afternoon: the game hangs everything off `ASTEROIDS`, so a staged
+frame is a console script. And it stays a nudge, at any number — a poster does
+not stop a landing.
+
 Write a `Chronicle:` line in your commit message. That is the sentence that
 goes in the book, and the book is read for fun.
 
 *Checked:* a new entity — a thing in the field, which is the one kind of
 feature the guide never turns away — with neither a `guide` entry nor a
 `No guide tile:` line is flagged; a README edit alongside a new feature is
-flagged; a missing `Chronicle:` line is mentioned. Features in the other three
-homes are not asked. The guide's own rules already decide most of them, and a
-referee guessing at the rest is the disagreement this section exists to end.
+flagged; eight versions landing since `media/` last moved is mentioned, on a
+commit that lands a version and does not reshoot them; a missing `Chronicle:`
+line is mentioned. Features in the other three homes are not asked. The guide's
+own rules already decide most of them, and a referee guessing at the rest is
+the disagreement this section exists to end.
 
 ## GR10 — Changing the rules is its own commit. `red line`
 

@@ -671,6 +671,45 @@ case_ GR9 "a feature that says why it stays off the splash"
   stage; check pre-commit
   silent GR9
 
+# The pictures on the front door, which are not in the diff and go stale
+# without anybody touching them. The lab has none until a case hangs some, so
+# every other test in here answers this one in a single git log.
+poster() { mkdir -p media; printf 'a photograph of the cabinet, %s\n' "$1" > media/cabinet.png; }
+landings() {
+  i=1
+  while [ "$i" -le "$1" ]; do fly "$i"; land "The trap comes a wave later"; i=$((i + 1)); done
+}
+
+case_ GR9 "the pictures on the wall are of a cabinet nobody can play"
+  poster one; land "The pictures on the wall are of the game in the cabinet"
+  landings 12
+  fly 13
+  stage; check pre-commit
+  nudges GR9
+
+case_ GR9 "the same landing, with the pictures reshot in it"
+  poster one; land "The pictures on the wall are of the game in the cabinet"
+  landings 12
+  poster later; fly 13
+  stage; check pre-commit
+  silent GR9
+
+case_ GR9 "a poster that is still of this week's cabinet"
+  poster one; land "The pictures on the wall are of the game in the cabinet"
+  landings 2
+  fly 3
+  stage; check pre-commit
+  silent GR9
+
+# The meter counts versions, so the thing that leaves the cabinet alone leaves
+# the pictures as true as it found them - however long the poster has hung.
+case_ GR9 "work that leaves the cabinet alone leaves the poster alone"
+  poster one; land "The pictures on the wall are of the game in the cabinet"
+  landings 12
+  printf '\nA paragraph about the cabinet.\n' >> README.md
+  stage; check pre-commit
+  silent GR9
+
 case_ GR11 "a trap started from somebody else's template is still yours"
   sed 's/closing-ring/quiet-ring/; s/Ada Vex/Bo Renn/; s/at: 4/at: 7/' \
     "src/events/ada-vex.js" > "src/events/bo-renn-two.js"

@@ -889,6 +889,61 @@ check_gr39() {
 }
 
 # ---------------------------------------------------------------------------
+# GR9  The pictures on the front door.
+#
+# media/ is the only description of this cabinet anybody reads without opening
+# it, and until now nothing in here had an opinion about it. The last set ran
+# eleven versions behind - a splash screen with no logo, no pilot card, no
+# board and no seats on it, advertising a machine nobody could play any more -
+# and every check in this file said clear the whole way.
+#
+# So: the same shape of meter GR14 keeps for flights, counting versions since
+# media/ last moved. A nudge and never anything else. A picture is not a red
+# line, and nobody should be stopped from landing a wave because the poster
+# outside is out of date.
+#
+# What a version is, is not answered here. $BOOK answers it, the way GR14 asks
+# rather than counting for itself - a second copy of that arithmetic is the
+# thing tools/lockstep.sh exists to catch.
+# ---------------------------------------------------------------------------
+check_media() {
+  [ -f "$BOOK" ] || return 0
+
+  # No pictures, nothing to go stale. Cheap, and first: every other line in
+  # here forks the book, and most clones asking this have nothing to answer.
+  shot=$(git log -1 --format='%H' "$BASE" -- media/ 2>/dev/null) || return 0
+  [ -n "$shot" ] || return 0
+
+  # This commit is the reshoot. The pictures are of the game as it is about to
+  # be, which is the most current they have ever been.
+  grep -q '^media/' "$TMP/files" 2>/dev/null && return 0
+
+  # Only a landing moves the meter, the way only a landing spends a tape:
+  # rewriting the rules leaves the cabinet exactly as the last photograph
+  # found it.
+  case "$MODE" in
+    rev) sh "$BOOK" --moved "$REV" 2>/dev/null || return 0 ;;
+    *)   sh "$BOOK" --moved 2>/dev/null || return 0 ;;
+  esac
+
+  # Both counted as of $BASE, which is HEAD for a pilot at work and the parent
+  # for a commit being read back - so the number means the same thing in all
+  # three modes: versions that landed after the shutter closed, not counting
+  # the one being landed now.
+  now=$(sh "$BOOK" --versions "$BASE" 2>/dev/null | wc -l | tr -d ' ')
+  was=$(sh "$BOOK" --versions "$shot" 2>/dev/null | wc -l | tr -d ' ')
+  case "$now$was" in ''|*[!0-9]*) return 0 ;; esac
+
+  # Eight, because eleven was plainly too many and a poster nobody has looked
+  # at for eight evenings is describing a different machine. Reshooting is
+  # twenty minutes: the game hangs everything off ASTEROIDS, so a staged frame
+  # is a console script rather than an afternoon.
+  [ "$((now - was))" -ge 8 ] || return 0
+  warn GR9 "$((now - was)) versions since the pictures in media/ were taken - the front door is showing another cabinet"
+  note "a nudge, and it stays one: nothing here is waiting on a photograph"
+}
+
+# ---------------------------------------------------------------------------
 # the commit message is the changelog
 # ---------------------------------------------------------------------------
 check_message() {
@@ -937,12 +992,12 @@ check_lockstep() {
 
 case "$STAGE" in
   pre-commit) check_gr1; check_gr2; check_gr7; check_gr10; check_gr11; check_gr12
-              check_gr13; check_gr39; check_lockstep ;;
+              check_gr13; check_gr39; check_media; check_lockstep ;;
   commit-msg) check_gr45; check_gr6; check_gr10; check_gr12; check_gr14
               check_breach; check_message ;;
   *)          check_gr1; check_gr2; check_gr7; check_gr10; check_gr11
               check_gr45; check_gr6; check_gr12; check_gr13; check_gr14
-              check_breach; check_gr39; check_lockstep ;;
+              check_breach; check_gr39; check_media; check_lockstep ;;
 esac
 
 if [ ! -s "$TMP/out" ]; then
