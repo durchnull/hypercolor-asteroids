@@ -45,7 +45,12 @@ marks_all() { sh "$BOOK" --marks --all 2>/dev/null | while IFS= read -r m; do sl
 marks_here() {
   { git diff --name-only HEAD 2>/dev/null
     git diff --cached --name-only 2>/dev/null
-    git ls-files --others --exclude-standard 2>/dev/null; } \
+    git ls-files --others --exclude-standard 2>/dev/null
+    # And what the branch already holds, which is the whole of it once the
+    # first commit has landed. --rename is asked on a clean tree more often
+    # than not: the work is committed, that is why the name is wrong.
+    base=$(git merge-base main HEAD 2>/dev/null || git merge-base origin/main HEAD 2>/dev/null)
+    [ -n "${base:-}" ] && git diff --name-only "$base"..HEAD 2>/dev/null; } \
     | sh "$BOOK" --marks 2>/dev/null | while IFS= read -r m; do slug "$m"; done
 }
 
