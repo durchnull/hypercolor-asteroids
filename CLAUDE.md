@@ -154,6 +154,13 @@ registry-shaped solution instead.
   everybody's business and it costs a few lines.
 - Fix an outright bug in anyone's feature, small and surgical.
 - Run the referee, regenerate the chronicle, read any history you like.
+- Write down how the game behind the game could be better — a rule that is not
+  pulling its weight, a meter that reads wrong, an unfairness nobody has priced
+  — in `.dev/IMPROVEMENTS.md`, newest first, one entry per idea: date, title,
+  what you saw, what might be done. That directory is gitignored and per
+  machine on purpose; it is where a candidate waits until somebody decides to
+  spend a rule-change commit on it. Note what came of an entry rather than
+  deleting it.
 
 **Ask the pilot first:**
 
@@ -201,7 +208,13 @@ Say it in one sentence, offer the legitimate route, and move on.
 ## How a session goes
 
 1. **Look around.** `tools/chronicle.sh --recent 8`, then `git log --oneline -10`.
-   Play the current build if there is any doubt about what state it is in.
+   Play the current build if there is any doubt about what state it is in. More
+   than one session is often flying this same working tree at once, so the
+   status you were handed at the start goes stale while you read it: check for
+   live peers and run `git status` again before you touch a shared generator
+   (`tools/chronicle.sh`, `tools/golden-check.sh`) or rebuild `docs/`, and say
+   which regions you are taking. Three sessions once collided in the middle of
+   that one file and it only came apart cleanly because they were talking.
 2. **Build it in its own file.** GR3. Register it, give it a `guide` entry so
    the next player can discover it — or a `No guide tile:` line if it is the
    kind of thing the guide turns away.
@@ -212,7 +225,9 @@ Say it in one sentence, offer the legitimate route, and move on.
 5. **Try it.** Open `index.html` (or `python3 -m http.server 8000`) and actually
    play. GR1 is a promise to somebody who is not here. Die, copy the tape off
    the game-over screen, and `/blackbox` puts it on the board — that is what
-   GR14 counts, and one tape covers three landings.
+   GR14 counts, and one tape covers three landings. If you drove a browser to
+   do it, close it before you report: a window left open outlives the turn on
+   somebody's desktop, and the next run inherits whatever state it was in.
 6. **Land it, on a branch.** `git switch -c <name>` — `main` takes pull
    requests and nothing else (GR7), so the branch is where a version lives
    until the room has seen it. Subject line written from the next pilot's seat,
@@ -235,9 +250,13 @@ one becomes.
 The hooks show you which shape of commit this is, check the red lines, check
 the budgets, and rebuild `docs/index.html` after the commit lands.
 
-7. **Open the pull request.** `git push -u origin <name>` then `gh pr create`,
-   and `.github/PULL_REQUEST_TEMPLATE.md` is already in the box waiting for
-   you. Fill it the way a turn ends — a ship, then what the next pilot finds
+7. **Open the pull request — you, not them.** `git push -u origin <name>` then
+   `gh pr create`, and `.github/PULL_REQUEST_TEMPLATE.md` is already in the box
+   waiting for you. Both of those are yours to run and they happen before the
+   turn ends; a branch sitting on a laptop is not a turn that finished, and a
+   command handed over to be pasted is a chore rather than a decision. What is
+   left for the pilot is the merge button, which is the review gate and is
+   genuinely theirs. Fill the template the way a turn ends — a ship, then what the next pilot finds
    out by playing, then what it does to everybody else — because a pull request
    here is public and somebody who has never opened this repository may read it
    before anyone in the room does. Merge it on github, **merge commit only**:
@@ -323,8 +342,14 @@ scolding, and GR12 is not improved by being read out sternly.
 
 **YOUR MOVE** — three lines at most, one verb each, the command in the line
 and copy-pasteable. Only things the pilot does: if a tool could have run it, it
-ran already, so never ask them to run the referee "to check". Anything that
-costs them something says so in one clause. A decision is a question with the
+ran already, so never ask them to run the referee "to check", and never hand
+over `git push` or `gh pr create` — those are yours and they have already
+happened by the time this prints. What is genuinely theirs is a short list:
+flying for a tape (GR16 leaves you no honest way to produce one), pressing
+merge, and answering a question that changes what gets built next. If the only
+thing you can think of to write here is a command you could have run, the block
+does not belong on this turn. Anything that costs them something says so in one
+clause. A decision is a question with the
 options in it, not "let me know how you would like to proceed". If the turn
 ended blocked, this block says what is blocking it and both ways out.
 
@@ -403,6 +428,7 @@ Use them; they exist so this stays fun rather than procedural.
 | `/chronicle` | rebuild the book, or write a chapter worth reading |
 | `/fairplay` | who has landed what, who has bent which rules, is the game still balanced |
 | `/blackbox` | a pasted flight tape — verify the seal, rank it in docs/RANKINGS.md |
+| `/shoot` | stage the cabinet from the console and reshoot `media/` |
 
 ## Style
 
