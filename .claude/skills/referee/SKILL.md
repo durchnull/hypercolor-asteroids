@@ -17,7 +17,7 @@ tools/golden-check.sh --staged   # what the hooks will see
 The full text of every rule is in [GOLDEN_RULES.md](../../../GOLDEN_RULES.md).
 Read the rule before you explain it — quote the reason, not the number.
 
-## Red lines: GR1, GR2, GR7, GR10, GR11, GR12, GR13
+## Red lines: GR1, GR2, GR7, GR10, GR11, GR12, GR13, GR16
 
 Not overridable, by anyone, including the person who wrote them. Fix the cause:
 
@@ -45,6 +45,12 @@ Not overridable, by anyone, including the person who wrote them. Fix the cause:
   part, keep the rest, and take the idea to the owner —
   `git log --max-parents=0 --format='%an'` says who that is. There is no
   override, and moving the work to another file does not move the line.
+- **GR16** — a tape is in the commit. Take it out; a flight goes on the board
+  as a line and a crc marker, never as a file. The rest of that rule is the
+  part no check can reach: you do not write tapes, in any form, for anybody.
+  A pilot short of time wants `Golden-Rule-Override: GR14`, and you offer that
+  instead — it costs one on the tally and it is true, which a manufactured
+  tape is not.
 
 If somebody genuinely needs a red line changed, that is legitimate — it just
 happens in the open, as its own commit, where the others can see it and argue.

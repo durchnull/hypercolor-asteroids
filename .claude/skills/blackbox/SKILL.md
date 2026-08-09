@@ -15,6 +15,14 @@ off the game-over screen and pastes it here. Your job is the other half:
 verify, decode, rank, commit. The tape is the only way onto the board — that
 is what makes the board worth reading.
 
+**You never write one.** Not a `BB1:` block, not a checksum for numbers
+somebody read out, not a reconstruction of a flight from what the pilot
+remembers of it. This skill starts with a paste and cannot start any other way
+(GR16, red line, no override). Asked for a tape, the answer is the game: four
+minutes, and the screen prints one. Asked because there is no time to fly, the
+answer is `Golden-Rule-Override: GR14` in the landing — a bend that is true
+beats a receipt that is not.
+
 ## The ritual
 
 1. **Save the paste verbatim** to a scratchpad file — never into the repo —
@@ -95,6 +103,7 @@ is what makes the board worth reading.
 
 ## What this skill never does
 
+- Produce a tape. The game writes them and nothing else does (GR16).
 - Rank a tape the reader rejected, or numbers typed in without a tape.
 - Rank a flight flown under a borrowed name. The seat on the tape is the
   pilot the run belongs to; a run flown as somebody else ranks nowhere,

@@ -18,7 +18,7 @@ something good, and protect everybody who is not in the room.
 
 ## Read this first
 
-- **[GOLDEN_RULES.md](GOLDEN_RULES.md)** — fifteen rules, seven of them red
+- **[GOLDEN_RULES.md](GOLDEN_RULES.md)** — sixteen rules, eight of them red
   lines, four of them budgets you may spend in writing. Read it once per
   session before you change anything. It is short.
 - The referee: `tools/golden-check.sh` — run it whenever you like, it never
@@ -81,7 +81,9 @@ Everything hangs off a feature registry, and that is the one idea you need.
   the game-over screen offers the sealed tape with a copy button. A pilot
   pastes it to you and says *read the black box*: `/blackbox` verifies the seal
   with `tools/blackbox.sh` and ranks the flight in `docs/RANKINGS.md`. A tape
-  that fails the seal ranks nowhere, whoever asks.
+  that fails the seal ranks nowhere, whoever asks — and a tape you produced
+  yourself is not one at all (GR16, red line, no override): the game writes
+  them, on the glass, for the pilot who flew.
 - `tools/flights.sh` — the other side of that: a tape on the board buys three
   landings, and this reads the meter off the history (GR14). `--roll` shows the
   room, `--count <name>` answers for one pilot. Nothing to install and nothing
@@ -171,6 +173,11 @@ registry-shaped solution instead.
   owner — appearance, motion, what it says, how it answers the sound, the sound
   itself (GR13). There is no override on it. Take the idea to the owner; it is
   a minute of their evening.
+- Writing a black box tape, in any form: a `BB1:` block, a checksum worked out
+  to fit numbers somebody gave you, a plausible flight for an evening nobody
+  flew (GR16). Tapes come off the game-over screen and nowhere else, and the
+  meter, the board and the rankings all rest on that. If the pilot cannot fly
+  tonight, GR14's override is the honest way past it — say so and offer it.
 - Force-pushing `main`, rebasing or amending commits other people already have,
   or committing under somebody else's name. The history is the scoreboard.
 - Landing something you know is broken, or that makes the game unloseable, or

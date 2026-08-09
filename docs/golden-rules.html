@@ -17,7 +17,7 @@
 <p>
 Many hands, one cabinet. Somebody lands a version, and the next person to pull
 and press ENTER finds out what happened by playing. That is the entire game
-behind the game, and these fifteen rules exist to keep it playable for everyone
+behind the game, and these sixteen rules exist to keep it playable for everyone
 — not to slow anybody down.
 </p>
 <p>
@@ -37,7 +37,7 @@ Rules come in four weights, and the weight is the whole fairness argument:
 <tr><th>weight</th><th>what it means</th><th>which</th></tr>
 </thead>
 <tbody>
-<tr><td><b>red line</b></td><td>cannot be overridden by anyone. To change one, change this file — in its own commit, in front of everybody.</td><td>GR1, GR2, GR7, GR10, GR11, GR12, GR13</td></tr>
+<tr><td><b>red line</b></td><td>cannot be overridden by anyone. To change one, change this file — in its own commit, in front of everybody.</td><td>GR1, GR2, GR7, GR10, GR11, GR12, GR13, GR16</td></tr>
 <tr><td><b>budget</b></td><td>you may spend past it, but only in writing. One line in the commit message and you are through. That line stays in the book forever.</td><td>GR4, GR5, GR6, GR14</td></tr>
 <tr><td><b>nudge</b></td><td>the referee mentions it and gets out of your way.</td><td>GR3, GR9, GR15</td></tr>
 <tr><td><b>on your honour</b></td><td>no check exists and none could. It is the rule that decides whether the game is any good.</td><td>GR8</td></tr>
@@ -538,7 +538,7 @@ only reason it needed writing down.
 <li><b>Any</b> finished flight counts. The board keeps the best twenty and the log keeps every tape, so a short bad evening clears the meter exactly like a good one. This is evidence, not a score: the moment a quota starts rewarding a number, people grind the number instead of playing the game.</li>
 <li>Fly under your own name. A tape sealed to somebody else's seat ranks nowhere (GR12), a run flown as GUEST is GUEST's flight, and neither clears anybody's meter. Couriering a friend's real tape is fine and lands on theirs.</li>
 <li><b>An entry carries the tape's own checksum, and spends it once.</b> The reader prints <code>SEAL INTACT (crc a6bfaee1)</code> and the ritual files that sum under the log entry as <code>&lt;!-- crc a6bfaee1 --&gt;</code>. A line with no sum under it is a sentence somebody typed, and a sum the board has already accepted is the same evening being read out twice. Neither moves the meter.</li>
-<li>A tape is a flight, not a keypress. No machine can tell the difference — but the log prints how long you lasted, beside your name, for good.</li></ul>
+<li>A tape is a flight, not a keypress. No machine can tell the difference — but the log prints how long you lasted, beside your name, for good. Nor can a machine tell a tape from a thing shaped like one, which is why GR16 is a red line: the game writes tapes and nothing else does.</li></ul>
 <p>
 The checksum is honesty rather than security, exactly like the seal it comes
 off: eight hex digits are eight hex digits, and nothing stops somebody making
@@ -609,6 +609,59 @@ know whether anybody else actually wanted a turn is the one reading the line.
 never counting different spines. A commit that leaves the cabinet alone is not
 a turn at all, and a landing by somebody new is a handover, which is the thing
 this rule wants rather than the thing it mentions.
+</p>
+<h2 id="gr16-the-tape-comes-off-the-glass-red-line">GR16 — The tape comes off the glass. <code>red line</code></h2>
+<p>
+The game writes tapes. Nothing else does.
+</p>
+<p>
+<code>src/game/blackbox.js</code> seals one when a flight ends, on the game-over screen,
+in front of the pilot who just died. That is the only place a tape comes from,
+and the rule is one sentence:
+</p>
+<blockquote>
+<p><b>A tape is written by the game, or it is not a tape.</b></p>
+</blockquote>
+<p>
+So: nobody types one, and nobody asks the assistant at this keyboard to make
+one. No hand-rolled block of <code>BB1:</code> lines, no checksum worked out in a shell to
+match a body somebody wrote, no plausible numbers for an evening that did not
+happen, no headless run of the cabinet to manufacture a flight nobody sat
+through. A pilot who wants a tape has exactly one move available and it is the
+enjoyable one.
+</p>
+<p>
+This is the half of GR14 the seal never covered. The checksum proves the bytes
+did not change after the ship went down; it cannot prove there was a ship.
+Everything downstream rests on that — the meter, the board, the flight log, the
+best score, the ambush reel that credits somebody's trap with a kill — and
+until now it rested on nobody having thought to ask.
+</p>
+<p>
+Ask anyway and the answer is short: play it, it is four minutes, paste me what
+comes off the screen. If the flight genuinely is not happening tonight, GR14's
+override is right there and it is the honest route — a bend on the tally is a
+smaller thing than a receipt for an evening nobody had, because the bend is
+true.
+</p>
+<p>
+<b>One exception, and it is the opposite of a forgery.</b>
+<code>tools/evidence-test.sh</code> builds tapes on purpose — a good one, a tampered one,
+a borrowed seat, one from before seats were taped — and hands each to the
+reader to prove it says the right thing about them. They live in a temporary
+directory, they never go near <code>docs/RANKINGS.md</code>, and their whole job is to
+keep the seal worth something. A fixture that tests the reader is not a flight
+claiming to be one.
+</p>
+<p>
+<i>Checked:</i> barely, and honestly. A commit that puts tape lines in a tracked
+file is refused — the game writes them to the screen and the board keeps only
+the checksum, so a <code>BB1:</code> line arriving as a file is something somebody made,
+and there is one reason to make one. The rest cannot be checked and never
+will be: no machine in here can see whether a person pressed a key. There is
+no override, because an override on this one would be a signature under a
+flight that did not happen. The way through is GR14's line, which spends a
+budget and claims nothing.
 </p>
 <hr>
 <h2 id="spending-a-budget">Spending a budget</h2>

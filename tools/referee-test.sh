@@ -764,6 +764,29 @@ case_ GR15 "work that leaves the cabinet alone is not a turn at the keyboard"
   stage; check pre-commit
   silent GR15
 
+# GR16 is nearly all honour, and this is the one edge of it a machine can see:
+# a tape is a thing the game prints on a screen, so a tape sitting in the
+# repository as a file was made rather than flown.
+case_ GR16 "a tape written into the cabinet is not a flight"
+  printf ';; -- FLIGHT RECORD --\nBB1:0000 eyJ2IjoxLCJwaWxvdCI6IkJvIFJlbm4ifQ==\n' > flight.txt
+  printf 'BB1:CRC deadbeef :: END OF TAPE\n' >> flight.txt
+  stage; check pre-commit
+  blocks GR16
+
+# The writer, the reader and the fixtures all say BB1: constantly. None of them
+# is carrying one, which is the whole reason the check is anchored.
+case_ GR16 "the machinery may talk about tapes without holding one"
+  printf '(function (A) {\n  A.seal = function (i, s) { return "BB1:" + i + " " + s; };\n})(ASTEROIDS);\n' \
+    > src/entities/comet.js
+  stage; check pre-commit
+  silent GR16
+
+case_ GR16 "a flight on the board is a checksum, and a checksum is not a tape"
+  printf -- '- Bo Renn - 4200 - wave 6 - died with the bomb still in the rack\n' > docs/RANKINGS.md
+  printf -- '<!-- crc a6bfaee1 -->\n' >> docs/RANKINGS.md
+  stage; check pre-commit
+  silent GR16
+
 case_ GR11 "a trap started from somebody else's template is still yours"
   sed 's/closing-ring/quiet-ring/; s/Ada Vex/Bo Renn/; s/at: 4/at: 7/' \
     "src/events/ada-vex.js" > "src/events/bo-renn-two.js"

@@ -995,6 +995,34 @@ check_turns() {
 }
 
 # ---------------------------------------------------------------------------
+# GR16  The tape comes off the glass.
+#
+# Almost all of this rule is invisible to a machine. Nothing in here can tell
+# whether a person sat down and flew, and nothing ever will - the seal proves
+# the bytes did not move after the ship went down, never that there was a ship.
+#
+# What is visible is where a tape ends up. The game writes one to the screen,
+# the pilot pastes it into a chat, and what lands in the repository is a line
+# on the board with the checksum under it. A BB1: line arriving as a file in
+# here is therefore a tape somebody made rather than one that came off the
+# glass, and the only reason to make one is to hand it to the reader.
+#
+# Anchored at the start of a line, and that anchor is the whole exemption
+# list. The writer, the reader and the fixture all say BB1: with something in
+# front of it, because in all three it is a string being built rather than a
+# tape sitting there - tools/evidence-test.sh forges plenty and every one of
+# them is printf'd into a temporary directory at the moment it is read.
+# ---------------------------------------------------------------------------
+check_gr16() {
+  while IFS= read -r f; do
+    is_generated "$f" && continue
+    content "$f" | grep -q '^BB1:' || continue
+    fail GR16 "$f carries a tape - the game writes those, and it writes them to a screen"
+    note "a flight lands on the board as a crc marker; the tape itself never enters the repository"
+  done < "$TMP/files"
+}
+
+# ---------------------------------------------------------------------------
 # the commit message is the changelog
 # ---------------------------------------------------------------------------
 check_message() {
@@ -1074,14 +1102,14 @@ check_lockstep() {
 
 case "$STAGE" in
   pre-commit) check_gr1; check_gr2; check_gr7; check_gr10; check_gr11; check_gr12
-              check_gr13; check_gr39; check_media; check_turns; check_replay
-              check_lockstep ;;
+              check_gr13; check_gr16; check_gr39; check_media; check_turns
+              check_replay; check_lockstep ;;
   commit-msg) check_gr45; check_gr6; check_gr10; check_gr12; check_gr14
               check_breach; check_message ;;
   *)          check_gr1; check_gr2; check_gr7; check_gr10; check_gr11
               check_gr45; check_gr6; check_gr12; check_gr13; check_gr14
-              check_breach; check_gr39; check_media; check_turns; check_replay
-              check_lockstep ;;
+              check_gr16; check_breach; check_gr39; check_media; check_turns
+              check_replay; check_lockstep ;;
 esac
 
 if [ ! -s "$TMP/out" ]; then
