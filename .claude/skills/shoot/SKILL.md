@@ -33,6 +33,10 @@ Drive input by writing the seat's own state â€” `A.keys[seat]`, `A.held[seat]` â
 rather than sending keystrokes. Stub `A.killShip` and `A.damageSquid` for the
 duration: nothing should die in the middle of a shoot.
 
+A kraken is the awkward one, because it is mid-dive whenever it looks good:
+`A.spawnSquid()` and then pin its `x`, `y`, `z`, `hp` and `diveTimer` every
+frame, or it will have arrived, hit something and left before the shutter.
+
 ## The four things that took a while to work out
 
 - **Trails need motion, shapes need stillness.** Run the live loop about half a

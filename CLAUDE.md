@@ -95,11 +95,15 @@ Everything hangs off a feature registry, and that is the one idea you need.
   each replayed commit's *own* `post-commit`, which rebuilds the book mid-replay
   and stops it. It refuses to take a *person's* commit — that is somebody's
   work and you read it before you build on it — and refuses a dirty tree.
-- `tools/labels.sh` — what a change is *about*, in the same buckets the book's
-  `kindof()` draws with: `events`, `entities`, `game`, `ui`, `core`, `render`,
-  `audio`, `input`, `screen`, `rules`, `book`. `--list` shows them with their
-  colours, `--install` creates them on the remote once, and running it bare
-  answers for the working tree. `.github/workflows/strip.yml` is what puts them
+- `tools/labels.sh` — what a change is *about*, in the same nine marks the book
+  puts on a chapter: `game`, `game within`, `ui`, `music`, `controls`,
+  `engine`, `chronicle`, `rules`, `notes`. It classifies nothing itself — it
+  asks `tools/chronicle.sh --marks` and prints colours, so the label on a pull
+  request and the badge on the chapter it becomes are the same word, in the
+  same colour, out of `styles/tokens.css`. `--list` shows them, `--install`
+  creates them on the remote once, and running it bare answers for the working
+  tree. A path the book gives no mark to gets no label, which is why the ground
+  crew's own paperwork arrives bare. `.github/workflows/strip.yml` is what puts them
   on a pull request, along with the author as assignee and the owner as
   reviewer — the last of which github refuses whenever the owner is also the
   author, which is most of the time here and is not worth working around.
@@ -214,7 +218,11 @@ Say it in one sentence, offer the legitimate route, and move on.
    live peers and run `git status` again before you touch a shared generator
    (`tools/chronicle.sh`, `tools/golden-check.sh`) or rebuild `docs/`, and say
    which regions you are taking. Three sessions once collided in the middle of
-   that one file and it only came apart cleanly because they were talking.
+   that one file and it only came apart cleanly because they were talking. When
+   you need to test something unfinished and somebody else is about to commit,
+   back your own hunks out — keep a copy in the scratchpad — and verify in a
+   throwaway clone there instead, so that nothing half-built rides out in a
+   commit somebody else wrote.
 2. **Build it in its own file.** GR3. Register it, give it a `guide` entry so
    the next player can discover it — or a `No guide tile:` line if it is the
    kind of thing the guide turns away.
