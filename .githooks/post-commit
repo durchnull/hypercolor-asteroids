@@ -53,6 +53,10 @@ sh "$ROOT/tools/chronicle.sh" >/dev/null 2>&1 || exit 0
 # into the working tree, to ride along with whatever commit comes next.
 sh "$ROOT/tools/tally.sh" >/dev/null 2>&1 || true
 
+# And the front page counts versions, tapes, pilots and traps, which is the
+# same problem one screen earlier and in front of strangers. Same treatment.
+sh "$ROOT/tools/badges.sh" >/dev/null 2>&1 || true
+
 VER=$(sh "$ROOT/tools/chronicle.sh" --version)
 
 if sh "$ROOT/tools/chronicle.sh" --moved HEAD; then

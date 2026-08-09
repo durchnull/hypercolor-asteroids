@@ -395,6 +395,11 @@ hr { border: 0; border-top: 1px dashed color-mix(in srgb, var(--dim) 50%, transp
 
 img { max-width: 100%; height: auto; display: block; margin: 1.5rem 0; border-radius: 2px; }
 
+/* A run of images with no blank line between them is a badge strip, not a
+   gallery: a picture per paragraph stays a block, several in one paragraph
+   sit in a row the way they do on the front page. */
+p:has(img + img) img { display: inline-block; margin: 0 .3rem .4rem 0; vertical-align: middle; }
+
 .scroll { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: .9rem; }
 th, td { text-align: left; padding: .5rem .8rem; vertical-align: top; border-bottom: 1px solid color-mix(in srgb, var(--dim) 25%, transparent); }

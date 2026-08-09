@@ -15,115 +15,41 @@
 <header class="plate"><span class="kind">THE NOTES</span><span class="of">README.md</span></header>
 <h1 id="hypercolor-asteroids">HYPERCOLOR ASTEROIDS</h1>
 <p>
-A neon vector rewrite of the 1979 arcade game. Canvas graphics, Web Audio music,
-hand written HTML, CSS and JavaScript. No build step, no dependencies, no
-network.
+<img src="../media/badges/pilots.svg" alt="pilots: 1" loading="lazy" decoding="async">
+<img src="../media/badges/traps.svg" alt="traps armed: 6" loading="lazy" decoding="async">
+<img src="../media/badges/versions.svg" alt="versions: 32" loading="lazy" decoding="async">
+<img src="../media/badges/flights.svg" alt="flights: 3 taped" loading="lazy" decoding="async">
+<img src="../media/badges/rules.svg" alt="golden rules: 16" loading="lazy" decoding="async">
+<img src="../media/badges/licence.svg" alt="licence: MIT" loading="lazy" decoding="async">
 </p>
 <p>
-It is two games in one. On the screen: rocks, portals, a kraken. In the repo: a
-slow multiplayer game between the developers who share it. The git history is
-the save file, the commit log is the leaderboard, and nobody has to be online
-at the same time. That half is explained in
-<a href="#the-game-behind-the-game">The game behind the game</a> — you can also ignore it
-and just fly.
-</p>
-<p>
-Open <code>index.html</code> in a browser and it plays. Two pilots, one screen; player two
-can drop in mid-wave, and anyone out of lives can buy back in. What you need to
-play and to build — including what a Windows machine needs — is in
-<a href="requirements.html">docs/requirements.md</a>.
+A neon vector rewrite of the 1979 arcade game. No build step, no dependencies,
+no network. <b><a href="https://durchnull.github.io/hypercolor-asteroids/">Play it in the browser</a></b>,
+or open <code>index.html</code> from a clone.
 </p>
 <p>
 <img src="../media/field.png" alt="Two pilots, a kraken, a pair of portals, and somebody on the end of a grapple line" loading="lazy" decoding="async">
 </p>
-<h2 id="what-s-out-there">What's out there</h2>
-<ul>
-<li><b>Asteroid</b> — 20 / 50 / 100 points, splits into smaller, quicker pieces.</li>
-<li><b>Atom bomb</b> — the panic button. Eats half the screen. Two to start, one more each wave.</li>
-<li><b>Grapple</b> — the line locks where it bites and swings you rather than hauling you in. Cut loose to fly off on the tangent, faster than you came. The rock swings too, and wrecks whatever it meets.</li>
-<li><b>Kraken</b> — 250 points, 3–5 hits. Dives, then surfaces right beneath you. Angrier with every hit.</li>
-<li><b>Portals</b> — fly in one and out the other. So can your shots, and the kraken.</li>
-<li><b>Planet</b> — too big for the screen, and happy to flatten you.</li>
-<li><b>The Falcon</b> — passing smuggler, one enormous laser, then gone.</li>
-<li><b>The black box</b> — every flight is taped, and the tape is a scoreboard entry.</li></ul>
+<h2 id="the-game-on-the-screen">The game on the screen</h2>
 <p>
-<img src="../media/swing.png" alt="The grapple: the dotted circle is the arc the line will hold you to, and you leave on the tangent" loading="lazy" decoding="async">
+Two pilots share one keyboard; player two drops in mid-wave, and anyone out of
+lives can buy back in. Out there: rocks that split, a kraken that dives and
+surfaces underneath you, portals your shots also fall through, a grapple that
+swings you rather than reels you in, a planet too big for the screen, and a
+smuggler with one enormous laser. The splash screen's field guide is generated
+from the code, so it is never out of date.
 </p>
 <p>
 <img src="../media/bomb.png" alt="The atom bomb going off: the front eats up to half the screen, never all of it, and the kraken to the right of it has about a second left" loading="lazy" decoding="async">
 </p>
-<p>
-<img src="../media/falcon.png" alt="The Falcon crossing the field, putting one enormous laser through a kraken on its way past" loading="lazy" decoding="async">
-</p>
-<p>
-<img src="../media/planet.png" alt="A planet crossing the field, with a rock bouncing off the limb and shots burning up on it" loading="lazy" decoding="async">
-</p>
-<h2 id="how-it-s-put-together">How it's put together</h2>
-<p>
-Every feature is one module that registers itself with the game loop. Adding one
-is a new file plus a line in the manifest; nothing else mentions it. The HUD,
-the seat cards and the field guide are generated from the same registry, so two
-people adding two features never edit the same lines.
-</p>
-<p>
-<b><a href="architecture.html">docs/ARCHITECTURE.md</a> is the map.</b>
-</p>
-<hr>
 <h2 id="the-game-behind-the-game">The game behind the game</h2>
 <p>
-The repo is not just where the game is stored — it is where the game is played.
-It works like this:
+The other half of it is played in the repository. Somebody lands a version
+tonight; the next person pulls on Thursday, presses ENTER, and finds out what
+changed <b>by playing it</b>. No changelog, no announcement. The diff is not the
+deliverable — the surprise is.
 </p>
-<p>
-<b>Commits are turns.</b> A commit that touches <code>index.html</code>, <code>src/</code> or <code>styles/</code>
-gets a version number, counted off the git history by a script; docs and tools
-do not. Nobody announces what they built. You commit it, the next person pulls,
-presses ENTER, and finds out by playing. Reading the diff first is like shaking
-the presents.
-</p>
-<p>
-<img src="../media/cabinet.png" alt="The splash screen: the field guide, and a card saying who is flying and what the ledger has on them" loading="lazy" decoding="async">
-</p>
-<p>
-<b>Traps connect the players.</b> An event is a surprise dropped into a live wave,
-each in its own file under <code>src/events/</code>, and one rule makes it worth doing:
-</p>
-<blockquote>
-<p><b>Your own trap never fires for you.</b></p>
-</blockquote>
-<p>
-<b>Playing counts.</b> Every flight is taped, the tape carries a checksum, and an
-edited one ranks nowhere. Honest ones land in
-<a href="rankings.html">docs/RANKINGS.md</a>.
-</p>
-<p>
-<b>The rules are part of the game.</b> <a href="golden-rules.html">GOLDEN_RULES.md</a> is the
-whole rulebook. <i>Red lines</i> are hard stops. <i>Budgets</i> you may spend, but only
-in writing, in the commit, under your own name. <i>Nudges</i> just get mentioned.
-Changing a rule is allowed too, in its own commit, in the open.
-</p>
-<p>
-<b>Bending rules has a price.</b> Overrides are counted from the history into a
-ledger nobody may edit by hand, and the game reads your number: 1 bend and
-ambushes come sooner, 3 and your own traps stop sparing you, 4 and a wave may
-hold an extra ambush. Skipping the hooks costs two instead of one. Nothing
-blocks you and nobody shames you — your game just gets harder, in public.
-</p>
-<p>
-<b>A referee at the keyboard.</b> <code>tools/golden-check.sh</code> checks the rules on
-every commit, and <a href="claude.html">CLAUDE.md</a> makes claude a second one: it enforces
-the rulebook and refuses the shortcuts.
-</p>
-<p>
-<b>The book.</b> After every commit a script rewrites the chronicle —
-<a href="index.html">docs/index.html</a> is the cover, one page per version behind
-it. Put a <code>Chronicle:</code> line in your commit and the book quotes you.
-</p>
-<h2 id="joining-in">Joining in</h2>
-<p>
-You take your turn by talking to claude in this folder. A whole session looks
-like this:
-</p>
+<h2 id="a-session-with-claude-sounds-like-this">A session with Claude sounds like this</h2>
 <ul>
 <li><i>"what did the others land since I last played?"</i> — or <code>/scout</code></li>
 <li><i>"add comets, and make them come in threes"</i></li>
@@ -131,49 +57,112 @@ like this:
 <li><i>"the kraken is too easy now"</i></li>
 <li><i>"read the black box"</i> — paste the tape off the game-over screen</li>
 <li><i>"land it"</i> — or <code>/land</code></li></ul>
+<h2 id="you-build-the-traps-everybody-else-flies-into">You build the traps everybody else flies into</h2>
 <p>
-That is the job. Claude puts each thing in its own file, wires it in, checks
-the rules, hands the game back for you to play, and writes the commit. You do
-not need to know how any of it works.
+You can drop an ambush into the game — the lights go out mid-wave, rock closes
+in from every side but one, something comes through a portal that should not
+fit. It goes in a file with your name on it, and your name is the whole
+mechanic:
+</p>
+<blockquote>
+<p><b>A trap never fires for the person who wrote it.</b></p>
+</blockquote>
+<p>
+So you build it, everyone else meets it, and you never once see it from the
+inside. Nobody can disarm the one that is waiting for them, either. New pilots
+are safe until they write their first: the field does not ambush the unarmed.
 </p>
 <p>
-Set up once, in a terminal:
+<img src="../media/trap.png" alt="A trap firing mid-wave: rock closing from every side but one, the name of the ambush across the field, and its glyph counting down at the foot of the screen" loading="lazy" decoding="async">
 </p>
+<h2 id="the-black-box-you-have-to-fly-what-you-land">The black box: you have to fly what you land</h2>
+<p>
+Every flight tapes itself. Die, and the game-over screen hands you a sealed
+black box; paste it back and it lands on the
+<a href="rankings.html">flight records</a>. One tape buys three landings — three
+versions with your name on them — and nobody writes a tape by hand. They come
+off the glass or they are not tapes.
+</p>
+<p>
+<img src="../media/tape.png" alt="The game-over screen: the sealed tape in its panel and the button that hands it over. The record itself is X-ed out in this picture, because a tape that means anything only ever comes off your own glass" loading="lazy" decoding="async">
+</p>
+<h2 id="bending-a-rule-makes-your-game-harder">Bending a rule makes your game harder</h2>
+<p>
+<a href="golden-rules.html">GOLDEN_RULES.md</a> is the whole rulebook, one page. Red lines
+are hard stops; budgets you may spend, in writing, under your own name. Nothing
+is blocked and nobody is scolded — overrides are counted out of the git history
+into a ledger nobody edits by hand, your ambushes start coming sooner, and
+clean landings ease it back off. It is a difficulty setting made of your own
+behaviour.
+</p>
+<p>
+Every commit also writes itself into
+<a href="https://durchnull.github.io/hypercolor-asteroids/docs/">the chronicle</a>: a
+cover, a page per version, and your own line about it quoted a year from now.
+</p>
+<h2 id="getting-in">Getting in</h2>
 <pre><code class="lang-sh">
-git clone &lt;this repo&gt;
+git clone https://github.com/durchnull/hypercolor-asteroids   # or fork it
+cd hypercolor-asteroids
 tools/golden-check.sh --install   # wire in the referee
-tools/whoami.sh                   # say who you are
+tools/whoami.sh                   # say who you are, so your own traps go quiet
 open index.html                   # find out what the others did to you
-claude                            # and take your turn
 </code></pre>
 <p>
-Two things worth knowing:
-</p>
-<ul>
-<li>Claude will refuse some things — another player's trap file, skipping the referee, editing your own tally. That is the game working, not a bug.</li>
-<li>Bending a rule is allowed. It costs one line in the commit, and your game gets harder in public. <a href="golden-rules.html">GOLDEN_RULES.md</a> is one page if you are curious.</li></ul>
-<p>
-Arriving from outside, with a pull request rather than a push, works the same
-way and is read the same way — one commit at a time, each judged as its own
-author. <a href="contributing.html">CONTRIBUTING.md</a> is the walk-through, and
-<code>tools/inbound.sh</code> tells you what the referee will say before you send it.
+On Windows, double-click <code>index.html</code> instead of that last line; if your
+browser is strict about local files, <code>python3 -m http.server 8000</code> and go to
+<code>localhost:8000</code>. <a href="requirements.html">Before you can play</a> has the rest.
 </p>
 <p>
-Nobody has to trust anybody. <code>git blame</code> says who made a thing, the book says
-who bent which rule, and the ledger is computed from both. That is all the
-governance a game about shooting rocks needs.
+Your meter starts at zero, which buys you three landings — three versions of
+your own — before anybody asks to see a tape. Spend one on something small:
+make the kraken meaner, give the blaster a nastier noise, repaint the whole
+cabinet a colour nobody asked for. Each of those is one file, none of them can
+break anybody else, and every one counts as a full turn.
 </p>
 <p>
-Now go and do something to annoy the others.
+Talking to claude is the quick way through it, and doing the same five steps by
+hand is no slower — <a href="contributing.html">CONTRIBUTING.md</a> walks you from a clone
+to a pull request. The project is MIT, and what you contribute is contributed
+under the same licence.
 </p>
+<h3 id="what-happens-after-you-push">What happens after you push</h3>
+<p>
+<code>main</code> takes pull requests and nothing else, from everybody including the
+person who owns the place. A workflow reads your branch one commit at a time
+and prints a verdict into the pull request: red lines fail it, budgets and
+nudges are only ever mentioned, because the point was never that a machine
+stops you. Another one labels it and puts your name on it.
+</p>
+<p>
+Then a person presses merge — a merge commit, never a squash, because the
+history is the scoreboard. If what you landed touched the game it becomes the
+next numbered version, counted off the history rather than chosen by anybody,
+and the chronicle and the ledger rewrite themselves on the way through.
+</p>
+<h2 id="where-to-look-next">Where to look next</h2>
+<div class="scroll"><table>
+<thead>
+<tr><th></th><th></th></tr>
+</thead>
+<tbody>
+<tr><td><a href="https://durchnull.github.io/hypercolor-asteroids/docs/">the chronicle</a></td><td>every night this cabinet has had, written down while it was happening</td></tr>
+<tr><td><a href="rankings.html">the flight records</a></td><td>who flew, how far they got, and how it ended for them</td></tr>
+<tr><td><a href="golden-rules.html">the rulebook</a></td><td>sixteen rules, eight of them unbendable, and the price of the rest</td></tr>
+<tr><td><a href="contributing.html">taking a turn by hand</a></td><td>the long way round, from a clone to a pull request, no help required</td></tr>
+<tr><td><a href="architecture.html">behind the glass</a></td><td>how the cabinet is wired, and where a new idea plugs into it</td></tr>
+<tr><td><a href="claude.html">the referee's briefing</a></td><td>what claude is told before it sits down at this keyboard</td></tr>
+<tr><td><a href="requirements.html">before you can play</a></td><td>what your machine needs, Windows included</td></tr>
+</tbody>
+</table></div>
 <nav class="flip" aria-label="the notes">
 <span class="here">README</span>
-<a href="requirements.html">REQUIREMENTS</a>
-<a href="architecture.html">ARCHITECTURE</a>
 <a href="rankings.html">RANKINGS</a>
 <a href="golden-rules.html">GOLDEN RULES</a>
-<a href="claude.html">CLAUDE</a>
+<a href="requirements.html">REQUIREMENTS</a>
 <a href="contributing.html">CONTRIBUTING</a>
+<a href="architecture.html">ARCHITECTURE</a>
+<a href="claude.html">CLAUDE</a>
 <a class="out" href="index.html">THE CHRONICLE</a>
 <a class="out" href="../index.html">PLAY</a>
 </nav>

@@ -97,6 +97,24 @@ stay equal. Nothing makes the game unloseable. No machine checks this and none
 ever will — it is the rule that decides whether the game is any good.
 </p>
 <h2 id="before-you-open-a-pull-request">Before you open a pull request</h2>
+<p>
+Branches live in a directory, and the directory is the mark: the same nine
+words the book puts on a chapter and the strip puts on a pull request.
+<code>game/comets-come-in-threes</code>, <code>music/the-bass-was-too-polite</code>,
+<code>chronicle/the-plates-paint-themselves</code>. Not <code>feat/</code> and <code>fix/</code>, because every
+change is one of those and the word is spent before it has said anything.
+</p>
+<pre><code class="lang-sh">
+tools/branch.sh &lt;name&gt;       # the mark is read off what you have changed
+tools/branch.sh --rename     # for the branch you cut before you knew
+tools/branch.sh --marks      # the nine directories, in order
+</code></pre>
+<p>
+You do not type the mark. <code>tools/chronicle.sh --marks</code> answers that question
+for the book, the labels and the branch alike, so all three say the same word.
+A branch that is already pushed is left alone — renaming it there strands the
+old name on the remote with a pull request pointing at it.
+</p>
 <pre><code class="lang-sh">
 tools/inbound.sh
 </code></pre>
@@ -112,7 +130,14 @@ the sentence the book quotes.
 </p>
 <h2 id="what-happens-to-your-pull-request">What happens to your pull request</h2>
 <p>
-Two things read it, in this order.
+Three things read it, in this order.
+</p>
+<p>
+<b>The flight strip</b>, which is furniture and arrives first: you are assigned to
+your own pull request, the owner is asked for a review, and it wears the same
+nine marks the book puts on the chapter it becomes — <code>game</code>, <code>music</code>, <code>rules</code>,
+and the rest. <code>tools/labels.sh main..HEAD</code> previews them. Nobody fills any of
+that in by hand, and a path the book gives no mark to arrives bare.
 </p>
 <p>
 <b>A workflow</b>, which prints what it found into the pull request summary: every
@@ -133,7 +158,7 @@ that cannot be refereed.
 <h2 id="the-rules">The rules</h2>
 <p>
 <a href="golden-rules.html">GOLDEN_RULES.md</a> is the whole rulebook and it is one page.
-Fifteen rules in four weights:
+Sixteen rules in four weights:
 </p>
 <div class="scroll"><table>
 <thead>
@@ -152,12 +177,13 @@ start coming for you sooner, and it is on the record under your name — that is
 the entire price, and it is meant to be cheap to pay and impossible to hide.
 </p>
 <p>
-Three things get refused whoever asks, and they are worth knowing in advance:
+Four things get refused whoever asks, and they are worth knowing in advance:
 </p>
 <ul>
 <li><b>Another pilot's event file</b> (GR11). An event is a trap that never fires for whoever wrote it, and the whole mechanic rests on nobody being able to disarm the one waiting for them. No budget, no override, not one line.</li>
 <li><b>Your own tally</b> (GR12). It is generated from the history by <code>tools/tally.sh</code>, which is the only reason it means anything.</li>
-<li><b>The orb and the song in the book</b> (GR13). One corner of the project stays as one person meant it. If you have a better thought for it to think, say so — that is a minute of their evening and they will probably enjoy it.</li></ul>
+<li><b>The orb and the song in the book</b> (GR13). One corner of the project stays as one person meant it. If you have a better thought for it to think, say so — that is a minute of their evening and they will probably enjoy it.</li>
+<li><b>A tape you did not fly</b> (GR16). Black boxes come off the game-over screen and nowhere else — not typed out, not a checksum worked backwards from numbers somebody read to you. The meter, the board and the rankings all rest on that, and GR14's override is the honest way past an evening you cannot fly.</li></ul>
 <p>
 Everything else is arguable, including the rules. Argue with them in their own
 commit with a <code>Rule-Change:</code> line, never in the same breath as using them
@@ -201,12 +227,12 @@ Now go and do something to annoy the others.
 </p>
 <nav class="flip" aria-label="the notes">
 <a href="readme.html">README</a>
-<a href="requirements.html">REQUIREMENTS</a>
-<a href="architecture.html">ARCHITECTURE</a>
 <a href="rankings.html">RANKINGS</a>
 <a href="golden-rules.html">GOLDEN RULES</a>
-<a href="claude.html">CLAUDE</a>
+<a href="requirements.html">REQUIREMENTS</a>
 <span class="here">CONTRIBUTING</span>
+<a href="architecture.html">ARCHITECTURE</a>
+<a href="claude.html">CLAUDE</a>
 <a class="out" href="index.html">THE CHRONICLE</a>
 <a class="out" href="../index.html">PLAY</a>
 </nav>
