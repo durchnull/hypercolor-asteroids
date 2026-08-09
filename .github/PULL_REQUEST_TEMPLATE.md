@@ -118,9 +118,12 @@
     tools/whoami.sh                    your seat, so your own traps go quiet
     tools/groundcrew.sh                on main, before you branched
     tools/inbound.sh                   what the referee will say about this branch
+    tools/labels.sh main..HEAD         what this will be tagged as
 
-  That last one is exactly what CI runs. If it is quiet here it will be quiet
-  there.
+  The middle one is exactly what CI runs. If it is quiet here it will be quiet
+  there. The last one is a preview, not a chore - the flight strip puts those
+  labels on for you, assigns you to your own pull request, and asks the owner
+  for a review. Do not fill any of that in by hand.
 
   A rule change lands in its own commit with a `Rule-Change:` line and no game
   code beside it (GR10). Arguing with a rule is allowed and encouraged; doing
