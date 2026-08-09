@@ -915,6 +915,43 @@ html { scroll-padding-bottom: 6rem; }
   opacity: 0.55;
   animation: march 1.1s linear infinite;
 }
+/* A file that came back lighter than it went has had a piece taken out of it.
+   A rock loses it out of the outline itself, because a rock is drawn fresh
+   every time and can be; a silhouette is fixed markup and cannot, so it loses
+   it beside itself instead. Either way the chip stays where it came off - a
+   shard flies away and means the thing is gone, and this one is not. */
+.art .crumb {
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  opacity: 0.55;
+  filter: drop-shadow(0 0 4px var(--c));
+}
+/* And what the words said, when the tagline said something a picture can hold:
+   speed lines off whatever the pilot was aiming at, or two more of the thing
+   when the line says there was more than one of them. Garnish rather than
+   grammar - it fires on about one chapter in twenty-six, and that is the
+   intended rate. */
+.art .streak {
+  stroke: var(--lime);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  opacity: 0.5;
+  filter: drop-shadow(0 0 6px var(--lime));
+  animation: streak 1.1s ease-out infinite;
+  animation-delay: var(--d);
+}
+.art .echo {
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.3;
+  animation: echopulse 3.6s ease-in-out infinite alternate;
+  animation-delay: var(--d);
+}
 .art .ghost { font: 700 400px var(--mono); fill: var(--violet); opacity: 0.07; }
 .art .stamp rect { fill: none; stroke: currentColor; stroke-width: 3; opacity: 0.75; }
 .art .stamp text {
@@ -931,6 +968,8 @@ html { scroll-padding-bottom: 6rem; }
 @keyframes twinkle { to { opacity: 0.12; } }
 @keyframes march { to { stroke-dashoffset: -48; } }
 @keyframes pip { to { opacity: 0.25; } }
+@keyframes streak { from { opacity: 0.7; } to { opacity: 0; } }
+@keyframes echopulse { to { opacity: 0.1; } }
 @keyframes bornring {
   0% { transform: scale(0.55); opacity: 0.9; }
   100% { transform: scale(1.5); opacity: 0; }

@@ -58,12 +58,15 @@
 # mine, the rules are a gear, the song is a note, a panel is a panel - sized by
 # how much of it moved and coloured by which part of the cabinet it was. The
 # diff picks the pilot's move: wreckage is shot down and sheds shards, a new
-# arrival rides in on a tow beam and rings while it settles, a tuning pass gets
-# a reticle where a shot would be, and anything else is the standing order -
-# fire at the biggest thing you moved. The seed is the commit hash, so a
-# version draws the identical field on every machine and in every clone,
-# forever. That is what makes a generated file worth committing: rebuild it
-# anywhere and the bytes come back the same.
+# arrival rides in on a tow beam and rings while it settles, a file that came
+# back lighter than it went has a bite taken out of it, a tuning pass gets a
+# reticle where a shot would be, and anything else is the standing order - fire
+# at the biggest thing you moved. And the words get a say as well as the diff:
+# a tagline about speed earns streaks, a tagline about threes draws two more of
+# the thing, and every other tagline earns nothing, which is what keeps it a
+# remark. The seed is the commit hash, so a version draws the identical field on
+# every machine and in every clone, forever. That is what makes a generated file
+# worth committing: rebuild it anywhere and the bytes come back the same.
 #
 # A chapter can also carry a plate: a painted scene of whatever its tagline says
 # happened, asked for once by tools/chronicle-art.sh and kept in docs/art/ from
@@ -910,12 +913,19 @@ function tint(s) {
 
 # The twelve busiest paths of a commit, biggest first, kept as they arrive.
 # Twelve because thirteen rocks is a mess to look at, not because git ran out.
-function keep(p, n, gone, born,   i, j, last) {
+#
+# cut is the lines a path lost net, and it is the one of the four that is not a
+# yes or a no: it is how much lighter the file came back, so a nick and a
+# gutting draw different sizes of the same mark rather than needing a number
+# somebody had to choose.
+function keep(p, n, gone, born, cut,   i, j, last) {
   for (i = 1; i <= kc; i++) if (n > kn[i]) break
   if (i > 12) return
   last = (kc < 12 ? kc : 11)
-  for (j = last; j >= i; j--) { kp[j+1] = kp[j]; kn[j+1] = kn[j]; kd[j+1] = kd[j]; kb[j+1] = kb[j] }
-  kp[i] = p; kn[i] = n; kd[i] = gone; kb[i] = born
+  for (j = last; j >= i; j--) {
+    kp[j+1] = kp[j]; kn[j+1] = kn[j]; kd[j+1] = kd[j]; kb[j+1] = kb[j]; kg[j+1] = kg[j]
+  }
+  kp[i] = p; kn[i] = n; kd[i] = gone; kb[i] = born; kg[i] = cut
   if (kc < 12) kc++
 }
 
@@ -924,14 +934,19 @@ function keep(p, n, gone, born,   i, j, last) {
 # something, so it borrows from further down the page.
 function shout(v) { return VT[v] != "" ? VT[v] : (VL[v] != "" ? VL[v] : VS[v]) }
 
-function caption(v,   s, k, born, gone) {
+function caption(v,   s, k, born, gone, bit) {
   if (RC[v] == 0) return "An empty field. Nothing in this one moved."
-  born = 0; gone = 0
-  for (k = 1; k <= RC[v]; k++) { if (RD[v,k]) gone++; else if (RA[v,k]) born++ }
+  born = 0; gone = 0; bit = 0
+  for (k = 1; k <= RC[v]; k++) {
+    if (RD[v,k]) gone++
+    else if (RA[v,k]) born++
+    else if (RG[v,k] > 0) bit++
+  }
   s = RC[v] " sector" plural(RC[v]) " on the scan, " (RC[v] == 1 ? "drawn" : "each drawn") " as the thing it is"
   if (born) s = s "; " born " of them arrived in this commit"
   if (gone) s = s "; " gone " shot out of the field for good"
-  if (born == 0 && gone == 0 && VI[v] + VJ[v] < 40)
+  if (bit)  s = s "; " bit " came back lighter than " (bit == 1 ? "it" : "they") " went"
+  if (born == 0 && gone == 0 && bit == 0 && VI[v] + VJ[v] < 40)
     s = s "; nothing moved but numbers, and the sights are on " RP[v,1]
   else
     s = s "; the heavy one is " RP[v,1]
@@ -1018,7 +1033,48 @@ function glyphart(n) {
   return "<g transform=\"rotate(-42)\"><path d=\"M-3.2 -11V-7A3.4 3.4 0 0 0 3.2 -7V-11\"/><path d=\"M0 -3.6V9\"/><circle cx=\"0\" cy=\"10.5\" r=\"1.6\"/></g>"
 }
 
-function picture(v,   out, k, K, j, q, a, c, rb, ang, rad, x, y, r, s, kind, tt, act, tk, bx, by, br, pts, mx, ix, iy, px, py, nx, ny, sa) {
+# What the words said, as far as a machine should ever claim to read them. The
+# diff says what moved; the tagline says what the pilot thought was happening,
+# and a picture that reads only the one is drawing half the commit. Two families
+# rather than a vocabulary, because a grammar that garnished every chapter would
+# be wallpaper instead of a remark - on this history it fires once in
+# twenty-six, which is about right for a joke.
+#
+# It reads shout(), which is the tagline if there is one, the pilot own line if
+# there is not, and the subject if there is neither: the same string the chapter
+# shouts in letters you can read from across the room. No clock, no rand - the
+# same words draw the same garnish in every clone, forever, like everything else
+# down here.
+#
+# The letter tests either side are not decoration. Without them repair earns a
+# pair and breakfast goes fast.
+function garnish(v,   t) {
+  t = tolower(shout(v))
+  if (t ~ /(^|[^a-z])(fast|quick|speed|swift|rush|sooner|hurr|acceler|velocit)/) return "speed"
+  if (t ~ /(^|[^a-z])(three|thrice|triple|treble|twice|double|twin|pair|swarm|flock)/) return "echo"
+  return ""
+}
+
+# One shape, drawn again somewhere else and smaller: what an echo is made of.
+# The same two branches picture() has, because a ghost of a rock has to be a
+# rock and a ghost of a gear has to be a gear, and a circle standing in for
+# either would say nothing at all.
+function ghostof(v, k, gx, gy, gr,   j, q, pts, kk, s) {
+  kk = kindof(RP[v,k])
+  if (kk == "rock") {
+    pts = ""
+    for (j = 0; j < 9; j++) {
+      q = j * 0.6981
+      pts = pts f1(gx + cos(q) * gr * rr(0.74, 1.2)) "," f1(gy + sin(q) * gr * rr(0.74, 1.2)) " "
+    }
+    return "<polygon points=\"" pts "\"/>"
+  }
+  s = gr / 12
+  return "<g transform=\"translate(" f1(gx) "," f1(gy) ") scale(" sprintf("%.2f", s) \
+         ")\" stroke-width=\"" sprintf("%.2f", 2.6 / s) "\">" glyphart(kk) "</g>"
+}
+
+function picture(v,   out, k, K, j, q, a, c, rb, ang, rad, x, y, r, s, kind, tt, act, tk, bx, by, br, pts, mx, ix, iy, px, py, nx, ny, sa, bf, bj, bs, ba, qx, qy, g) {
   seed(VH[v])
   K = RC[v]
   mx = (RM[v] > 0 ? RM[v] : 1)
@@ -1033,11 +1089,19 @@ function picture(v,   out, k, K, j, q, a, c, rb, ang, rad, x, y, r, s, kind, tt,
   if (rb > 86) rb = 86
   # What the pilot is doing down there, the diff decides: a commit that
   # deleted something shot it down, one that brought a new file flies it in
-  # on a tow beam, a handful of tuned numbers is a sighting pass, and
-  # anything else is the standing order - fire at the biggest thing you moved.
+  # on a tow beam, one that came back lighter than it went took a bite out of
+  # something, a handful of tuned numbers is a sighting pass, and anything else
+  # is the standing order - fire at the biggest thing you moved.
+  #
+  # The bite is the reading that used to be missing. Only a whole file leaving
+  # the repository read as damage, so a half-gutted feature and a polished one
+  # drew the identical picture. It sits between the sighting pass and the kill
+  # on purpose: more than numbers moving, less than a thing leaving the field.
   act = "shot"; tk = 1
   for (k = 1; k <= K; k++) if (RD[v,k]) { act = "kill"; tk = k; break }
   if (act == "shot") for (k = 1; k <= K; k++) if (RA[v,k]) { act = "deploy"; tk = k; break }
+  if (act == "shot" && VJ[v] > VI[v])
+    for (k = 1; k <= K; k++) if (RG[v,k] > 0) { act = "gnaw"; tk = k; break }
   if (act == "shot" && VI[v] + VJ[v] < 40) act = "tune"
   out = "<svg class=\"art\" viewBox=\"0 0 1400 640\" preserveAspectRatio=\"xMidYMid meet\" aria-hidden=\"true\">"
   out = out "<text class=\"ghost\" x=\"46\" y=\"590\">" roman(v) "</text>"
@@ -1054,14 +1118,33 @@ function picture(v,   out, k, K, j, q, a, c, rb, ang, rad, x, y, r, s, kind, tt,
     r = rb * (0.42 + 0.58 * sqrt(RN[v,k] / mx))
     if (k == tk) { bx = x; by = y; br = r }
     kind = kindof(RP[v,k])
-    tt = "<title>" att(RP[v,k]) " &mdash; " (RD[v,k] ? "shot down, " : (RA[v,k] ? "flown in new, " : "")) \
+    # How much lighter this one came back, as a fraction of everything that
+    # happened to it - so a file that lost three lines out of two hundred takes
+    # a nick and a file that lost most of itself takes a chomp, without anybody
+    # choosing a threshold. A thing that left the field or arrived in it is
+    # already being drawn as that, and is not bitten as well.
+    bf = 0
+    if (RG[v,k] > 0 && !RD[v,k] && !RA[v,k] && RN[v,k] > 0) {
+      bf = RG[v,k] / RN[v,k]
+      if (bf > 0.75) bf = 0.75
+      if (bf < 0.2)  bf = 0.2
+    }
+    tt = "<title>" att(RP[v,k]) " &mdash; " \
+         (RD[v,k] ? "shot down, " : (RA[v,k] ? "flown in new, " : (bf ? "bitten back, " : ""))) \
          RN[v,k] " line" plural(RN[v,k]) "</title>"
     out = out "<g class=\"drift\" style=\"--d:-" f1(rr(0, 9)) "s;--c:" tint(sector(RP[v,k])) "\">"
     if (kind == "rock") {
+      # A rock is bitten in the outline itself, two neighbouring points hauled
+      # in towards the middle. It has to be the geometry rather than something
+      # laid over the top, because the rock turns and a bite that stayed where
+      # it was put while the rock spun under it would read as a smudge on the
+      # lens.
       pts = ""
+      bj = (bf ? int(rr(0, 9)) : -1)
       for (j = 0; j < 9; j++) {
         q = j * 0.6981
-        pts = pts f1(x + cos(q) * r * rr(0.74, 1.2)) "," f1(y + sin(q) * r * rr(0.74, 1.2)) " "
+        bs = (j == bj || j == (bj + 1) % 9) ? 1 - bf * 0.75 : 1
+        pts = pts f1(x + cos(q) * r * rr(0.74, 1.2) * bs) "," f1(y + sin(q) * r * rr(0.74, 1.2) * bs) " "
       }
       out = out "<polygon class=\"rock" (RD[v,k] ? " gone" : "") "\" points=\"" pts \
                 "\" style=\"--s:" f1(rr(18, 46)) "s\">" tt "</polygon>"
@@ -1073,6 +1156,18 @@ function picture(v,   out, k, K, j, q, a, c, rb, ang, rad, x, y, r, s, kind, tt,
                 ") scale(" sprintf("%.2f", s) ")\" stroke-width=\"" sprintf("%.2f", 2.6 / s) "\""
       if (RD[v,k]) out = out " stroke-dasharray=\"" sprintf("%.2f", 5 / s) " " sprintf("%.2f", 8 / s) "\""
       out = out ">" glyphart(kind) tt "</g>"
+    }
+    # And the piece that came off, for either kind. A silhouette is fixed
+    # markup and cannot be deformed the way the rock above just was, so what
+    # says the same thing about both is the chip itself, sitting where it came
+    # off rather than flying away the way wreckage does. Which is the whole
+    # difference between a bite and a kill, said in the vocabulary the field
+    # already has: three shards on their way out, or one crumb that stayed.
+    if (bf) {
+      ba = rr(0, 6.28318)
+      qx = x + cos(ba) * (r + 4 + bf * 9); qy = y + sin(ba) * (r + 4 + bf * 9)
+      out = out "<path class=\"crumb\" d=\"M" f1(qx) " " f1(qy) \
+                "l" f1(rr(5, 11)) " " f1(rr(-4, 4)) "l" f1(rr(-9, -3)) " " f1(rr(4, 9)) "z\"/>"
     }
     if (RD[v,k]) {
       # Wreckage sheds. Three shards, each on its own way out.
@@ -1108,15 +1203,43 @@ function picture(v,   out, k, K, j, q, a, c, rb, ang, rad, x, y, r, s, kind, tt,
   } else {
     ix = bx - cos(ang) * (br + 8); iy = by - sin(ang) * (br + 8)
     out = out "<line class=\"shot\" x1=\"" f1(nx) "\" y1=\"" f1(ny) "\" x2=\"" f1(ix) "\" y2=\"" f1(iy) "\"/>"
-    if (act == "kill")
-      for (j = 0; j < 6; j++) {
-        sa = j * 1.0472 + rr(-0.25, 0.25)
+    # Six ways for a kill and three for a bite, so the two read apart at a
+    # glance: something ended, or something came off.
+    if (act == "kill" || act == "gnaw")
+      for (j = 0; j < (act == "kill" ? 6 : 3); j++) {
+        sa = j * (act == "kill" ? 1.0472 : 0.7854) + rr(-0.25, 0.25)
         out = out "<line class=\"hit\" x1=\"" f1(ix + cos(sa) * 5) "\" y1=\"" f1(iy + sin(sa) * 5) \
                   "\" x2=\"" f1(ix + cos(sa) * rr(14, 24)) "\" y2=\"" f1(iy + sin(sa) * rr(14, 24)) "\"/>"
       }
   }
   out = out "<g class=\"ship\" transform=\"translate(140,556) rotate(" f1(ang * 57.29578) ")\">"
   out = out "<polygon points=\"30,0 -19,-16 -9,0 -19,16\"/></g>"
+  # And what the words said, when they said something a picture can hold.
+  # Drawn here, after everything the diff decided, so that a chapter whose
+  # tagline says nothing draws the field it drew before to the last decimal -
+  # the seed hands out no number past this line unless the grammar caught
+  # something, which is what lets the grammar grow later without repainting
+  # twenty-six chapters that never mentioned speed.
+  g = (K > 0 ? garnish(v) : "")
+  if (g == "speed") {
+    # Three streaks off the back of whatever the pilot was aiming at, pointing
+    # the way it came.
+    for (j = 0; j < 3; j++) {
+      sa = ang + rr(-0.34, 0.34)
+      out = out "<line class=\"streak\" style=\"--d:-" f1(rr(0, 0.9)) "s\" x1=\"" \
+                f1(bx + cos(sa) * (br + 5)) "\" y1=\"" f1(by + sin(sa) * (br + 5)) "\" x2=\"" \
+                f1(bx + cos(sa) * (br + rr(34, 64))) "\" y2=\"" f1(by + sin(sa) * (br + rr(34, 64))) "\"/>"
+    }
+  } else if (g == "echo") {
+    # Two more of it, a third of a turn apart each way, which makes three of
+    # the thing altogether. That is the whole joke and it only works if the
+    # ghost is the same silhouette as the shape it came off.
+    for (j = 1; j <= 2; j++) {
+      sa = a + j * 2.0944
+      out = out "<g class=\"echo\" style=\"--d:-" f1(j * 0.7) "s;--c:" tint(sector(RP[v,tk])) "\">" \
+                ghostof(v, tk, bx + cos(sa) * br * 1.9, by + sin(sa) * br * 1.9 * 0.72, br * 0.62) "</g>"
+    }
+  }
   # The three things a chapter cannot keep quiet, stamped across the field
   # rather than footnoted under it.
   if (VU[v] != "") out = out stamp("off", "REFEREE OFF", 1060, 116, -13)
@@ -1391,7 +1514,10 @@ NF < 4 { next }
         if (!(p in deleted)) acmr++
         if (ns[1] != "-") ins += ns[1]
         if (ns[2] != "-") del += ns[2]
-        keep(p, (ns[1] == "-" ? 0 : ns[1]) + (ns[2] == "-" ? 0 : ns[2]), (p in deleted), (p in arrived))
+        # A binary file reports both sides as a dash, and nought minus nought is
+        # a file that lost nothing, which is the right answer for a picture.
+        pa = (ns[1] == "-" ? 0 : ns[1]); pd = (ns[2] == "-" ? 0 : ns[2])
+        keep(p, pa + pd, (p in deleted), (p in arrived), pd - pa)
       }
       mode = ""; continue
     }
@@ -1575,7 +1701,9 @@ NF < 4 { next }
   VO[v] = overrides; VU[v] = unrec; VR[v] = rulechange; VB[v] = breach
   VP[v] = ($1 in art) ? art[$1] : ""; VQ[v] = altof[$1]
   RC[v] = kc;    RM[v] = kn[1]
-  for (k = 1; k <= kc; k++) { RP[v,k] = kp[k]; RN[v,k] = kn[k]; RD[v,k] = kd[k]; RA[v,k] = kb[k] }
+  for (k = 1; k <= kc; k++) {
+    RP[v,k] = kp[k]; RN[v,k] = kn[k]; RD[v,k] = kd[k]; RA[v,k] = kb[k]; RG[v,k] = kg[k]
+  }
   ENT[++en] = "V" SUBSEP v
 }
 # One line of the contents, a version or an interlude, wearing the marks for
@@ -3119,6 +3247,43 @@ html { scroll-padding-bottom: 6rem; }
   opacity: 0.55;
   animation: march 1.1s linear infinite;
 }
+/* A file that came back lighter than it went has had a piece taken out of it.
+   A rock loses it out of the outline itself, because a rock is drawn fresh
+   every time and can be; a silhouette is fixed markup and cannot, so it loses
+   it beside itself instead. Either way the chip stays where it came off - a
+   shard flies away and means the thing is gone, and this one is not. */
+.art .crumb {
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  opacity: 0.55;
+  filter: drop-shadow(0 0 4px var(--c));
+}
+/* And what the words said, when the tagline said something a picture can hold:
+   speed lines off whatever the pilot was aiming at, or two more of the thing
+   when the line says there was more than one of them. Garnish rather than
+   grammar - it fires on about one chapter in twenty-six, and that is the
+   intended rate. */
+.art .streak {
+  stroke: var(--lime);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  opacity: 0.5;
+  filter: drop-shadow(0 0 6px var(--lime));
+  animation: streak 1.1s ease-out infinite;
+  animation-delay: var(--d);
+}
+.art .echo {
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.3;
+  animation: echopulse 3.6s ease-in-out infinite alternate;
+  animation-delay: var(--d);
+}
 .art .ghost { font: 700 400px var(--mono); fill: var(--violet); opacity: 0.07; }
 .art .stamp rect { fill: none; stroke: currentColor; stroke-width: 3; opacity: 0.75; }
 .art .stamp text {
@@ -3135,6 +3300,8 @@ html { scroll-padding-bottom: 6rem; }
 @keyframes twinkle { to { opacity: 0.12; } }
 @keyframes march { to { stroke-dashoffset: -48; } }
 @keyframes pip { to { opacity: 0.25; } }
+@keyframes streak { from { opacity: 0.7; } to { opacity: 0; } }
+@keyframes echopulse { to { opacity: 0.1; } }
 @keyframes bornring {
   0% { transform: scale(0.55); opacity: 0.9; }
   100% { transform: scale(1.5); opacity: 0; }
