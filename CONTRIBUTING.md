@@ -77,6 +77,23 @@ ever will — it is the rule that decides whether the game is any good.
 
 ## Before you open a pull request
 
+Branches live in a directory, and the directory is the mark: the same nine
+words the book puts on a chapter and the strip puts on a pull request.
+`game/comets-come-in-threes`, `music/the-bass-was-too-polite`,
+`chronicle/the-plates-paint-themselves`. Not `feat/` and `fix/`, because every
+change is one of those and the word is spent before it has said anything.
+
+```sh
+tools/branch.sh <name>       # the mark is read off what you have changed
+tools/branch.sh --rename     # for the branch you cut before you knew
+tools/branch.sh --marks      # the nine directories, in order
+```
+
+You do not type the mark. `tools/chronicle.sh --marks` answers that question
+for the book, the labels and the branch alike, so all three say the same word.
+A branch that is already pushed is left alone — renaming it there strands the
+old name on the remote with a pull request pointing at it.
+
 ```sh
 tools/inbound.sh
 ```
@@ -91,7 +108,13 @@ the sentence the book quotes.
 
 ## What happens to your pull request
 
-Two things read it, in this order.
+Three things read it, in this order.
+
+**The flight strip**, which is furniture and arrives first: you are assigned to
+your own pull request, the owner is asked for a review, and it wears the same
+nine marks the book puts on the chapter it becomes — `game`, `music`, `rules`,
+and the rest. `tools/labels.sh main..HEAD` previews them. Nobody fills any of
+that in by hand, and a path the book gives no mark to arrives bare.
 
 **A workflow**, which prints what it found into the pull request summary: every
 commit and its verdict, every budget the branch spent, and where the flight
@@ -109,7 +132,7 @@ that cannot be refereed.
 ## The rules
 
 [GOLDEN_RULES.md](GOLDEN_RULES.md) is the whole rulebook and it is one page.
-Fifteen rules in four weights:
+Sixteen rules in four weights:
 
 | weight | what it means |
 |---|---|
@@ -122,7 +145,7 @@ Spending a budget is not a failing. It costs one on the tally, your events
 start coming for you sooner, and it is on the record under your name — that is
 the entire price, and it is meant to be cheap to pay and impossible to hide.
 
-Three things get refused whoever asks, and they are worth knowing in advance:
+Four things get refused whoever asks, and they are worth knowing in advance:
 
 - **Another pilot's event file** (GR11). An event is a trap that never fires
   for whoever wrote it, and the whole mechanic rests on nobody being able to
@@ -132,6 +155,11 @@ Three things get refused whoever asks, and they are worth knowing in advance:
 - **The orb and the song in the book** (GR13). One corner of the project stays
   as one person meant it. If you have a better thought for it to think, say so
   — that is a minute of their evening and they will probably enjoy it.
+- **A tape you did not fly** (GR16). Black boxes come off the game-over screen
+  and nowhere else — not typed out, not a checksum worked backwards from
+  numbers somebody read to you. The meter, the board and the rankings all rest
+  on that, and GR14's override is the honest way past an evening you cannot
+  fly.
 
 Everything else is arguable, including the rules. Argue with them in their own
 commit with a `Rule-Change:` line, never in the same breath as using them

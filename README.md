@@ -1,102 +1,37 @@
 # HYPERCOLOR ASTEROIDS
 
-A neon vector rewrite of the 1979 arcade game. Canvas graphics, Web Audio music,
-hand written HTML, CSS and JavaScript. No build step, no dependencies, no
-network.
+![pilots: 1](media/badges/pilots.svg)
+![traps armed: 6](media/badges/traps.svg)
+![versions: 32](media/badges/versions.svg)
+![flights: 3 taped](media/badges/flights.svg)
+![golden rules: 16](media/badges/rules.svg)
+![licence: MIT](media/badges/licence.svg)
 
-It is two games in one. On the screen: rocks, portals, a kraken. In the repo: a
-slow multiplayer game between the developers who share it. The git history is
-the save file, the commit log is the leaderboard, and nobody has to be online
-at the same time. That half is explained in
-[The game behind the game](#the-game-behind-the-game) — you can also ignore it
-and just fly.
-
-Open `index.html` in a browser and it plays. Two pilots, one screen; player two
-can drop in mid-wave, and anyone out of lives can buy back in. What you need to
-play and to build — including what a Windows machine needs — is in
-[docs/requirements.md](docs/requirements.md).
+A neon vector rewrite of the 1979 arcade game. No build step, no dependencies,
+no network. **[Play it in the browser](https://durchnull.github.io/hypercolor-asteroids/)**,
+or open `index.html` from a clone.
 
 ![Two pilots, a kraken, a pair of portals, and somebody on the end of a grapple line](media/field.png)
 
-## What's out there
+## The game on the screen
 
-- **Asteroid** — 20 / 50 / 100 points, splits into smaller, quicker pieces.
-- **Atom bomb** — the panic button. Eats half the screen. Two to start, one more
-  each wave.
-- **Grapple** — the line locks where it bites and swings you rather than hauling
-  you in. Cut loose to fly off on the tangent, faster than you came. The rock
-  swings too, and wrecks whatever it meets.
-- **Kraken** — 250 points, 3–5 hits. Dives, then surfaces right beneath you.
-  Angrier with every hit.
-- **Portals** — fly in one and out the other. So can your shots, and the kraken.
-- **Planet** — too big for the screen, and happy to flatten you.
-- **The Falcon** — passing smuggler, one enormous laser, then gone.
-- **The black box** — every flight is taped, and the tape is a scoreboard entry.
-
-![The grapple: the dotted circle is the arc the line will hold you to, and you leave on the tangent](media/swing.png)
+Two pilots share one keyboard; player two drops in mid-wave, and anyone out of
+lives can buy back in. Out there: rocks that split, a kraken that dives and
+surfaces underneath you, portals your shots also fall through, a grapple that
+swings you rather than reels you in, a planet too big for the screen, and a
+smuggler with one enormous laser. The splash screen's field guide is generated
+from the code, so it is never out of date.
 
 ![The atom bomb going off: the front eats up to half the screen, never all of it, and the kraken to the right of it has about a second left](media/bomb.png)
 
-![The Falcon crossing the field, putting one enormous laser through a kraken on its way past](media/falcon.png)
-
-![A planet crossing the field, with a rock bouncing off the limb and shots burning up on it](media/planet.png)
-
-## How it's put together
-
-Every feature is one module that registers itself with the game loop. Adding one
-is a new file plus a line in the manifest; nothing else mentions it. The HUD,
-the seat cards and the field guide are generated from the same registry, so two
-people adding two features never edit the same lines.
-
-**[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) is the map.**
-
----
-
 ## The game behind the game
 
-The repo is not just where the game is stored — it is where the game is played.
-It works like this:
+The other half of it is played in the repository. Somebody lands a version
+tonight; the next person pulls on Thursday, presses ENTER, and finds out what
+changed **by playing it**. No changelog, no announcement. The diff is not the
+deliverable — the surprise is.
 
-**Commits are turns.** A commit that touches `index.html`, `src/` or `styles/`
-gets a version number, counted off the git history by a script; docs and tools
-do not. Nobody announces what they built. You commit it, the next person pulls,
-presses ENTER, and finds out by playing. Reading the diff first is like shaking
-the presents.
-
-![The splash screen: the field guide, and a card saying who is flying and what the ledger has on them](media/cabinet.png)
-
-**Traps connect the players.** An event is a surprise dropped into a live wave,
-each in its own file under `src/events/`, and one rule makes it worth doing:
-
-> **Your own trap never fires for you.**
-
-**Playing counts.** Every flight is taped, the tape carries a checksum, and an
-edited one ranks nowhere. Honest ones land in
-[docs/RANKINGS.md](docs/RANKINGS.md).
-
-**The rules are part of the game.** [GOLDEN_RULES.md](GOLDEN_RULES.md) is the
-whole rulebook. *Red lines* are hard stops. *Budgets* you may spend, but only
-in writing, in the commit, under your own name. *Nudges* just get mentioned.
-Changing a rule is allowed too, in its own commit, in the open.
-
-**Bending rules has a price.** Overrides are counted from the history into a
-ledger nobody may edit by hand, and the game reads your number: 1 bend and
-ambushes come sooner, 3 and your own traps stop sparing you, 4 and a wave may
-hold an extra ambush. Skipping the hooks costs two instead of one. Nothing
-blocks you and nobody shames you — your game just gets harder, in public.
-
-**A referee at the keyboard.** `tools/golden-check.sh` checks the rules on
-every commit, and [CLAUDE.md](CLAUDE.md) makes claude a second one: it enforces
-the rulebook and refuses the shortcuts.
-
-**The book.** After every commit a script rewrites the chronicle —
-[docs/index.html](docs/index.html) is the cover, one page per version behind
-it. Put a `Chronicle:` line in your commit and the book quotes you.
-
-## Joining in
-
-You take your turn by talking to claude in this folder. A whole session looks
-like this:
+## A session with Claude sounds like this
 
 - *"what did the others land since I last played?"* — or `/scout`
 - *"add comets, and make them come in threes"*
@@ -105,35 +40,90 @@ like this:
 - *"read the black box"* — paste the tape off the game-over screen
 - *"land it"* — or `/land`
 
-That is the job. Claude puts each thing in its own file, wires it in, checks
-the rules, hands the game back for you to play, and writes the commit. You do
-not need to know how any of it works.
+## You build the traps everybody else flies into
 
-Set up once, in a terminal:
+You can drop an ambush into the game — the lights go out mid-wave, rock closes
+in from every side but one, something comes through a portal that should not
+fit. It goes in a file with your name on it, and your name is the whole
+mechanic:
+
+> **A trap never fires for the person who wrote it.**
+
+So you build it, everyone else meets it, and you never once see it from the
+inside. Nobody can disarm the one that is waiting for them, either. New pilots
+are safe until they write their first: the field does not ambush the unarmed.
+
+![A trap firing mid-wave: rock closing from every side but one, the name of the ambush across the field, and its glyph counting down at the foot of the screen](media/trap.png)
+
+## The black box: you have to fly what you land
+
+Every flight tapes itself. Die, and the game-over screen hands you a sealed
+black box; paste it back and it lands on the
+[flight records](docs/RANKINGS.md). One tape buys three landings — three
+versions with your name on them — and nobody writes a tape by hand. They come
+off the glass or they are not tapes.
+
+![The game-over screen: the sealed tape in its panel and the button that hands it over. The record itself is X-ed out in this picture, because a tape that means anything only ever comes off your own glass](media/tape.png)
+
+## Bending a rule makes your game harder
+
+[GOLDEN_RULES.md](GOLDEN_RULES.md) is the whole rulebook, one page. Red lines
+are hard stops; budgets you may spend, in writing, under your own name. Nothing
+is blocked and nobody is scolded — overrides are counted out of the git history
+into a ledger nobody edits by hand, your ambushes start coming sooner, and
+clean landings ease it back off. It is a difficulty setting made of your own
+behaviour.
+
+Every commit also writes itself into
+[the chronicle](https://durchnull.github.io/hypercolor-asteroids/docs/): a
+cover, a page per version, and your own line about it quoted a year from now.
+
+## Getting in
 
 ```sh
-git clone <this repo>
+git clone https://github.com/durchnull/hypercolor-asteroids   # or fork it
+cd hypercolor-asteroids
 tools/golden-check.sh --install   # wire in the referee
-tools/whoami.sh                   # say who you are
+tools/whoami.sh                   # say who you are, so your own traps go quiet
 open index.html                   # find out what the others did to you
-claude                            # and take your turn
 ```
 
-Two things worth knowing:
+On Windows, double-click `index.html` instead of that last line; if your
+browser is strict about local files, `python3 -m http.server 8000` and go to
+`localhost:8000`. [Before you can play](docs/requirements.md) has the rest.
 
-- Claude will refuse some things — another player's trap file, skipping the
-  referee, editing your own tally. That is the game working, not a bug.
-- Bending a rule is allowed. It costs one line in the commit, and your game
-  gets harder in public. [GOLDEN_RULES.md](GOLDEN_RULES.md) is one page if you
-  are curious.
+Your meter starts at zero, which buys you three landings — three versions of
+your own — before anybody asks to see a tape. Spend one on something small:
+make the kraken meaner, give the blaster a nastier noise, repaint the whole
+cabinet a colour nobody asked for. Each of those is one file, none of them can
+break anybody else, and every one counts as a full turn.
 
-Arriving from outside, with a pull request rather than a push, works the same
-way and is read the same way — one commit at a time, each judged as its own
-author. [CONTRIBUTING.md](CONTRIBUTING.md) is the walk-through, and
-`tools/inbound.sh` tells you what the referee will say before you send it.
+Talking to claude is the quick way through it, and doing the same five steps by
+hand is no slower — [CONTRIBUTING.md](CONTRIBUTING.md) walks you from a clone
+to a pull request. The project is MIT, and what you contribute is contributed
+under the same licence.
 
-Nobody has to trust anybody. `git blame` says who made a thing, the book says
-who bent which rule, and the ledger is computed from both. That is all the
-governance a game about shooting rocks needs.
+### What happens after you push
 
-Now go and do something to annoy the others.
+`main` takes pull requests and nothing else, from everybody including the
+person who owns the place. A workflow reads your branch one commit at a time
+and prints a verdict into the pull request: red lines fail it, budgets and
+nudges are only ever mentioned, because the point was never that a machine
+stops you. Another one labels it and puts your name on it.
+
+Then a person presses merge — a merge commit, never a squash, because the
+history is the scoreboard. If what you landed touched the game it becomes the
+next numbered version, counted off the history rather than chosen by anybody,
+and the chronicle and the ledger rewrite themselves on the way through.
+
+## Where to look next
+
+| | |
+|---|---|
+| [the chronicle](https://durchnull.github.io/hypercolor-asteroids/docs/) | every night this cabinet has had, written down while it was happening |
+| [the flight records](docs/RANKINGS.md) | who flew, how far they got, and how it ended for them |
+| [the rulebook](GOLDEN_RULES.md) | sixteen rules, eight of them unbendable, and the price of the rest |
+| [taking a turn by hand](CONTRIBUTING.md) | the long way round, from a clone to a pull request, no help required |
+| [behind the glass](docs/ARCHITECTURE.md) | how the cabinet is wired, and where a new idea plugs into it |
+| [the referee's briefing](CLAUDE.md) | what claude is told before it sits down at this keyboard |
+| [before you can play](docs/requirements.md) | what your machine needs, Windows included |
