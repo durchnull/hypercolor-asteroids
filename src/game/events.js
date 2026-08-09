@@ -210,7 +210,16 @@
   // A pilot who has bent a rule waits less between ambushes, and a wave may
   // hold one more of them. Both come off the ledger, both are capped, and
   // neither exists for anybody who has not earned it. GR12.
-  const heat = () => (A.eventHeat ? A.eventHeat() : 1);
+  //
+  // Whoever tops the board waits less as well, for a reason that has nothing
+  // to do with the ledger — game/bounty.js, and it is a share of the gap like
+  // the other one. Two impatiences multiply, so they get a floor of their own:
+  // a pilot who has bent four rules while sitting on the high score is still
+  // playing a wave somebody can read and survive. GR8 is why the floor is
+  // here rather than in either of the things it caps.
+  const HEAT_FLOOR = 0.45;
+  const heat = () => Math.max(HEAT_FLOOR,
+    (A.eventHeat ? A.eventHeat() : 1) * (A.bountyHeat ? A.bountyHeat() : 1));
   const quota = () => MAX_PER_WAVE + (A.eventQuotaBonus ? A.eventQuotaBonus() : 0);
 
   const gap = () => Math.max(9, A.rand(GAP[0], GAP[1]) - A.game.level * 0.7) * heat();
