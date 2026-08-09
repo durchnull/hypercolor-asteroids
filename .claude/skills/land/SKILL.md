@@ -50,8 +50,15 @@ point.
 Then get off `main`, because that is not where a version lands any more:
 
 ```sh
-git switch -c <name>
+tools/branch.sh <name>        # -> <mark>/<name>, e.g. game/comets-come-in-threes
+tools/branch.sh --rename      # if you cut the branch before you knew
 ```
+
+A branch lives in a directory and the directory is its mark — the same word
+the pull request and the chapter will wear, read off what you changed rather
+than typed. Not `feat/` or `fix/`: every change is one of those, so the word is
+spent before it has said anything. If nothing has changed yet the tool says so
+and asks you to name one, which is the honest answer to branching first.
 
 `main` takes pull requests and nothing else (GR7). The pre-push hook refuses
 every push to it and the remote's ruleset refuses the same ones from the other

@@ -108,9 +108,13 @@ case "${1:---worktree}" in
     ;;
 
   --worktree)
-    # What is uncommitted plus what is staged, which is the question a pilot
-    # mid-branch is actually asking.
-    { git diff --name-only HEAD 2>/dev/null; git diff --cached --name-only 2>/dev/null; } \
+    # What is uncommitted, what is staged and what is not tracked yet, which is
+    # the question a pilot mid-branch is actually asking. The third of those
+    # was missing and mattered: a feature here is a new file (GR3), so the one
+    # change most worth previewing was the one that read as empty.
+    { git diff --name-only HEAD 2>/dev/null
+      git diff --cached --name-only 2>/dev/null
+      git ls-files --others --exclude-standard 2>/dev/null; } \
       | from_stdin
     ;;
 
