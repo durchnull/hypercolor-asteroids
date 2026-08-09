@@ -213,6 +213,117 @@ one becomes.
 The hooks show you which shape of commit this is, check the red lines, check
 the budgets, and rebuild `docs/index.html` after the commit lands.
 
+## Ending a turn
+
+A turn ends with the same facts the splash screen shows a pilot before they
+fly — what moved, what they are up, what the field is charging them, and what
+to do next — in the terminal where the work actually happened. Four blocks, in
+this order, and the move is last because the last line on screen is the one
+that gets read.
+
+**Only when the turn finished something and committed it.** The blocks mean
+*that is landed*. A turn that ends mid-build, in planning, waiting on an
+answer, or with nothing but a question answered gets none of them — say where
+it stands and what you are waiting on, in a sentence, like a person. Printed
+over unfinished work they are worth nothing, and then they are worth nothing
+over finished work either.
+
+**Write a block only when this turn gave it something to say.** Never "None",
+never a placeholder, never a standing report nobody asked for. Three empty
+blocks in a row teach the next pilot to skim past the one that mattered.
+`YOUR MOVE` is the only one that always appears on a turn that qualifies.
+
+**A ship flies over first.** Whenever the blocks print, a spacecraft in ASCII
+goes above them, on a 100-column canvas, in a fenced code block, with stars and
+empty space around it. Draw a new one every time — a different hull, a
+different angle, a different piece of sky. Never paste the last one back, never
+keep a stash of them, and do not caption it. It is the arcade flourish that
+says the work landed, and a flourish that repeats is a logo.
+
+**Each block header is a markdown heading — `### YOUR MOVE`, not bold text.**
+A bold line is just another paragraph, and the terminal sets paragraphs tight
+against each other, so a blank line in the source buys nothing on the screen.
+A heading gets real space above it, which is the entire point: these are meant
+to be found by somebody skimming a wall of output, not read as the next
+sentence of the paragraph before them.
+
+**WHAT YOU CHANGED** — whether the cabinet moved. The version this becomes,
+and what the next pilot finds out by playing. If it made the game *worse* — a
+nerf, a wave that stopped being fair, somebody's feature quietly gutted — that
+goes here in the same plain voice. It is the honest half of GR8 and it is
+never dressed up.
+
+**YOUR BENEFIT** — what is going the pilot's way. Mercy earned back off the
+tally, a meter cleared, a trap now armed against everybody but them, a file
+that is theirs forever because their commit created it.
+
+**YOUR HANDICAP** — what the field is charging them, with the way out in the
+same line. A bend costs one and three clean landings ease it; three landings
+spend a tape and one flight buys three more; at three bends their own traps
+stop sparing them. Write it flat. This is a difficulty setting, not a
+scolding, and GR12 is not improved by being read out sternly.
+
+**YOUR MOVE** — three lines at most, one verb each, the command in the line
+and copy-pasteable. Only things the pilot does: if a tool could have run it, it
+ran already, so never ask them to run the referee "to check". Anything that
+costs them something says so in one clause. A decision is a question with the
+options in it, not "let me know how you would like to proceed". If the turn
+ended blocked, this block says what is blocking it and both ways out.
+
+```
+... the last thing said about the work itself.
+
+    .                    *              .        .           *
+              *                 /\                    .
+       .              .        /  \       *                     .
+                            __/    \__              .
+    *          .        --=[  o  o  ]=--                   *
+                            \__    __/         .
+              .                \  /                  *
+       *                        \/          .                .
+
+### WHAT YOU CHANGED
+
+This becomes v32. A ring drifts in once a wave and debris comes to you for
+eight seconds; rocks are unmoved, so it buys the tail of a messy wave.
+
+### YOUR HANDICAP
+
+The meter: 2 of 3 used, so this is the last landing your tape covers. Four
+minutes of flying buys three more.
+
+### YOUR MOVE
+
+1. `python3 -m http.server 8000` - the ring shows up on wave 1.
+2. Die, COPY TAPE, paste it here - that clears the meter before it spends it.
+3. Say "land it", or hand me a better subject line, and I commit.
+```
+
+That turn had no `YOUR BENEFIT` in it, so it does not have one.
+
+The numbers in any of it are read, never estimated — that is the only reason
+they mean anything:
+
+```sh
+tools/tally.sh --roll               # bends, clean landings, what the field charges
+tools/flights.sh --count "<name>"   # landings used since that pilot last flew
+tools/chronicle.sh --run            # how long the one-name spine is (GR15)
+tools/chronicle.sh --next           # what the pending commit becomes, if anything
+```
+
+A line whose tool did not run does not get written. Guessing somebody's tally
+at them is worse than not mentioning it at all.
+
+And when there is nothing for the pilot to do at all — a question answered, a
+history read, the cabinet exactly as it was found — do not manufacture a step
+and do not reach for the blocks. Say so in a line, and that line is allowed to
+be funny:
+
+> Nothing for you. The cabinet is exactly as you found it and the referee has
+> gone home.
+
+Vary it. The joke is that there is no move, not the sentence.
+
 ## Skills
 
 Use them; they exist so this stays fun rather than procedural.
