@@ -6,19 +6,20 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 26,
-    latest: { v: 26, pilot: "David Friedrich", date: "08 August 2026", line: "The splash screen learned the difference between reading and pressing.", plate: "6b9065f4.jpg", alt: "The splash screen learned the difference between reading and pressing." },
+    versions: 28,
+    latest: { v: 28, pilot: "David Friedrich", date: "09 August 2026", line: "A rule was taken out, looked at, and put back differently.", plate: "bb2a685e.jpg", alt: "A rule was taken out, looked at, and put back differently." },
     plates: [
+      { v: 28, file: "bb2a685e.jpg", alt: "A rule was taken out, looked at, and put back differently.", line: "A rule was taken out, looked at, and put back differently." },
+      { v: 27, file: "9b3013af.jpg", alt: "The HUD is more forthcoming than it used to be.", line: "The HUD is more forthcoming than it used to be." },
       { v: 26, file: "6b9065f4.jpg", alt: "The splash screen learned the difference between reading and pressing.", line: "The splash screen learned the difference between reading and pressing." },
       { v: 25, file: "31479209.jpg", alt: "The plumbing was rerouted and nothing caught fire.", line: "The plumbing was rerouted and nothing caught fire." },
-      { v: 24, file: "f31b98ce.jpg", alt: "The panels say something different now.", line: "The panels say something different now." },
-      { v: 23, file: "cddc9daf.jpg", alt: "The phosphor is a different colour of wrong now. The HUD says so, too.", line: "The phosphor is a different colour of wrong now. The HUD says so, too." },
     ],
     roster: {
-      "David Friedrich": 26,
+      "David Friedrich": 28,
     }
   };
   A.BOARD = [
     { rank: "1", pilot: "David Friedrich", score: "16530", wave: "4", time: "4:42", hits: "17%", line: "Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end." },
+    { rank: "2", pilot: "David Friedrich", score: "15170", wave: "4", time: "4:16", hits: "19%", line: "Three house traps walked through, and then PINCER took the last two ships at wave 4." },
   ];
 })(ASTEROIDS);
