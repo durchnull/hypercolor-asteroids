@@ -107,6 +107,12 @@ Everything hangs off a feature registry, and that is the one idea you need.
   on a pull request, along with the author as assignee and the owner as
   reviewer — the last of which github refuses whenever the owner is also the
   author, which is most of the time here and is not worth working around.
+- `tools/branch.sh` — the same nine words one step earlier: a branch lives in a
+  directory and the directory is its mark, so a change announces itself before
+  anybody opens it. `tools/branch.sh <name>` reads the mark off what you have
+  changed, `--rename` fixes a branch cut before you knew what it would hold,
+  and neither asks you to type the mark — that answer has one home and this is
+  not it.
 - **What counts as a version is one question with one answer, and it lives in
   `tools/chronicle.sh`.** `--versions` lists them, `--moved` asks about one,
   `--pilots` says who is a person rather than a workflow, `--run` says how long
@@ -236,9 +242,18 @@ Say it in one sentence, offer the legitimate route, and move on.
    GR14 counts, and one tape covers three landings. If you drove a browser to
    do it, close it before you report: a window left open outlives the turn on
    somebody's desktop, and the next run inherits whatever state it was in.
-6. **Land it, on a branch.** `git switch -c <name>` — `main` takes pull
+6. **Land it, on a branch.** `tools/branch.sh <name>` — `main` takes pull
    requests and nothing else (GR7), so the branch is where a version lives
-   until the room has seen it. Subject line written from the next pilot's seat,
+   until the room has seen it. A branch goes in a directory and **the directory
+   is its mark**: `game/comets-come-in-threes`,
+   `game-within/the-trap-that-spares-nobody`, `chronicle/the-plates-paint-themselves`.
+   Not `feat/` and `fix/` — every change is one of those, so the word is spent
+   before it has said anything, while the mark says which part of the cabinet
+   you were standing in and is the same word the pull request and the chapter
+   will wear. You do not type it: the tool reads it off what you have changed
+   through `tools/chronicle.sh --marks`, takes the loudest when there are
+   several, and `--rename` fixes a branch you cut before you knew what it would
+   hold. Subject line written from the next pilot's seat,
    plus a `Chronicle:` line for the book:
 
 ```

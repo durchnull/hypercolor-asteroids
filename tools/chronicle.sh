@@ -679,6 +679,16 @@ case "${1:-}" in
   # correctly bare: the paperwork is not a thing that happened.
   --marks)
     shift
+    # Every mark there is, in the order the book prints them, for the two
+    # callers that need the vocabulary rather than an answer about paths:
+    # tools/branch.sh validating a directory somebody typed, and anything that
+    # wants to list them. Same one home - a second copy of these nine words is
+    # a second opinion waiting to happen.
+    if [ "${1:-}" = "--all" ]; then
+      awk "$LIB"'BEGIN { n = split(markorder(), a, " ")
+                         for (i = 1; i <= n; i++) print markname(a[i]); exit }'
+      exit 0
+    fi
     if [ $# -gt 0 ]; then printf '%s\n' "$@"; else cat; fi \
       | awk "$LIB"'
           $0 != "" { m = markof($0); if (m != "") seen[m] = 1 }
