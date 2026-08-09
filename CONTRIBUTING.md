@@ -181,6 +181,14 @@ read before the first pull request, and it never becomes a question at all.
 `docs/art/` and `docs/faces/` are machine-painted rather than written; see
 [NOTICE](NOTICE) if you were wondering who drew them.
 
+## One thing that is not arguable
+
+The game is hostile on purpose and the people are not.
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) is short and it comes down to aiming
+it at the ship rather than at the pilot. Build the meanest trap you can and
+address it to somebody by name — that is the game working. The rest of what
+that file rules out was never part of it.
+
 ## If you are new here
 
 Two things are on your side.

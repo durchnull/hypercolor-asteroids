@@ -124,6 +124,7 @@ and the chronicle and the ledger rewrite themselves on the way through.
 | [the flight records](docs/RANKINGS.md) | who flew, how far they got, and how it ended for them |
 | [the rulebook](GOLDEN_RULES.md) | sixteen rules, eight of them unbendable, and the price of the rest |
 | [taking a turn by hand](CONTRIBUTING.md) | the long way round, from a clone to a pull request, no help required |
+| [the code of conduct](CODE_OF_CONDUCT.md) | the game is hostile on purpose; aim it at the ship, never at the pilot |
 | [behind the glass](docs/ARCHITECTURE.md) | how the cabinet is wired, and where a new idea plugs into it |
 | [the referee's briefing](CLAUDE.md) | what claude is told before it sits down at this keyboard |
 | [before you can play](docs/requirements.md) | what your machine needs, Windows included |
