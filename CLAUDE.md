@@ -214,7 +214,11 @@ Say it in one sentence, offer the legitimate route, and move on.
    live peers and run `git status` again before you touch a shared generator
    (`tools/chronicle.sh`, `tools/golden-check.sh`) or rebuild `docs/`, and say
    which regions you are taking. Three sessions once collided in the middle of
-   that one file and it only came apart cleanly because they were talking.
+   that one file and it only came apart cleanly because they were talking. When
+   you need to test something unfinished and somebody else is about to commit,
+   back your own hunks out — keep a copy in the scratchpad — and verify in a
+   throwaway clone there instead, so that nothing half-built rides out in a
+   commit somebody else wrote.
 2. **Build it in its own file.** GR3. Register it, give it a `guide` entry so
    the next player can discover it — or a `No guide tile:` line if it is the
    kind of thing the guide turns away.
