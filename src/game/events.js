@@ -26,6 +26,7 @@
 //     by: "Dave Okoro",          // your git name, exactly. or A.HOUSE.
 //     name: "PINCER",            // the banner the victim gets
 //     blurb: "From three sides", // the small line under it
+//     for: "Mira Vogel",         // optional. a dedication, and nothing else.
 //     minWave: 4,                // earliest wave it may fire on
 //     weight: 2,                 // relative likelihood within your own arsenal
 //     cooldown: 3,               // waves before it may repeat
@@ -39,6 +40,18 @@
 // the foot of the screen and stays there for as long as the ambush is really
 // happening. Draw one — an event without an icon gets a warning diamond and
 // looks like every other event without an icon. See ui/mark.js.
+//
+// `for:` is a dedication and it is worth being exact about what it is not. It
+// changes the banner and it changes nothing else: the trap fires at the same
+// pilots it fired at before, at the same odds, in the same waves, and the one
+// named gets no more of it than anybody in the room. Everybody reads the name,
+// which is the point of dedicating anything — a trap addressed to somebody is
+// a thing the rest of the room gets to watch happen.
+//
+// It is written down here because the line it does not cross is a red one. The
+// moment a `for:` decides who an event is eligible for, it is targeting by
+// name, and that is GR11 with no override in it. If somebody wants that, it is
+// one commit changing the rule in the open, and it is not this.
 //
 // `by: A.HOUSE` means the event belongs to nobody and fires for everyone,
 // author included. Use it when you want a thing in the game more than you want
@@ -258,10 +271,25 @@
     return traps[traps.length - 1];
   }
 
+  // A dedication, first name only, because the banner has one line for it and
+  // because that is how anybody says it out loud. The pilot it names reads
+  // something else, and reads it while the walls are closing: a dedication
+  // nobody is told about is a postcard nobody posted.
+  const first = (name) => String(name).split(/\s+/)[0].toUpperCase();
+
+  function dedication(e) {
+    if (!e.for) return null;
+    return e.for === A.activePilot() ? "FOR YOU, " + first(e.for) : "FOR " + first(e.for);
+  }
+
   function announce(e) {
-    // Your own trap, coming back at you. Say so — the tally is a punishment,
-    // and a punishment nobody notices is only a bug.
-    A.showBanner(e.name || "INCOMING", own(e) ? "YOURS. YOU EARNED THIS ONE" : e.blurb || null, 1.8);
+    // Three things can go under the name, and the order is the order they
+    // matter in. Your own trap coming back at you outranks everything — the
+    // tally is a punishment, and a punishment nobody notices is only a bug.
+    // Then whoever it was written for, because that is the whole of what a
+    // dedication is. Then the blurb, which is what it always was.
+    const sub = own(e) ? "YOURS. YOU EARNED THIS ONE" : dedication(e) || e.blurb || null;
+    A.showBanner(e.name || "INCOMING", sub, 1.8);
     A.screenFlash(A.hue + 200, 0.34);
     A.shakeBy(10);
     A.blip(180, 0.4, "sawtooth", 0.16);
@@ -335,7 +363,7 @@
         stroke="currentColor" stroke-width="1.6">
         <path d="M17 3v7M17 24v7M3 17h7M24 17h7M7 7l5 5M22 22l5 5M27 7l-5 5M12 22l-5 5"/>
         <circle cx="17" cy="17" r="4.5"/></svg>`,
-      desc: "The field has moods. Somebody wrote one of them for you, and it is not the one they get. A pilot with no trap laid is spared the lot &mdash; the room arms when you do.",
+      desc: "The field has moods. Somebody wrote one of them for you, and it is not the one they get. A pilot with no trap laid is spared the lot &mdash; the room arms when you do. Some of them arrive with a name under the banner: that is a dedication, and it is addressed to somebody rather than aimed at them.",
     },
   });
 })(ASTEROIDS);

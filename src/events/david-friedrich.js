@@ -17,6 +17,10 @@
       by: "David Friedrich",
       name: "THE VICE",
       blurb: "TWO WALLS, AND THEY ARE NOT STOPPING",
+      // Addressed, not aimed. The whole room reads the name and the whole room
+      // gets the walls; Malte is in exactly the danger everybody else is in,
+      // and the only thing he has that they do not is the greeting.
+      for: "Malte Buttjer",
       minWave: 3,
       weight: 2,
       cooldown: 3,
