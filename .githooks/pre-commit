@@ -41,13 +41,26 @@ fi
 
 # Nothing checks the referee except this, so it runs when the referee moves -
 # golden-check.sh itself, its own tests, and the two tools it leans on to
-# decide what is generated and what the ledger should say. It takes about
-# twenty seconds, which is why it is not on the path of an ordinary landing.
+# decide what is generated and what the ledger should say. And nothing checks
+# the sentence except tools/tally-test.sh - what a bend costs, who a breach
+# charges, the receipts these hooks write, and what the ledger does to a
+# pilot's field - so that one runs when any of that machinery moves. Each
+# suite takes a minute or two, which is why neither is on the path of an
+# ordinary landing.
 if git diff --cached --name-only --diff-filter=ACMRD |
    grep -Eq '^tools/(golden-check|referee-test|tally|docs)\.sh$'; then
   if ! sh tools/referee-test.sh; then
     printf '\n  the referee no longer referees. nothing was committed.\n' >&2
     printf '  tools/referee-test.sh says which rule stopped working.\n\n' >&2
+    exit 1
+  fi
+fi
+
+if git diff --cached --name-only --diff-filter=ACMRD |
+   grep -Eq '^tools/(tally|tally-test|chronicle)\.sh$|^\.githooks/|^src/game/(tally|events)\.js$'; then
+  if ! sh tools/tally-test.sh; then
+    printf '\n  a bend no longer costs what the rules say. nothing was committed.\n' >&2
+    printf '  tools/tally-test.sh says which part of the sentence stopped landing.\n\n' >&2
     exit 1
   fi
 fi
