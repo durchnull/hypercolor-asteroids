@@ -189,13 +189,29 @@ other people already have. Land a new commit instead — the old one stays in th
 book either way.
 </p>
 <p>
+And it is why <b><code>main</code> takes pull requests rather than pushes.</b> Nobody merges
+into it directly — not a pilot, not the person who owns the cabinet. Work
+happens on a branch, arrives as a pull request, and gets merged there. The
+reason is not ceremony: a pull request is the one moment the whole room can see
+a version <i>before</i> it is on the cabinet, and it is where the referee gets its
+second reading, on a runner, for work from a clone that never installed the
+hooks.
+</p>
+<p>
+Merge commits only. Squashing would collapse three versions into one and rebase
+would hand every commit a new sha, and both of those are this rule being broken
+by a button instead of by a person.
+</p>
+<p>
 Write the subject line for the next pilot, not for the diff. "Comets, and they
 come in threes" beats "add comet feature".
 </p>
 <p>
 <i>Checked:</i> <code>git config user.name</code> must be set; no <code>@author</code> tags in source; the
-pre-push hook refuses any non-fast-forward push to <code>main</code>. Thin or generic
-subjects get a nudge.
+pre-push hook refuses every push to <code>main</code> — deletions, rewrites and
+fast-forwards alike — and the remote's "main is the scoreboard" ruleset refuses
+the same three from the other side, with the pull request as the only way in.
+Thin or generic subjects get a nudge.
 </p>
 <h2 id="gr8-play-fair-in-the-game-too-on-your-honour">GR8 — Play fair in the game, too. <code>on your honour</code></h2>
 <p>

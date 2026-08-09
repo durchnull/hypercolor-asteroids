@@ -7,10 +7,21 @@
 # than stale - if every branch carries its own copy, every branch conflicts
 # with every other one over a file nobody is allowed to edit by hand anyway.
 #
-# So the book is rebuilt here, once, after the merge, and pushed. Nobody's
-# branch has to carry it and nobody has to resolve it.
+# So the book is rebuilt here, once, after the merge. Nobody's branch has to
+# carry it and nobody has to resolve it.
 #
-# Two things keep this honest:
+# **It arrives as a pull request, like everything else.** main takes pull
+# requests and nothing else now (GR7), and the honest reading of that is that
+# it holds for the machines too - a rule the machinery is exempt from is a rule
+# with a door in it, and the door would be the one place nobody is watching.
+# So the crew branches, files, opens a pull request and merges its own, which
+# is exactly what a pilot does with one difference: nobody has to read it.
+#
+# The alternative was a bypass on the ruleset, and github would not have given
+# us one anyway - the GitHub Actions integration cannot be a bypass actor on a
+# user-owned repository. That refusal turned out to be the better design.
+#
+# Three things keep this honest:
 #
 #   - It only ever commits generated files. tools/chronicle.sh and
 #     tools/tally.sh both derive everything they write from the history, so
@@ -19,11 +30,14 @@
 #     a machine writing a number the history does not support, and it cannot.
 #   - The book passes over its own filing in silence, so these commits get no
 #     version, no chapter and no mention. They are the paperwork the chronicle
-#     already declines to narrate.
+#     already declines to narrate - and now so are the pull requests.
+#   - It merges nothing but its own. The pull request it opens has one commit
+#     in it, written four lines earlier, on a branch that exists for ninety
+#     seconds and is deleted on the way out.
 #
-# There is no loop to worry about: a push made with the default GITHUB_TOKEN
-# does not trigger another workflow run. That is github's rule, not ours, and
-# it is the reason this does not need a guard.
+# There is no loop to worry about: neither a push nor a merge made with the
+# default GITHUB_TOKEN triggers another workflow run. That is github's rule,
+# not ours, and it is the reason this does not need a guard.
 #
 # tools/chronicle-art.sh is not called here and could not do anything if it
 # were - the plates need credentials that live in one person's untracked .env
@@ -37,6 +51,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: the-book
@@ -56,7 +71,9 @@ jobs:
           sh tools/chronicle.sh
           sh tools/tally.sh
 
-      - name: land it, if anything actually moved
+      - name: file it, if anything actually moved
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if git diff --quiet; then
             echo "the book was already up to date."
@@ -75,6 +92,12 @@ jobs:
           git config user.name  "Ground Crew"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          # The run id, because two of these must never collide and a date
+          # would. The branch outlives the merge by no time at all.
+          BRANCH="ground-crew/$GITHUB_RUN_ID"
+          SUBJECT="The paperwork from $(git rev-parse --short HEAD), filed"
+
+          git switch -q -c "$BRANCH"
           git add -A
           git status --short
 
@@ -83,5 +106,45 @@ jobs:
           # the hooks are not installed on a runner, because nobody ran
           # --install. The referee has already read this push, one commit at a
           # time, on the pull request that produced it.
-          git commit -q -m "The paperwork from $(git rev-parse --short HEAD), filed"
-          git push
+          git commit -q -m "$SUBJECT"
+          git push -q -u origin "$BRANCH"
+
+          # Through a file, because the body is markdown and a heredoc indented
+          # to sit inside this block hands github a wall of leading spaces,
+          # which markdown reads as one long code block.
+          cat > "$RUNNER_TEMP/body.md" <<'EOF'
+          ```
+                ___
+              _/ o \__      .        the crew, filing
+              \_____/ `-.        .
+                 |  |    `.                    .
+                 `--'      *
+          ```
+
+          Generated. `tools/chronicle.sh` and `tools/tally.sh` were run over
+          the history that just landed, and whatever came out different is in
+          here.
+
+          Nobody needs to read it. The book passes over its own filing in
+          silence, so this is not a version, earns no chapter and gets no
+          plate. It arrives as a pull request because main takes pull requests
+          and nothing else (GR7) — and a rule the machines are exempt from is a
+          rule with a door in it.
+          EOF
+
+          gh pr create --base main --head "$BRANCH" \
+                       --title "$SUBJECT" --body-file "$RUNNER_TEMP/body.md"
+
+          # github works out whether a pull request can be merged after it has
+          # answered the call that created it, so the first ask is sometimes
+          # too early. Five tries at ten seconds, and then it is a real
+          # failure worth a red run rather than a spin.
+          n=1
+          until gh pr merge "$BRANCH" --merge --delete-branch; do
+            if [ "$n" -ge 5 ]; then
+              echo "the crew could not file its own paperwork. the book is one commit stale."
+              exit 1
+            fi
+            n=$((n + 1))
+            sleep 10
+          done

@@ -47,6 +47,18 @@ around:
 Never reach for `git pull --rebase` to get around a stop. The stop is the
 point.
 
+Then get off `main`, because that is not where a version lands any more:
+
+```sh
+git switch -c <name>
+```
+
+`main` takes pull requests and nothing else (GR7). The pre-push hook refuses
+every push to it and the remote's ruleset refuses the same ones from the other
+side, so a branch is not a formality here — it is the only route. Paperwork
+first, branch second, in that order: `tools/groundcrew.sh` only ever looks at
+`main`, and on a branch it exits without a word.
+
 ## 1. The referee
 
 ```sh
@@ -194,3 +206,30 @@ last chapter.
 
 Report the version that landed, not the filing commits. The pilot asked for a
 version; the paperwork is the tail of it.
+
+## 6. Open the pull request
+
+```sh
+git push -u origin <name>
+gh pr create
+```
+
+`.github/PULL_REQUEST_TEMPLATE.md` is already in the box. It ends the way a
+turn at the keyboard ends — a ship drawn fresh, then what the next pilot finds
+out by playing, then who else it happens to — and the same rule applies: write
+a block only when this branch gave it something to say, and delete the rest.
+Draft it for the pilot the way you draft the `Chronicle:` line, and let them
+redraw it. This repository is public and somebody who has never pressed ENTER
+here may read it first.
+
+Do not spoil the surprise in it (GR9). Tease the thing; the reveal belongs in
+the game.
+
+The merge is the pilot's, on github, and it is a **merge commit** — squashing
+collapses several versions into one and rebasing hands every commit a new sha,
+and the book counts versions off commits. Say so once if they ask which button.
+
+Then it is out of your hands: the referee reads every commit on the branch on
+the way in, and Ground Crew files the book on the way out. Nothing to push
+afterwards, and nothing of yours to collect until next session, when step 0
+takes it.

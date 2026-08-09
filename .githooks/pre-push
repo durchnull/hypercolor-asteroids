@@ -1,58 +1,50 @@
 #!/bin/sh
 # GR7, the part of it that only shows up at push time: the history is the
 # scoreboard, and you do not get to edit the scoreboard. Your own branches are
-# yours to rebase; main belongs to everyone.
+# yours to rebase and yours to push; main belongs to everyone, and main takes
+# pull requests rather than pushes.
+#
+# That last part used to be three refusals - delete, rewrite, and a nudge about
+# the ground crew's paperwork if the push was out of date by it. It is one
+# refusal now, and the paperwork check went with it: it only ever fired on a
+# push to main, and there is no such thing any more. tools/groundcrew.sh still
+# collects the paperwork and /land still runs it first.
+#
+# The remote says the same thing in github's own words - the "main is the
+# scoreboard" ruleset - which is the point of saying it here as well. This one
+# arrives while the pilot is still at the keyboard, with the commands in it,
+# rather than as a rejected push four seconds later.
 set -u
 Z=0000000000000000000000000000000000000000
 status=0
-pushing_main=0
 
 while read -r _local lsha rref rsha; do
-  case "$rref" in refs/heads/main|refs/heads/master) pushing_main=1 ;; *) continue ;; esac
+  case "$rref" in refs/heads/main|refs/heads/master) ;; *) continue ;; esac
+  status=1
 
   if [ "$lsha" = "$Z" ]; then
     printf '\n  GR7  refusing to delete %s. that is everybody'\''s history.\n\n' "$rref" >&2
-    status=1
     continue
   fi
-  [ "$rsha" = "$Z" ] && continue
 
-  if ! git merge-base --is-ancestor "$rsha" "$lsha" 2>/dev/null; then
+  if [ "$rsha" != "$Z" ] && ! git merge-base --is-ancestor "$rsha" "$lsha" 2>/dev/null; then
     printf '\n  GR7  this push rewrites %s - commits that other pilots already have\n' "$rref" >&2
     printf '       would disappear. Land a new commit instead; the old one stays\n' >&2
     printf '       in the book either way.\n\n' >&2
-    status=1
+    continue
   fi
-done
 
-# The ground crew, whose paperwork lands on main while people are flying. The
-# remote would refuse this push anyway and say so in git's own words; this says
-# it in the cabinet's, and clears it.
-#
-# It used to only report, and the reason given was that a hook must not rewrite
-# a branch the pilot did not aim at their own history. That reason still holds
-# and this still obeys it: a merge rewrites nothing, not one existing sha
-# moves, and tools/groundcrew.sh refuses a person's commit exactly as it did
-# before. What changed is who runs the errand. Being handed the name of a
-# command and typing it back is not a decision anybody was making.
-#
-# This push still cannot carry it - git resolved the sha before the hook ran,
-# which is why the old comment said this could not work. It cannot fix *this*
-# push. It can make the next one land, and the next one is the same command
-# with the same arguments, one line up in the pilot's history.
-if [ "$pushing_main" = 1 ] && [ "$status" = 0 ] && [ -f tools/groundcrew.sh ]; then
-  if ! sh tools/groundcrew.sh --check >/dev/null 2>&1; then
-    if out=$(sh tools/groundcrew.sh 2>&1); then
-      printf '%s\n' "$out" >&2
-      printf '  the paperwork is collected and this push is out of date by it.\n' >&2
-      printf '  push again - nothing of yours moved and nothing is waiting now.\n\n' >&2
-    else
-      # A person's commit, or a dirty tree. Both are somebody looking at
-      # something, and groundcrew.sh has already said which.
-      printf '%s\n' "$out" >&2
-    fi
-    status=1
-  fi
-fi
+  printf '\n  GR7  %s takes pull requests, not pushes.\n\n' "$rref" >&2
+  printf '       Nothing is wrong with your commits. main is just not a place\n' >&2
+  printf '       anybody types into directly any more, including whoever owns\n' >&2
+  printf '       the cabinet.\n\n' >&2
+  printf '         git switch -c <name>            # the commits come with you\n' >&2
+  printf '         git push -u origin <name>\n' >&2
+  printf '         gh pr create                    # .github has the template\n' >&2
+  printf '         git branch -f main origin/main  # and main goes back to theirs\n\n' >&2
+  printf '       Then merge it on github. The referee reads the branch on the way\n' >&2
+  printf '       in and the ground crew files the book on the way out, and every\n' >&2
+  printf '       sha you just made is a sha that lands.\n\n' >&2
+done
 
 exit $status
