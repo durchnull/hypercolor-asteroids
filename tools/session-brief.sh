@@ -4,13 +4,34 @@
 #
 # Runs at session start and hands the assistant the state of the cabinet: which
 # version is on it, what the others landed recently, and whether the referee is
-# actually installed in this clone. Cheap, quiet, and read-only.
+# actually installed in this clone. Cheap and quiet.
+#
+# It used to be read-only as well, and gave that up for one thing: the ground
+# crew's paperwork. .github/workflows/book.yml files the book after every push
+# to main, under a name that is not a person's, and it lands while nobody is
+# looking. A pilot who comes back the next evening starts behind by a commit
+# they did not write, finds out at push time, and has to be told about a tool.
+#
+# Being told is the part that was wrong. Nothing in that exchange is a
+# decision: the crew's commits are never a version, never anybody's work, and
+# the book passes over them in silence. So this collects them on the way in,
+# and mentions it afterwards rather than asking first.
+#
+# The judgement stays where it already was. tools/groundcrew.sh refuses to
+# touch a *person's* commit and says whose it is instead, so the one case that
+# genuinely needs a pilot reading something still gets one. A dirty tree stops
+# it too, and offline is not an error.
 # ---------------------------------------------------------------------------
 set -u
 
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 cd "$ROOT" || exit 0
 git rev-parse --verify -q HEAD >/dev/null 2>&1 || exit 0
+
+CREW=""
+if [ -f tools/groundcrew.sh ]; then
+  CREW=$(sh tools/groundcrew.sh --quiet 2>&1 || true)
+fi
 
 TMP=$(mktemp) || exit 0
 trap 'rm -f "$TMP"' EXIT INT TERM
@@ -42,6 +63,13 @@ trap 'rm -f "$TMP"' EXIT INT TERM
     else
       printf '\nFlight meter: %s of %s landings used since your last tape (%s).\n' "$SINCE" "$PER" "$LAST"
     fi
+  fi
+
+  # Said after the brief rather than before it, because it is housekeeping and
+  # not news - and said at all, because a tool that quietly moves somebody's
+  # branch without ever mentioning it is worse than the errand it saves.
+  if [ -n "$CREW" ]; then
+    printf '\nThe ground crew, on the way in:\n%s\n' "$CREW"
   fi
 
   if [ "$(git config core.hooksPath 2>/dev/null)" != ".githooks" ]; then

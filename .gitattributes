@@ -16,6 +16,26 @@ docs/chronicle.css merge=union
 # pilot mid-pull over a file neither of them wrote.
 docs/v*.html      merge=union
 
+# The splash screen's window into the book, and the rail beside it. Written by
+# the same machine on every rebuild and thrown away by the next one, exactly
+# like the pages above - and left off this list until a collection that was
+# supposed to be silent stopped to ask a pilot about all three.
+#
+# The union of two of these can be nonsense to read, and once was: what it
+# cannot be is a lost intention, because nobody writes a line of either by
+# hand. The nonsense has a lifetime of one commit, which is the merge, and the
+# referee passes over a merge for its own reasons anyway.
+docs/chronicle.js merge=union
+docs/rail.js      merge=union
+
+# The ledger, and the only generated file in the project that does not live
+# under docs/ - which is precisely how it got left off this list. It is
+# rewritten by  tools/tally.sh  off the history, nobody may edit it by hand
+# (GR12), and duplicate keys in an object literal are legal JS that the rebuild
+# replaces on the spot. So there was never a human intention in here for a
+# union to lose, and never a reason for it to stop anybody.
+src/game/ledger.js merge=union
+
 # The plates and the list of them. A plate is asked for once and never asked
 # for again, so two clones can only ever have painted different versions, not
 # the same one differently — union is exactly right for the list, and the

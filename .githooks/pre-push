@@ -27,15 +27,30 @@ done
 
 # The ground crew, whose paperwork lands on main while people are flying. The
 # remote would refuse this push anyway and say so in git's own words; this says
-# it in the cabinet's, and names the one command that clears it.
+# it in the cabinet's, and clears it.
 #
-# It only ever reports. Rewriting the branch from inside a hook the pilot did
-# not aim at their own history would be a worse habit than the one it saves -
-# and it cannot work regardless, because git resolved the sha it is pushing
-# before this ran.
+# It used to only report, and the reason given was that a hook must not rewrite
+# a branch the pilot did not aim at their own history. That reason still holds
+# and this still obeys it: a merge rewrites nothing, not one existing sha
+# moves, and tools/groundcrew.sh refuses a person's commit exactly as it did
+# before. What changed is who runs the errand. Being handed the name of a
+# command and typing it back is not a decision anybody was making.
+#
+# This push still cannot carry it - git resolved the sha before the hook ran,
+# which is why the old comment said this could not work. It cannot fix *this*
+# push. It can make the next one land, and the next one is the same command
+# with the same arguments, one line up in the pilot's history.
 if [ "$pushing_main" = 1 ] && [ "$status" = 0 ] && [ -f tools/groundcrew.sh ]; then
-  if ! out=$(sh tools/groundcrew.sh --check 2>&1); then
-    printf '%s\n' "$out" >&2
+  if ! sh tools/groundcrew.sh --check >/dev/null 2>&1; then
+    if out=$(sh tools/groundcrew.sh 2>&1); then
+      printf '%s\n' "$out" >&2
+      printf '  the paperwork is collected and this push is out of date by it.\n' >&2
+      printf '  push again - nothing of yours moved and nothing is waiting now.\n\n' >&2
+    else
+      # A person's commit, or a dirty tree. Both are somebody looking at
+      # something, and groundcrew.sh has already said which.
+      printf '%s\n' "$out" >&2
+    fi
     status=1
   fi
 fi
