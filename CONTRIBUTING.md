@@ -13,6 +13,7 @@ the commit for the next pilot rather than for the diff.
 git clone https://github.com/durchnull/hypercolor-asteroids
 cd hypercolor-asteroids
 tools/golden-check.sh --install   # wire in the referee
+git config pull.rebase false      # the house setting, and it is not a taste
 tools/whoami.sh                   # your seat, so your own traps go quiet
 open index.html                   # find out what the others did to you
 ```
@@ -26,6 +27,17 @@ git at the hooks in `.githooks/`, and those are what tell you a rule is about
 to be bent while you can still cheaply do something about it. Skip it and
 nothing stops you — you just find out on the pull request instead, in public,
 which is a worse place to find out.
+
+`pull.rebase false` is the one line here that is about this repository rather
+than about good practice, and it is worth the sentence. A rebase checks the
+worktree out to each commit it replays, `.githooks/` along with everything
+else, so an old commit runs the `post-commit` hook *it* shipped with — which
+rebuilds the book, which dirties the tree, which stops the replay dead on the
+very next commit. Today's hook refuses to rebuild mid-replay; a copy that
+landed before that guard existed never will, and those copies are not going
+anywhere. So this house merges. `tools/groundcrew.sh` merges for the same
+reason, the referee says so if it catches you halfway through one, and if you
+are already stuck the way out is `git rebase --abort`.
 
 ## Taking a turn
 
