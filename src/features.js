@@ -54,6 +54,7 @@ ASTEROIDS.MODULES = [
   "./entities/planet.js",
   "./entities/portals.js",
   "./entities/ship.js",
+  "./entities/wreck.js",
   "./game/blackbox.js",
   "./game/bounty.js",
   "./game/pact.js",
