@@ -1013,6 +1013,37 @@ check_message() {
 }
 
 # ---------------------------------------------------------------------------
+# The replay hazard.
+#
+# Not a rule either, and nobody's fault - a landmine, in a repository that
+# happens to be full of them, and the referee is the one thing a pilot who has
+# just stepped on it is likely to run.
+#
+# A rebase checks the worktree out to each commit it replays, .githooks/
+# included, so an old commit runs the post-commit hook *it* shipped with. That
+# hook rebuilds the book, the rebuild dirties the tree, and the replay refuses
+# to lay the next commit down over it. Today's post-commit refuses to rebuild
+# mid-replay, which fixes it going forward and can never fix a copy that landed
+# before the guard existed - so replaying anything from before that will keep
+# doing this, forever.
+#
+# tools/groundcrew.sh stopped rebasing for exactly this reason. A pilot who
+# typed `git pull --rebase` by hand has no tool to catch them: what git says on
+# the way past is that there are unstaged changes and a hint about --edit-todo,
+# and neither of those is the thing that happened.
+# ---------------------------------------------------------------------------
+check_replay() {
+  case "$MODE" in rev) return 0 ;; esac
+  gd=$(git rev-parse --git-dir 2>/dev/null) || return 0
+  [ -e "$gd/rebase-merge" ] || [ -e "$gd/rebase-apply" ] || return 0
+  warn GIT "a rebase is in progress, and this repository fights one"
+  note "an old post-commit rebuilds the book as it is replayed, which dirties"
+  note "the tree, and the next commit will not apply over it. not your change."
+  note "out: git rebase --abort, then git config pull.rebase false && git pull"
+  note "tools/groundcrew.sh does that and rebuilds the book once, at the end"
+}
+
+# ---------------------------------------------------------------------------
 # The referee's own arithmetic.
 #
 # Not a golden rule - a rule needs somebody to have broken it, and nobody breaks
@@ -1043,12 +1074,14 @@ check_lockstep() {
 
 case "$STAGE" in
   pre-commit) check_gr1; check_gr2; check_gr7; check_gr10; check_gr11; check_gr12
-              check_gr13; check_gr39; check_media; check_turns; check_lockstep ;;
+              check_gr13; check_gr39; check_media; check_turns; check_replay
+              check_lockstep ;;
   commit-msg) check_gr45; check_gr6; check_gr10; check_gr12; check_gr14
               check_breach; check_message ;;
   *)          check_gr1; check_gr2; check_gr7; check_gr10; check_gr11
               check_gr45; check_gr6; check_gr12; check_gr13; check_gr14
-              check_breach; check_gr39; check_media; check_turns; check_lockstep ;;
+              check_breach; check_gr39; check_media; check_turns; check_replay
+              check_lockstep ;;
 esac
 
 if [ ! -s "$TMP/out" ]; then
