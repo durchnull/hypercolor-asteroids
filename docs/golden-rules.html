@@ -203,7 +203,7 @@ The referee cannot check this one, so it is on you, and it is the rule that
 actually keeps the game good:
 </p>
 <ul>
-<li>Nothing makes the player invincible and nothing makes the game unloseable. Every new power has a cost, a cooldown, or a finite count — the atom bomb is the precedent: two to start, one more each wave.</li>
+<li>Nothing makes the player invincible and nothing makes the game unloseable. Every new power has a cost, a cooldown, or a finite count — the atom bomb is the precedent: a finite rack, refilled slowly. What the cadence is on any given evening is the cabinet's business and it has already changed once; a precedent that quotes a number goes stale and gets argued with.</li>
 <li>Both seats stay equal. Any control you add exists for player one and player two.</li>
 <li>Difficulty may rise. It may not become unfair — the player must be able to see the thing that is about to kill them.</li>
 <li>It still holds 60fps on a laptop, and it still works on a keyboard with no numpad.</li>
@@ -240,12 +240,33 @@ feature so it appears in the field guide and the next player discovers it by
 playing; leave the README describing the cabinet, not your changelog.
 </p>
 <p>
+The guide turns some things away, and it says so itself — <code>src/ui/fieldguide.js</code>
+is where that is written down. A tile briefs the flight: a thing in the field, a
+thing in your hands, or an instrument. Bookkeeping does not brief anybody, and
+reveals itself where it happens instead — on the game-over screen, on the pilot
+card, on the hull. So the ask is a tile <b>or</b> a line in the file saying why
+there is none:
+</p>
+<pre><code class="lang-js">
+// No guide tile: the tape announces itself on the game-over screen, which
+// is the only moment it matters.
+</code></pre>
+<p>
+Both are the same promise kept two ways, and the second one matters as much as
+the first: without it the next reader cannot tell a decision from an oversight,
+and the referee cannot either.
+</p>
+<p>
 Write a <code>Chronicle:</code> line in your commit message. That is the sentence that
 goes in the book, and the book is read for fun.
 </p>
 <p>
-<i>Checked:</i> a new feature with no <code>guide</code> entry is flagged; a README edit
-alongside a new feature is flagged; a missing <code>Chronicle:</code> line is mentioned.
+<i>Checked:</i> a new entity — a thing in the field, which is the one kind of
+feature the guide never turns away — with neither a <code>guide</code> entry nor a
+<code>No guide tile:</code> line is flagged; a README edit alongside a new feature is
+flagged; a missing <code>Chronicle:</code> line is mentioned. Features in the other three
+homes are not asked. The guide's own rules already decide most of them, and a
+referee guessing at the rest is the disagreement this section exists to end.
 </p>
 <h2 id="gr10-changing-the-rules-is-its-own-commit-red-line">GR10 — Changing the rules is its own commit. <code>red line</code></h2>
 <p>

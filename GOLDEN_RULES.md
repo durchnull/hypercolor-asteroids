@@ -168,7 +168,9 @@ actually keeps the game good:
 
 - Nothing makes the player invincible and nothing makes the game unloseable.
   Every new power has a cost, a cooldown, or a finite count — the atom bomb is
-  the precedent: two to start, one more each wave.
+  the precedent: a finite rack, refilled slowly. What the cadence is on any
+  given evening is the cabinet's business and it has already changed once; a
+  precedent that quotes a number goes stale and gets argued with.
 - Both seats stay equal. Any control you add exists for player one and player
   two.
 - Difficulty may rise. It may not become unfair — the player must be able to
@@ -206,11 +208,31 @@ The reveal happens in the game, not in the diff. Ship a `guide` entry with your
 feature so it appears in the field guide and the next player discovers it by
 playing; leave the README describing the cabinet, not your changelog.
 
+The guide turns some things away, and it says so itself — `src/ui/fieldguide.js`
+is where that is written down. A tile briefs the flight: a thing in the field, a
+thing in your hands, or an instrument. Bookkeeping does not brief anybody, and
+reveals itself where it happens instead — on the game-over screen, on the pilot
+card, on the hull. So the ask is a tile **or** a line in the file saying why
+there is none:
+
+```js
+// No guide tile: the tape announces itself on the game-over screen, which
+// is the only moment it matters.
+```
+
+Both are the same promise kept two ways, and the second one matters as much as
+the first: without it the next reader cannot tell a decision from an oversight,
+and the referee cannot either.
+
 Write a `Chronicle:` line in your commit message. That is the sentence that
 goes in the book, and the book is read for fun.
 
-*Checked:* a new feature with no `guide` entry is flagged; a README edit
-alongside a new feature is flagged; a missing `Chronicle:` line is mentioned.
+*Checked:* a new entity — a thing in the field, which is the one kind of
+feature the guide never turns away — with neither a `guide` entry nor a
+`No guide tile:` line is flagged; a README edit alongside a new feature is
+flagged; a missing `Chronicle:` line is mentioned. Features in the other three
+homes are not asked. The guide's own rules already decide most of them, and a
+referee guessing at the rest is the disagreement this section exists to end.
 
 ## GR10 — Changing the rules is its own commit. `red line`
 

@@ -86,7 +86,9 @@ them into a local at load time.
 </p>
 <p>
 Adding a feature therefore means: new file, <code>register({...})</code> with a <code>guide</code>
-entry, one line in the manifest. If you find yourself editing four shared files
+entry, one line in the manifest. If the thing briefs nobody — bookkeeping, a
+record, a tape — it stays off the splash and says so where it registers:
+<code>// No guide tile: &lt;why&gt;</code>, and GR9 takes that for the answer it is. If you find yourself editing four shared files
 to land one idea, you have taken a wrong turn — say so and find the
 registry-shaped solution instead.
 </p>
@@ -123,7 +125,7 @@ Say it in one sentence, offer the legitimate route, and move on.
 <h2 id="how-a-session-goes">How a session goes</h2>
 <ol>
 <li><b>Look around.</b> <code>tools/chronicle.sh --recent 8</code>, then <code>git log --oneline -10</code>. Play the current build if there is any doubt about what state it is in.</li>
-<li><b>Build it in its own file.</b> GR3. Register it, give it a <code>guide</code> entry so the next player can discover it.</li>
+<li><b>Build it in its own file.</b> GR3. Register it, give it a <code>guide</code> entry so the next player can discover it — or a <code>No guide tile:</code> line if it is the kind of thing the guide turns away.</li>
 <li><b>Check the fairness of the idea, not just the code</b> — GR8. Cost, cooldown or finite count for every new power; both seats equal; nothing invincible.</li>
 <li><b>Run the referee.</b> <code>tools/golden-check.sh</code>. Fix what it flags. If it flags a budget, take it to the pilot.</li>
 <li><b>Try it.</b> Open <code>index.html</code> (or <code>python3 -m http.server 8000</code>) and actually play. GR1 is a promise to somebody who is not here. Die, copy the tape off the game-over screen, and <code>/blackbox</code> puts it on the board — that is what GR14 counts, and one tape covers three landings.</li>

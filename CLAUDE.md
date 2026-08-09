@@ -118,7 +118,9 @@ server. Everything shared hangs off `A`. `src/boot.js` loads the manifest, and
 them into a local at load time.
 
 Adding a feature therefore means: new file, `register({...})` with a `guide`
-entry, one line in the manifest. If you find yourself editing four shared files
+entry, one line in the manifest. If the thing briefs nobody — bookkeeping, a
+record, a tape — it stays off the splash and says so where it registers:
+`// No guide tile: <why>`, and GR9 takes that for the answer it is. If you find yourself editing four shared files
 to land one idea, you have taken a wrong turn — say so and find the
 registry-shaped solution instead.
 
@@ -173,7 +175,8 @@ Say it in one sentence, offer the legitimate route, and move on.
 1. **Look around.** `tools/chronicle.sh --recent 8`, then `git log --oneline -10`.
    Play the current build if there is any doubt about what state it is in.
 2. **Build it in its own file.** GR3. Register it, give it a `guide` entry so
-   the next player can discover it.
+   the next player can discover it — or a `No guide tile:` line if it is the
+   kind of thing the guide turns away.
 3. **Check the fairness of the idea, not just the code** — GR8. Cost, cooldown
    or finite count for every new power; both seats equal; nothing invincible.
 4. **Run the referee.** `tools/golden-check.sh`. Fix what it flags. If it flags

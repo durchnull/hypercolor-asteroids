@@ -660,6 +660,17 @@ case_ GR9 "a new rock nobody can discover by playing"
   stage; check pre-commit
   nudges GR9
 
+# The other answer GR9 takes: the guide turns away anything that briefs
+# nobody, so a feature that says why it stays off the splash has answered the
+# question rather than ducked it.
+case_ GR9 "a feature that says why it stays off the splash"
+  printf '(function (A) {\n  // No guide tile: it is scenery, and the guide briefs the flight.\n  A.register({ order: 40, draw: function () {} });\n})(ASTEROIDS);\n' \
+    > src/entities/dust.js
+  awk '/^\];$/ && !d { print "  \"./entities/dust.js\","; d = 1 } { print }' \
+    src/features.js > f && mv f src/features.js
+  stage; check pre-commit
+  silent GR9
+
 case_ GR11 "a trap started from somebody else's template is still yours"
   sed 's/closing-ring/quiet-ring/; s/Ada Vex/Bo Renn/; s/at: 4/at: 7/' \
     "src/events/ada-vex.js" > "src/events/bo-renn-two.js"

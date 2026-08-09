@@ -870,9 +870,16 @@ check_gr39() {
 
     printf '%s' "$manifest" | grep -q "\"\\./${f#src/}\"" || \
       warn GR3 "$f is not imported in src/features.js - nothing will ever load it"
+    # Only the entities, because the guide turns things away and says so in
+    # src/ui/fieldguide.js: a tile briefs the flight, and bookkeeping reveals
+    # itself where it happens instead. A thing in the field is the one kind
+    # nothing turns away - and even there the answer can be the other one, a
+    # line saying why this one stays off the splash. Both spellings are looked
+    # for at once, and they do not overlap: "No guide tile:" has a word between
+    # the key and the colon, which is what keeps it out of the first pattern.
     case "$f" in src/entities/*.js)
-      content "$f" | grep -q 'guide' || \
-        warn GR9 "$f has no guide entry - nobody will discover it by playing" ;;
+      content "$f" | grep -Eqi 'guide[[:space:]]*:|no guide tile:' || \
+        warn GR9 "$f has neither a guide entry nor a \"No guide tile:\" line saying why not" ;;
     esac
   done < "$TMP/files"
 
