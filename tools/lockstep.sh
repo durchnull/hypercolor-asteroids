@@ -421,7 +421,19 @@ fixture() {
   # The count on the cabinet is the list, counted. They cannot drift while that
   # is true, and this is what says it stayed true.
   want=$(awk -F'\t' '$2 == "yes" { n++ } END { print n + 0 }' "$WORK/expected")
-  got=$( cd "$WORK/cabinet" && sh "$ROOT/$BOOK" --version 2>/dev/null )
+  # The unset every other subshell down here does, and the one place it was
+  # missing. Entering the cabinet is not enough: a hook exports GIT_DIR, the
+  # book reads it in preference to the directory it was called in, and this
+  # line then compares a count taken from the fixture against a version taken
+  # from whatever repository the hook was running in. It said v32 against 8 and
+  # called it a disagreement, which is precisely what it is there to detect and
+  # exactly not what had happened. The cost was that no commit could be made
+  # from a linked worktree at all - LOCK is a red line, so there was no
+  # override, and .claude/worktrees/ is a documented place to work.
+  got=$( cd "$WORK/cabinet" || exit
+         # shellcheck disable=SC2086
+         unset $GIT_ENV_UNSET 2>/dev/null || true
+         sh "$ROOT/$BOOK" --version 2>/dev/null )
   if [ "$got" = "v$want" ]; then ok "the cabinet is on v$want"
   else bad "--version says ${got:-nothing} where the versions list has $want in it"; fi
 
