@@ -25,7 +25,8 @@
 #   the receipts    .githooks/post-commit, driven directly. The ledger commit
 #                   lands on its own, says the right number, and does not
 #                   tally itself.
-#   the scoreboard  .githooks/pre-push. main moves forward or not at all.
+#   the scoreboard  .githooks/pre-push. main does not move by push at all,
+#                   forward or otherwise; it takes pull requests.
 #   the readers     tools/lockstep.sh, which is what stops the book, the meter
 #                   and the ledger disagreeing about what a version is. One
 #                   reader is bent in a scratch copy and it has to object;
@@ -412,10 +413,10 @@ ZERO=0000000000000000000000000000000000000000
 
 push() { printf '%s %s %s %s\n' "$1" "$2" "$3" "$4" | sh .githooks/pre-push > "$OUT" 2>&1; }
 
-case_ GR7 "history may move forward on main"
+case_ GR7 "main takes a pull request, not a push"
   OLD=$(git rev-parse HEAD~1); NEW=$(git rev-parse HEAD)
   push refs/heads/main "$NEW" refs/heads/main "$OLD"
-  expect "$?" "0"
+  expect "exit=$? said=$(grep -c GR7 "$OUT")" "exit=1 said=1"
 
 case_ GR7 "rewriting main is refused, whoever asks"
   OLD=$(git rev-parse HEAD~1); NEW=$(git rev-parse HEAD)

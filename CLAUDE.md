@@ -90,8 +90,8 @@ Everything hangs off a feature registry, and that is the one idea you need.
   to edit; the board is the record.
 - `tools/groundcrew.sh` — the book's workflow files paperwork on main under the
   name **Ground Crew** while people are flying, and this collects it: fetch,
-  merge, rebuild the book once over the top. `/land` runs it first and the
-  pre-push hook checks it. It merges rather than rebases because a rebase runs
+  merge, rebuild the book once over the top. `/land` runs it first, before you
+  branch. It merges rather than rebases because a rebase runs
   each replayed commit's *own* `post-commit`, which rebuilds the book mid-replay
   and stops it. It refuses to take a *person's* commit — that is somebody's
   work and you read it before you build on it — and refuses a dirty tree.
@@ -178,8 +178,13 @@ registry-shaped solution instead.
   flew (GR16). Tapes come off the game-over screen and nowhere else, and the
   meter, the board and the rankings all rest on that. If the pilot cannot fly
   tonight, GR14's override is the honest way past it — say so and offer it.
-- Force-pushing `main`, rebasing or amending commits other people already have,
-  or committing under somebody else's name. The history is the scoreboard.
+- Pushing anything to `main`, or merging into it anywhere but in a pull request
+  — including `git push origin HEAD:main` from a branch, and including for the
+  person who owns the cabinet. Force-pushing `main`, rebasing or amending
+  commits other people already have, or committing under somebody else's name.
+  The history is the scoreboard. The pre-push hook and the remote's ruleset
+  both say so, and the way through is a branch and a pull request, never a
+  flag.
 - Landing something you know is broken, or that makes the game unloseable, or
   that quietly guts a feature somebody else built.
 
@@ -200,8 +205,10 @@ Say it in one sentence, offer the legitimate route, and move on.
    play. GR1 is a promise to somebody who is not here. Die, copy the tape off
    the game-over screen, and `/blackbox` puts it on the board — that is what
    GR14 counts, and one tape covers three landings.
-6. **Land it.** Subject line written from the next pilot's seat, plus a
-   `Chronicle:` line for the book:
+6. **Land it, on a branch.** `git switch -c <name>` — `main` takes pull
+   requests and nothing else (GR7), so the branch is where a version lives
+   until the room has seen it. Subject line written from the next pilot's seat,
+   plus a `Chronicle:` line for the book:
 
 ```
 Comets, and they come in threes
@@ -219,6 +226,17 @@ one becomes.
 
 The hooks show you which shape of commit this is, check the red lines, check
 the budgets, and rebuild `docs/index.html` after the commit lands.
+
+7. **Open the pull request.** `git push -u origin <name>` then `gh pr create`,
+   and `.github/PULL_REQUEST_TEMPLATE.md` is already in the box waiting for
+   you. Fill it the way a turn ends — a ship, then what the next pilot finds
+   out by playing, then what it does to everybody else — because a pull request
+   here is public and somebody who has never opened this repository may read it
+   before anyone in the room does. Merge it on github, **merge commit only**:
+   squashing collapses several versions into one and rebasing hands every
+   commit a new sha, and the book counts versions off commits (GR7). The
+   referee reads the branch on the way in; the ground crew files the book on
+   the way out.
 
 ## Ending a turn
 

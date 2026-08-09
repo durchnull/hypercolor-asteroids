@@ -154,12 +154,26 @@ is not editable: no force-pushing `main`, no rewriting or reassigning commits
 other people already have. Land a new commit instead — the old one stays in the
 book either way.
 
+And it is why **`main` takes pull requests rather than pushes.** Nobody merges
+into it directly — not a pilot, not the person who owns the cabinet. Work
+happens on a branch, arrives as a pull request, and gets merged there. The
+reason is not ceremony: a pull request is the one moment the whole room can see
+a version *before* it is on the cabinet, and it is where the referee gets its
+second reading, on a runner, for work from a clone that never installed the
+hooks.
+
+Merge commits only. Squashing would collapse three versions into one and rebase
+would hand every commit a new sha, and both of those are this rule being broken
+by a button instead of by a person.
+
 Write the subject line for the next pilot, not for the diff. "Comets, and they
 come in threes" beats "add comet feature".
 
 *Checked:* `git config user.name` must be set; no `@author` tags in source; the
-pre-push hook refuses any non-fast-forward push to `main`. Thin or generic
-subjects get a nudge.
+pre-push hook refuses every push to `main` — deletions, rewrites and
+fast-forwards alike — and the remote's "main is the scoreboard" ruleset refuses
+the same three from the other side, with the pull request as the only way in.
+Thin or generic subjects get a nudge.
 
 ## GR8 — Play fair in the game, too. `on your honour`
 
