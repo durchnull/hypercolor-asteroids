@@ -12,6 +12,34 @@ allowed-tools: Bash, Read, Edit, Write, Grep, Glob
 A commit here is a version, and somebody is going to pull it and press ENTER
 expecting a game. Do the whole ritual; it takes two minutes.
 
+## 0. Collect the ground crew's paperwork
+
+```sh
+tools/groundcrew.sh
+```
+
+`.github/workflows/book.yml` rebuilds the book after every push to main and
+files it as **Ground Crew**. That lands while the pilot is working, so a
+landing built on a stale main is a push that gets rejected an hour later for
+reasons that have nothing to do with the pilot. Run this first and the landing
+is built on top of the remote instead.
+
+It is quiet when there is nothing waiting, quiet when there is no network, and
+it takes the paperwork itself when there is any: fetch, replay your commits
+over it, rebuild the book once at the end, file that.
+
+It stops and hands back, exit 1, in two cases, and neither is a thing to work
+around:
+
+- **a person's commit is waiting.** Somebody flew that. Read it before you
+  build on top of it — that is CLAUDE.md's rule, not this tool's — and pull it
+  yourself once you have.
+- **the working tree is dirty.** A replay would drag the pilot's half-finished
+  edit through it. Commit or stash, then run it again.
+
+Never reach for `git pull --rebase` to get around a stop. The stop is the
+point.
+
 ## 1. The referee
 
 ```sh
@@ -142,6 +170,13 @@ version, so the book has nothing to say about it and the tree comes out clean.
 Repeat until `git status --porcelain` is empty. It settles in two rounds at the
 outside; if a third is somehow needed, stop and say so rather than looping,
 because something else is dirty and it is not the book's doing.
+
+One thing this hook deliberately does *not* do is run during a replay. A
+rebase, a merge or a cherry-pick reaches `post-commit` once per commit it lays
+down, against a history that is half rewritten — so it writes nothing, and
+whoever finishes the replay rebuilds once at the end. `tools/groundcrew.sh`
+does that; a pilot doing it by hand runs `tools/chronicle.sh` and
+`tools/tally.sh` and files the result.
 
 A filing commit is not a story. Subject line only — no `Chronicle:` line, no
 `Tagline:`, nothing to explain. The referee will nudge about the missing

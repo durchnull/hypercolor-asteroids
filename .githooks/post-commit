@@ -26,6 +26,26 @@ rm -f "$MARK"
 # The ledger commit is a commit too, and it does not get to tally itself.
 [ -n "${ASTEROIDS_TALLY:-}" ] && exit 0
 
+# Nothing is rebuilt in the middle of a replay. A rebase, a merge or a
+# cherry-pick reaches this hook once per commit it lays down, against a history
+# that is only half rewritten - so the pages would be wrong, and worse, writing
+# them dirties the tree and the next commit in the replay refuses to apply over
+# it. That is not theoretical: it is what stopped a pilot rebasing twelve
+# commits onto one line of the ground crew's paperwork, and it stopped them on
+# the second one.
+#
+# The book loses nothing by waiting. It is derived from the history and the
+# history is not finished yet; whoever finishes the replay rebuilds it once, at
+# the end, from a history that is true - tools/groundcrew.sh does exactly that,
+# and a pilot doing it by hand runs the same two commands.
+#
+# The GR12 block below already refused to tally mid-replay for its own reason.
+# This is the same list, asked earlier, because by the time that check ran the
+# damage was already in the worktree.
+for f in rebase-merge rebase-apply CHERRY_PICK_HEAD REVERT_HEAD MERGE_HEAD; do
+  [ -e "$GITDIR/$f" ] && exit 0
+done
+
 sh "$ROOT/tools/chronicle.sh" >/dev/null 2>&1 || exit 0
 
 # The ledger counts clean landings now as well as bends (GR12), so it goes

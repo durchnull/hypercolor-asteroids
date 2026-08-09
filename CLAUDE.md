@@ -86,6 +86,12 @@ Everything hangs off a feature registry, and that is the one idea you need.
   landings, and this reads the meter off the history (GR14). `--roll` shows the
   room, `--count <name>` answers for one pilot. Nothing to install and nothing
   to edit; the board is the record.
+- `tools/groundcrew.sh` — the book's workflow files paperwork on main under the
+  name **Ground Crew** while people are flying, and this collects it: fetch,
+  replay your commits over it, rebuild the book once at the end. `/land` runs
+  it first and the pre-push hook checks it. It refuses to replay over a
+  *person's* commit — that is somebody's work and you read it before you build
+  on it — and refuses to drag a dirty tree through a rebase.
 - **What counts as a version is one question with one answer, and it lives in
   `tools/chronicle.sh`.** `--versions` lists them, `--moved` asks about one,
   `--pilots` says who is a person rather than a workflow, `--run` says how long
