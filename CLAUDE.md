@@ -224,16 +224,22 @@ the budgets, and rebuild `docs/index.html` after the commit lands.
 
 A turn ends with the same facts the splash screen shows a pilot before they
 fly — what moved, what they are up, what the field is charging them, and what
-to do next — in the terminal where the work actually happened. Four blocks, in
+to do next — in the terminal where the work actually happened. Five blocks, in
 this order, and the move is last because the last line on screen is the one
 that gets read.
 
-**Only when the turn finished something and committed it.** The blocks mean
-*that is landed*. A turn that ends mid-build, in planning, waiting on an
-answer, or with nothing but a question answered gets none of them — say where
-it stands and what you are waiting on, in a sentence, like a person. Printed
-over unfinished work they are worth nothing, and then they are worth nothing
-over finished work either.
+**Only when the turn settled something.** The blocks mean *that is decided* —
+a commit landed, or the referee stopped one, or a budget is waiting on the
+pilot's answer before anything else can happen. A turn that ends mid-build, in
+planning, waiting on a reply, or with nothing but a question answered gets none
+of them: say where it stands and what you are waiting on, in a sentence, like a
+person. Printed over unfinished work they are worth nothing, and then they are
+worth nothing over finished work either.
+
+A refusal counts because it is as finished as a landing — it just finished the
+other way — and it is the turn where a heading marked `YOUR MOVE` earns its
+keep most: somebody is stopped, and the two ways out are the only thing they
+want to read.
 
 **Write a block only when this turn gave it something to say.** Never "None",
 never a placeholder, never a standing report nobody asked for. Three empty
@@ -247,6 +253,10 @@ different angle, a different piece of sky. Never paste the last one back, never
 keep a stash of them, and do not caption it. It is the arcade flourish that
 says the work landed, and a flourish that repeats is a logo.
 
+Keep it under about twelve lines. The ship is the flourish and `YOUR MOVE` is
+the point, and a ship tall enough to push the move off the screen has eaten the
+thing it was there to celebrate.
+
 **Each block header is a markdown heading — `### YOUR MOVE`, not bold text.**
 A bold line is just another paragraph, and the terminal sets paragraphs tight
 against each other, so a blank line in the source buys nothing on the screen.
@@ -254,11 +264,26 @@ A heading gets real space above it, which is the entire point: these are meant
 to be found by somebody skimming a wall of output, not read as the next
 sentence of the paragraph before them.
 
-**WHAT YOU CHANGED** — whether the cabinet moved. The version this becomes,
-and what the next pilot finds out by playing. If it made the game *worse* — a
-nerf, a wave that stopped being fair, somebody's feature quietly gutted — that
-goes here in the same plain voice. It is the honest half of GR8 and it is
-never dressed up.
+**WHAT YOU CHANGED** — the version verdict in the first three words, because
+it is the first thing anybody asks: **v32.**, or **Not a version — v31 is
+still on the cabinet.** The hooks have already worked it out and said it out
+loud, so quote them rather than deciding it again. Then one sentence on what
+the next pilot notices by playing. If it made the game *worse* — a nerf, a
+wave that stopped being fair, somebody's feature quietly gutted — that goes
+here in the same plain voice. It is the honest half of GR8 and it is never
+dressed up.
+
+Do not restate the `Chronicle:` line here. That one is written for the book and
+read a year from now; this one is what a player notices tonight. Printing both
+saying the same sentence wastes the only two lines anybody reads twice.
+
+**WHAT IT DOES TO THE OTHERS** — written only when the answer is not nothing.
+Every other block is about the pilot's own standing, and this is a cabinet
+several people share, so the thing GR8 actually asks has nowhere else to appear
+at the moment it becomes true. A new event arms the room, and names the one
+pilot it will never fire at. A tuned number lands in somebody's feature, and
+names them. A difficulty change says which seat feels it first. Name people,
+not files.
 
 **YOUR BENEFIT** — what is going the pilot's way. Mercy earned back off the
 tally, a meter cleared, a trap now armed against everybody but them, a file
@@ -277,6 +302,10 @@ costs them something says so in one clause. A decision is a question with the
 options in it, not "let me know how you would like to proceed". If the turn
 ended blocked, this block says what is blocking it and both ways out.
 
+Every file named in any of the blocks is a link — `[CLAUDE.md:223](CLAUDE.md#L223)`
+rather than a filename sitting in prose — so the pilot arrives on the line
+instead of going to look for it.
+
 ```
 ... the last thing said about the work itself.
 
@@ -291,8 +320,8 @@ ended blocked, this block says what is blocking it and both ways out.
 
 ### WHAT YOU CHANGED
 
-This becomes v32. A ring drifts in once a wave and debris comes to you for
-eight seconds; rocks are unmoved, so it buys the tail of a messy wave.
+**v32.** A ring drifts in once a wave and debris comes to you for eight
+seconds; rocks are unmoved, so it buys the tail of a messy wave.
 
 ### YOUR HANDICAP
 
@@ -306,7 +335,8 @@ minutes of flying buys three more.
 3. Say "land it", or hand me a better subject line, and I commit.
 ```
 
-That turn had no `YOUR BENEFIT` in it, so it does not have one.
+That turn had no `YOUR BENEFIT` and it touched nobody else, so it has neither
+of those blocks. Three of the five is a normal turn.
 
 The numbers in any of it are read, never estimated — that is the only reason
 they mean anything:
@@ -329,7 +359,10 @@ be funny:
 > Nothing for you. The cabinet is exactly as you found it and the referee has
 > gone home.
 
-Vary it. The joke is that there is no move, not the sentence.
+Vary it. The joke is that there is no move, not the sentence — and it is at the
+expense of the cabinet, the referee or the orb, never the pilot. Nothing needed
+doing and they did nothing wrong; a joke at their expense on a turn where they
+are blameless is a small irritant that repeats forever.
 
 ## Skills
 
