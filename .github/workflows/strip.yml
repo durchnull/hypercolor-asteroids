@@ -13,10 +13,11 @@
 #                 request here. That is not a bug in this file and it is not
 #                 worth working around: the moment a second pilot lands
 #                 something, this starts firing and the owner gets asked.
-#   the labels    tools/labels.sh, which reads the same buckets the book's
-#                 kindof() draws with. One question, one answer - the labels on
-#                 a pull request and the glyphs on its chapter cannot disagree,
-#                 because neither of them keeps its own copy of the mapping.
+#   the labels    tools/labels.sh, which asks tools/chronicle.sh --marks - the
+#                 same nine badges the book puts on a chapter. One question,
+#                 one answer: the labels on a pull request and the marks on the
+#                 chapter it becomes cannot disagree, because only one of them
+#                 knows the mapping and the other one asks.
 #
 # **Why pull_request_target, when the referee deliberately refuses it.**
 # .github/workflows/referee.yml runs the branch's own code, so a writable token
@@ -71,10 +72,12 @@ jobs:
         run: |
           # The ground crew files its own paperwork through a pull request like
           # everybody else (see book.yml). It is generated, nobody reads it and
-          # nobody reviews it, so it gets one honest label and is left alone.
+          # nobody reviews it, so it is left alone - and it wears nothing,
+          # because the marks give the book's own pages no mark at all. The
+          # paperwork is not a thing that happened, and the strip says so by
+          # being empty rather than by inventing a label for it.
           if [ "$AUTHOR_TYPE" = "Bot" ]; then
-            echo "the ground crew's own paperwork. one label, no reviewer."
-            gh pr edit "$NUMBER" --add-label book
+            echo "the ground crew's own paperwork. no labels, no reviewer."
             exit 0
           fi
 
