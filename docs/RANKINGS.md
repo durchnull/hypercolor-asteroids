@@ -23,15 +23,28 @@ same evening being read out twice. Neither one buys a landing.
 | 1 | David Friedrich | 21880 | 5 | 6:18 | 19% | Six ambushes walked through, fourteen kraken dead, and then PINCER again — same trap, one wave later. |
 | 2 | David Friedrich | 16530 | 4 | 4:42 | 17% | Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end. |
 | 3 | David Friedrich | 15170 | 4 | 4:16 | 19% | Three house traps walked through, and then PINCER took the last two ships at wave 4. |
-| 4 | Malte Buttjer | 4680 | 2 | 1:32 | 12% | Two kraken in two shots, 26 rocks to the bomb, and DEBRIS FIELD took the last of it. |
-| 5 | Malte Buttjer | 3380 | 2 | 2:20 | 11% | Three kraken down and both bombs gone by wave two, with a wingmate who never left the spot they spawned on. |
-| 6 | David Friedrich | 0 | 1 | 0:16 | — | Three ships in sixteen seconds without the trigger ever being pressed. |
+| 4 | David Friedrich | 13810 | 4 | 3:47 | 24% | Sharpest aim and longest flurry on the board, four ambushes flown clear, and then wave 4 with the bomb still in the rack. |
+| 5 | Malte Buttjer | 4680 | 2 | 1:32 | 12% | Two kraken in two shots, 26 rocks to the bomb, and DEBRIS FIELD took the last of it. |
+| 6 | Malte Buttjer | 3380 | 2 | 2:20 | 11% | Three kraken down and both bombs gone by wave two, with a wingmate who never left the spot they spawned on. |
+| 7 | David Friedrich | 0 | 1 | 0:16 | — | Three ships in sixteen seconds without the trigger ever being pressed. |
 
 ## THE FLIGHT LOG
 
 Newest first. One line per tape, so the same evening is readable as an evening.
 
 <!-- log -->
+**2026-08-10 · David Friedrich · 13810 · wave 4 · 3:47** — 627 shots for 148
+rocks (18 large, 41 medium, 89 small), 24 percent accuracy — the sharpest on
+the board — and a flurry of 25, which is nine longer than anybody has managed
+before. 3650 points a minute. Kraken again: 23 hits, 9 killed. Three grapple
+throws, 20.8 klicks flown, topping out at 260, with 97 seconds on the throttle.
+Three close shaves, three deaths, no nukes, and the bomb never left the rack for
+the second tape running. Four ambushes across two waves, all flown clear —
+DEBRIS and SHOWER, the house's, at wave 2; UNDERTOW, Malte Buttjer's, and
+SWITCH, the house's, at wave 3. Nothing the field laid on ended this one; wave 4
+did it with ordinary rocks. 8070 short of their own best, set earlier the same
+day.
+<!-- crc 2228e497 -->
 **2026-08-10 · David Friedrich · 21880 · wave 5 · 6:18** — 1143 shots for 214
 rocks (26 large, 60 medium, 128 small), 19 percent accuracy, best flurry of 15,
 and 3466 points a minute. The bomb came out once and took 21 rocks with it.
