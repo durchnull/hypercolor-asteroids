@@ -50,6 +50,7 @@ ASTEROIDS.MODULES = [
   "./entities/falcon.js",
   "./entities/hook.js",
   "./entities/kraken.js",
+  "./entities/mines.js",
   "./entities/nuke.js",
   "./entities/planet.js",
   "./entities/portals.js",
@@ -78,4 +79,5 @@ ASTEROIDS.MODULES = [
   // See GOLDEN_RULES.md, GR11.
   "./events/house.js",
   "./events/david-friedrich.js",
+  "./events/malte-buttjer.js",
 ];
