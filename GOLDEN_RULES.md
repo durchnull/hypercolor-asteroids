@@ -210,6 +210,20 @@ first, always — a breach line written by one annoyed pilot without the table
 behind it is itself the kind of thing the table gets to judge, in the open,
 where it landed.
 
+**A power with somebody's name written into it.** GR11 refuses to aim an
+ambush by name and has no override in it. The mirror of that — a feature that
+only ever fires for one named pilot — was refused by nothing at all, so the
+referee passed one without a word and the question only ever reached whoever
+thought to ask out loud. It gets a word now: comparing `A.activePilot()`
+against a name spelled out in the source is warned, not blocked, because the
+fair version of the idea is usually one line away. Dedicate it instead — `for:`
+puts the name on the banner and gives the mechanic to the room — or key it on
+something the pilot earned rather than on who they are, the way
+`src/game/bounty.js` does. The cost of the named version does not land on the
+author, which is why it needs saying: it lands on `docs/RANKINGS.md`, where a
+power one name has and the rest do not quietly changes what every score on the
+page means.
+
 The judgment is human and stays human; the paperwork is checked. A breach
 naming somebody no commit was ever authored by does not land — a typo would
 charge a phantom and let the real pilot walk — and a breach line riding
@@ -421,6 +435,16 @@ refused, and
 there is no override on either — the tally is the one number in this project
 nobody writes for themselves.
 
+Checked **on disk**, and not only when the file is in a commit. The game loads
+the ledger off the working tree at play time, so for a while the only copy that
+decided anybody's field was the one copy nothing compared against the history
+unless it happened to be staged — an edit that was never committed was read by
+the game and by nothing else. A punishment the punished can quietly switch off
+would not be one, so the file is now checked where it is used: any commit, from
+a tree whose ledger disagrees with the history, is refused. A stale ledger after
+a pull trips the same wire, and the fix is the same one command, because there
+is no state this file can be in where regenerating it is the wrong move.
+
 ## GR13 — The owner's ground. `red line`
 
 Almost nothing here belongs to one person. Tune anybody's numbers, extend
@@ -609,14 +633,34 @@ directory, they never go near `docs/RANKINGS.md`, and their whole job is to
 keep the seal worth something. A fixture that tests the reader is not a flight
 claiming to be one.
 
+**The flight is kept; the tape still is not.** For a long time a ranked flight
+left behind a sentence and eight hex digits, and nothing else — so a row, once
+landed, could never be read back by anybody, ever. That made the board the one
+scoreboard here that could not be recomputed: the ledger comes off the history,
+the meter off the board's own commits, the versions off the commits, and a
+ranked flight came off nothing. So `tools/blackbox.sh --save` writes the
+decoded flight to `docs/tapes/<crc>.json` — exactly the bytes the seal was
+taken over, which is why the file is named after its own sum — and the referee
+recomputes it. The `BB1:` block still never enters the repository, because that
+is the thing the game writes and the thing a person would forge. What is kept
+is the flight it decoded to, under a name that answers for it.
+
+This does not make forging harder, and it is not pretending to: a sum you took
+over bytes you wrote is a sum that matches. What it buys is that a row is now
+an artefact somebody can check rather than a sentence nobody can, and that a
+flight nobody had has to be committed as one, under a name, in a history that
+remembers.
+
 *Checked:* barely, and honestly. A commit that puts tape lines in a tracked
-file is refused — the game writes them to the screen and the board keeps only
-the checksum, so a `BB1:` line arriving as a file is something somebody made,
-and there is one reason to make one. The rest cannot be checked and never
-will be: no machine in here can see whether a person pressed a key. There is
-no override, because an override on this one would be a signature under a
-flight that did not happen. The way through is GR14's line, which spends a
-budget and claims nothing.
+file is refused — the game writes them to the screen, so a `BB1:` line arriving
+as a file is something somebody made, and there is one reason to make one. A
+filed flight whose bytes do not hash to its own name is refused. A board row
+arriving with no flight filed under it gets a word, not a block, because every
+row that landed before any of this was kept is one of those. The rest cannot be
+checked and never will be: no machine in here can see whether a person pressed
+a key. There is no override, because an override on this one would be a
+signature under a flight that did not happen. The way through is GR14's line,
+which spends a budget and claims nothing.
 
 ---
 
