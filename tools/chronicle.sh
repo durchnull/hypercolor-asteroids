@@ -879,7 +879,24 @@ fi
 # taglines, because the tagline is what the plate is a picture of. It is capped,
 # it keeps what it painted, and it exits without a word on a machine that has no
 # credentials for it, which is most of them. Nothing below waits on the result.
-[ "$QUIET" = 1 ] || [ -n "${ASTEROIDS_NO_ART:-}" ] || sh tools/chronicle-art.sh --auto 2>/dev/null || true
+#
+# From main and nowhere else, and that is not a preference. A plate is asked for
+# by tagline and comes back a little different every time it is asked, so two
+# machines painting the same commit get two pictures - and docs/art/*.jpg is
+# binary, so git cannot union them the way it unions every other generated file
+# here. That is the one merge conflict this project is able to manufacture for
+# itself, in a file neither pilot wrote, and it happens exactly when somebody
+# branches while the plates for the last version are still being filed.
+#
+# So a branch does not paint. Main does, on the next rebuild, which is how they
+# have always arrived anyway - "The plates for v34 and v35, filed" is what that
+# commit looks like. A detached HEAD is nobody's branch and paints nothing.
+PAINTS=0
+case "$(git symbolic-ref --quiet --short HEAD 2>/dev/null)" in
+  main|master) PAINTS=1 ;;
+esac
+[ "$QUIET" = 1 ] || [ -n "${ASTEROIDS_NO_ART:-}" ] || [ "$PAINTS" = 0 ] || \
+  sh tools/chronicle-art.sh --auto 2>/dev/null || true
 
 [ "$QUIET" = 1 ] || mkdir -p docs
 
