@@ -15,8 +15,8 @@
       { v: 29, file: "2ec32929.jpg", alt: "The cabinet keeps score with slightly different arithmetic now.", line: "The cabinet keeps score with slightly different arithmetic now." },
     ],
     roster: {
-      "Malte Buttjer": 1,
       "David Friedrich": 32,
+      "Malte Buttjer": 1,
     }
   };
   A.BOARD = [
