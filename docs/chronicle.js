@@ -22,6 +22,8 @@
   A.BOARD = [
     { rank: "1", pilot: "David Friedrich", score: "16530", wave: "4", time: "4:42", hits: "17%", line: "Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end." },
     { rank: "2", pilot: "David Friedrich", score: "15170", wave: "4", time: "4:16", hits: "19%", line: "Three house traps walked through, and then PINCER took the last two ships at wave 4." },
-    { rank: "3", pilot: "David Friedrich", score: "0", wave: "1", time: "0:16", hits: "—", line: "Three ships in sixteen seconds without the trigger ever being pressed." },
+    { rank: "3", pilot: "Malte Buttjer", score: "4680", wave: "2", time: "1:32", hits: "12%", line: "Two kraken in two shots, 26 rocks to the bomb, and DEBRIS FIELD took the last of it." },
+    { rank: "4", pilot: "Malte Buttjer", score: "3380", wave: "2", time: "2:20", hits: "11%", line: "Three kraken down and both bombs gone by wave two, with a wingmate who never left the spot they spawned on." },
+    { rank: "5", pilot: "David Friedrich", score: "0", wave: "1", time: "0:16", hits: "—", line: "Three ships in sixteen seconds without the trigger ever being pressed." },
   ];
 })(ASTEROIDS);
