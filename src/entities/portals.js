@@ -84,8 +84,85 @@
     for (const s of A.squids) A.tryPortal(s, dt);
   }
 
+  // One arm, at radius 1, wound exactly the way the flat spiral is wound and
+  // sinking away from the plane as it turns inward — so a portal reads as a
+  // hole in the field rather than a sticker on it. The seven arms differ only
+  // by the angle and the colour they are handed, so this is one mesh instanced
+  // seven times rather than seven meshes.
+  const ARM_SEGS = 16;
+  const SINK = 0.8;              // how far the middle drops, in rim radii
+  const THROAT = 0.24;           // where the throat ring crosses the arms
+
+  const arm = () => A.mesh.get("portal:arm", () => {
+    const segs = [];
+    let px = 0, py = 0, pz = -SINK;
+    for (let j = 1; j <= ARM_SEGS; j++) {
+      const f = j / ARM_SEGS;
+      const ang = f * 3.4;
+      const x = Math.cos(ang) * f, y = Math.sin(ang) * f, z = -SINK * (1 - f);
+      segs.push([px, py, pz, x, y, z]);
+      px = x; py = y; pz = z;
+    }
+    return A.mesh.wire(segs);
+  });
+
+  // The rim as a ring of dashes rather than a dashed stroke: there is no line
+  // dash out here, and a hoop turned at the speed the dashes used to crawl is
+  // the same picture carrying none of the state.
+  const DASHES = 11;
+  const DASH_SPIN = 60 / (PORTAL_R - 1);   // the old -60 px a second, in radians
+  const rim = () => A.mesh.get("portal:rim", () => {
+    const segs = [];
+    const span = (A.TAU / DASHES) * 0.57;  // the old [8, 6] pattern, as an angle
+    for (let d = 0; d < DASHES; d++) {
+      const a0 = (d / DASHES) * A.TAU;
+      for (let k = 0; k < 2; k++) {
+        const b = a0 + span * (k / 2), c = a0 + span * ((k + 1) / 2);
+        segs.push([Math.cos(b), Math.sin(b), 0, Math.cos(c), Math.sin(c), 0]);
+      }
+    }
+    return A.mesh.wire(segs);
+  });
+
+  const at = {};
+
+  function draw3d(tick, s) {
+    if (!tick.running || !A.portals) return;
+    const t = tick.time;
+    const closing = A.portals.life < 2;
+    const grow = Math.min(1, A.portals.age / 0.4);
+    const r = (PORTAL_R - 1) * grow;
+    at.z = 0;
+    at.rx = at.ry = 0;
+    at.s = r;
+    at.alpha = closing ? 0.35 + 0.65 * Math.abs(Math.sin(A.portals.life * 6)) : 1;
+    at.glow = true;               // a portal is light, so it adds rather than covers
+    for (const [i, e] of [A.portals.a, A.portals.b].entries()) {
+      at.x = e.x; at.y = e.y;
+      at.light = 62;
+      at.width = 2;
+      for (let k = 0; k < 7; k++) {
+        // the flat arms ride A.hue twice over, so the offset carries the
+        // second turn — the renderer adds the first one itself
+        at.hue = A.hue + k * 51 + i * 180;
+        at.rz = t * (1.6 + k * 0.12) + k * 0.9;
+        s.model(arm(), at);
+      }
+      at.hue = A.hue * 2 + i * 180;
+      at.light = 75;
+      at.width = 2.2;
+      at.rz = t * DASH_SPIN;
+      s.model(rim(), at);
+      // the throat, down where the arms have nearly met: it is what tells you
+      // the mouth has a bottom. The rim stays on the plane, because the rim at
+      // z = 0 is the circle the trip is decided by.
+      s.ring(e.x, e.y, -SINK * (1 - THROAT) * r, THROAT * r, at);
+    }
+  }
+
   function draw(tick, g) {
     if (!tick.running || !A.portals) return;
+    if (A.gl.on) return;
     const t = tick.time;
     const closing = A.portals.life < 2;
     for (const [i, e] of [A.portals.a, A.portals.b].entries()) {
@@ -126,7 +203,7 @@
   A.register({
     id: "portals",
     order: { update: 60, draw: 20, guide: 50 },
-    reset, update, draw,
+    reset, update, draw, draw3d,
     guide: {
       name: "PORTALS",
       tint: "var(--violet)",

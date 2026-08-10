@@ -308,44 +308,137 @@
     g.globalAlpha = 1;
   }
 
+  // The same restraint as the flat hull, by the only means the renderer has:
+  // it offers no saturation to drain, so the deadness is bought with a low
+  // light over almost no body — a live ship keeps 0.13 of the key light and
+  // this keeps 0.05, which is the difference between a hull and the silhouette
+  // of one. The shape says it a second time. No canopy peak and no keel, one
+  // caved-in ridge over a flat plate, a ragged diagonal where the nose was, and
+  // fewer edges than a live ship rather than more.
+  const hulk = () => A.mesh.get("wreck:hull", () => {
+    const [N, R, T, L] = A.SHIP_HULL;
+    const deck = -1.6;                       // the outline sits under the plane
+    const verts = [
+      [R[0], R[1], deck], [T[0], T[1], deck], [L[0], L[1], deck],
+      [N[0] + 3.5, N[1] * 0.42, deck],       // 3, the stub on the right
+      [N[0] - 2.5, N[1] * 0.66, deck],       // 4, the longer one on the left
+      [0, 1, 3.2],                           // 5, what is left of the deck
+    ];
+    return A.mesh.build(verts, [
+      [3, 0, 5], [0, 1, 5], [1, 2, 5], [2, 4, 5], [4, 2, 1, 0, 3],
+    ]);
+  });
+
+  // The nose, off on its own and never coming back — line only, and canted out
+  // of the plane so it reads as adrift rather than as part of the hull.
+  const nose = () => A.mesh.get("wreck:nose", () => {
+    const N = A.SHIP_HULL[0];
+    return A.mesh.wire([[N[0] - 4, N[1] - 5, 0, N[0] + 2, N[1] - 9, 2.4]]);
+  });
+
+  const at = {};
+
+  function hulk3d(s, x, y, z, angle, scale, alpha) {
+    at.x = x; at.y = y; at.z = z;
+    at.rx = 0; at.ry = 0; at.rz = angle;
+    at.s = scale;
+    // Bone, at the same twenty percent saturation the flat hull is drawn at.
+    // Dimming alone was not enough: a dull magenta beside a bright magenta is
+    // still the same colour, and next to a live ship this hull was reading as
+    // the louder of the two — which is the one thing it must never do.
+    at.hue = 190; at.light = 70; at.sat = 20;
+    at.alpha = alpha; at.width = 1.3; at.dim = 0.05; at.glow = false;
+    s.model(hulk(), at);
+    at.light = 64; at.width = 1.1;
+    s.model(nose(), at);
+  }
+
+  function draw3d(tick, s) {
+    if (!tick.running) return;
+
+    if (A.wreck) {
+      const w = A.wreck;
+      hulk3d(s, w.x, w.y, 0, w.angle, 1.7, 0.95);
+
+      for (const q of w.shards) {
+        const a = w.angle * q.d + q.a;
+        // they swing through the plane instead of lying on it, which is what
+        // makes the pieces read as adrift rather than as parked
+        const z = Math.sin(a * 1.3 + q.t) * 7;
+        const sx = w.x + Math.cos(a) * q.r, sy = w.y + Math.sin(a) * q.r;
+        at.hue = 190; at.light = 66; at.sat = 20;
+        at.alpha = 0.55; at.width = 1.2; at.glow = false;
+        s.line(sx, sy, z, sx + Math.cos(a + q.t) * q.len,
+          sy + Math.sin(a + q.t) * q.len, z + q.len * 0.5, at);
+      }
+
+      // Exactly GRAB and exactly on the floor. Height on this one would be a
+      // promise the claw does not keep: the reach is measured in the plane, so
+      // the mark has to be drawn there.
+      const beat = 0.35 + 0.65 * Math.pow(Math.max(0, Math.sin(tick.time * 2.2)), 6);
+      // the locator is the one thing here that is lit: it is a signal rather
+      // than a hull, and it is meant to be found across a loud field
+      at.hue = 40; at.light = 66; at.sat = 100; at.alpha = 0.3 + beat * 0.5;
+      at.rz = 0; at.width = 1.4; at.dim = 0; at.glow = true;
+      s.ring(w.x, w.y, 0, GRAB, at);
+    }
+
+    for (const p of carried.keys()) {
+      if (p.dead || p.out) continue;
+      const back = p.angle + Math.PI;
+      // slung behind and under, so the weight is something you can see as well
+      // as something you feel in the drag
+      at.hue = 190; at.light = 50; at.sat = 55; at.alpha = 0.5;
+      at.width = 1.1; at.glow = false;
+      s.line(p.x + Math.cos(back) * 12, p.y + Math.sin(back) * 12, 0,
+        p.x + Math.cos(back) * 26, p.y + Math.sin(back) * 26, -5, at);
+      hulk3d(s, p.x + Math.cos(back) * 26, p.y + Math.sin(back) * 26, -5,
+        p.angle + tick.time * 0.6, 0.8, 0.7);
+    }
+  }
+
   function draw(tick, g) {
     if (!tick.running) return;
 
     if (A.wreck) {
       const w = A.wreck;
-      drawHull(g, w.x, w.y, w.angle, 1.7, 0.95);
+      // The geometry has a solid above; the lettering never will, so the rest
+      // of this runs either way.
+      if (!A.gl.on) {
+        drawHull(g, w.x, w.y, w.angle, 1.7, 0.95);
 
-      // what came off it, still keeping station after all this time
-      g.save();
-      g.globalAlpha = 0.55;
-      A.glow(A.neon(A.hue + 190, 66, 1, 20));
-      g.lineWidth = 1.2;
-      for (const s of w.shards) {
-        const a = w.angle * s.d + s.a;
-        const sx = w.x + Math.cos(a) * s.r, sy = w.y + Math.sin(a) * s.r;
+        // what came off it, still keeping station after all this time
+        g.save();
+        g.globalAlpha = 0.55;
+        A.glow(A.neon(A.hue + 190, 66, 1, 20));
+        g.lineWidth = 1.2;
+        for (const s of w.shards) {
+          const a = w.angle * s.d + s.a;
+          const sx = w.x + Math.cos(a) * s.r, sy = w.y + Math.sin(a) * s.r;
+          g.beginPath();
+          g.moveTo(sx, sy);
+          g.lineTo(sx + Math.cos(a + s.t) * s.len, sy + Math.sin(a + s.t) * s.len);
+          g.stroke();
+        }
+        g.restore();
+        g.globalAlpha = 1;
+
+        // The locator, still going long after the pilot stopped. It is why a
+        // hull is findable at all in a field this loud, and it is drawn at
+        // exactly the reach of the claw: put the line through the ring and it
+        // is yours. A hitbox nobody can see is how a fair mechanic gets a
+        // reputation for cheating.
+        const beat = 0.35 + 0.65 * Math.pow(Math.max(0, Math.sin(tick.time * 2.2)), 6);
+        g.save();
+        g.globalAlpha = 0.3 + beat * 0.5;
+        A.glow(A.neon(A.hue + 40, 66));
+        g.lineWidth = 1.4;
         g.beginPath();
-        g.moveTo(sx, sy);
-        g.lineTo(sx + Math.cos(a + s.t) * s.len, sy + Math.sin(a + s.t) * s.len);
+        g.arc(w.x, w.y, GRAB, 0, A.TAU);
         g.stroke();
+        g.restore();
+        g.globalAlpha = 1;
       }
-      g.restore();
-      g.globalAlpha = 1;
-
-      // The locator, still going long after the pilot stopped. It is why a
-      // hull is findable at all in a field this loud, and it is drawn at
-      // exactly the reach of the claw: put the line through the ring and it
-      // is yours. A hitbox nobody can see is how a fair mechanic gets a
-      // reputation for cheating.
-      const beat = 0.35 + 0.65 * Math.pow(Math.max(0, Math.sin(tick.time * 2.2)), 6);
-      g.save();
-      g.globalAlpha = 0.3 + beat * 0.5;
-      A.glow(A.neon(A.hue + 40, 66));
-      g.lineWidth = 1.4;
-      g.beginPath();
-      g.arc(w.x, w.y, GRAB, 0, A.TAU);
-      g.stroke();
-      g.restore();
-      g.globalAlpha = 1;
 
       // whose it was, and the number you would be taking on
       g.save();
@@ -367,15 +460,17 @@
       const back = p.angle + Math.PI;
       const bx = p.x + Math.cos(back) * 26;
       const by = p.y + Math.sin(back) * 26;
-      g.save();
-      A.glow(A.neon(A.hue + 190, 50, 0.5, 55));
-      g.lineWidth = 1.2;
-      g.beginPath();
-      g.moveTo(p.x + Math.cos(back) * 12, p.y + Math.sin(back) * 12);
-      g.lineTo(bx, by);
-      g.stroke();
-      g.restore();
-      drawHull(g, bx, by, p.angle + tick.time * 0.6, 0.8, 0.7);
+      if (!A.gl.on) {
+        g.save();
+        A.glow(A.neon(A.hue + 190, 50, 0.5, 55));
+        g.lineWidth = 1.2;
+        g.beginPath();
+        g.moveTo(p.x + Math.cos(back) * 12, p.y + Math.sin(back) * 12);
+        g.lineTo(bx, by);
+        g.stroke();
+        g.restore();
+        drawHull(g, bx, by, p.angle + tick.time * 0.6, 0.8, 0.7);
+      }
 
       // The only number that matters while it is aboard, and it is written as
       // a distance rather than a total: a bare figure over your own hull reads
@@ -395,7 +490,7 @@
   A.register({
     id: "wreck",
     order: { update: 15, draw: 35, guide: 65 },
-    reset, update, draw,
+    reset, update, draw, draw3d,
     guide: {
       name: "THE WRECK",
       meta: "grapple it",

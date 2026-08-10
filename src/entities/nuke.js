@@ -74,7 +74,65 @@
     if (n.life <= 0) A.nuke = null;
   }
 
+  // The fireball. Flat, it is a radial gradient — which is already a picture of
+  // a sphere seen from straight above, so in three dimensions it is just the
+  // sphere, middle on the plane so the front you can see is the front that is
+  // eating rocks. Two shells rather than one, because the gradient had a white
+  // heart in it and no single ball is both white and red.
+  const shell = (n) => A.mesh.get("nuke:fireball:" + n, () => A.mesh.ball(n));
+
+  const at = {};
+
+  function draw3d(tick, s) {
+    const n = A.nuke;
+    if (!n) return;
+    const f = Math.min(1, n.r / n.max);
+    const fade = Math.max(0, Math.min(1, n.life / 0.9));
+    const r = Math.max(1, n.r);
+
+    // Every part of the bomb glows: it is light, not matter, so it adds rather
+    // than covers and can never black out the rocks it is busy eating. That is
+    // also why the body keeps most of its light here — a fireball dimmed to a
+    // sixth like a rock is a soap bubble.
+    at.x = n.x; at.y = n.y; at.z = 0;
+    at.rx = f * 0.7; at.ry = f * 1.1; at.rz = f * 1.6;
+    at.s = r;
+    at.hue = 25 - A.hue; at.light = 58;
+    at.alpha = 0.2 * fade; at.width = 1; at.dim = 0.9; at.glow = true;
+    s.model(shell(1), at);
+
+    at.s = r * 0.42;
+    at.hue = 50 - A.hue; at.light = 86;
+    at.alpha = 0.4 * fade; at.width = 1.4;
+    s.model(shell(0), at);
+
+    // the shock front, at the three radii the flat bomb strokes its arcs
+    at.rx = at.ry = at.rz = 0; at.s = 1; at.dim = 0;
+    for (let i = 0; i < 3; i++) {
+      at.hue = 55 - i * 20 - A.hue;
+      at.light = 70;
+      at.alpha = (0.9 - i * 0.25) * fade;
+      at.width = 7 - i * 2;
+      s.ring(n.x, n.y, 0, Math.max(1, n.r - i * 9), at);
+    }
+
+    // Forty tongues, because forty is what makes a ring read as fire. The outer
+    // end lifts off the plane by turns so the rim boils instead of spreading
+    // like a puddle; the inner end stays down, where the front is.
+    at.light = 62; at.width = 2.5;
+    for (let i = 0; i < 40; i++) {
+      const a = (i / 40) * A.TAU + f * 2;
+      const wob = 1 + Math.sin(i * 3.1 + f * 12) * 0.09;
+      at.hue = 35 + Math.sin(i) * 25 - A.hue;
+      at.alpha = 0.55 * fade;
+      s.line(n.x + Math.cos(a) * n.r * 0.86, n.y + Math.sin(a) * n.r * 0.86, 0,
+             n.x + Math.cos(a) * n.r * wob, n.y + Math.sin(a) * n.r * wob,
+             Math.sin(i * 2.7 + f * 9) * n.r * 0.14, at);
+    }
+  }
+
   function draw(tick, g) {
+    if (A.gl.on) return;
     const n = A.nuke;
     if (!n) return;
     const f = Math.min(1, n.r / n.max);
@@ -118,7 +176,7 @@
   A.register({
     id: "nuke",
     order: { update: 50, draw: 80, guide: 20 },
-    reset, update, draw,
+    reset, update, draw, draw3d,
     guide: {
       name: "ATOM BOMB",
       meta: "B &middot; 2 to start",

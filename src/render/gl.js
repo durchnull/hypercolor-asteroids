@@ -217,8 +217,11 @@
     const D = gl3.eye;
     const f = (2 * D) / A.H;
     const aspect = A.W / A.H;
-    const near = Math.max(1, D - 420);
-    const far = D + 900;
+    // Generous at both ends. The blast front is most of the screen across and
+    // the kraken dives a long way under it, and a body clipped by the lens on
+    // the frame it matters is worse than a little lost depth precision.
+    const near = Math.max(1, D * 0.15);
+    const far = D + 1400;
     const zc = (far + near) / (near - far);
     const zd = (2 * far * near) / (near - far);
 
@@ -252,11 +255,15 @@
     return b;
   }
 
-  /** hsl at full saturation — the same colour A.neon names in CSS. */
-  function rgb(out, at, h, l) {
+  // The same colour A.neon names in CSS, saturation and all. Saturation is not
+  // decoration here: the salvage hull is drawn at twenty percent of it because
+  // being the one thing out here that is not lit up is how the field says
+  // nobody is flying this, and a renderer that could only dim would have had
+  // to say it some other way.
+  function rgb(out, at, h, l, sat) {
     h = (((h % 360) + 360) % 360) / 60;
     l = l / 100;
-    const c = 1 - Math.abs(2 * l - 1);
+    const c = (1 - Math.abs(2 * l - 1)) * (sat === undefined ? 1 : sat / 100);
     const x = c * (1 - Math.abs((h % 2) - 1));
     const m = l - c / 2;
     let r = 0, g = 0, b = 0;
@@ -285,6 +292,7 @@
    *   s         size, or sx / sy / sz for something that is not a ball
    *   hue       an offset from A.hue, exactly as A.neon takes it
    *   light     lightness 0-100, as A.neon's second argument
+   *   sat       saturation 0-100, as A.neon's fourth. 100 unless you say otherwise
    *   alpha     1 by default
    *   width     edge thickness in pixels, 1.6 by default
    *   dim       how much light the body keeps, 0.16 by default
@@ -326,7 +334,7 @@
     d[i + 14] = o.z || 0;
     d[i + 15] = 1;
 
-    rgb(d, i + 16, A.hue + (o.hue || 0), o.light === undefined ? 62 : o.light);
+    rgb(d, i + 16, A.hue + (o.hue || 0), o.light === undefined ? 62 : o.light, o.sat);
     d[i + 19] = o.alpha === undefined ? 1 : o.alpha;
     d[i + 20] = o.width === undefined ? 1.6 : o.width;
     d[i + 21] = o.dim === undefined ? 0.16 : o.dim;
@@ -349,24 +357,39 @@
     d[i + 4] = 0; d[i + 5] = 1; d[i + 6] = 0; d[i + 7] = 0;
     d[i + 8] = 0; d[i + 9] = 0; d[i + 10] = 1; d[i + 11] = 0;
     d[i + 12] = x0; d[i + 13] = y0; d[i + 14] = z0; d[i + 15] = 1;
-    rgb(d, i + 16, A.hue + (o.hue || 0), o.light === undefined ? 62 : o.light);
+    rgb(d, i + 16, A.hue + (o.hue || 0), o.light === undefined ? 62 : o.light, o.sat);
     d[i + 19] = o.alpha === undefined ? 1 : o.alpha;
     d[i + 20] = o.width === undefined ? 1.6 : o.width;
     d[i + 21] = 0;
     b.n++;
   };
 
+  // Every field is written on every call, deliberately. A carried-over object
+  // that only copies the keys the caller happened to set is how a ring that
+  // glowed once goes on glowing for the rest of the run.
   const hoopOpts = {};
 
   /** A hoop lying flat on the plane — reach marks, blast fronts, shockwaves. */
   gl3.ring = function ring(x, y, z, radius, o) {
     if (!gl3.on) return;
     const m = A.mesh.get("gl:hoop", () => A.mesh.hoop(56));
-    for (const k in o) hoopOpts[k] = o[k];
-    hoopOpts.x = x; hoopOpts.y = y; hoopOpts.z = z;
-    hoopOpts.sx = hoopOpts.sy = radius;
+    hoopOpts.x = x;
+    hoopOpts.y = y;
+    hoopOpts.z = z;
+    hoopOpts.sx = radius;
+    hoopOpts.sy = radius;
     hoopOpts.sz = 1;
-    hoopOpts.rx = hoopOpts.ry = 0;
+    hoopOpts.rx = 0;
+    hoopOpts.ry = 0;
+    hoopOpts.rz = o.rz || 0;
+    hoopOpts.s = undefined;
+    hoopOpts.hue = o.hue;
+    hoopOpts.light = o.light;
+    hoopOpts.alpha = o.alpha;
+    hoopOpts.width = o.width;
+    hoopOpts.sat = o.sat;
+    hoopOpts.dim = o.dim;
+    hoopOpts.glow = o.glow;
     gl3.model(m, hoopOpts);
   };
 
