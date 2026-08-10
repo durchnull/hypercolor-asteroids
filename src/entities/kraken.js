@@ -316,19 +316,117 @@
 
   function drawDeep(tick, g) {
     if (!tick.running) return;
+    if (A.gl.on) return;
     for (const s of squids) if (s.z > DEPTH_SPLIT) drawSquid(s, g);
   }
 
   function drawSurface(tick, g) {
     if (!tick.running) return;
+    if (A.gl.on) return;
     for (const s of squids) if (s.z <= DEPTH_SPLIT) drawSquid(s, g);
+  }
+
+  // ---------- the same animal, no longer faking it ----------
+  //
+  // Watch the sign: s.z counts *downward*, so world z is its negative and a
+  // diving kraken really does pass under the rocks — which is the whole job the
+  // two passes above were splitting the draw in half to fake.
+
+  const R3 = 17;        // the dome, at the radius the flat one has always drawn
+  const SPLAY = 0.6;    // the tentacle cone, flattened in height
+  const LIFT = 2;       // how far the glare stands off the shell
+
+  // A dome rather than a ball, so its widest ring lies on the body's own
+  // z = 0: the circle you are looking at is the circle the collision uses (GR8).
+  const dome = () => A.mesh.get("kraken:dome", () => {
+    const profile = [[0.82, -0.26]];
+    for (let i = 0; i <= 3; i++) {
+      const a = (i / 3) * (Math.PI / 2);
+      profile.push([Math.cos(a), Math.sin(a) * 0.92]);
+    }
+    return A.mesh.lathe(profile, 9);
+  });
+
+  const eyeball = () => A.mesh.get("kraken:eye", () => A.mesh.ball(0));
+
+  /** How high the shell stands at a distance from its own axis. */
+  const shellZ = (d) => 0.92 * R3 * Math.sqrt(Math.max(0, 1 - (d * d) / (R3 * R3)));
+
+  const SIDES = [-1, 1];
+  const EYE_Z = shellZ(Math.hypot(6, 6)) + LIFT;
+  const BROW_OUT = shellZ(Math.hypot(9.5, 12)) + LIFT;
+  const BROW_IN = shellZ(Math.hypot(2.5, 8.5)) + LIFT;
+  const at = {};
+
+  function draw3d(tick, scene) {
+    if (!tick.running) return;
+    for (const s of squids) {
+      const rage = s.maxHp - s.hp, enraged = rage >= s.maxHp - 1;
+      const thrash = 3 + rage * 1.5, flare = s.windup > 0 ? 1.9 : 1;
+      const dir = Math.atan2(s.vy, s.vx), cz = -s.z;
+      const fx = Math.cos(dir), fy = Math.sin(dir);   // forward; (-fy, fx) is abeam
+
+      const hit = s.flash > 0 || s.windup > 0, strobe = enraged && Math.sin(s.phase * 9) > 0;
+      const base = 300 - rage * 45 + Math.sin(s.phase * 2) * 20;
+      // the flat draw names every one of these hues absolutely, so each of them
+      // comes across as an offset from the drift rather than as itself
+      at.hue = (hit ? A.hue * 4 : strobe ? base - 20 : base) - A.hue;
+      at.light = hit ? 80 : strobe ? 70 : 60;
+      // it still dims as it dives. Perspective shrinks it on its own, but water
+      // is not glass, and this is the curve the drone is already tuned on.
+      at.alpha = 0.45 + 0.55 * (FOCAL / (FOCAL + s.z));
+
+      at.x = s.x; at.y = s.y; at.z = cz; at.s = R3;
+      at.rx = Math.sin(s.phase * 1.3) * 0.08;         // the old tilt, kept as a nod
+      at.ry = 0; at.rz = s.roll; at.width = 1.6; at.dim = 0.16; at.glow = false;
+      scene.model(dome(), at);
+
+      // The same phase/thrash/flare maths, only the chain is real now: it
+      // streams backward along travel and splays around that axis. The splay is
+      // flattened in height because a tentacle pointed at the camera is a dot,
+      // and six of them would be six dots.
+      for (let k = 0; k < 6; k++) {
+        const az = (k / 6) * A.TAU + 0.5, ca = Math.cos(az), sa = Math.sin(az);
+        let px = s.x - fx * 4 - fy * ca * 11, py = s.y - fy * 4 + fx * ca * 11;
+        let pz = cz + sa * 11 * SPLAY;
+        for (let i = 1; i <= 6; i++) {
+          const radial = 11 + Math.sin(s.phase * thrash + k * 1.1 + i * 0.9) * i * 1.6 * flare;
+          const tang = Math.cos(s.phase * thrash * 0.8 + k * 2.1 + i * 0.7) * i * 1.4 * flare;
+          const side = ca * radial - sa * tang, back = 4 + i * 6.6;
+          const qx = s.x - fx * back - fy * side, qy = s.y - fy * back + fx * side;
+          const qz = cz + (sa * radial + ca * tang) * SPLAY;
+          at.width = 2.3 - i * 0.22;                  // thick at the root
+          scene.line(px, py, pz, qx, qy, qz, at);
+          px = qx; py = qy; pz = qz;
+        }
+      }
+
+      // The glare stays on whoever it is hunting while the body rolls under it
+      // — the one part of a kraken that never spins.
+      const prey = A.nearestShip(s.x, s.y);
+      const gx = prey ? prey.x - s.x : fx, gy = prey ? prey.y - s.y : fy;
+      const gd = Math.hypot(gx, gy) || 1, lx = gx / gd, ly = gy / gd;
+      at.hue = (enraged ? 10 : 35) - A.hue; at.light = 60;
+      at.rx = at.ry = at.rz = 0; at.glow = true;
+      at.dim = 0.3;                    // an eye is the one body allowed to blow out
+      for (const sgn of SIDES) {
+        at.x = s.x - ly * sgn * 6 + lx * 6; at.y = s.y + lx * sgn * 6 + ly * 6;
+        at.z = cz + EYE_Z; at.width = 1.2;
+        at.s = (enraged ? 2.8 : 2.1) + Math.sin(s.phase * 6) * 0.25;
+        scene.model(eyeball(), at);
+
+        at.width = 2.2;                // and the brow, slanted down the shell
+        scene.line(s.x - ly * sgn * 9.5 + lx * 12, s.y + lx * sgn * 9.5 + ly * 12, cz + BROW_OUT,
+          s.x - ly * sgn * 2.5 + lx * 8.5, s.y + lx * sgn * 2.5 + ly * 8.5, cz + BROW_IN, at);
+      }
+    }
   }
 
   A.register([
     {
       id: "kraken",
       order: { update: 40, resolve: 20, draw: 30, guide: 40 },
-      reset, update, resolve, draw: drawDeep,
+      reset, update, resolve, draw: drawDeep, draw3d,
       guide: {
         name: "KRAKEN",
         meta: "250 &middot; 3&ndash;5 hits",

@@ -40,7 +40,25 @@
     }
   }
 
+  const at = {};
+
+  function draw3d(tick, s) {
+    const m = A.mesh.get("bullet", () => A.mesh.ball(0));
+    for (const b of bullets) {
+      at.x = b.x; at.y = b.y; at.z = 0;
+      // stretched along its own flight, which is the only direction a shot
+      // has ever cared about
+      at.rz = Math.atan2(b.vy, b.vx);
+      at.rx = 0; at.ry = 0;
+      at.sx = 4.4; at.sy = 2.4; at.sz = 2.4;
+      at.hue = b.hue - A.hue;   // bullets bake the drift in at birth
+      at.light = 75; at.width = 1.4; at.dim = 0.55; at.glow = true;
+      s.model(m, at);
+    }
+  }
+
   function draw(tick, g) {
+    if (A.gl.on) return;
     for (const b of bullets) {
       g.fillStyle = A.neon(b.hue, 75);
       g.beginPath();
@@ -49,5 +67,5 @@
     }
   }
 
-  A.register({ id: "bullets", order: { update: 20, draw: 89 }, reset, update, draw });
+  A.register({ id: "bullets", order: { update: 20, draw: 89 }, reset, update, draw, draw3d });
 })(ASTEROIDS);

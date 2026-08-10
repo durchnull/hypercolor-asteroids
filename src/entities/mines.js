@@ -195,7 +195,121 @@
     g.restore();
   }
 
+  // The same two states with height on them. The shell is a sphere rather than
+  // a circle, and the collapse is a hole rather than a pattern of shrinking
+  // rings: every ring and every spoke lies on one funnel, so the last second of
+  // a mine goes somewhere instead of merely getting smaller.
+  //
+  // The reach ring is the exception and stays exactly where it was, flat on the
+  // floor at z = 0. It is the promise that you can see what is coming (GR8),
+  // and a promise you have to read through perspective is a worse promise.
+
+  const THROAT = 120;      // px the drain drops below the plane at its middle
+  const shell = () => A.mesh.get("mine:shell", () => A.mesh.ball(0));
+
+  /** How far under the plane the funnel wall has fallen, at radius r. */
+  const wall = (m, r) => -(1 - r / m.reach) * THROAT;
+
+  const at = {};
+
+  function drawFuse3d(m, s, tick) {
+    const t = Math.min(1, m.age / m.fuse);
+    at.hue = 290 + m.hueOff;
+    at.rx = at.ry = at.rz = 0;
+
+    // A fuse is light, not matter, and this is the file where that matters
+    // most: there is no hull here and no contact fuse, so a shell that covered
+    // would be a two-hundred-pixel hole in the field, opened next to a ship,
+    // hiding the rocks that can actually kill them. The mark on the floor goes
+    // the same way — it is the promise you can see what is coming, and a
+    // promise that dims the rock it crosses is a worse promise. Both add and
+    // neither writes depth.
+    at.dim = 0;
+    at.glow = true;
+
+    at.light = 58;
+    at.alpha = 0.14 + t * 0.22;
+    at.width = 1;
+    s.ring(m.x, m.y, 0, m.reach, at);
+
+    // the equator stays on the plane, so the circle the fuse always drew is
+    // still the circle you are looking at
+    const wob = 1 + Math.sin(tick.time * (3 + t * 13)) * 0.04 * (0.4 + t);
+    at.x = m.x; at.y = m.y; at.z = 0;
+    at.rx = m.age * 0.31; at.rz = m.age * 0.52;
+    at.s = m.r * wob;
+    at.dim = 0.06;
+    at.light = 62;
+    at.alpha = 0.45 + t * 0.55;
+    at.width = 1.4 + t * 1.4;
+    s.model(shell(), at);
+
+    // The hand rides on top of the dome, because a clock buried in the middle
+    // of one is a clock nobody reads. It still leaves at -PI/2 and goes round
+    // once, which is the whole clock.
+    const lift = m.r * wob * 0.9;
+    const hand = -Math.PI / 2 + t * A.TAU;
+    at.z = lift;
+    at.rx = at.rz = 0;
+    at.s = 5 + t * 5;
+    at.light = 70;
+    at.alpha = 0.35 + t * 0.5;
+    at.width = 1;
+    at.dim = 0.06;
+    at.glow = true;
+    s.model(shell(), at);
+
+    at.light = 78;
+    at.alpha = 1;
+    at.width = 2.4;
+    s.line(m.x, m.y, lift,
+      m.x + Math.cos(hand) * m.r * 0.62, m.y + Math.sin(hand) * m.r * 0.62, lift, at);
+  }
+
+  function drawCollapse3d(m, s) {
+    const f = Math.max(0, m.pulling / PULL);
+    at.hue = 290 + m.hueOff;
+    at.rx = at.ry = at.rz = 0;
+    at.dim = 0.06;
+    at.glow = true;
+
+    at.light = 72;
+    for (let i = 0; i < 3; i++) {
+      const p = (f + i / 3) % 1;
+      at.alpha = p * 0.75;
+      at.width = 1 + (1 - p) * 3;
+      s.ring(m.x, m.y, wall(m, m.reach * p), m.reach * p, at);
+    }
+
+    at.alpha = f;
+    at.width = 1.6;
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * A.TAU + (1 - f) * 2.4;
+      const from = m.reach * (0.25 + f * 0.5);
+      const to = Math.max(0, from - 40 - (1 - f) * 70);
+      at.light = 58 + i * 2;
+      s.line(m.x + Math.cos(a) * from, m.y + Math.sin(a) * from, wall(m, from),
+        m.x + Math.cos(a) * to, m.y + Math.sin(a) * to, wall(m, to), at);
+    }
+
+    // the light at the bottom of it, where the flat version had a gradient
+    at.x = m.x; at.y = m.y; at.z = -THROAT;
+    at.s = Math.max(1, m.r + 14);
+    at.light = 80;
+    at.alpha = 0.5 * f;
+    at.width = 1;
+    s.model(shell(), at);
+  }
+
+  function draw3d(tick, s) {
+    for (const m of mines) {
+      if (m.pulling > 0) drawCollapse3d(m, s);
+      else drawFuse3d(m, s, tick);
+    }
+  }
+
   function draw(tick, g) {
+    if (A.gl.on) return;
     for (const m of mines) {
       const c = (l, a) => A.neon(A.hue + 290 + m.hueOff, l, a === undefined ? 1 : a);
       if (m.pulling > 0) drawCollapse(m, g, c);
@@ -206,7 +320,7 @@
   A.register({
     id: "mines",
     order: { update: 45, draw: 35, guide: 45 },
-    reset, update, draw,
+    reset, update, draw, draw3d,
     guide: {
       name: "MINE",
       meta: "timed &middot; no contact fuse",

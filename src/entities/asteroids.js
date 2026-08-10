@@ -175,7 +175,32 @@
     }
   }
 
+  // Five boulders, built once. A rock's variant and its tumble both come off
+  // hueOff and angle, which it already had — a shape this old should not need
+  // new state to stand up in.
+  const SHAPES = 5;
+  const shapeOf = (a) => A.mesh.get("rock:" + (Math.floor(a.hueOff) % SHAPES),
+    () => A.mesh.rock(Math.floor(a.hueOff) % SHAPES + 1));
+
+  const at = {};
+
+  function draw3d(tick, s) {
+    for (const a of asteroids) {
+      at.x = a.x; at.y = a.y; at.z = 0;
+      // the equator stays on the plane, because the equator is the hitbox
+      at.rz = a.angle;
+      at.rx = a.angle * 0.71 + a.hueOff;
+      at.ry = a.angle * 0.43;
+      at.s = a.radius;
+      at.hue = a.hueOff;
+      at.light = 60 + Math.sin(a.pulse) * 8;
+      at.width = 1.6;
+      s.model(shapeOf(a), at);
+    }
+  }
+
   function draw(tick, g) {
+    if (A.gl.on) return;
     for (const a of asteroids) {
       const c = A.neon(A.hue + a.hueOff, 60 + Math.sin(a.pulse) * 8);
       g.save();
@@ -201,7 +226,7 @@
   A.register({
     id: "asteroids",
     order: { update: 30, resolve: 10, draw: 40, guide: 10 },
-    reset, update, resolve, draw,
+    reset, update, resolve, draw, draw3d,
     guide: {
       name: "ASTEROID",
       meta: "20 / 50 / 100",

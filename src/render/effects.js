@@ -124,7 +124,36 @@
     }
   }
 
+  // Shards tumble out of the plane now, and a shockwave is a hoop lying on the
+  // floor that the rocks pass over. Neither needed a new field to do it: the
+  // out-of-plane swing comes off the angle and spin a shard already carried.
+  const at = {};
+
+  function drawField3d(tick, s) {
+    for (const w of shocks) {
+      const f = 1 - w.r / w.max;
+      at.hue = w.hue; at.light = 65;
+      at.alpha = Math.max(0, f) * 0.85;
+      at.width = 1 + f * 3.5;
+      at.glow = true;
+      s.ring(w.x, w.y, 1, w.r, at);
+    }
+    for (const d of debris) {
+      const cx = Math.cos(d.angle) * d.len * 0.5;
+      const cy = Math.sin(d.angle) * d.len * 0.5;
+      const cz = Math.sin(d.angle * 1.7 + d.spin) * d.len * 0.5;
+      s.line(d.x - cx, d.y - cy, (d.z || 0) - cz, d.x + cx, d.y + cy, (d.z || 0) + cz, {
+        hue: d.hue - A.hue,     // a shard's hue was fixed when it was struck
+        light: 62,
+        alpha: Math.min(1, d.life * 2.2),
+        width: 1.8,
+        glow: true,
+      });
+    }
+  }
+
   function drawField(tick, g) {
+    if (A.gl.on) return;
     for (const s of shocks) {
       const f = 1 - s.r / s.max;
       g.save();
@@ -185,7 +214,7 @@
   // Two entries, because the effects straddle everything else: shards and rings
   // sit under the bullets, the death bloom and the score popups sit over them.
   A.register([
-    { id: "effects", order: { update: 90, draw: 88 }, reset, update, draw: drawField },
+    { id: "effects", order: { update: 90, draw: 88 }, reset, update, draw: drawField, draw3d: drawField3d },
     { id: "effects:overlay", order: { draw: 92 }, draw: drawOver },
   ]);
 })(ASTEROIDS);

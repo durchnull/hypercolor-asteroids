@@ -91,8 +91,72 @@
     }
   }
 
+  // The one body in the field the camera has an opinion about. A true ball of
+  // this radius — wider than the screen — would push its near cap straight
+  // through the lens, so the solid is squashed in z until it fits under it.
+  // What is not squashed is the limb at z = 0, and the limb is the circle every
+  // collision above has always used.
+  const dome = () => Math.min(300, Math.min(A.W, A.H) * 0.2);
+
+  /** Where that surface stands, at distance d out from the middle. */
+  function lift(p, d) {
+    const k = Math.min(1, d / p.r);
+    return dome() * Math.sqrt(1 - k * k);
+  }
+
+  const body = () => A.mesh.get("planet:body", () => A.mesh.ball(2));
+  // finer than the shared hoop, because at this radius a fifty-six-sided ring
+  // reads as a polygon and this particular ring is the thing that kills you
+  const limb = () => A.mesh.get("planet:limb", () => A.mesh.hoop(96));
+
+  const at = {};
+
+  function draw3d(tick, s) {
+    if (!tick.running || !A.planet) return;
+    const p = A.planet;
+
+    at.x = p.x; at.y = p.y; at.z = 0;
+    at.rx = at.ry = 0;
+    at.rz = tick.time * 0.06;         // the slow turn the flat meridians had
+    at.sx = at.sy = p.r; at.sz = dome();
+    at.hue = p.hueOff; at.light = 62;
+    at.alpha = 1; at.glow = false;
+    // a hull this wide catches too much of the key light to be lit like a rock,
+    // and it is here to hide what is behind it rather than to be looked at
+    at.dim = 0.1;
+    at.width = 0.9;                   // four hundred edges, most of them off screen
+    s.model(body(), at);
+
+    at.sz = 1;
+    at.width = 2.4;
+    s.model(limb(), at);
+
+    // contour bands, climbing the dome as they close on the middle — flat
+    // circles in the flat game because a flat game had nowhere else to put them
+    at.width = 1.3;
+    at.light = 58;
+    for (let i = 1; i <= 6; i++) {
+      const rr = p.r * (1 - i * 0.055);
+      at.hue = p.hueOff + i * 30;
+      at.alpha = 0.42 - i * 0.05;
+      s.ring(p.x, p.y, lift(p, rr), rr, at);
+    }
+
+    at.width = 1.1;
+    at.hue = p.hueOff + 60;
+    at.light = 55;
+    at.alpha = 0.5;
+    for (const c of p.craters) {
+      const cx = p.x + Math.cos(c.a) * c.d;
+      const cy = p.y + Math.sin(c.a) * c.d;
+      if (cx < -60 || cx > A.W + 60 || cy < -60 || cy > A.H + 60) continue;
+      s.ring(cx, cy, lift(p, c.d), c.r, at);
+    }
+  }
+
   function draw(tick, g) {
     if (!tick.running || !A.planet) return;
+    if (A.gl.on) return;
     const p = A.planet;
     const t = tick.time;
     g.save();
@@ -139,7 +203,7 @@
   A.register({
     id: "planet",
     order: { update: 80, draw: 10, guide: 60 },
-    reset, update, draw,
+    reset, update, draw, draw3d,
     guide: {
       name: "PLANET",
       tint: "var(--lime)",

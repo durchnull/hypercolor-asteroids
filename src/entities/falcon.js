@@ -70,8 +70,70 @@
     if ((f.vx > 0 && f.x > A.W + 80) || (f.vx < 0 && f.x < -80)) A.falcon = null;
   }
 
+  // The hull, built once. The flat version is this same ship seen from straight
+  // overhead — a disc, two forks, a pod on the rim — so the solid keeps every
+  // radius and every reach it already had and only gains a thickness.
+  const disc = () => A.mesh.get("falcon:disc", () => A.mesh.lathe(
+    [[0, -2.5], [9, -1.7], [13, 0], [9, 1.7], [0, 2.5]], 14));
+  const mandible = () => A.mesh.get("falcon:mandible", () => A.mesh.box(9, 2.5, 1.9));
+  const pod = () => A.mesh.get("falcon:pod", () => A.mesh.ball(0));
+
+  const at = {};
+
+  function draw3d(tick, s) {
+    if (!tick.running || !A.falcon) return;
+    const f = A.falcon;
+    const t = tick.time;
+    const rot = Math.atan2(f.vy, f.vx);
+    const cr = Math.cos(rot), sr = Math.sin(rot);
+    // every part is bolted to a hull that flies nose first, so each one is
+    // placed by the same turn ctx.rotate was doing for the flat draw
+    const px = (lx, ly) => f.x + lx * cr - ly * sr;
+    const py = (lx, ly) => f.y + lx * sr + ly * cr;
+
+    if (f.laserT > 0) {
+      // the beam rides a little above the plane, which is what makes it read as
+      // something passing over the field rather than lying on it
+      const a = Math.min(1, f.laserT / 0.2);
+      at.glow = true;
+      for (let i = 0; i < 4; i++) {
+        at.hue = A.hue * 5 + i * 90;      // the flat code names an absolute hue
+        at.light = 62; at.alpha = a; at.width = 11 - i * 2.6;
+        s.line(f.x, f.y, 5,
+          f.beamX + Math.sin(t * 40 + i) * 3, f.beamY + Math.cos(t * 40 + i) * 3, 1, at);
+      }
+      at.hue = 0; at.light = 100; at.width = 1.8;
+      s.line(f.x, f.y, 5, f.beamX, f.beamY, 1, at);
+    }
+
+    at.x = f.x; at.y = f.y; at.z = 0;
+    at.rx = 0; at.ry = 0; at.rz = rot;
+    at.s = 1;
+    at.hue = 200; at.light = 78;
+    at.alpha = 1; at.width = 1.5; at.dim = 0.14; at.glow = false;
+    s.model(disc(), at);
+
+    for (let side = -1; side <= 1; side += 2) {
+      at.x = px(17, side * 6.5); at.y = py(17, side * 6.5);
+      s.model(mandible(), at);
+    }
+
+    at.x = px(5, -12); at.y = py(5, -12); at.z = 2.2;
+    at.s = 3.2;
+    s.model(pod(), at);
+
+    // the dish reads as a hoop on the roof; a second ball up there would only
+    // be another blob at the size this ship actually is on screen
+    at.s = 1;
+    s.ring(px(-2, 0), py(-2, 0), 2.8, 4.5, at);
+
+    at.hue = 20; at.light = 62; at.width = 3.2; at.glow = true;
+    s.line(px(-13.5, -6), py(-13.5, -6), 0, px(-13.5, 6), py(-13.5, 6), 0, at);
+  }
+
   function draw(tick, g) {
     if (!tick.running || !A.falcon) return;
+    if (A.gl.on) return;
     const f = A.falcon;
     const t = tick.time;
     if (f.laserT > 0) {
@@ -123,7 +185,7 @@
   A.register({
     id: "falcon",
     order: { update: 70, draw: 70, guide: 70 },
-    reset, update, draw,
+    reset, update, draw, draw3d,
     guide: {
       name: "THE FALCON",
       tint: "var(--ink)",

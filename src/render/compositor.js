@@ -25,6 +25,11 @@
     g.restore();
     g.globalCompositeOperation = "source-over";
 
+    // the field itself, as solids under a camera, painted onto the same layer
+    // so it inherits the trails and the bloom (src/render/gl.js). On a machine
+    // with no WebGL2 this does nothing and the flat draw hooks below are the
+    // whole game, exactly as they used to be.
+    A.gl.frame(tick, g);
     A.run("draw", tick, g);
 
     // composite the glowing layer over the sky, with shake and RGB smear
