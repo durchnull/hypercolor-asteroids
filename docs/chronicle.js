@@ -6,8 +6,8 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 34,
-    latest: { v: 34, pilot: "Malte Buttjer", date: "10 August 2026", line: "" },
+    versions: 35,
+    latest: { v: 35, pilot: "Malte Buttjer", date: "10 August 2026", line: "Somebody adjusted what was already out there, and it noticed. The colours moved as well." },
     plates: [
       { v: 33, file: "c7f8fbd0.jpg", alt: "A new ambush went into the waves, armed against everybody except the pilot who wrote it. An ambush came along with it.", line: "A new ambush went into the waves, armed against everybody except the pilot who wrote it. An ambush came along with it." },
       { v: 32, file: "84359a28.jpg", alt: "The scoreboard climbed down off the wall and into the field.", line: "The scoreboard climbed down off the wall and into the field." },
@@ -15,7 +15,7 @@
       { v: 30, file: "d4dc5431.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
     ],
     roster: {
-      "Malte Buttjer": 2,
+      "Malte Buttjer": 3,
       "David Friedrich": 32,
     }
   };
