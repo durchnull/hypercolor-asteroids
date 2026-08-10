@@ -16,6 +16,8 @@ ASTEROIDS.MODULES = [
   "./core/math.js",
   "./core/sidecar.js",
   "./render/palette.js",
+  "./render/meshes.js",
+  "./render/gl.js",
   "./render/starfield.js",
   "./render/compositor.js",
   "./audio/context.js",

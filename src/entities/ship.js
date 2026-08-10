@@ -133,11 +133,95 @@
     }
   }
 
+  // The hull as a solid, built over the same four points the flat game draws,
+  // so looking straight down at it gives back exactly the silhouette the seat
+  // cards print. The dart was always a good shape; it only ever needed a
+  // spine — a canopy ridge nose to tail, wings left flat either side of it,
+  // and one keel underneath that you never see from up here.
+  //
+  // A single peak over the middle was the first thing tried and it was wrong:
+  // four edges radiating to one apex read as a diamond, and the ship stopped
+  // looking like a ship. The ridge is what puts the nose back.
+  const hull = () => A.mesh.get("ship:hull", () => {
+    const [N, R, T, L] = A.SHIP_HULL;
+    const verts = [
+      [N[0], N[1], 0], [R[0], R[1], 0], [T[0], T[1], 0], [L[0], L[1], 0],
+      [0, -4, 5.0],      // 4, the canopy
+      [0, -2, -2.8],     // 5, the keel
+    ];
+    // Four panels on top and four underneath, and no more than that. An
+    // earlier deck had a second ridge vertex and five struts, which at the
+    // size a ship actually is on screen is eleven glowing lines inside
+    // twenty pixels — it bloomed into a white smear. Fewer edges is what
+    // makes it legible, not a dimmer colour.
+    return A.mesh.build(verts, [
+      [0, 1, 4], [4, 1, 2], [0, 4, 3], [4, 2, 3],
+      [1, 0, 5], [2, 1, 5], [3, 2, 5], [0, 3, 5],
+    ]);
+  });
+
+  // The flame is built in the hull's own space rather than lathed and turned,
+  // because a cone that has to be rotated into place is a cone somebody will
+  // get backwards later.
+  const flame = () => A.mesh.get("ship:flame", () => {
+    const verts = [[0, 18, 0]];
+    const ring = [];
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * A.TAU;
+      ring.push(verts.length);
+      verts.push([Math.cos(a) * 4.4, 9, Math.sin(a) * 4.4]);
+    }
+    const faces = [ring.slice().reverse()];
+    for (let i = 0; i < 6; i++) faces.push([ring[i], ring[(i + 1) % 6], 0]);
+    return A.mesh.build(verts, faces);
+  });
+
+  const shell = () => A.mesh.get("ship:shield", () => A.mesh.ball(1));
+
+  const at = {};
+
+  function draw3d(tick, s) {
+    if (!tick.running) return;
+    for (const p of A.livePlayers()) {
+      A.hook3d(p, s);
+      if (p.dead) continue;
+      if (p.invuln > 0 && Math.floor(p.invuln * 8) % 2 === 0) continue;
+
+      if (p.invuln > 0) {
+        at.x = p.x; at.y = p.y; at.z = 0;
+        at.rx = at.ry = 0; at.rz = p.invuln * 1.4;
+        at.s = 21 + Math.sin(p.invuln * 9) * 2;
+        at.hue = p.hue - 60; at.light = 70;
+        at.alpha = 0.34; at.width = 1; at.dim = 0.04; at.glow = true;
+        s.model(shell(), at);
+      }
+
+      at.x = p.x; at.y = p.y; at.z = 0;
+      at.rx = 0; at.ry = 0; at.rz = p.angle + Math.PI / 2;
+      at.s = 1;
+      at.hue = p.hue; at.light = 66;
+      // the same dimming the rocks get: this is a hull that catches light, and
+      // a hull bright enough to read as paint drowns in its own bloom
+      at.alpha = 1; at.width = 1.8; at.dim = 0.13; at.glow = false;
+      s.model(hull(), at);
+
+      if (A.keys[p.idx].thrust && Math.random() > 0.3) {
+        at.hue = p.hue + 60; at.light = 62;
+        at.sx = at.sz = 0.8 + Math.random() * 0.5;
+        at.sy = 0.7 + Math.random() * 0.9;
+        at.s = undefined;
+        at.alpha = 0.55; at.width = 1.4; at.dim = 0.1; at.glow = true;
+        s.model(flame(), at);
+        at.sx = at.sy = at.sz = undefined;
+      }
+    }
+  }
+
   function draw(tick, g) {
     if (!tick.running) return;
     for (const p of A.livePlayers()) {
-      A.drawHook(p, g);
-      drawShip(p, g);
+      if (!A.gl.on) A.drawHook(p, g);
+      if (!A.gl.on) drawShip(p, g);
     }
   }
 
@@ -177,5 +261,5 @@
     g.restore();
   }
 
-  A.register({ id: "ship", order: { update: 10, draw: 60 }, reset, update, draw });
+  A.register({ id: "ship", order: { update: 10, draw: 60 }, reset, update, draw, draw3d });
 })(ASTEROIDS);

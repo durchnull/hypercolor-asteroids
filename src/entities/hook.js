@@ -333,6 +333,56 @@
     }
   };
 
+  // The line, in three dimensions and strung a little over the plane so it
+  // passes above the rocks it is not attached to. The claw keeps its barbs;
+  // they are the reason you can tell which end is which at a glance.
+  const at = {};
+
+  A.hook3d = function hook3d(p, s) {
+    const h = p.hook;
+    if (!h || p.dead) return;
+    const taut = h.state === "attached";
+    const dx = h.x - p.x, dy = h.y - p.y;
+    const d = Math.hypot(dx, dy) || 1;
+    const nx = -dy / d, ny = dx / d;
+
+    const reach = taut ? Math.min(1, Math.max(0, (d / h.len - 0.72) * 3.6)) : 0;
+    if (reach > 0.02) {
+      at.hue = p.hue; at.light = 60; at.alpha = 0.26 * reach;
+      at.width = 1; at.glow = true;
+      s.ring(h.x, h.y, 0, h.len, at);
+    }
+
+    const hue = p.hue + (taut ? 40 : 0);
+    const light = taut ? 70 + h.taut * 20 : 60;
+    const width = taut ? 1.8 + h.taut * 1.6 : 1.4;
+    let px = p.x, py = p.y, pz = 3;
+    const segs = 10;
+    for (let i = 1; i <= segs; i++) {
+      const f = i / segs;
+      const wob = taut
+        ? Math.sin(f * Math.PI) * Math.sin(h.swept * 9) * (1 + h.taut * 5)
+        : Math.sin(f * Math.PI) * Math.sin(h.travel * 0.05) * 7;
+      const qx = p.x + dx * f + nx * wob;
+      const qy = p.y + dy * f + ny * wob;
+      // the slack rides a little higher in the middle than at either end
+      const qz = 3 + Math.sin(f * Math.PI) * (taut ? 2 : 7);
+      s.line(px, py, pz, qx, qy, qz, { hue, light, alpha: 1, width });
+      px = qx; py = qy; pz = qz;
+    }
+
+    const spin = taut ? Math.atan2(-dy, -dx) : h.spin;
+    const c = Math.cos(spin), n = Math.sin(spin);
+    const arm = (ax, ay, az, bx, by, bz) => s.line(
+      h.x + ax * c - ay * n, h.y + ax * n + ay * c, az,
+      h.x + bx * c - by * n, h.y + bx * n + by * c, bz,
+      { hue, light: 72, width: 2 });
+    arm(-5, 0, 3, 4, 0, 3);
+    arm(4, 0, 3, -2, -5, 3);
+    arm(4, 0, 3, -2, 5, 3);
+    arm(4, 0, 3, -2, 0, 8);
+  };
+
   A.drawHook = function drawHook(p, g) {
     const h = p.hook;
     if (!h || p.dead) return;

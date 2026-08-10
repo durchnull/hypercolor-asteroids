@@ -30,8 +30,43 @@
     return { versions, traps, flights };
   };
 
-  function draw(tick, g) {
+  // The same paint, laid on the roof of a hull that now has one. It sits just
+  // over the ridge rather than on it, because trim sunk into its own fuselage
+  // is trim nobody is ever credited with.
+  const DECK = 6.1;
+
+  function draw3d(tick, s) {
     if (!tick.running) return;
+    const r = A.serviceRecord(A.activePilot());
+    if (!r) return;
+
+    let chevrons = 0;
+    for (const at of CHEVRONS) if (r.versions >= at) chevrons++;
+
+    for (const p of A.livePlayers()) {
+      if (p.dead) continue;
+      if (p.invuln > 0 && Math.floor(p.invuln * 8) % 2 === 0) continue;
+      const c = Math.cos(p.angle + Math.PI / 2), n = Math.sin(p.angle + Math.PI / 2);
+      const mark = (ax, ay, bx, by) => s.line(
+        p.x + ax * c - ay * n, p.y + ax * n + ay * c, DECK,
+        p.x + bx * c - by * n, p.y + bx * n + by * c, DECK,
+        { hue: p.hue + 40, light: 78, alpha: 0.85, width: 1.3 });
+
+      for (let i = 0; i < chevrons; i++) {
+        const y = -3.5 + i * 4;
+        mark(-3.6, y + 2.4, 0, y);
+        mark(0, y, 3.6, y + 2.4);
+      }
+      if (r.traps > 0) mark(-3.4, 8.4, 3.4, 8.4);
+      if (r.flights > 0) {
+        mark(-8.2, 9.6, -6.4, 6.4);
+        mark(8.2, 9.6, 6.4, 6.4);
+      }
+    }
+  }
+
+  function draw(tick, g) {
+    if (!tick.running || A.gl.on) return;
     const r = A.serviceRecord(A.activePilot());
     if (!r) return;
 
@@ -81,6 +116,6 @@
   A.register({
     id: "service",
     order: { draw: 61 },   // paint goes on right after the hull
-    draw,
+    draw, draw3d,
   });
 })(ASTEROIDS);
