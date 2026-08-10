@@ -20,17 +20,29 @@ same evening being read out twice. Neither one buys a landing.
 
 | # | pilot | score | wave | time | accuracy | the flight in one line |
 |---|-------|-------|------|------|----------|------------------------|
-| 1 | David Friedrich | 16530 | 4 | 4:42 | 17% | Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end. |
-| 2 | David Friedrich | 15170 | 4 | 4:16 | 19% | Three house traps walked through, and then PINCER took the last two ships at wave 4. |
-| 3 | Malte Buttjer | 4680 | 2 | 1:32 | 12% | Two kraken in two shots, 26 rocks to the bomb, and DEBRIS FIELD took the last of it. |
-| 4 | Malte Buttjer | 3380 | 2 | 2:20 | 11% | Three kraken down and both bombs gone by wave two, with a wingmate who never left the spot they spawned on. |
-| 5 | David Friedrich | 0 | 1 | 0:16 | — | Three ships in sixteen seconds without the trigger ever being pressed. |
+| 1 | David Friedrich | 21880 | 5 | 6:18 | 19% | Six ambushes walked through, fourteen kraken dead, and then PINCER again — same trap, one wave later. |
+| 2 | David Friedrich | 16530 | 4 | 4:42 | 17% | Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end. |
+| 3 | David Friedrich | 15170 | 4 | 4:16 | 19% | Three house traps walked through, and then PINCER took the last two ships at wave 4. |
+| 4 | Malte Buttjer | 4680 | 2 | 1:32 | 12% | Two kraken in two shots, 26 rocks to the bomb, and DEBRIS FIELD took the last of it. |
+| 5 | Malte Buttjer | 3380 | 2 | 2:20 | 11% | Three kraken down and both bombs gone by wave two, with a wingmate who never left the spot they spawned on. |
+| 6 | David Friedrich | 0 | 1 | 0:16 | — | Three ships in sixteen seconds without the trigger ever being pressed. |
 
 ## THE FLIGHT LOG
 
 Newest first. One line per tape, so the same evening is readable as an evening.
 
 <!-- log -->
+**2026-08-10 · David Friedrich · 21880 · wave 5 · 6:18** — 1143 shots for 214
+rocks (26 large, 60 medium, 128 small), 19 percent accuracy, best flurry of 15,
+and 3466 points a minute. The bomb came out once and took 21 rocks with it.
+Kraken hunting again, harder: 37 hits, 14 killed. One grapple throw, 29.5
+klicks flown, topping out at 267, with 141 seconds of that on the throttle.
+Eight close shaves, three deaths. Six ambushes flown clear across four waves —
+SHOWER and DEBRIS at wave 2 and again at wave 4, SWITCH at wave 3, and
+UNDERTOW, Malte Buttjer's, at wave 3, cleared on its first outing against this
+pilot. Then PINCER, the house's, at wave 5: two ships down inside it and the
+evening over. 5080 over their own best, and the first tape past wave 4.
+<!-- crc 1af31d91 -->
 **2026-08-09 · David Friedrich · 0 · wave 1 · 0:16** — No shots, so no accuracy
 to report, and no rocks: nothing on this tape was hit by anything the pilot did.
 Three ships gone in sixteen seconds, 1.3 klicks flown at up to 236, eight and a
