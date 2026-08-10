@@ -15,8 +15,8 @@
       { v: 30, file: "d4dc5431.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
     ],
     roster: {
-      "Malte Buttjer": 3,
       "David Friedrich": 32,
+      "Malte Buttjer": 3,
     }
   };
   A.BOARD = [
