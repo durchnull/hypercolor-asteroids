@@ -166,6 +166,36 @@ old_json() {
 }
 OLD_CRC=cd4483e6
 
+# The same pilot, a fortnight later, from a cabinet that was locked to him. On
+# file this is what ages the tape above: one flight proving Cy's cabinet locks
+# is what turns "no seat" from a fair question into a poor answer.
+locked_json() {
+  printf '%s' \
+'{"v":1,"ts":"2026-07-14T20:31:09.120Z","pilot":"Cy Null","whoami":"Cy Null",' \
+'"score":2040,"best":2040,"wave":2,"time":95.5,"shaves":4,' \
+'"seats":[{"seat":"P1","shots":110,"hits":26,' \
+'"rocks":{"large":4,"medium":8,"small":13},"nuked":0,"deaths":3,"bombs":0,' \
+'"hooks":1,"kraken":{"hits":1,"kills":0},"dist":8.9,"top":301,"thrust":38.2,' \
+'"flurry":4,"score":2040}],"events":[]}'
+}
+LOCKED_CRC=737df8c8
+
+# A pilot the ledger was charging while she flew. The field she met is part of
+# what her numbers mean, so the tape carries the row it read - and because the
+# game reads that row off the working tree, this is the only place the rest of
+# the room ever sees which one it was.
+charged_json() {
+  printf '%s' \
+'{"v":1,"ts":"2026-08-02T18:22:40.010Z","pilot":"Ada Vex","whoami":"Ada Vex",' \
+'"ledger":{"bends":4,"clean":3},' \
+'"score":3120,"best":3120,"wave":3,"time":120.0,"shaves":5,' \
+'"seats":[{"seat":"P1","shots":180,"hits":40,' \
+'"rocks":{"large":5,"medium":11,"small":19},"nuked":0,"deaths":3,"bombs":1,' \
+'"hooks":0,"kraken":{"hits":3,"kills":1},"dist":11.7,"top":330,"thrust":51.0,' \
+'"flurry":6,"score":3120}],"events":[]}'
+}
+CHARGED_CRC=012cd673
+
 # The tape around a record: the readable header nobody parses, the body base64'd
 # into BB1: lines forty-eight characters wide, and the seal on the last line.
 tape() {
@@ -232,6 +262,56 @@ case_ GR14 "an older tape admits what it does not carry"
   read_tape "$WORK/tape"; X=$?
   expect "exit=$X seat=$(grep -c '^NO SEAT ON TAPE' "$OUT") reel=$(grep -c '^NO EVENT REEL' "$OUT")" \
          "exit=0 seat=1 reel=1"
+
+case_ GR12 "a missing seat ages: this name has flown from a locked one before"
+  # The filed flights are what answers it. "No seat" used to mean an old tape
+  # and a lock somebody removed on the way to borrowing a name, with no way to
+  # tell the two apart, so the reader asked politely about both. One flight on
+  # file under this pilot with a seat in it settles which one this is.
+  mkdir -p "$WORK/seat/docs/tapes" "$WORK/seat/tools"
+  cp "$ROOT/tools/blackbox.sh" "$WORK/seat/tools/blackbox.sh"
+  printf '%s' "$(locked_json)" > "$WORK/seat/docs/tapes/$LOCKED_CRC.json"
+  tape "$(old_json)" "$OLD_CRC" > "$WORK/tape"
+  ( cd "$WORK/seat" && sh tools/blackbox.sh "$WORK/tape" ) > "$OUT" 2>&1; X=$?
+  expect "exit=$X aged=$(grep -c '^SEAT UNPROVEN' "$OUT") old=$(grep -c '^NO SEAT ON TAPE' "$OUT")" \
+         "exit=0 aged=1 old=0"
+
+case_ GR12 "a name with no flight on file is still given the benefit of the doubt"
+  # The mirror, and the reason the verdict is worth having: a pilot whose
+  # cabinet nobody has ever seen locked is exactly who the gentle reading is
+  # for, and they keep it.
+  mkdir -p "$WORK/noseat/docs/tapes" "$WORK/noseat/tools"
+  cp "$ROOT/tools/blackbox.sh" "$WORK/noseat/tools/blackbox.sh"
+  printf '%s' "$(flown_json)" > "$WORK/noseat/docs/tapes/$FLOWN_CRC.json"
+  tape "$(old_json)" "$OLD_CRC" > "$WORK/tape"
+  ( cd "$WORK/noseat" && sh tools/blackbox.sh "$WORK/tape" ) > "$OUT" 2>&1; X=$?
+  expect "exit=$X old=$(grep -c '^NO SEAT ON TAPE' "$OUT") aged=$(grep -c '^SEAT UNPROVEN' "$OUT")" \
+         "exit=0 old=1 aged=0"
+
+case_ GR12 "the field a flight was flown under is read off the tape, not asked about"
+  tape "$(charged_json)" "$CHARGED_CRC" > "$WORK/tape"
+  read_tape "$WORK/tape"; X=$?
+  expect "exit=$X field=$(grep -c '^THE FIELD IT FLEW: 4 bends, 3 clean' "$OUT")" \
+         "exit=0 field=1"
+
+case_ GR12 "a tape from before the ledger was sealed says nothing about it"
+  tape "$(flown_json)" "$FLOWN_CRC" > "$WORK/tape"
+  read_tape "$WORK/tape"
+  expect "$(grep -c '^THE FIELD IT FLEW' "$OUT")" "0"
+
+case_ GR16 "a filed flight is checked against the name it is filed under"
+  # The whole point of filing one: the name is the sum, so the bytes answer for
+  # themselves for as long as the repository exists.
+  printf '%s' "$(flown_json)" > "$WORK/filed.json"
+  expect "$(sh tools/blackbox.sh --sum "$WORK/filed.json")" "$FLOWN_CRC"
+
+case_ GR16 "--save writes the flight the seal was taken over, and no more"
+  mkdir -p "$WORK/save"; ( cd "$WORK/save" && git init -q . )
+  tape "$(flown_json)" "$FLOWN_CRC" > "$WORK/tape"
+  ( cd "$WORK/save" && sh "$ROOT/tools/blackbox.sh" --save "$WORK/tape" ) > "$OUT" 2>&1
+  expect "filed=$(grep -c '^FILED' "$OUT") sum=$(sh tools/blackbox.sh --sum \
+          "$WORK/save/docs/tapes/$FLOWN_CRC.json" 2>/dev/null)" \
+         "filed=1 sum=$FLOWN_CRC"
 
 case_ GR11 "the reel names the trap, its author, and what it cost"
   tape "$(flown_json)" "$FLOWN_CRC" > "$WORK/tape"

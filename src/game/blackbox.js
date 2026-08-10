@@ -198,6 +198,20 @@
     return m > 0 ? m + "m" + String(s).padStart(2, "0") + "s" : s + "s";
   }
 
+  // What the field was charging this pilot while they flew. The ledger is
+  // generated from the history and the referee checks it against the history -
+  // but the game reads it off the working tree, which is the one copy that
+  // decides anybody's evening. Sealing the numbers the flight actually flew
+  // under puts them somewhere another pilot reads them, so a field quietly
+  // talked down shows up on the board rather than only on the machine that
+  // did it. The raw row, not the eased number: src/game/tally.js does that
+  // sum and anybody holding these two can do it again. See GR12.
+  function ledgerRow() {
+    const r = (A.LEDGER || {})[A.activePilot()];
+    if (!r) return null;
+    return { bends: Math.max(0, r.bends | 0), clean: Math.max(0, r.clean | 0) };
+  }
+
   function seal() {
     if (!taping) return;
     taping = false;
@@ -219,6 +233,9 @@
       // tape, and tools/blackbox.sh says so out loud - GR12 says what such a
       // run is worth. No seat lock, no claim: null, and the reader admits it.
       whoami: A.LOCAL_PILOT || null,
+      // Additive, like the reel below: a tape sealed before this existed has
+      // no ledger and the reader says nothing rather than guessing zero.
+      ledger: ledgerRow(),
       score,
       best: A.game.best,
       wave: A.game.level,

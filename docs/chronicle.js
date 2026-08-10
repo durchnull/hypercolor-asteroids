@@ -6,17 +6,17 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 35,
-    latest: { v: 35, pilot: "Malte Buttjer", date: "10 August 2026", line: "Somebody adjusted what was already out there, and it noticed. The colours moved as well.", plate: "07129e98.jpg", alt: "Somebody adjusted what was already out there, and it noticed. The colours moved as well." },
+    versions: 36,
+    latest: { v: 36, pilot: "David Friedrich", date: "10 August 2026", line: "What counts as fair was quietly re-argued.", plate: "a716ccc6.jpg", alt: "What counts as fair was quietly re-argued." },
     plates: [
+      { v: 36, file: "a716ccc6.jpg", alt: "What counts as fair was quietly re-argued.", line: "What counts as fair was quietly re-argued." },
       { v: 35, file: "07129e98.jpg", alt: "Somebody adjusted what was already out there, and it noticed. The colours moved as well.", line: "Somebody adjusted what was already out there, and it noticed. The colours moved as well." },
       { v: 34, file: "c78b5d4a.jpg", alt: "The phosphor is a different colour of wrong now. It brought company.", line: "The phosphor is a different colour of wrong now. It brought company." },
       { v: 33, file: "c7f8fbd0.jpg", alt: "A new ambush went into the waves, armed against everybody except the pilot who wrote it. An ambush came along with it.", line: "A new ambush went into the waves, armed against everybody except the pilot who wrote it. An ambush came along with it." },
-      { v: 32, file: "84359a28.jpg", alt: "The scoreboard climbed down off the wall and into the field.", line: "The scoreboard climbed down off the wall and into the field." },
     ],
     roster: {
-      "David Friedrich": 32,
       "Malte Buttjer": 3,
+      "David Friedrich": 33,
     }
   };
   A.BOARD = [

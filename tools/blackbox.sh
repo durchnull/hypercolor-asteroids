@@ -9,6 +9,8 @@
 #
 #   tools/blackbox.sh tape.txt      read a saved tape
 #   pbpaste | tools/blackbox.sh     read one straight off the clipboard
+#   tools/blackbox.sh --save t.txt  read it, and file the flight under docs/tapes/
+#   tools/blackbox.sh --sum FILE    the FNV-1a sum over a file's exact bytes
 #
 # Prints the verdict and the JSON. Exit 0 with the seal intact, 1 when the
 # tape was edited or mangled, 2 when there is no tape in the input at all.
@@ -26,8 +28,54 @@
 # The seal is honesty, not security: anyone who can read this file can forge
 # a tape. They would be lying to a scoreboard in a git repo, and the history
 # would remember them doing it, which is deterrent enough around here.
+#
+# What --save is for. The board keeps a sentence and the tape's checksum, and
+# for a long time it kept nothing else - so a row that had landed could never
+# be read back, by anybody, ever. Every other number here is derived and
+# re-derivable: the ledger off the history, the meter off the board's own
+# commits, the versions off the commits. The board was the one scoreboard that
+# was not. --save writes the decoded flight to docs/tapes/<crc>.json, exactly
+# the bytes the sum was taken over, so the referee can recompute it later and
+# so can anybody with this script. The BB1 block itself still never enters the
+# repository - GR16 is about where a tape comes from, and the answer is still
+# the glass.
 # ---------------------------------------------------------------------------
 set -u
+
+TAPES=docs/tapes
+SAVE=0
+
+# FNV-1a, 32-bit, over the exact bytes on stdin - the same sum the game wrote,
+# and the only implementation of it on this side of the glass. tools/tally.sh
+# reads the ledger, tools/chronicle.sh reads the book and this reads the seal;
+# the referee asks rather than keeping a second copy, so there is one answer to
+# what a flight's sum is and it lives here.
+fnv1a() {
+  od -An -v -tu1 | {
+    h=2166136261
+    while read -r line; do
+      for b in $line; do
+        h=$(( ((h ^ b) * 16777619) & 4294967295 ))
+      done
+    done
+    printf '%08x' "$h"
+  }
+}
+
+case "${1:-}" in
+  --sum)
+    [ $# -ge 2 ] && [ -f "$2" ] || {
+      printf 'blackbox: --sum needs a file\n' >&2; exit 2; }
+    fnv1a < "$2"
+    printf '\n'
+    exit 0 ;;
+  --save)
+    SAVE=1
+    shift ;;
+  -h|--help)
+    sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'
+    exit 0 ;;
+esac
 
 TAPE=$(cat "${1:--}")
 
@@ -48,16 +96,7 @@ if [ -z "$JSON" ]; then
   exit 1
 fi
 
-# FNV-1a, 32-bit, over the exact JSON bytes - the same sum the game wrote.
-CRC=$(printf '%s' "$JSON" | od -An -v -tu1 | {
-  h=2166136261
-  while read -r line; do
-    for b in $line; do
-      h=$(( ((h ^ b) * 16777619) & 4294967295 ))
-    done
-  done
-  printf '%08x' "$h"
-})
+CRC=$(printf '%s' "$JSON" | fnv1a)
 
 if [ "$CRC" != "$CLAIM" ]; then
   printf 'SEAL BROKEN: the tape says %s, the bytes say %s.\n' "$CLAIM" "$CRC" >&2
@@ -69,14 +108,51 @@ printf 'SEAL INTACT (crc %s)\n' "$CRC"
 
 PILOT=$(printf '%s' "$JSON" | sed -n 's/.*"pilot":"\([^"]*\)".*/\1/p')
 SEAT=$(printf '%s' "$JSON" | sed -n 's/.*"whoami":"\([^"]*\)".*/\1/p')
+
+# Has this name ever flown from a locked seat before? The filed flights are the
+# record that answers it: one of them carrying both this pilot and a whoami is
+# proof that this cabinet was locked at least once under this name. That is
+# what ages a missing seat. "No seat" used to mean two things at once - an old
+# tape, or a lock somebody removed on the way to borrowing a name - and the
+# reader could not tell them apart, so it asked politely about both. With a
+# confirmed flight already on file it is no longer a fair question.
+flown_locked() {
+  [ -d "$TAPES" ] || return 1
+  [ -n "$PILOT" ] || return 1
+  for t in "$TAPES"/*.json; do
+    [ -f "$t" ] || continue
+    grep -qF "\"pilot\":\"$PILOT\"" "$t" || continue
+    grep -qF "\"whoami\":\"$PILOT\"" "$t" && return 0
+  done
+  return 1
+}
+
 if [ -z "$SEAT" ]; then
-  printf 'NO SEAT ON TAPE: sealed before seats were taped, or the cabinet was\n'
-  printf 'never locked (tools/whoami.sh). The pilot line is the tape'\''s word alone.\n'
+  if flown_locked; then
+    printf 'SEAT UNPROVEN: this tape carries no seat, and %s has flown from a\n' "$PILOT"
+    printf 'locked one before - docs/tapes/ has the flight. An unlocked cabinet\n'
+    printf 'under a name that locks its own is the shape of a borrowed name, not\n'
+    printf 'of an old tape. Treat it as GR12 does until the pilot says otherwise.\n'
+  else
+    printf 'NO SEAT ON TAPE: sealed before seats were taped, or the cabinet was\n'
+    printf 'never locked (tools/whoami.sh). The pilot line is the tape'\''s word alone.\n'
+  fi
 elif [ "$SEAT" = "$PILOT" ]; then
   printf 'SEAT CONFIRMED: %s flew this from their own seat.\n' "$PILOT"
 else
   printf 'SEAT MISMATCH: flown as %s from %s'\''s seat. A borrowed name ranks\n' "$PILOT" "$SEAT"
   printf 'nowhere, whoever asks - GR12. The numbers decode below all the same.\n'
+fi
+
+# What the field was charging while this was flown. The ledger is generated
+# from the history and the referee checks it, but it is read off the working
+# tree at play time - so the tape seals the number it actually flew under, and
+# a field quietly talked down is a thing the board can see. Older tapes have no
+# ledger and say nothing, which is not a gap to fill in by asking.
+BENDS=$(printf '%s' "$JSON" | sed -n 's/.*"ledger":{"bends":\([0-9]*\).*/\1/p')
+CLEAN=$(printf '%s' "$JSON" | sed -n 's/.*"ledger":{"bends":[0-9]*,"clean":\([0-9]*\).*/\1/p')
+if [ -n "$BENDS" ]; then
+  printf 'THE FIELD IT FLEW: %s bends, %s clean, as the cabinet read them.\n' "$BENDS" "$CLEAN"
 fi
 
 # The ambush reel. The JSON is machine-written with its keys in a fixed
@@ -102,5 +178,20 @@ case "$JSON" in
   *)
     printf 'NO EVENT REEL: sealed before tapes watched the other pilots.\n' ;;
 esac
+
+# File it, so the row it becomes can be read back. Written with no trailing
+# newline, because the sum was taken over these bytes and nothing else - the
+# file is the tape's own evidence, not a pretty-printed copy of it.
+if [ "$SAVE" = 1 ]; then
+  ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
+    printf 'blackbox: --save needs a git repo\n' >&2; exit 1; }
+  mkdir -p "$ROOT/$TAPES" || exit 1
+  if [ -f "$ROOT/$TAPES/$CRC.json" ]; then
+    printf 'ALREADY ON FILE: %s/%s.json - this evening is already a row.\n' "$TAPES" "$CRC"
+  else
+    printf '%s' "$JSON" > "$ROOT/$TAPES/$CRC.json" || exit 1
+    printf 'FILED: %s/%s.json - the referee can recompute this one.\n' "$TAPES" "$CRC"
+  fi
+fi
 
 printf '%s\n' "$JSON"

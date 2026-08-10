@@ -29,8 +29,17 @@ beats a receipt that is not.
    and run the reader:
 
    ```sh
-   sh tools/blackbox.sh <file>     # or: pbpaste | sh tools/blackbox.sh
+   sh tools/blackbox.sh --save <file>    # or: pbpaste | sh tools/blackbox.sh --save
    ```
+
+   `--save` files the decoded flight at `docs/tapes/<crc>.json` — the exact
+   bytes the seal was taken over, which is why the file is named after its own
+   sum. Use it on every tape you are going to rank, and commit it beside the
+   board row. Without it the row is a sentence and eight hex digits that
+   nobody, ever, can read back — which is what the board used to be, and the
+   one thing about it that was not true of every other number in this project.
+   Leave `--save` off only when you are reading a tape without ranking it: a
+   proof flight, or somebody asking what their numbers were.
 
 2. **Seal broken or no tape?** Say so and stop. Do not decode by hand, do not
    "fix" the base64, do not rank it. A tape that fails the reader ranks
@@ -54,6 +63,15 @@ beats a receipt that is not.
    genuinely the named pilot's flight? Couriering a friend's real tape is
    fine and lands under the friend's name. The seal proves the tape; this
    step is what proves the pilot.
+
+   `SEAT UNPROVEN` is the same missing seat with the benefit of the doubt
+   spent: `docs/tapes/` already holds a flight where this pilot flew from a
+   locked cabinet, so "no seat" cannot mean "this name never locks its own"
+   any more. Removing the lock is one deleted file and it is what borrowing a
+   name looks like from here. Do not rank it on your own judgement — put the
+   verdict to the pilot in one sentence, name the filed flight that contradicts
+   it, and let them answer. A real explanation exists (a second machine, a
+   fresh clone, a tape from before they locked it) and it is theirs to give.
 
 5. **Work out the fun numbers.** The JSON has the raw counts per seat; derive
    the ones people actually enjoy reading:
@@ -87,8 +105,10 @@ beats a receipt that is not.
 7. **Commit it, without asking.** Handing over the tape is the ask; a verified
    flight that sits unstaged in somebody's working tree is not on the record,
    and the pilot has already walked away. So finish the job: stage
-   `docs/RANKINGS.md` alone, nothing else that happens to be dirty, and commit
-   in the same breath as ranking. No confirmation round, no "shall I land
+   `docs/RANKINGS.md` and the `docs/tapes/<crc>.json` step 1 filed, nothing
+   else that happens to be dirty, and commit in the same breath as ranking.
+   The two land together or the row cannot be read back — the referee will say
+   so, and it is right. No confirmation round, no "shall I land
    this?" — the only stops in this ritual are steps 2, 3 and 4, and a tape
    that got past those is going on the board. A ranking does not change the
    game, so it is not a version at all; it gets a subject worth reading and a

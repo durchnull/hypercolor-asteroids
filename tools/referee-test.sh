@@ -782,10 +782,35 @@ case_ GR16 "the machinery may talk about tapes without holding one"
   silent GR16
 
 case_ GR16 "a flight on the board is a checksum, and a checksum is not a tape"
+  # The row and the flight it came off, which is the shape the ritual files
+  # now: the sum on the board, the bytes it was taken over in docs/tapes, and
+  # the referee able to tell you a year from now that the two still agree.
   printf -- '- Bo Renn - 4200 - wave 6 - died with the bomb still in the rack\n' > docs/RANKINGS.md
-  printf -- '<!-- crc a6bfaee1 -->\n' >> docs/RANKINGS.md
+  printf -- '<!-- crc 79e0d8c7 -->\n' >> docs/RANKINGS.md
+  mkdir -p docs/tapes
+  # Named after its own sum, like every filed flight. Change a byte of it and
+  # the name stops being true, which is the next case down.
+  printf '%s' '{"v":1,"pilot":"Bo Renn","whoami":"Bo Renn","score":4200}' \
+    > docs/tapes/79e0d8c7.json
   stage; check pre-commit
   silent GR16
+
+case_ GR16 "a row with no flight under it can never be read back, and is told so"
+  # Warned rather than refused: every row that landed before anything was kept
+  # is one of these, and a rule that opens by calling the record it inherited a
+  # forgery is not one anybody would install.
+  printf -- '- Bo Renn - 9900 - wave 9 - a very good evening indeed\n' > docs/RANKINGS.md
+  printf -- '<!-- crc 5ea15ea1 -->\n' >> docs/RANKINGS.md
+  stage; check pre-commit
+  nudges GR16
+
+case_ GR16 "a filed flight that does not answer to its own name"
+  # The one thing filing them buys, and the reason the name is the sum.
+  printf -- '<!-- crc c0ffee11 -->\n' > docs/RANKINGS.md
+  mkdir -p docs/tapes
+  printf '%s' '{"v":1,"pilot":"Bo Renn","score":999999}' > docs/tapes/c0ffee11.json
+  stage; check pre-commit
+  blocks GR16
 
 case_ GR11 "a trap started from somebody else's template is still yours"
   sed 's/closing-ring/quiet-ring/; s/Ada Vex/Bo Renn/; s/at: 4/at: 7/' \

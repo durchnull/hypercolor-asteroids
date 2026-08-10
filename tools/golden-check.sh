@@ -358,6 +358,7 @@ is_generated() {
     docs/v[0-9]*.html) return 0 ;;      # one page per version, same machine
     docs/art/*) return 0 ;;             # the plates, painted once and kept
     docs/faces/*) return 0 ;;           # the pilots, painted once and never again
+    docs/tapes/*) return 0 ;;           # the filed flights, byte for byte off the glass
     src/game/ledger.js) return 0 ;;
   esac
   grep -qxF "$1" "$TMP/notes" 2>/dev/null && return 0
@@ -734,6 +735,30 @@ check_gr12() {
     return 0
   fi
 
+  # The copy the game actually reads. src/features.js loads the ledger off the
+  # working tree at play time, and for a long time it was only ever compared
+  # against the history when it happened to be part of a commit - so an edit
+  # that was never staged was never read by anything but the game, and the
+  # field forgave whatever the file said. GR12's own argument is that a
+  # punishment the punished could quietly switch off would not be one, so the
+  # file is checked where it is used: on disk, whether or not this commit goes
+  # anywhere near it. A --rev reading is describing somebody else's commit and
+  # has no working tree to speak for, so it stays out of this.
+  #
+  # A stale ledger after a pull trips the same wire as an edited one, and the
+  # fix is the same command, which is why the note says both. It is generated;
+  # there is no state it can be in where regenerating it is wrong.
+  if [ "$MODE" != rev ] && [ -f "$LEDGER" ] && [ -f tools/tally.sh ] \
+     && ! grep -qx "$LEDGER" "$TMP/files" 2>/dev/null; then
+    if sh tools/tally.sh --print > "$TMP/ledger.disk" 2>/dev/null; then
+      cmp -s "$LEDGER" "$TMP/ledger.disk" || {
+        hard GR12 "$LEDGER on disk does not say what the history says"
+        note "the game reads this copy, so this is the one that decides your field"
+        note "it is generated - run tools/tally.sh, whether it was edited or just stale"
+      }
+    fi
+  fi
+
   # The rest needs the message in hand, and at pre-commit there is not one yet.
   [ "$STAGE" = pre-commit ] && return 0
 
@@ -840,6 +865,36 @@ check_breach() {
   if grep -Ev '^docs/|^src/game/ledger\.js$' "$TMP/files" 2>/dev/null | grep -q .; then
     warn GR8 "a breach commit should carry the ledger and nothing else - this one carries more"
   fi
+}
+
+# ---------------------------------------------------------------------------
+# GR8, the other corner: a power with somebody's name written into it.
+#
+# GR11 refuses to aim an ambush by name and has no override in it. Nothing
+# refused the mirror of that - a feature that only ever fires for one named
+# pilot - so the referee passed one without a word for as long as there has
+# been a referee, and the question only ever reached whoever happened to ask
+# out loud. It is not a red line and this does not make it one: it warns,
+# because the fair version of the idea is usually one line away, and because
+# the cost does not land on the author. It lands on docs/RANKINGS.md, where a
+# power one name has and the rest do not quietly changes what every score on
+# the page means.
+#
+# The literal is the whole signal. Every honest caller in the game compares
+# activePilot() against something it was handed - an event's `by`, a bounty's
+# holder, a pact's other signatory - so a name spelled out in the source is
+# the one shape that is never the ordinary way of doing this.
+# ---------------------------------------------------------------------------
+check_named() {
+  while IFS= read -r f; do
+    case "$f" in src/*.js) ;; *) continue ;; esac
+    case "$f" in src/game/profile.js) continue ;; esac   # where the seat is decided
+    content "$f" | grep -Eq \
+      'activePilot\(\)[[:space:]]*[!=]=[=]?[[:space:]]*"|"[^"]*"[[:space:]]*[!=]=[=]?[[:space:]]*[A-Za-z_.]*activePilot\(\)' \
+      || continue
+    warn GR8 "$f keys behaviour on one pilot's name - that is read on everybody's board"
+    note "dedicate it instead (for:), or key it on something they earned - see src/game/bounty.js"
+  done < "$TMP/files"
 }
 
 # ---------------------------------------------------------------------------
@@ -1014,12 +1069,48 @@ check_turns() {
 # them is printf'd into a temporary directory at the moment it is read.
 # ---------------------------------------------------------------------------
 check_gr16() {
+  BOARD=docs/RANKINGS.md
   while IFS= read -r f; do
     is_generated "$f" && continue
     content "$f" | grep -q '^BB1:' || continue
     fail GR16 "$f carries a tape - the game writes those, and it writes them to a screen"
     note "a flight lands on the board as a crc marker; the tape itself never enters the repository"
   done < "$TMP/files"
+
+  # The filed flights, and the single thing that makes filing them worth the
+  # trouble: the name is the sum, so the bytes can be checked against it for as
+  # long as the repository exists. The board used to keep a sentence and eight
+  # hex digits and nothing else, which made it the one scoreboard here that
+  # could never be recomputed - the ledger comes off the history, the meter
+  # off the board's own commits, the versions off the commits, and a ranked
+  # flight came off nothing. This is the other half of tools/blackbox.sh
+  # --save, and the sum is asked for rather than reimplemented, the same way
+  # every other reader here asks tools/chronicle.sh what a version is.
+  while IFS= read -r f; do
+    case "$f" in docs/tapes/*.json) ;; *) continue ;; esac
+    want=${f##*/}; want=${want%.json}
+    content "$f" > "$TMP/tape.bytes" 2>/dev/null
+    got=$(sh tools/blackbox.sh --sum "$TMP/tape.bytes" 2>/dev/null)
+    [ "$got" = "$want" ] && continue
+    fail GR16 "$f does not hash to its own name - it claims $want, the bytes say $got"
+    note "a filed flight is the tape's evidence, not a copy of it - tools/blackbox.sh --save writes one"
+  done < "$TMP/files"
+
+  # A row arriving on the board with no flight behind it. Warned rather than
+  # refused: the rows already up there were filed before anything was kept, and
+  # a rule that starts by calling the record it inherited a forgery is not one
+  # anybody would install.
+  case "$MODE" in
+    staged) added=$(git diff --cached -U0 -- "$BOARD" 2>/dev/null) ;;
+    rev)    added=$(git diff -U0 "$BASE" "$REV" -- "$BOARD" 2>/dev/null) ;;
+    *)      added=$(git diff -U0 "$BASE" -- "$BOARD" 2>/dev/null) ;;
+  esac
+  printf '%s\n' "$added" | sed -n 's/^+.*<!-- crc \([0-9a-f]\{8\}\) -->.*/\1/p' | while read -r c; do
+    [ -n "$c" ] || continue
+    path_exists "docs/tapes/$c.json" && continue
+    warn GR16 "the board gains crc $c and no flight is filed under it"
+    note "tools/blackbox.sh --save keeps the row readable - without it this one never can be"
+  done
 }
 
 # ---------------------------------------------------------------------------
@@ -1102,14 +1193,14 @@ check_lockstep() {
 
 case "$STAGE" in
   pre-commit) check_gr1; check_gr2; check_gr7; check_gr10; check_gr11; check_gr12
-              check_gr13; check_gr16; check_gr39; check_media; check_turns
-              check_replay; check_lockstep ;;
+              check_gr13; check_gr16; check_gr39; check_named; check_media
+              check_turns; check_replay; check_lockstep ;;
   commit-msg) check_gr45; check_gr6; check_gr10; check_gr12; check_gr14
               check_breach; check_message ;;
   *)          check_gr1; check_gr2; check_gr7; check_gr10; check_gr11
               check_gr45; check_gr6; check_gr12; check_gr13; check_gr14
-              check_gr16; check_breach; check_gr39; check_media; check_turns
-              check_replay; check_lockstep ;;
+              check_gr16; check_breach; check_gr39; check_named; check_media
+              check_turns; check_replay; check_lockstep ;;
 esac
 
 if [ ! -s "$TMP/out" ]; then
