@@ -15,8 +15,8 @@
       { v: 32, file: "84359a28.jpg", alt: "The scoreboard climbed down off the wall and into the field.", line: "The scoreboard climbed down off the wall and into the field." },
     ],
     roster: {
-      "Malte Buttjer": 3,
       "David Friedrich": 32,
+      "Malte Buttjer": 3,
     }
   };
   A.BOARD = [
