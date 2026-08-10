@@ -7,23 +7,24 @@
   "use strict";
   A.CHRONICLE = {
     versions: 33,
-    latest: { v: 33, pilot: "Malte Buttjer", date: "10 August 2026", line: "A new ambush went into the waves, armed against everybody except the pilot who wrote it. An ambush came along with it." },
+    latest: { v: 33, pilot: "Malte Buttjer", date: "10 August 2026", line: "A new ambush went into the waves, armed against everybody except the pilot who wrote it. An ambush came along with it.", plate: "c7f8fbd0.jpg", alt: "A new ambush went into the waves, armed against everybody except the pilot who wrote it. An ambush came along with it." },
     plates: [
+      { v: 33, file: "c7f8fbd0.jpg", alt: "A new ambush went into the waves, armed against everybody except the pilot who wrote it. An ambush came along with it.", line: "A new ambush went into the waves, armed against everybody except the pilot who wrote it. An ambush came along with it." },
       { v: 32, file: "84359a28.jpg", alt: "The scoreboard climbed down off the wall and into the field.", line: "The scoreboard climbed down off the wall and into the field." },
       { v: 31, file: "d839684c.jpg", alt: "Somebody rewrote what the cabinet tells you.", line: "Somebody rewrote what the cabinet tells you." },
       { v: 30, file: "d4dc5431.jpg", alt: "The bookkeeping of the cabinet moved a foot to the left.", line: "The bookkeeping of the cabinet moved a foot to the left." },
-      { v: 29, file: "2ec32929.jpg", alt: "The cabinet keeps score with slightly different arithmetic now.", line: "The cabinet keeps score with slightly different arithmetic now." },
     ],
     roster: {
-      "David Friedrich": 32,
       "Malte Buttjer": 1,
+      "David Friedrich": 32,
     }
   };
   A.BOARD = [
-    { rank: "1", pilot: "David Friedrich", score: "16530", wave: "4", time: "4:42", hits: "17%", line: "Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end." },
-    { rank: "2", pilot: "David Friedrich", score: "15170", wave: "4", time: "4:16", hits: "19%", line: "Three house traps walked through, and then PINCER took the last two ships at wave 4." },
-    { rank: "3", pilot: "Malte Buttjer", score: "4680", wave: "2", time: "1:32", hits: "12%", line: "Two kraken in two shots, 26 rocks to the bomb, and DEBRIS FIELD took the last of it." },
-    { rank: "4", pilot: "Malte Buttjer", score: "3380", wave: "2", time: "2:20", hits: "11%", line: "Three kraken down and both bombs gone by wave two, with a wingmate who never left the spot they spawned on." },
-    { rank: "5", pilot: "David Friedrich", score: "0", wave: "1", time: "0:16", hits: "—", line: "Three ships in sixteen seconds without the trigger ever being pressed." },
+    { rank: "1", pilot: "David Friedrich", score: "21880", wave: "5", time: "6:18", hits: "19%", line: "Six ambushes walked through, fourteen kraken dead, and then PINCER again — same trap, one wave later." },
+    { rank: "2", pilot: "David Friedrich", score: "16530", wave: "4", time: "4:42", hits: "17%", line: "Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end." },
+    { rank: "3", pilot: "David Friedrich", score: "15170", wave: "4", time: "4:16", hits: "19%", line: "Three house traps walked through, and then PINCER took the last two ships at wave 4." },
+    { rank: "4", pilot: "Malte Buttjer", score: "4680", wave: "2", time: "1:32", hits: "12%", line: "Two kraken in two shots, 26 rocks to the bomb, and DEBRIS FIELD took the last of it." },
+    { rank: "5", pilot: "Malte Buttjer", score: "3380", wave: "2", time: "2:20", hits: "11%", line: "Three kraken down and both bombs gone by wave two, with a wingmate who never left the spot they spawned on." },
+    { rank: "6", pilot: "David Friedrich", score: "0", wave: "1", time: "0:16", hits: "—", line: "Three ships in sixteen seconds without the trigger ever being pressed." },
   ];
 })(ASTEROIDS);
