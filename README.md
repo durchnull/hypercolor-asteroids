@@ -11,6 +11,9 @@ A neon vector rewrite of the 1979 arcade game. No build step, no dependencies,
 no network. **[Play it in the browser](https://durchnull.github.io/hypercolor-asteroids/)**,
 or open `index.html` from a clone.
 
+> **Anyone can play it. Fewer can change it.** Clone, prompt *"add an asteroid
+> storm"*, open the PR — that is where developers actually battle.
+
 ![Two pilots, a kraken, a pair of portals, and somebody on the end of a grapple line](media/field.png)
 
 ## The game on the screen
