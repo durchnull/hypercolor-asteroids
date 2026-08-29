@@ -194,6 +194,32 @@ unfold() {
     }'
 }
 
+# Where git keeps a half-finished operation, asked once. Everything that cares
+# whether the history is mid-sentence reads the same answer.
+GITDIR=$(git rev-parse --git-dir 2>/dev/null) || GITDIR=
+
+# Mid-replay the history is only half written: HEAD is not the commit this tree
+# will belong to, so anything derived from `git log` is answering about a
+# history that does not exist yet. .githooks/post-commit keeps this same list
+# for this same reason and refuses to rebuild the book or tally a bend inside
+# one.
+replaying() {
+  [ -n "$GITDIR" ] || return 1
+  for f in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD rebase-merge rebase-apply; do
+    [ -e "$GITDIR/$f" ] && return 0
+  done
+  return 1
+}
+
+# Keep only the lines whose path the other side of a merge disagrees with too -
+# see "a merge is nobody's work" below. Column 1 is a bare list, and the wider
+# lists say which of their fields carries the path.
+resolution() {
+  awk -F'\t' -v col="$1" '
+    NR == FNR { theirs[$0] = 1; next }
+    ($col in theirs)' "$TMP/theirs" "$2" > "$2.cc" && mv "$2.cc" "$2"
+}
+
 # --find-renames is the default, and it is written down anyway: the pairs and
 # the counts have to be reading the same diff now that one is asked about the
 # other.
@@ -219,6 +245,44 @@ else
     printf '%s\t0\t%s\n' "$(wc -l < "$f" | tr -d ' ')" "$f" >> "$TMP/stat"
     printf '%s\n' "$f" >> "$TMP/files"
   done < "$TMP/new"
+fi
+
+# --- a merge is nobody's work -----------------------------------------------
+#
+# The same argument the range loop makes with --no-merges, one door along. A
+# merge commit's diff against HEAD is everything the other branch brought with
+# it, so a pilot syncing with main was being handed the bill for every commit
+# that landed while they were flying: the rules and the game moving together
+# (GR10) because main had merged a rule change, the orb's song "changed" (GR13)
+# because the commit that really changed it was somebody else's and is now
+# arriving. Both are red lines with no override, so the pilot could not get
+# past it and could not be let past it either - which meant that once a rule
+# change landed on main, no branch cut before it could ever sync again.
+#
+# What a merge is actually somebody's doing is the resolution: the paths that
+# differ from BOTH parents. Everything else is one side or the other arriving
+# unchanged, and refereeing that is a rule about git rather than about the
+# game. An edit smuggled in while the tree was open still differs from both
+# and is still caught, which is the only reason this is a filter rather than
+# skipping the commit outright - GR13 does not get a door held open for it.
+if [ "$MODE" != rev ] && [ -n "$GITDIR" ] && [ -f "$GITDIR/MERGE_HEAD" ]; then
+  # A merge only ever has one other side here; an octopus is somebody else's
+  # problem and every head it names is filtered the same way.
+  while IFS= read -r other; do
+    [ -n "$other" ] || continue
+    if [ "$MODE" = staged ]; then
+      git diff --cached --name-only "$other"
+    else
+      git diff --name-only "$other"
+    fi
+  done < "$GITDIR/MERGE_HEAD" | sort -u > "$TMP/theirs"
+
+  # files and gone are one path per line; stat is add/del/path; moved is
+  # old/new and answers on the name the file now has, as everywhere else.
+  resolution 1 "$TMP/files"
+  resolution 1 "$TMP/gone"
+  resolution 3 "$TMP/stat"
+  resolution 2 "$TMP/moved"
 fi
 
 # Nothing changed is usually nothing to check - unless a message is on the
@@ -748,7 +812,15 @@ check_gr12() {
   # A stale ledger after a pull trips the same wire as an edited one, and the
   # fix is the same command, which is why the note says both. It is generated;
   # there is no state it can be in where regenerating it is wrong.
+  # Not mid-replay. The tally is read off `git log`, and inside a merge that
+  # log is one parent short - the ledger arriving from the other side is
+  # counting commits this HEAD cannot see yet, so it reads as stale when it is
+  # the only correct copy in the room. Worse than a false block: the note says
+  # run tools/tally.sh, and doing that here would write the wrong number and
+  # commit it. The count comes right by itself the moment the merge lands, and
+  # post-commit regenerates it then for exactly this reason.
   if [ "$MODE" != rev ] && [ -f "$LEDGER" ] && [ -f tools/tally.sh ] \
+     && ! replaying \
      && ! grep -qx "$LEDGER" "$TMP/files" 2>/dev/null; then
     if sh tools/tally.sh --print > "$TMP/ledger.disk" 2>/dev/null; then
       cmp -s "$LEDGER" "$TMP/ledger.disk" || {
