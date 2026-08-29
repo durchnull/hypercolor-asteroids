@@ -6,8 +6,8 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 36,
-    latest: { v: 36, pilot: "David Friedrich", date: "10 August 2026", line: "What counts as fair was quietly re-argued.", plate: "a716ccc6.jpg", alt: "What counts as fair was quietly re-argued." },
+    versions: 37,
+    latest: { v: 37, pilot: "felix2072", date: "29 August 2026", line: "A key that did nothing now does something. The colours moved as well." },
     plates: [
       { v: 36, file: "a716ccc6.jpg", alt: "What counts as fair was quietly re-argued.", line: "What counts as fair was quietly re-argued." },
       { v: 35, file: "07129e98.jpg", alt: "Somebody adjusted what was already out there, and it noticed. The colours moved as well.", line: "Somebody adjusted what was already out there, and it noticed. The colours moved as well." },
@@ -15,17 +15,19 @@
       { v: 33, file: "c7f8fbd0.jpg", alt: "A new ambush went into the waves, armed against everybody except the pilot who wrote it. An ambush came along with it.", line: "A new ambush went into the waves, armed against everybody except the pilot who wrote it. An ambush came along with it." },
     ],
     roster: {
+      "felix2072": 1,
       "Malte Buttjer": 3,
       "David Friedrich": 33,
     }
   };
   A.BOARD = [
-    { rank: "1", pilot: "David Friedrich", score: "21880", wave: "5", time: "6:18", hits: "19%", line: "Six ambushes walked through, fourteen kraken dead, and then PINCER again — same trap, one wave later." },
-    { rank: "2", pilot: "David Friedrich", score: "16530", wave: "4", time: "4:42", hits: "17%", line: "Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end." },
-    { rank: "3", pilot: "David Friedrich", score: "15170", wave: "4", time: "4:16", hits: "19%", line: "Three house traps walked through, and then PINCER took the last two ships at wave 4." },
-    { rank: "4", pilot: "David Friedrich", score: "13810", wave: "4", time: "3:47", hits: "24%", line: "Sharpest aim and longest flurry on the board, four ambushes flown clear, and then wave 4 with the bomb still in the rack." },
-    { rank: "5", pilot: "Malte Buttjer", score: "4680", wave: "2", time: "1:32", hits: "12%", line: "Two kraken in two shots, 26 rocks to the bomb, and DEBRIS FIELD took the last of it." },
-    { rank: "6", pilot: "Malte Buttjer", score: "3380", wave: "2", time: "2:20", hits: "11%", line: "Three kraken down and both bombs gone by wave two, with a wingmate who never left the spot they spawned on." },
-    { rank: "7", pilot: "David Friedrich", score: "0", wave: "1", time: "0:16", hits: "—", line: "Three ships in sixteen seconds without the trigger ever being pressed." },
+    { rank: "1", pilot: "felix2072", score: "27430", wave: "8", time: "6:45", hits: "18%", line: "20 kraken dead, three bombs spent, and plain rocks finished it at wave 8." },
+    { rank: "2", pilot: "David Friedrich", score: "21880", wave: "5", time: "6:18", hits: "19%", line: "Six ambushes walked through, fourteen kraken dead, and then PINCER again — same trap, one wave later." },
+    { rank: "3", pilot: "David Friedrich", score: "16530", wave: "4", time: "4:42", hits: "17%", line: "Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end." },
+    { rank: "4", pilot: "David Friedrich", score: "15170", wave: "4", time: "4:16", hits: "19%", line: "Three house traps walked through, and then PINCER took the last two ships at wave 4." },
+    { rank: "5", pilot: "David Friedrich", score: "13810", wave: "4", time: "3:47", hits: "24%", line: "Sharpest aim and longest flurry on the board, four ambushes flown clear, and then wave 4 with the bomb still in the rack." },
+    { rank: "6", pilot: "Malte Buttjer", score: "4680", wave: "2", time: "1:32", hits: "12%", line: "Two kraken in two shots, 26 rocks to the bomb, and DEBRIS FIELD took the last of it." },
+    { rank: "7", pilot: "Malte Buttjer", score: "3380", wave: "2", time: "2:20", hits: "11%", line: "Three kraken down and both bombs gone by wave two, with a wingmate who never left the spot they spawned on." },
+    { rank: "8", pilot: "David Friedrich", score: "0", wave: "1", time: "0:16", hits: "—", line: "Three ships in sixteen seconds without the trigger ever being pressed." },
   ];
 })(ASTEROIDS);
