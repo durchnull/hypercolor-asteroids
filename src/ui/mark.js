@@ -70,7 +70,7 @@
     // it arrives with a bang and leaves quietly
     const pop = Math.min(1, l.age / 0.22);
     const grow = 1 + (1 - pop) * (1 - pop) * 0.8;
-    // your own trap knows it is yours, and will not sit still about it
+    // your own event knows it is yours, and will not sit still about it
     const pulse = l.own ? 0.72 + 0.28 * Math.sin(time * 6) : 1;
     const hue = A.hue + (l.own ? 320 : l.hue);
     const alpha = Math.min(1, l.fade) * pulse;

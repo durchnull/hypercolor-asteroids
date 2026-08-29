@@ -6,7 +6,7 @@
 // is which half of the ambushes you are on the wrong end of.
 //
 // There is no incentive to lie about it, which is the nice part. Pick somebody
-// else's name and their traps go quiet while your own start firing: you spoil
+// else's name and their events go quiet while your own start firing: you spoil
 // your own surprises and nobody else's. The honest answer is the fun one.
 //
 // Two places remember who you are, and the order matters:

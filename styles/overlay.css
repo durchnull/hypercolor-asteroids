@@ -291,7 +291,7 @@
 }
 /* one header shape for all six: the panel's own glyph, the label, a rule
    under it. The glyph replaced a lit square, which said "this is a panel" —
-   true, and the pilot could see that. A trap says what kind. */
+   true, and the pilot could see that. A glyph says what kind. */
 .brief h2, .pilot h2, .lobby h2, .board h2, .book h2, .about h2 {
   display: flex;
   align-items: center;

@@ -6,8 +6,8 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 37,
-    latest: { v: 37, pilot: "felix2072", date: "29 August 2026", line: "A key that did nothing now does something. The colours moved as well.", plate: "3c0fca03.jpg", alt: "A key that did nothing now does something. The colours moved as well." },
+    versions: 38,
+    latest: { v: 38, pilot: "David Friedrich", date: "29 August 2026", line: "The cabinet keeps score with slightly different arithmetic now. The screen was told as well." },
     plates: [
       { v: 37, file: "3c0fca03.jpg", alt: "A key that did nothing now does something. The colours moved as well.", line: "A key that did nothing now does something. The colours moved as well." },
       { v: 36, file: "a716ccc6.jpg", alt: "What counts as fair was quietly re-argued.", line: "What counts as fair was quietly re-argued." },
@@ -15,7 +15,7 @@
       { v: 34, file: "c78b5d4a.jpg", alt: "The phosphor is a different colour of wrong now. It brought company.", line: "The phosphor is a different colour of wrong now. It brought company." },
     ],
     roster: {
-      "David Friedrich": 33,
+      "David Friedrich": 34,
       "Malte Buttjer": 3,
       "felix2072": 1,
     }

@@ -87,7 +87,7 @@
   why in a sentence so nobody has to go looking.
 
   Nothing is blocked by an override. It costs one on the tally (GR12), your own
-  traps start coming for you sooner, and it stays in the book under your name.
+  events start coming for you sooner, and it stays in the book under your name.
   Write it flat - it is a difficulty setting, not a confession.
 
   `tools/tally.sh --roll` and `tools/flights.sh --count "<name>"` have the real
@@ -115,7 +115,7 @@
   Before you open this:
 
     tools/golden-check.sh --install    once per clone, wires up the hooks
-    tools/whoami.sh                    your seat, so your own traps go quiet
+    tools/whoami.sh                    your seat, so your own events go quiet
     tools/groundcrew.sh                on main, before you branched
     tools/inbound.sh                   what the referee will say about this branch
     tools/labels.sh main..HEAD         what this will be tagged as

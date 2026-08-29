@@ -41,7 +41,7 @@ ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && cd "$ROOT" || :
 table() {
   cat <<'EOF'
 game	ff3ec8	src/ - the field and the rules of a flight. The book draws it as the ship you fly.
-game within	b6ff3d	The traps, the seat, the tally, the tape. The game the pilots play on each other.
+game within	b6ff3d	The events, the seat, the tally, the tape. The game the pilots play on each other.
 ui	21f3ff	Panels, phosphor, the palette, the page itself. What the pilot actually looks at.
 music	ffb020	src/audio/ - the graph, the song, the one-shots.
 controls	a04bff	src/input/ - both seats and the touch buttons.

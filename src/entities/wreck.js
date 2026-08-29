@@ -184,7 +184,7 @@
   // risk and the meter starts again from here.
   //
   // This is the only way to fold, and the feature needs one: a bet with no way
-  // out is not a decision, it is a trap with a number on it. Passing a flight
+  // out is not a decision, it is a snare with a number on it. Passing a flight
   // outright is the jackpot and most evenings will not get there — what makes
   // carrying one worth doing every wave is that each wave you survive is
   // banked. It also puts the question somewhere good. One rock left on the

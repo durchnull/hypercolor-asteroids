@@ -7,12 +7,12 @@
 //
 // What the number buys you is a less patient field. Events come sooner, and
 // past THEIRS they stop making the one exception GR11 grants everybody — your
-// own traps start recognising you as the target rather than the author.
+// own events start recognising you as the target rather than the author.
 //
 // The field also forgives, without forgetting: every MERCY clean versions a
 // pilot lands after their last bend take one bend back out of the arithmetic.
 // The record never moves — the marks on the wall stay — but heat, crowding
-// and the armed-own-traps line all read the eased number. The next bend
+// and the armed-own-events line all read the eased number. The next bend
 // resets the clean count and the whole discount with it.
 //
 // Deliberately capped at both ends. One bend is a nuisance and ten bends are
@@ -63,7 +63,7 @@
     return eased() >= CROWD ? 1 : 0;
   };
 
-  /** GR11 spares you your own traps. This is the one thing that takes it back. */
+  /** GR11 spares you your own events. This is the one thing that takes it back. */
   A.ownEventsArmed = function ownEventsArmed() {
     return eased() >= THEIRS;
   };
@@ -114,7 +114,7 @@
         stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
         <path d="M9 9v16M14 9v16M19 9v16M24 9v16M6 26L27 8"/></svg>`,
       desc: `Every rule a pilot bends is counted, by a machine, off the history.
-        The field comes for them quicker &mdash; and at three, their own traps
+        The field comes for them quicker &mdash; and at three, their own events
         stop making an exception. Three clean versions landed since the last
         bend ease it all by one; the marks stay on the wall.`,
     },

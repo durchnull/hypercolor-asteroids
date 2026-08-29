@@ -9,7 +9,7 @@
 # said anything. The mark says which part of the cabinet you were standing in.
 #
 #   game/comets-come-in-threes
-#   game-within/the-trap-that-spares-nobody
+#   game-within/the-event-that-spares-nobody
 #   chronicle/the-plates-paint-themselves
 #
 # The mark is not typed. It is read off what you have changed, through

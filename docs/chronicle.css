@@ -773,7 +773,7 @@ html { scroll-padding-bottom: 6rem; }
 }
 
 /* The commit, drawn: one shape per sector it touched, drawn as the thing it
-   is — a trap is a mine, the rules are a gear, the song is a note, a panel is
+   is — an event is a mine, the rules are a gear, the song is a note, a panel is
    a panel — sized by how much of that sector moved and coloured by which part
    of the cabinet it was. The diff picks the pilot's move: wreckage is shot
    down and sheds shards, a new arrival rides in on a tow beam and rings while

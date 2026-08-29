@@ -32,7 +32,7 @@
   // The pilot-vs-pilot half of the flight: every event that fired, whose it
   // was, which wave it came on, and how many ships went down while it was
   // still in the field. The runner keeps one live entry per firing
-  // (game/events.js), so entry identity is firing identity - the same trap
+  // (game/events.js), so entry identity is firing identity - the same event
   // two waves apart is two rows on the tape.
   const courted = new Map();
 

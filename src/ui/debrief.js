@@ -2,7 +2,7 @@
 // button. game/blackbox.js seals the tape when the flight ends; this panel
 // only shows it and hands it over.
 //
-// One trap worth knowing about: tapping anywhere on the game-over overlay
+// One catch worth knowing about: tapping anywhere on the game-over overlay
 // restarts the game (input.js wires pointerdown on the whole element), so
 // this panel stops pointerdown from bubbling — copying the tape must not
 // launch the next flight out from under the pilot.

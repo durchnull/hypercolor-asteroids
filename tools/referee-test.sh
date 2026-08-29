@@ -212,7 +212,7 @@ JS
     git commit -qm "The lab counts nobody, in writing" >/dev/null
   fi
 
-  # Bo arrives, and brings one trap. From here on this is Bo's seat.
+  # Bo arrives, and brings one event. From here on this is Bo's seat.
   #
   # Written to look nothing like Ada's on purpose. git's rename detection will
   # call a similar new file a copy of the old one, and the referee asks git who
@@ -244,7 +244,7 @@ JS
   awk '/^\];$/ && !d { print "  \"./events/bo-renn.js\","; d = 1 } { print }' \
     src/features.js > src/features.new && mv src/features.new src/features.js
   git add -A >/dev/null
-  git commit -qm "Bo Renn lays the first trap of the evening" >/dev/null
+  git commit -qm "Bo Renn lays the first event of the evening" >/dev/null
   cd "$ROOT" || exit 1
 }
 
@@ -425,7 +425,7 @@ case_ GR11 "nor yours to rename and sign your own name to"
   stage; check pre-commit
   blocks GR11
 
-case_ GR11 "your own trap is yours to move wherever you like"
+case_ GR11 "your own event is yours to move wherever you like"
   git mv "src/events/bo-renn.js" "src/events/bo-renn-the-first.js" >/dev/null 2>&1
   awk '{ sub(/bo-renn\.js/, "bo-renn-the-first.js"); print }' \
     src/features.js > f && mv f src/features.js
@@ -461,7 +461,7 @@ JS
   stage; check pre-commit
   blocks GR11
 
-case_ GR11 "your own trap is yours to rewrite from scratch"
+case_ GR11 "your own event is yours to rewrite from scratch"
   cat > "src/events/bo-renn.js" <<'JS'
 (function (A) {
   A.EVENTS = (A.EVENTS || []).concat([{
@@ -587,53 +587,53 @@ case_ GR12 "a ledger that does not say what the history says"
 
 # GR14 counts off the history like everything else here, and in this lab the
 # commit that added tools/flights.sh is the root commit - so the meter starts at
-# the beginning and Bo's one trap is already one landing against it.
+# the beginning and Bo's one event is already one landing against it.
 fly() { printf '// wave %s, retuned\n' "$1" >> "src/events/bo-renn.js"; }
 
 case_ GR14 "a fourth version on the strength of one tape"
-  fly 7; land "The trap comes a wave later"
-  fly 8; land "The trap comes later still"
+  fly 7; land "The event comes a wave later"
+  fly 8; land "The event comes later still"
   fly 9
-  stage; message "The trap moves once more"
+  stage; message "The event moves once more"
   check commit-msg --message-file "$MSG"
   blocks GR14
 
 case_ GR14 "the same landing, with the budget spent out loud"
-  fly 7; land "The trap comes a wave later"
-  fly 8; land "The trap comes later still"
+  fly 7; land "The event comes a wave later"
+  fly 8; land "The event comes later still"
   fly 9
-  stage; message "The trap moves once more" "" \
+  stage; message "The event moves once more" "" \
                  "Golden-Rule-Override: GR14 - a one-line retune I have flown twice today"
   check commit-msg --message-file "$MSG"
   lands
 
 case_ GR14 "the last landing the tape covers gets a word, not a wall"
-  fly 7; land "The trap comes a wave later"
+  fly 7; land "The event comes a wave later"
   fly 8
-  stage; message "The trap comes later still"
+  stage; message "The event comes later still"
   check commit-msg --message-file "$MSG"
   nudges GR14
 
 case_ GR14 "work that leaves the cabinet alone leaves the meter alone"
-  fly 7; land "The trap comes a wave later"
-  fly 8; land "The trap comes later still"
+  fly 7; land "The event comes a wave later"
+  fly 8; land "The event comes later still"
   printf '\nA paragraph about the cabinet.\n' >> README.md
   stage; message "The README says what the cabinet is"
   check commit-msg --message-file "$MSG"
   silent GR14
 
 case_ GR14 "flying it, ranking it and landing it is one sitting"
-  fly 7; land "The trap comes a wave later"
-  fly 8; land "The trap comes later still"
+  fly 7; land "The event comes a wave later"
+  fly 8; land "The event comes later still"
   fly 9
   printf '# THE FLIGHT RECORDS\n\n<!-- log -->\n' > docs/RANKINGS.md
-  printf '**2026-08-08 · Bo Renn · 8400 · wave 5 · 5:03** — flew its own trap.\n' \
+  printf '**2026-08-08 · Bo Renn · 8400 · wave 5 · 5:03** — flew its own event.\n' \
     >> docs/RANKINGS.md
   # The receipt off the tape. Without it the line is a sentence somebody typed
   # and the meter does not read it - tools/evidence-test.sh is where that is
   # examined; here it just has to be a flight.
   printf '<!-- crc 5eaf00d1 -->\n' >> docs/RANKINGS.md
-  stage; message "The trap moves once more, and its author survived it"
+  stage; message "The event moves once more, and its author survived it"
   check commit-msg --message-file "$MSG"
   lands
 
@@ -681,7 +681,7 @@ case_ GR9 "a feature that says why it stays off the splash"
 poster() { mkdir -p media; printf 'a photograph of the cabinet, %s\n' "$1" > media/cabinet.png; }
 landings() {
   i=1
-  while [ "$i" -le "$1" ]; do fly "$i"; land "The trap comes a wave later"; i=$((i + 1)); done
+  while [ "$i" -le "$1" ]; do fly "$i"; land "The event comes a wave later"; i=$((i + 1)); done
 }
 
 case_ GR9 "the pictures on the wall are of a cabinet nobody can play"
@@ -714,7 +714,7 @@ case_ GR9 "work that leaves the cabinet alone leaves the poster alone"
   stage; check pre-commit
   silent GR9
 
-# The spine. Bo already has one landing in the fixture - the trap they arrived
+# The spine. Bo already has one landing in the fixture - the event they arrived
 # with - so `landings N` leaves them on N + 1, and the case stages the one
 # after that. Ada takes her turn in src/entities/rock.js rather than in Bo's
 # event file, because a handover that trips GR11 on the way past would be
@@ -812,12 +812,12 @@ case_ GR16 "a filed flight that does not answer to its own name"
   stage; check pre-commit
   blocks GR16
 
-case_ GR11 "a trap started from somebody else's template is still yours"
+case_ GR11 "an event started from somebody else's template is still yours"
   sed 's/closing-ring/quiet-ring/; s/Ada Vex/Bo Renn/; s/at: 4/at: 7/' \
     "src/events/ada-vex.js" > "src/events/bo-renn-two.js"
   awk '/^\];$/ && !d { print "  \"./events/bo-renn-two.js\","; d = 1 } { print }' \
     src/features.js > f && mv f src/features.js
-  land "Bo Renn lays a second trap, from the house template"
+  land "Bo Renn lays a second event, from the house template"
   printf '// tomorrow: make it meaner\n' >> "src/events/bo-renn-two.js"
   stage; check pre-commit
   lands
@@ -924,9 +924,9 @@ sneak() {
   git commit -q --no-verify -m "$1" >/dev/null 2>&1
 }
 
-case_ GR11 "another pilot's trap, caught after the fact"
+case_ GR11 "another pilot's event, caught after the fact"
   printf '// Bo was here\n' >> "src/events/ada-vex.js"
-  sneak "A small tidy-up of the traps"
+  sneak "A small tidy-up of the events"
   check_rev HEAD
   blocks GR11
 

@@ -246,7 +246,7 @@ Say it in one sentence, offer the legitimate route, and move on.
    requests and nothing else (GR7), so the branch is where a version lives
    until the room has seen it. A branch goes in a directory and **the directory
    is its mark**: `game/comets-come-in-threes`,
-   `game-within/the-trap-that-spares-nobody`, `chronicle/the-plates-paint-themselves`.
+   `game-within/the-event-that-spares-nobody`, `chronicle/the-plates-paint-themselves`.
    Not `feat/` and `fix/` — every change is one of those, so the word is spent
    before it has said anything, while the mark says which part of the cabinet
    you were standing in and is the same word the pull request and the chapter
@@ -354,12 +354,12 @@ names them. A difficulty change says which seat feels it first. Name people,
 not files.
 
 **YOUR BENEFIT** — what is going the pilot's way. Mercy earned back off the
-tally, a meter cleared, a trap now armed against everybody but them, a file
+tally, a meter cleared, an event now armed against everybody but them, a file
 that is theirs forever because their commit created it.
 
 **YOUR HANDICAP** — what the field is charging them, with the way out in the
 same line. A bend costs one and three clean landings ease it; three landings
-spend a tape and one flight buys three more; at three bends their own traps
+spend a tape and one flight buys three more; at three bends their own events
 stop sparing them. Write it flat. This is a difficulty setting, not a
 scolding, and GR12 is not improved by being read out sternly.
 
@@ -445,7 +445,7 @@ Use them; they exist so this stays fun rather than procedural.
 | skill | for |
 |---|---|
 | `/scout` | before you build: what landed, who owns what, where the free space is |
-| `/event` | lay a trap for the others — an ambush that never fires for you |
+| `/event` | write an event for the others — an ambush that never fires for you |
 | `/land` | the commit ritual — referee, playtest, subject line, chronicle line |
 | `/referee` | explain and fix what the golden check flagged |
 | `/chronicle` | rebuild the book, or write a chapter worth reading |
