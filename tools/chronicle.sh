@@ -222,6 +222,23 @@ function is_machine(who, mail) {
           mail ~ /\[bot\]@/ ||                  # github marks its own
           mail ~ /^actions@github\.com$/)
 }
+# The roster, in an order every awk agrees on. `for (p in pilots)` hands the
+# names back in whatever order the implementation own hash felt like, and the
+# three awks this book gets built with do not agree - so the cover listed the
+# pilots one way on a mac and another way on the runner, and whoever rebuilt
+# last rewrote it for no reason at all. Both ends of the book ask this instead:
+# most versions first, and a tie goes to the name.
+function roster_order(n, out,   p, i, j, q, c) {
+  c = 0
+  for (p in n) out[++c] = p
+  for (i = 2; i <= c; i++) {
+    q = out[i]
+    for (j = i - 1; j >= 1 && (n[q] > n[out[j]] || (n[q] == n[out[j]] && q < out[j])); j--)
+      out[j + 1] = out[j]
+    out[j + 1] = q
+  }
+  return c
+}
 '
 
 # The same question asked about one seat rather than about a stream. It used to
@@ -1860,7 +1877,9 @@ END {
   # also funny.
   for (p in interludes) if (!(p in pilots)) pilots[p] = 0
   roster = ""
-  for (p in pilots) {
+  nr = roster_order(pilots, roll)
+  for (ri = 1; ri <= nr; ri++) {
+    p = roll[ri]
     # One column, two kinds of bending: what somebody wrote down, and what the
     # book had to work out for itself.
     cell = ""
@@ -2422,12 +2441,45 @@ END {
     close(f)
   }
 }'
+BUILT=$?
 
 # The audit was the whole of what --audit wanted, and the stylesheet, the room
 # and the sidecar below all write files. Out here rather than at the top of the
 # script because the audit is inside the builder and there is no reaching it
 # without coming this far.
 [ "$QUIET" = 1 ] && exit 0
+
+# Every page in the book was written by the one awk above, and awk is not
+# supposed to be able to die. gawk 5.2.1 - which is what /usr/bin/awk is on the
+# github runner - dies anyway, partway through a chapter, with its heap in
+# pieces. An awk program cannot address memory, so it cannot corrupt any: the
+# defect is the reader's rather than the book's, and there is nothing here to
+# fix. What made it expensive was that this script did not look. It announced
+# "37 versions, a page each" over a corpse, the ground crew committed the
+# nought-byte page that was left behind, and v37 was gone off the shelf in
+# front of everybody.
+#
+# So the writer's status is read, and every page it promised is opened. A book
+# missing a page does not get filed. Stale is recoverable; wrong is the one
+# nobody notices.
+if [ "$BUILT" != 0 ]; then
+  printf 'chronicle: the builder died (exit %s) and the book is half written.\n' "$BUILT" >&2
+  printf '           Do not commit docs/ as it stands. If this is gawk, it is\n' >&2
+  printf '           gawk - mawk and the bsd awk both finish this history.\n' >&2
+  exit 1
+fi
+GAP=''
+[ -s docs/index.html ] || GAP=' the cover'
+PAGE=1
+while [ "$PAGE" -le "$TOTAL" ]; do
+  [ -s "docs/v$PAGE.html" ] || GAP="$GAP v$PAGE"
+  PAGE=$((PAGE + 1))
+done
+if [ -n "$GAP" ]; then
+  printf 'chronicle: the builder finished and still left nothing at:%s\n' "$GAP" >&2
+  printf '           Do not commit docs/ as it stands.\n' >&2
+  exit 1
+fi
 
 cat > docs/chronicle.css <<'CSS'
 /* THE CHRONICLE.
@@ -7518,7 +7570,8 @@ END {
   # landed per pilot, counted exactly the way the cover counts them. Traps
   # and board flights the splash already knows (the registry, A.BOARD).
   print "    roster: {"
-  for (p in PC) printf "      \"%s\": %d,\n", js(p), PC[p]
+  nr = roster_order(PC, roll)
+  for (ri = 1; ri <= nr; ri++) printf "      \"%s\": %d,\n", js(roll[ri]), PC[roll[ri]]
   print "    }"
   print "  };"
   # The board as the file has it - score order, the words included. A tape is
