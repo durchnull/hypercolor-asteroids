@@ -486,6 +486,75 @@ case_ GR13 "the rest of that script is ordinary work"
   stage; check pre-commit
   lands
 
+# --- a merge is nobody's work ------------------------------------------------
+#
+# Bo cuts a branch, main moves underneath him while he is up, and he comes back
+# to merge. Everything the other side brings arrives in his index, so before
+# this the referee handed him the bill for it: the rules and the game moving
+# together because main had merged a rule change, and Ada's hand on her own orb
+# reading as his. Both red lines, neither overridable, so the branch could not
+# be merged and could not be let through either.
+#
+# What is his in a merge is the resolution - what differs from both sides. The
+# last of these four is the one that keeps the rest honest: a hand on the song
+# while the tree is open differs from both, and is still caught.
+
+takesoff() {
+  TRUNK=$(git rev-parse --abbrev-ref HEAD)
+  git checkout -qb flying >/dev/null 2>&1
+  printf '\n  // bo, mid-flight\n' >> src/events/bo-renn.js
+  land "Bo takes something up"
+  git checkout -q "$TRUNK"
+  elsewhere
+}
+
+# ... and comes back to a main that has moved. Leaves the merge resolved,
+# staged and uncommitted, which is the moment the pre-commit hook runs.
+comesback() {
+  backagain
+  git checkout -q flying
+  git merge --no-commit "$TRUNK" >/dev/null 2>&1
+}
+
+case_ GR10 "the rules and the game arriving through a merge are nobody's doing"
+  takesoff
+    printf '\n# a rule was rewritten while he was up\n' >> GOLDEN_RULES.md
+    land "Ada moves a rule, alone, the way GR10 asks"
+    printf '\n// and the field changed after it\n' >> src/entities/rock.js
+    land "Ada moves the game, in its own commit"
+  comesback
+  stage; check pre-commit
+  lands
+
+case_ GR13 "somebody else's hand on their own song, arriving through a merge"
+  takesoff
+    awk '{ print } index($0, "cat > docs/chronicle-song.js <<") == 1 { print "// ada" }' \
+      tools/chronicle.sh > f && mv f tools/chronicle.sh
+    land "Ada retunes the orb that is hers to retune"
+  comesback
+  stage; check pre-commit
+  lands
+
+case_ GR12 "the ledger from the other side of a merge is not a stale ledger"
+  takesoff
+    printf '\n// the field moved while he was up\n' >> src/entities/rock.js
+    land "Ada moves the game"
+    sh tools/tally.sh >/dev/null 2>&1
+    land "The lab counts again"
+  comesback
+  stage; check pre-commit
+  lands
+
+case_ GR13 "a hand on the song while the merge was open is still a hand on it"
+  takesoff
+    printf '\n# ada, elsewhere in the book entirely\n' >> tools/chronicle.sh
+    land "Ada writes in the book"
+  comesback
+  awk '{ print } index($0, "cat > docs/chronicle-song.js <<") == 1 { print "// bo" }' \
+    tools/chronicle.sh > f && mv f tools/chronicle.sh
+  stage; check pre-commit
+  blocks GR13
+
 case_ GR4 "gutting another pilot's feature"
   truncate_to src/entities/rock.js 20
   stage; message "Trim the rock a little"
