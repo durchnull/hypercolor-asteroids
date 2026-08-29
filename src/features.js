@@ -29,6 +29,7 @@ ASTEROIDS.MODULES = [
   "./audio/riff.js",
   "./input/bindings.js",
   "./input/input.js",
+  "./input/mouse.js",
   "./game/difficulty.js",
   "./game/players.js",
   "./game/profile.js",
@@ -47,6 +48,7 @@ ASTEROIDS.MODULES = [
   // ---- the features: everything that lives, moves or draws ----------------
   // Order does not matter here. Add yours at the end and keep it alphabetical.
   "./render/effects.js",
+  "./render/reticle.js",
   "./entities/asteroids.js",
   "./entities/bullets.js",
   "./entities/falcon.js",

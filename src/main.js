@@ -13,6 +13,7 @@
   A.renderGuide();
   A.renderLobby();
   A.installInput();
+  A.installMouseAim();
   A.attract();
   A.startLoop();
 })(ASTEROIDS);

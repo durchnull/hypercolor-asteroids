@@ -33,6 +33,12 @@
     if (!A.EDGE.has(action)) keys[seat][action] = false;
   }
 
+  // Exposed so another input source — the mouse, so far — can drive the same
+  // tables through the same press/release rules instead of poking keys/held
+  // directly.
+  A.pressAction = press;
+  A.releaseAction = release;
+
   // A seat's fire button on the game-over screen restarts with that seat in
   // it, so player two can call for another round rather than waiting to be let
   // in. On the splash it does not — see below, and src/ui/lobby.js.

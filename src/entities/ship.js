@@ -7,6 +7,7 @@
   "use strict";
 
   const TURN = 4.2;          // radians per second
+  const MOUSE_TURN = 7;      // radians per second — mouse-aim still has to swing round, not snap
   const THRUST = 260;        // px/s²
   const TOP_SPEED = 820;
   const FIRE_GAP = 0.22;
@@ -19,6 +20,16 @@
   // the field is worse than no ship on the card at all.
   A.SHIP_HULL = [[0, -13], [9, 11], [0, 6], [-9, 11]];
   A.SHIP_FLAME = [[-5, 9], [0, 18], [5, 9]];
+
+  // p.angle accumulates rather than wrapping (turning left for a minute keeps
+  // subtracting), so a target angle from atan2 needs its own shortest way
+  // round rather than a plain subtraction.
+  function shortestDiff(target, angle) {
+    let d = (target - angle) % A.TAU;
+    if (d > Math.PI) d -= A.TAU;
+    else if (d < -Math.PI) d += A.TAU;
+    return d;
+  }
 
   /** Open a path along a point list. Closing and stroking is the caller's. */
   function trace(g, pts) {
@@ -35,6 +46,10 @@
   }
 
   function update(tick) {
+    // The crosshair is a promise about what the mouse currently does, so it
+    // has to track solo/multi even across a phase change (game over, a pause,
+    // player two dropping in) rather than only while a round is live.
+    document.body.classList.toggle("mouse-aim", tick.running && A.solo() && A.mouseEngaged);
     if (!tick.running) return;
     const dt = tick.dt;
 
@@ -56,8 +71,19 @@
         continue;
       }
 
+      // Keys and touch buttons always turn, seat 0 included, and taking the
+      // wheel that way hands the mouse back — it only takes it again once it
+      // actually moves (src/input/mouse.js). Solo only (GR8): two seats
+      // share one mouse, so the cursor never aims anybody but seat 0, and
+      // only while seat 1 is not in the game.
       if (key.left) p.angle -= TURN * dt;
       if (key.right) p.angle += TURN * dt;
+      if (p.idx === 0 && (key.left || key.right)) A.mouseEngaged = false;
+      if (p.idx === 0 && A.solo() && A.mouseEngaged) {
+        const step = MOUSE_TURN * dt;
+        const diff = shortestDiff(A.mouseAim(p), p.angle);
+        p.angle += Math.max(-step, Math.min(step, diff));
+      }
       if (key.thrust) {
         p.vx += Math.cos(p.angle) * THRUST * dt;
         p.vy += Math.sin(p.angle) * THRUST * dt;

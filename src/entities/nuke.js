@@ -179,7 +179,7 @@
     reset, update, draw, draw3d,
     guide: {
       name: "ATOM BOMB",
-      meta: "B &middot; 2 to start",
+      meta: "L &middot; 2 to start",
       tint: "var(--amber)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
         <circle cx="16" cy="20" r="9"/>

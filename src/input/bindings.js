@@ -23,18 +23,18 @@
       side: "left",
       keys: {
         left: "ArrowLeft", right: "ArrowRight", thrust: "ArrowUp",
-        fire: "Space", hook: "ArrowDown", bomb: "KeyB",
+        fire: "Period", hook: "ArrowDown", bomb: "KeyL",
       },
       binds: [
         ["&larr; &rarr;", "turn"],
         ["&uarr;", "thrust"],
-        ["space", "fire"],
+        [".", "fire"],
         ["&darr;", "grapple &middot; hold to winch"],
-        ["B", "bomb"],
+        ["L", "bomb"],
       ],
       lobby: "READY",              // this seat is always in the game
       joinHint: "",                // …so it never advertises itself on the HUD
-      rejoinHint: "PRESS SPACE TO REJOIN",
+      rejoinHint: "PRESS . TO REJOIN",
     },
     {
       tag: "P2",
