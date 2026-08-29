@@ -1,7 +1,7 @@
 # HYPERCOLOR ASTEROIDS
 
 ![pilots: 1](media/badges/pilots.svg)
-![traps armed: 6](media/badges/traps.svg)
+![events armed: 6](media/badges/events.svg)
 ![versions: 32](media/badges/versions.svg)
 ![flights: 3 taped](media/badges/flights.svg)
 ![golden rules: 16](media/badges/rules.svg)
@@ -38,25 +38,25 @@ deliverable — the surprise is.
 
 - *"what did the others land since I last played?"* — or `/scout`
 - *"add comets, and make them come in threes"*
-- *"a trap that flips everyone's controls for ten seconds"* — or `/event`
+- *"an event that flips everyone's controls for ten seconds"* — or `/event`
 - *"the kraken is too easy now"*
 - *"read the black box"* — paste the tape off the game-over screen
 - *"land it"* — or `/land`
 
-## You build the traps everybody else flies into
+## You build the events everybody else flies into
 
 You can drop an ambush into the game — the lights go out mid-wave, rock closes
 in from every side but one, something comes through a portal that should not
 fit. It goes in a file with your name on it, and your name is the whole
 mechanic:
 
-> **A trap never fires for the person who wrote it.**
+> **An event never fires for the person who wrote it.**
 
 So you build it, everyone else meets it, and you never once see it from the
 inside. Nobody can disarm the one that is waiting for them, either. New pilots
 are safe until they write their first: the field does not ambush the unarmed.
 
-![A trap firing mid-wave: rock closing from every side but one, the name of the ambush across the field, and its glyph counting down at the foot of the screen](media/trap.png)
+![An event firing mid-wave: rock closing from every side but one, the name of the ambush across the field, and its glyph counting down at the foot of the screen](media/event.png)
 
 ## The black box: you have to fly what you land
 
@@ -87,7 +87,7 @@ cover, a page per version, and your own line about it quoted a year from now.
 git clone https://github.com/durchnull/hypercolor-asteroids   # or fork it
 cd hypercolor-asteroids
 tools/golden-check.sh --install   # wire in the referee
-tools/whoami.sh                   # say who you are, so your own traps go quiet
+tools/whoami.sh                   # say who you are, so your own events go quiet
 open index.html                   # find out what the others did to you
 ```
 

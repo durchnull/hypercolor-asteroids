@@ -62,10 +62,10 @@
   color: var(--ink);
 }
 /* Two small numbers used to sit under a name in two shades of small: how many
-   traps this pilot has out, and how many rules they have bent. Both read as
+   events this pilot has out, and how many rules they have bent. Both read as
    "0.6rem, amber-ish" at a glance, which is no help at all when one of them is
    a boast and the other is a sentence. So each gets a glyph, and the glyph is
-   the thing you actually read — teeth for a trap, a bent rule for a bend. */
+   the thing you actually read — teeth for an event, a bent rule for a bend. */
 .pilotcard .pmeta {
   display: flex;
   align-items: center;
@@ -76,8 +76,8 @@
   font-variant-numeric: tabular-nums;
 }
 .pilotcard .pmeta .ic { width: 0.78rem; height: 0.78rem; }
-/* A pilot with nothing out yet gets the outline of a trap and no glow: the
-   card says "no traps laid", and it should look like an empty rack. */
+/* A pilot with nothing out yet gets the outline of an event and no glow: the
+   card says "no events written", and it should look like an empty rack. */
 .pilotcard .pmeta .cold { opacity: 0.5; filter: none; }
 .pilotcard:not(.on) .pmeta { color: var(--dim); }
 
