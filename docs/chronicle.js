@@ -15,9 +15,9 @@
       { v: 33, file: "c7f8fbd0.jpg", alt: "A new ambush went into the waves, armed against everybody except the pilot who wrote it. An ambush came along with it.", line: "A new ambush went into the waves, armed against everybody except the pilot who wrote it. An ambush came along with it." },
     ],
     roster: {
-      "felix2072": 1,
-      "Malte Buttjer": 3,
       "David Friedrich": 33,
+      "Malte Buttjer": 3,
+      "felix2072": 1,
     }
   };
   A.BOARD = [

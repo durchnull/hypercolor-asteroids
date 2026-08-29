@@ -75,6 +75,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      # /usr/bin/awk on this image is gawk 5.2.1, and gawk 5.2.1 corrupts its
+      # own heap and aborts partway through writing the chapters - it managed
+      # thirty-six of them and died on the thirty-seventh, and the crew filed
+      # the nought-byte page without noticing. tools/chronicle.sh notices now,
+      # so leaving this alone would turn a lost chapter into a red build on
+      # every landing instead. mawk is on the same image, is what Debian and
+      # Ubuntu ship as awk anyway, and finishes; the book is written to be the
+      # same book whichever reader builds it, and tools/lockstep.sh is the
+      # thing that keeps that true. Nothing is installed here (GR2) - one of
+      # the two awks already on the runner is chosen over the other.
+      - name: an awk that can finish the book
+        run: |
+          sudo update-alternatives --set awk /usr/bin/mawk
+          awk -W version 2>&1 | head -1
+
       - name: rebuild
         run: |
           sh tools/chronicle.sh
