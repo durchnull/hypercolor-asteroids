@@ -47,7 +47,11 @@
 # every face is asked for with the identical sentence, so the roster reads as
 # one crew rather than a folder of strangers, and the seed is what makes a face
 # theirs. It also means two clones that paint the same pilot before either
-# commits arrive at the same face rather than at an argument.
+# commits arrive at the same face rather than at an argument - for as long as
+# the model takes a seed at all, which flux-1-schnell did for every plate in
+# docs/art and then stopped doing. A refused seed is asked again without one
+# and the picture still lands; it is simply the afternoon's rather than the
+# name's, and there is nothing on this end that can be done about that.
 #
 # About the network, which is the one thing this project does not do. GR2 says
 # the cabinet plays on a plane, and it still does: nothing here runs in the
@@ -252,6 +256,8 @@ json_escape() {
 
 # A seed the commit decides, so asking twice for the same version - which only
 # happens under --force - is asking the same question rather than a new one.
+# Offered on every request and dropped only when the model's schema refuses it;
+# see ask(), which is where that argument is had.
 seed_of() {
   h=$(printf '%s' "$1" | cut -c1-7)
   printf '%d' "0x$h" 2>/dev/null || printf '1'
@@ -373,6 +379,49 @@ extract_error() {
 }
 
 # --- one picture --------------------------------------------------------------
+# A schema refusal that is specifically about the seed, as opposed to any of the
+# other ways one request in a hundred is wrong. Cloudflare phrases it as an
+# unevaluated property, so match on the property and not on the sentence around
+# it, which is the half of the message most likely to be reworded.
+seed_refused() {
+  grep -q "'/seed'" "$1" 2>/dev/null || grep -q '"/seed"' "$1" 2>/dev/null
+}
+
+# One request, and whatever came back turned into a picture at $TMP/plate. Sets
+# ext to the picture's extension when one landed and code to what the API said,
+# and returns 0 only if there is a picture to be had.
+post() {   # post BODY
+  printf '%s' "$1" > "$TMP/body.json"
+
+  code=$(curl -sS -o "$TMP/resp" -w '%{http_code}' \
+         --connect-timeout 15 --max-time 120 \
+         -X POST \
+         -H "Authorization: Bearer $TOKEN" \
+         -H "Content-Type: application/json" \
+         --data-binary @"$TMP/body.json" \
+         "$API/accounts/$ACCOUNT/ai/run/$MODEL" \
+         2>"$TMP/curl.err") || { code=''; ext=''; return 1; }
+
+  # Some models hand back the bytes and some hand back base64 in a wrapper.
+  # Both are an image, so look at what arrived rather than at the content type
+  # or the status - a picture that opens is a picture that opens, and the code
+  # is only worth quoting once there is no picture to be had.
+  ext=$(sniff "$TMP/resp")
+  if [ -n "$ext" ]; then
+    mv "$TMP/resp" "$TMP/plate"
+    return 0
+  fi
+
+  b64=$(extract_image "$TMP/resp")
+  if [ -n "$b64" ] && find_decoder; then
+    printf '%s' "$b64" | $DECODER > "$TMP/plate" 2>/dev/null
+    ext=$(sniff "$TMP/plate")
+    [ -n "$ext" ] && return 0
+  fi
+  ext=''
+  return 1
+}
+
 # The half that talks to the model, and the only half that does. Both subjects
 # come through here: hand it where the picture goes, which manifest files it,
 # what it is filed under, what to call the file, what to ask and with which
@@ -385,41 +434,33 @@ ask() {   # ask DIR MANIFEST KEY STEM PROMPT SEED NOTE
   a_dir=$1; a_man=$2; a_key=$3; a_stem=$4; a_prompt=$5; a_seed=$6; a_note=$7
 
   esc=$(json_escape "$a_prompt")
-  printf '{"prompt":"%s","seed":%s,"steps":4}' "$esc" "$a_seed" > "$TMP/body.json"
 
-  code=$(curl -sS -o "$TMP/resp" -w '%{http_code}' \
-         --connect-timeout 15 --max-time 120 \
-         -X POST \
-         -H "Authorization: Bearer $TOKEN" \
-         -H "Content-Type: application/json" \
-         --data-binary @"$TMP/body.json" \
-         "$API/accounts/$ACCOUNT/ai/run/$MODEL" \
-         2>"$TMP/curl.err") || {
-    say "$a_stem - could not reach cloudflare: $(tr -d '\n' < "$TMP/curl.err" | cut -c1-120)"
-    return 1
-  }
-
-  # Some models hand back the bytes and some hand back base64 in a wrapper.
-  # Both are an image, so look at what arrived rather than at the content type
-  # or the status - a picture that opens is a picture that opens, and the code
-  # is only worth quoting once there is no picture to be had.
-  ext=$(sniff "$TMP/resp")
-  if [ -n "$ext" ]; then
-    mv "$TMP/resp" "$TMP/plate"
-  else
-    b64=$(extract_image "$TMP/resp")
-    if [ -n "$b64" ] && find_decoder; then
-      printf '%s' "$b64" | $DECODER > "$TMP/plate" 2>/dev/null
-      ext=$(sniff "$TMP/plate")
-    fi
-    if [ -z "$ext" ]; then
-      [ -n "$b64" ] && [ -z "$DECODER" ] && \
-        { say 'no base64 on this machine, and no openssl either'; return 1; }
-      say "$a_stem - cloudflare said $code: $(extract_error "$TMP/resp")"
-      return 1
+  # Seeded first and always, because the seed is the whole of how a picture
+  # belongs to its subject rather than to the afternoon it was asked for. But
+  # which parameters a model takes is the model's business, and
+  # ASTEROIDS_ART_MODEL means the model is not always this one: flux-1-schnell
+  # took a seed for every plate already in docs/art and then stopped taking
+  # one, and its schema now says no outright rather than ignoring it. A picture
+  # nobody can ask for is worse than a picture nobody can ask for twice, so a
+  # refusal that is specifically about the seed is asked again without it and
+  # the book takes what comes. Anything else is an error like any other.
+  if ! post "$(printf '{"prompt":"%s","seed":%s,"steps":4}' "$esc" "$a_seed")"; then
+    if [ -n "$code" ] && seed_refused "$TMP/resp"; then
+      say "$a_stem - this model has stopped taking a seed; asking unseeded"
+      post "$(printf '{"prompt":"%s","steps":4}' "$esc")"
     fi
   fi
 
+  if [ -z "$ext" ]; then
+    [ -z "$code" ] && {
+      say "$a_stem - could not reach cloudflare: $(tr -d '\n' < "$TMP/curl.err" | cut -c1-120)"
+      return 1
+    }
+    [ -n "$(extract_image "$TMP/resp")" ] && [ -z "$DECODER" ] && \
+      { say 'no base64 on this machine, and no openssl either'; return 1; }
+    say "$a_stem - cloudflare said $code: $(extract_error "$TMP/resp")"
+    return 1
+  fi
   manifest_init "$a_dir" "$a_man"
   out="$a_stem.$ext"
   cp "$TMP/plate" "$a_dir/$out" || return 1
