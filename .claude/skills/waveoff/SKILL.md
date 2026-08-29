@@ -73,14 +73,28 @@ we'll take another look".
 
 What the comment is:
 
-1. **What is in the way**, as the thing that happened rather than as a git
+1. **Whoever opened it, by name, first thing.** `@` and the login
+   `tools/waveoff.sh` printed on the first line of the detail run — whoever
+   that turns out to be, read off the pull request in front of you every time.
+   Never a display name, which github will not turn into a mention, and never a
+   name carried over from an example or from the last waveoff you wrote.
+   Github mails the author either way, so this is not about delivery: the
+   comment is a request that one particular person come round again, and a
+   thread with three people reading it should never make anybody work out whose
+   move it is. Address them, then say the thing — not *the branch*, not *this
+   pull request*, but *you*.
+2. **What is in the way**, as the thing that happened rather than as a git
    state. *v38 retired the word trap, and the badge that carried it went with
    it. Your branch repainted that badge on the way past.*
-2. **The paths**, one line each, with what each side did. A list, not prose.
-3. **What they run**, in a fenced block, on their clone — and if you know which
+3. **The paths**, one line each, with what each side did. A list, not prose.
+4. **What they run**, in a fenced block, on their clone — and if you know which
    side wins, the line that settles it.
-4. **What happens after**: they push, the strip re-runs, the referee reads it
+5. **What happens after**: they push, the strip re-runs, the referee reads it
    again, and the merge button was always theirs.
+
+Nobody else gets mentioned. The pilot whose commit moved the ground is named by
+sha and subject, which is a fact about the history; @-ing them is pulling
+somebody into a conversation that is not theirs to have.
 
 What it is not:
 
