@@ -162,20 +162,20 @@ function area(p) {
 }
 
 BEGIN {
-  # A trap that was not there this morning.
-  add("trap", "Somebody laid a trap and walked away whistling.")
-  add("trap", "A new ambush went into the waves, armed against everybody except the pilot who wrote it.")
-  add("trap", "There is something waiting in the field now, and it knows whose seat you are in.")
-  add("trap", "A trap was set by somebody who will never meet it.")
-  add("trap", "The field acquired a grudge, and the grudge has a name on it.")
-  add("trap", "Somebody spent an evening arranging for yours to go worse.")
+  # An event that was not there this morning.
+  add("ambush", "Somebody wrote an event and walked away whistling.")
+  add("ambush", "A new ambush went into the waves, armed against everybody except the pilot who wrote it.")
+  add("ambush", "There is something waiting in the field now, and it knows whose seat you are in.")
+  add("ambush", "An event was armed by somebody who will never meet it.")
+  add("ambush", "The field acquired a grudge, and the grudge has a name on it.")
+  add("ambush", "Somebody spent an evening arranging for yours to go worse.")
 
-  # A trap that was already out there, tightened.
+  # An event that was already out there, tightened.
   add("events", "An old ambush was taken apart and put back meaner.")
-  add("events", "Somebody went back to their trap and tightened it.")
-  add("events", "A trap that was already out there got a second thought.")
+  add("events", "Somebody went back to their event and tightened it.")
+  add("events", "An event that was already out there got a second thought.")
   add("events", "The ambush was retuned by the one pilot it will never fire at.")
-  add("events", "Somebody adjusted a trap they are personally immune to.")
+  add("events", "Somebody adjusted an event they are personally immune to.")
   add("events", "An existing grudge was brought up to date.")
 
   # Something in the field that was not in the field before.
@@ -250,7 +250,7 @@ BEGIN {
   add("jettison", "Somebody removed more than they added, and meant to.")
 
   # The second thing that happened, when two things happened.
-  add("also_events", "There is a trap in it as well.")
+  add("also_events", "There is an event in it as well.")
   add("also_events", "An ambush came along with it.")
   add("also_events", "It arrived with a grudge attached.")
   add("also_entities", "Something new came with it.")
@@ -310,9 +310,9 @@ END {
   }
 
   # What the pilot will notice first, in the order they would notice it: a new
-  # trap, then a new thing in the field, then a commit that mostly took things
+  # ambush, then a new thing in the field, then a commit that mostly took things
   # away, then whatever moved most.
-  if (fresh["events"])        primary = "trap"
+  if (fresh["events"])        primary = "ambush"
   else if (fresh["entities"]) primary = "arrival"
   else if (totdel > 2 * totadd && totdel > 40) primary = "jettison"
   else                        primary = (bestk == "") ? "machine" : bestk

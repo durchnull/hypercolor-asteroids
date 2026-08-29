@@ -248,7 +248,7 @@ b64() {
 # face a seat card looks up by name and the file that face is stored in are all
 # the same person, and a rename that caught four of the six would be worse than
 # none. GR11 is not touched by it - the runner compares the seat to the `by:`
-# and both sides move together, so an author's own trap stays quiet for them.
+# and both sides move together, so an author's own event stays quiet for them.
 #
 # The clock goes too. A date says when a version landed; thirty-three of them
 # stamped to the minute says what time this person tends to stop working.

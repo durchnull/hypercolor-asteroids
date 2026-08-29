@@ -14,7 +14,7 @@ git clone https://github.com/durchnull/hypercolor-asteroids
 cd hypercolor-asteroids
 tools/golden-check.sh --install   # wire in the referee
 git config pull.rebase false      # the house setting, and it is not a taste
-tools/whoami.sh                   # your seat, so your own traps go quiet
+tools/whoami.sh                   # your seat, so your own events go quiet
 open index.html                   # find out what the others did to you
 ```
 
@@ -47,7 +47,7 @@ that knows the rulebook. A session looks like:
 
 - *"what did the others land since I last played?"* — or `/scout`
 - *"add comets, and make them come in threes"*
-- *"a trap that flips everyone's controls for ten seconds"* — or `/event`
+- *"an event that flips everyone's controls for ten seconds"* — or `/event`
 - *"read the black box"* — paste the tape off the game-over screen
 - *"land it"* — or `/land`
 
@@ -147,7 +147,7 @@ the entire price, and it is meant to be cheap to pay and impossible to hide.
 
 Four things get refused whoever asks, and they are worth knowing in advance:
 
-- **Another pilot's event file** (GR11). An event is a trap that never fires
+- **Another pilot's event file** (GR11). An event is an event that never fires
   for whoever wrote it, and the whole mechanic rests on nobody being able to
   disarm the one waiting for them. No budget, no override, not one line.
 - **Your own tally** (GR12). It is generated from the history by
@@ -185,7 +185,7 @@ read before the first pull request, and it never becomes a question at all.
 
 The game is hostile on purpose and the people are not.
 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) is short and it comes down to aiming
-it at the ship rather than at the pilot. Build the meanest trap you can and
+it at the ship rather than at the pilot. Build the meanest event you can and
 address it to somebody by name — that is the game working. The rest of what
 that file rules out was never part of it.
 
@@ -195,7 +195,7 @@ Two things are on your side.
 
 **The field does not ambush the unarmed.** A pilot with no event of their own
 has none fired at them. The first evening is for learning the field; writing
-your first trap is the induction that arms the room, and it is the most direct
+your first event is the induction that arms the room, and it is the most direct
 route there is to ruining a stranger's evening.
 
 **Your meter starts at zero.** You get three landings before GR14 asks to see a

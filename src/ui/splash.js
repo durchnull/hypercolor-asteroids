@@ -31,7 +31,7 @@
 // All of it is a continuous function of where the deck has got to, so it is
 // the same movement your hand is making.
 //
-// Two measurements, and both of them are careful about the same trap. The mark
+// Two measurements, and both of them are careful about the same pitfall. The mark
 // is read with offsetHeight and offsetTop, which are layout and ignore
 // transforms: a rectangle with the fold already applied to it would feed the
 // scale back into the deck's padding, the padding back into the scroll, and

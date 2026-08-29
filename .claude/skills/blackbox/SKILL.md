@@ -83,7 +83,7 @@ beats a receipt that is not.
    - distance flown in klicks (`dist / 1000`), and top speed.
    - the ambush reel — the reader lists every event that fired: id, author,
      wave, flown clear or died inside. "Died to PINCER, Mira's, wave 3" is
-     exactly the sentence the board wants; a cleared trap is the pilot's
+     exactly the sentence the board wants; a cleared event is the pilot's
      boast, a kill is its author's. An older tape has no reel, and that is
      not a gap to fill in by asking.
 
@@ -99,7 +99,7 @@ beats a receipt that is not.
    line mentions the wingmate. When the tape carries an ambush reel, the
    flight log entry names each event with its author and outcome — cleared
    or fatal — so an author's public kills and clears read straight off the
-   record, and the board line names the trap that ended the run when one
+   record, and the board line names the event that ended the run when one
    did.
 
 7. **Commit it, without asking.** Handing over the tape is the ask; a verified

@@ -70,7 +70,7 @@ CABINET=$WORK/cabinet
 LAB=$WORK/lab
 OUT=$WORK/out
 
-OWNER="Ada Vex"     # roots the cabinet, owns one trap and the long rock
+OWNER="Ada Vex"     # roots the cabinet, owns one event and the long rock
 PILOT="Bo Renn"     # the seat every case flies from, and charges land on
 
 if [ -t 1 ]; then
@@ -172,7 +172,7 @@ JS
     git commit -qm "The lab counts nobody, in writing" >/dev/null
   fi
 
-  # Bo arrives with one trap, and every case after this is Bo at the keyboard
+  # Bo arrives with one event, and every case after this is Bo at the keyboard
   git config user.name "$PILOT"
   cat > src/events/bo-renn.js <<'JS'
 (function (A) {
@@ -186,7 +186,7 @@ JS
   awk '/^\];$/ && !d { print "  \"./events/bo-renn.js\","; d = 1 } { print }' \
     src/features.js > src/features.new && mv src/features.new src/features.js
   git add -A >/dev/null
-  git commit -qm "Bo Renn lays the first trap of the evening" >/dev/null
+  git commit -qm "Bo Renn lays the first event of the evening" >/dev/null
   cd "$ROOT" || exit 1
 }
 
@@ -208,7 +208,7 @@ rowof() {
 # that is not the author's own file, judged off the history alone
 sneak_red_line() {
   printf '// a small improvement, surely\n' >> src/events/ada-vex.js
-  land -m "a small tidy-up of the traps"
+  land -m "a small tidy-up of the events"
 }
 
 case_() { RULE=$1; NAME=$2; DONE=0; fresh; }
@@ -246,16 +246,16 @@ case_ GR12 "a clean history charges nobody"
 
 case_ GR12 "a bend costs one, and the ledger says which rule"
   printf '// retuned\n' >> src/events/bo-renn.js
-  land -m "The trap comes a wave later" \
+  land -m "The event comes a wave later" \
        -m "Golden-Rule-Override: GR4 - Ada agreed, in the lab's imagination"
   expect "count=$(count "$PILOT") row=$(rowof "$PILOT")" \
          "count=1 row=\"Bo Renn\": { bends: 1, clean: 0, last: \"GR4\" }"
 
 case_ GR12 "a second bend costs a second one"
   printf '// retuned\n' >> src/events/bo-renn.js
-  land -m "The trap comes a wave later" -m "Golden-Rule-Override: GR4 - once"
+  land -m "The event comes a wave later" -m "Golden-Rule-Override: GR4 - once"
   printf '// retuned again\n' >> src/events/bo-renn.js
-  land -m "The trap comes later still" -m "Golden-Rule-Override: GR6 - twice"
+  land -m "The event comes later still" -m "Golden-Rule-Override: GR6 - twice"
   expect "$(count "$PILOT")" "2"
 
 case_ GR12 "a receipt prices going round the referee at two"
@@ -304,10 +304,10 @@ case_ GR8 "a breach naming a phantom charges nobody"
 
 case_ GR12 "three clean versions ease one bend"
   printf '// retuned\n' >> src/events/bo-renn.js
-  land -m "The trap comes a wave later" -m "Golden-Rule-Override: GR4 - spent"
+  land -m "The event comes a wave later" -m "Golden-Rule-Override: GR4 - spent"
   for w in 7 8 9; do
     printf '// wave %s, retuned\n' "$w" >> src/events/bo-renn.js
-    land -m "The trap moves to wave $w"
+    land -m "The event moves to wave $w"
   done
   CHARGE=$(sh tools/tally.sh --roll 2>/dev/null | grep -F "$PILOT" | sed 's/.*charges as \([0-9]*\).*/\1/')
   expect "row=$(rowof "$PILOT") charges=$CHARGE" \
@@ -315,34 +315,34 @@ case_ GR12 "three clean versions ease one bend"
 
 case_ GR12 "the next bend takes the whole discount back"
   printf '// retuned\n' >> src/events/bo-renn.js
-  land -m "The trap comes a wave later" -m "Golden-Rule-Override: GR4 - spent"
+  land -m "The event comes a wave later" -m "Golden-Rule-Override: GR4 - spent"
   for w in 7 8 9; do
     printf '// wave %s, retuned\n' "$w" >> src/events/bo-renn.js
-    land -m "The trap moves to wave $w"
+    land -m "The event moves to wave $w"
   done
   printf '// meaner\n' >> src/events/bo-renn.js
-  land -m "The trap grows teeth" -m "Golden-Rule-Override: GR6 - spent again"
+  land -m "The event grows teeth" -m "Golden-Rule-Override: GR6 - spent again"
   expect "$(rowof "$PILOT")" "\"Bo Renn\": { bends: 2, clean: 0, last: \"GR6\" }"
 
 case_ GR12 "the ledger's own receipt is not a clean landing"
   printf '// retuned\n' >> src/events/bo-renn.js
-  land -m "The trap comes a wave later" -m "Golden-Rule-Override: GR4 - spent"
+  land -m "The event comes a wave later" -m "Golden-Rule-Override: GR4 - spent"
   sh tools/tally.sh >/dev/null 2>&1
   git add src/game/ledger.js >/dev/null 2>&1
   git commit -qm "THE LEDGER: Bo Renn bends GR4, and it goes on the record" >/dev/null 2>&1
   AFTER_RECEIPT=$(rowof "$PILOT")
   printf '// a real landing\n' >> src/events/bo-renn.js
-  land -m "The trap moves once more"
+  land -m "The event moves once more"
   expect "receipt=[$AFTER_RECEIPT] version=[$(rowof "$PILOT")]" \
          "receipt=[\"Bo Renn\": { bends: 1, clean: 0, last: \"GR4\" }] version=[\"Bo Renn\": { bends: 1, clean: 1, last: \"GR4\" }]"
 
 case_ GR12 "a message still being written is already priced"
-  printf 'The trap moves once more\n\nGolden-Rule-Override: GR14 - not landed yet\n' > "$WORK/msg"
+  printf 'The event moves once more\n\nGolden-Rule-Override: GR14 - not landed yet\n' > "$WORK/msg"
   expect "$(sh tools/tally.sh --plus "$WORK/msg" --count "$PILOT" 2>/dev/null)" "1"
 
 case_ GR12 "a doctored ledger does not survive --check"
   printf '// retuned\n' >> src/events/bo-renn.js
-  land -m "The trap comes a wave later" -m "Golden-Rule-Override: GR4 - spent"
+  land -m "The event comes a wave later" -m "Golden-Rule-Override: GR4 - spent"
   sh tools/tally.sh >/dev/null 2>&1
   HONEST=$?
   sh tools/tally.sh --check >/dev/null 2>&1; HONEST=$?
@@ -363,7 +363,7 @@ receipts() { sh .githooks/post-commit > "$OUT" 2>&1; }
 
 case_ GR12 "a clean landing gets no ledger commit"
   printf '// retuned\n' >> src/events/bo-renn.js
-  land -m "The trap comes a wave later"
+  land -m "The event comes a wave later"
   WAS=$(git rev-parse HEAD)
   refereed; receipts
   expect "moved=$(git rev-parse HEAD | grep -c "$WAS") count=$(count "$PILOT")" \
@@ -371,21 +371,21 @@ case_ GR12 "a clean landing gets no ledger commit"
 
 case_ GR12 "a refereed bend is written down while the pilot is still reading"
   printf '// retuned\n' >> src/events/bo-renn.js
-  land -m "The trap comes a wave later" -m "Golden-Rule-Override: GR4 - spent"
+  land -m "The event comes a wave later" -m "Golden-Rule-Override: GR4 - spent"
   refereed; receipts
   expect "subject=[$(git log -1 --format=%s)] author=[$(git log -1 --format=%an)] count=$(count "$PILOT") ledger=$(grep -c '"Bo Renn": { bends: 1' src/game/ledger.js)" \
          "subject=[THE LEDGER: Bo Renn bends GR4, and it goes on the record] author=[Bo Renn] count=1 ledger=1"
 
 case_ GR12 "a commit the referee never saw gets its two, in writing"
   printf '// retuned\n' >> src/events/bo-renn.js
-  land -m "The trap comes a wave later"
+  land -m "The event comes a wave later"
   unrefereed; receipts
   expect "subject=[$(git log -1 --format=%s)] receipt=$(git log -1 --format=%B | grep -c '^Referee-Skipped:') count=$(count "$PILOT")" \
          "subject=[THE LEDGER: Bo Renn went round the referee] receipt=1 count=2"
 
 case_ GR12 "the ledger commit does not tally itself"
   printf '// retuned\n' >> src/events/bo-renn.js
-  land -m "The trap comes a wave later" -m "Golden-Rule-Override: GR4 - spent"
+  land -m "The event comes a wave later" -m "Golden-Rule-Override: GR4 - spent"
   WAS=$(git rev-parse HEAD)
   unrefereed
   ASTEROIDS_TALLY=1 sh .githooks/post-commit > "$OUT" 2>&1
@@ -394,7 +394,7 @@ case_ GR12 "the ledger commit does not tally itself"
 case_ GR12 "a merge is nobody's bend"
   git checkout -qb side 2>/dev/null
   printf '// side work\n' >> src/events/bo-renn.js
-  land -m "The trap, on a branch"
+  land -m "The event, on a branch"
   git checkout -q - 2>/dev/null
   printf '\nA paragraph.\n' >> README.md
   land -m "The README says a little more"
@@ -470,7 +470,7 @@ case_ GR12 "and an unbent one still comes back in lockstep"
 # Everything above prices the paper. This loads the real src/game/tally.js and
 # src/game/events.js - from this working tree, not from the lab - hands them a
 # ledger, and reads the GR12 table back out of them: events sooner from one
-# bend, your own traps armed at three, a crowded wave at four, a floor of
+# bend, your own events armed at three, a crowded wave at four, a floor of
 # half, mercy every three clean landings. The thresholds are quoted from
 # GOLDEN_RULES.md on purpose: retuning them is a rule change, and this is
 # where a quiet one gets loud.
@@ -487,13 +487,13 @@ if command -v node >/dev/null 2>&1; then
     out.push((cond ? "ok" : "no") + "\t" + rule + "\t" + name + "\t" + (cond ? "" : detail));
 
   // a fresh cabinet per question: stub seat, real punishment code
-  function cabinet(ledger, pilot, traps) {
+  function cabinet(ledger, pilot, events) {
     const A = { register() {}, activePilot: () => pilot, GUEST: "GUEST", LEDGER: ledger };
     global.ASTEROIDS = A;
     for (const f of ["src/game/tally.js", "src/game/events.js"]) {
       new Function(fs.readFileSync(path.join(ROOT, f), "utf8"))();
     }
-    for (const e of traps || []) A.defineEvent(e);
+    for (const e of events || []) A.defineEvent(e);
     return A;
   }
   const bo = (bends, clean) => ({ "Bo Renn": { bends, clean, last: "GR4" } });
@@ -508,7 +508,7 @@ if command -v node >/dev/null 2>&1; then
       A.eventHeat() === 1 && A.eventQuotaBonus() === 0 && !A.ownEventsArmed(),
       "heat=" + A.eventHeat() + " bonus=" + A.eventQuotaBonus() + " own=" + A.ownEventsArmed());
     t("GR11", "an event never fires for the pilot who wrote it",
-      A.armedCount() === 1, "armedCount=" + A.armedCount() + ", wanted Ada's trap only");
+      A.armedCount() === 1, "armedCount=" + A.armedCount() + ", wanted Ada's event only");
 
     A = cabinet(bo(1, 0), "Bo Renn", armoury());
     const h1 = A.eventHeat();
@@ -516,7 +516,7 @@ if command -v node >/dev/null 2>&1; then
       h1 < 1 && h1 >= 0.5 && !A.ownEventsArmed(), "heat=" + h1 + " own=" + A.ownEventsArmed());
 
     A = cabinet(bo(2, 0), "Bo Renn", armoury());
-    t("GR12", "two bends press harder and still spare your own traps",
+    t("GR12", "two bends press harder and still spare your own events",
       A.eventHeat() < h1 && !A.ownEventsArmed(),
       "heat=" + A.eventHeat() + " (one bend gave " + h1 + ") own=" + A.ownEventsArmed());
 
@@ -547,7 +547,7 @@ if command -v node >/dev/null 2>&1; then
         " own=" + A.ownEventsArmed() + " bonus=" + A.eventQuotaBonus());
 
     A = cabinet(bo(3, 3), "Bo Renn", armoury());
-    t("GR11", "mercy hands your own traps back to sparing you",
+    t("GR11", "mercy hands your own events back to sparing you",
       !A.ownEventsArmed(), "3 bends 3 clean charges as 2, own=" + A.ownEventsArmed());
 
     A = cabinet({}, "GUEST", armoury());
@@ -566,7 +566,7 @@ if command -v node >/dev/null 2>&1; then
       [{ id: "closing-ring", by: "Ada Vex", fire() {} },
        { id: "meteor-rain", by: "THE HOUSE", fire() {} }]);
     t("GR11", "the house ambushes everybody, author included",
-      A.armedCount() === 1, "armedCount=" + A.armedCount() + ", wanted the house trap only");
+      A.armedCount() === 1, "armedCount=" + A.armedCount() + ", wanted the house event only");
 
     A = cabinet(bo(-5, 0), "Bo Renn", armoury());
     t("GR12", "a garbage ledger row charges nothing rather than less than nothing",

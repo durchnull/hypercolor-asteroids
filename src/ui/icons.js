@@ -3,14 +3,14 @@
 // The field guide already draws icons, but those belong to the features that
 // register them — a kraken ships its own kraken. These are the other kind: the
 // marks the panels themselves wear, where a number on its own would not say
-// what kind of number it is. Seven traps laid and three bends on the ledger
+// what kind of number it is. Seven events written and three bends on the ledger
 // are both small amber digits until one of them has teeth next to it.
 //
 // One box, one stroke weight, no fills, `currentColor` throughout — so a glyph
 // picks up the colour of whatever it was dropped into and drifts with the
 // spectrum like everything else on that screen.
 //
-//   A.ico("trap")            -> <svg class="ic">…</svg>
+//   A.ico("event")            -> <svg class="ic">…</svg>
 //   A.ico("bend", "lit")     -> the same, plus a class of your own
 //
 // An unknown name draws nothing rather than a broken box: a panel that asks
@@ -21,8 +21,8 @@
   "use strict";
 
   const PATH = {
-    // a bear trap, seen from the side: teeth on the ground, plate in the middle
-    trap: '<path d="M3 16h18"/><path d="M5 16l2.2-4.6L9.4 16l2.6-5.6L14.6 16l2.2-4.6L19 16"/><circle cx="12" cy="19.3" r="1.5"/>',
+    // a sprung jaw, seen from the side: teeth on the ground, plate in the middle
+    event: '<path d="M3 16h18"/><path d="M5 16l2.2-4.6L9.4 16l2.6-5.6L14.6 16l2.2-4.6L19 16"/><circle cx="12" cy="19.3" r="1.5"/>',
     // a rule that should be straight, and is not
     bend: '<path d="M2.6 17.4h6.2l5.4-10.8h7.2"/><path d="M2.6 15.2v4.4M21.4 4.4v4.4"/>',
     // something has you in it

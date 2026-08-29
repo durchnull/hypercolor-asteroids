@@ -1,7 +1,7 @@
 // The bounty. The field is less patient with whoever is winning.
 //
 // Every other pressure in this cabinet is authored at somebody. An event is a
-// trap with a pilot's name on the file and a pilot's name in the `by:`
+// event with a pilot's name on the file and a pilot's name in the `by:`
 // (GR11); the tally is a bill for something you did (GR12). This one has
 // nobody behind it. It reads the top line of the board — the same rows the
 // splash screen shows, out of docs/chronicle.js — and shortens the wait
@@ -10,7 +10,7 @@
 // Which makes it the one shape of targeting the rules already allow: by
 // standing, not by grudge. Nobody wrote it at anybody, the pilot it comes for
 // picked the fight by beating everybody else, and it is self-correcting in a
-// way a personal trap can never be — the moment somebody else takes the top
+// way a personal event can never be — the moment somebody else takes the top
 // row, the field changes its mind about who it is impatient with. An event
 // aimed at a name would need GR11 amended in the open; this needed nothing,
 // which is most of the argument for it.

@@ -2,7 +2,7 @@
 //
 // Built from the event registry, so it cannot go stale: a pilot appears here
 // the moment they land their first event, and the count next to their name is
-// how many traps of theirs are armed against everybody else.
+// how many events of theirs are armed against everybody else.
 //
 // It re-renders on every return to the splash, which is how the locked seat
 // arrives — whoami.local.js loads a moment after the page and asks for a
@@ -33,7 +33,7 @@
     const locked = A.pilotLocked();
     const pilots = A.eventPilots ? A.eventPilots() : [];
 
-    // Everyone with a trap in the game, then everyone on the guest list who has
+    // Everyone with an event in the game, then everyone on the guest list who has
     // not laid one yet, then whoever is locked into this seat even if they are
     // on neither — a pilot whose git name nobody spelled right still gets to see
     // their own card. Names collapse: the count only ever comes from the
@@ -62,9 +62,9 @@
           : ""}
           <span class="pname">${esc(p.name)}</span>
           <span class="pmeta">${
-            p.events < 0 ? A.ico("aim") + "every trap armed"
-            : p.events === 0 ? A.ico("trap", "cold") + "no traps laid"
-            : A.ico("trap") + plural(p.events, "trap", "traps") + " laid"
+            p.events < 0 ? A.ico("aim") + "every event armed"
+            : p.events === 0 ? A.ico("event", "cold") + "no events written"
+            : A.ico("event") + plural(p.events, "event", "events") + " written"
           }</span>${(() => {
             const r = A.serviceRecord && A.serviceRecord(p.name);
             if (!r || (!r.versions && !r.flights)) return "";
@@ -89,7 +89,7 @@
           + "They are in the pile with everybody else's now. The field will also "
           + "come for you sooner than it does for the others."
         : active !== A.GUEST && pilots.length > 0 && A.armedCount && A.armedCount() === 0
-        ? "&#9670; the field does not ambush the unarmed. None of the traps in "
+        ? "&#9670; the field does not ambush the unarmed. None of the events in "
           + "this room fire at a pilot who has laid none &mdash; write your "
           + "first event and the room arms itself. That is the induction."
         : locked

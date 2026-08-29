@@ -8,12 +8,12 @@
 //
 //     an event never fires for the pilot who wrote it.
 //
-// You cannot be ambushed by your own trap. Everybody else can. That is why the
+// You cannot be ambushed by your own event. Everybody else can. That is why the
 // splash screen asks who is flying before it lets you in — see game/profile.js
 // — and why laying a good one is the most direct way there is to ruin a
 // friend's run.
 //
-// The mirror of that rule: a named pilot with no trap in the game is not
+// The mirror of that rule: a named pilot with no event in the game is not
 // ambushed at all. Nobody's first evening is spent as pure target — writing
 // your first event is the induction, and the room arms itself the moment it
 // lands. GUEST gets everything, which is the walk-up experience and is
@@ -43,10 +43,10 @@
 // looks like every other event without an icon. See ui/mark.js.
 //
 // `for:` is a dedication and it is worth being exact about what it is not. It
-// changes the banner and it changes nothing else: the trap fires at the same
+// changes the banner and it changes nothing else: the event fires at the same
 // pilots it fired at before, at the same odds, in the same waves, and the one
 // named gets no more of it than anybody in the room. Everybody reads the name,
-// which is the point of dedicating anything — a trap addressed to somebody is
+// which is the point of dedicating anything — an event addressed to somebody is
 // a thing the rest of the room gets to watch happen.
 //
 // It is written down here because the line it does not cross is a red one. The
@@ -58,7 +58,7 @@
 // same line. It calls a pilot out for a duel, and it does nothing whatsoever
 // until one of their events calls you back — at which point both of you spend
 // the evening mostly meeting each other's work, and waiting less for it. Still
-// nothing about eligibility: your own traps still never come for you, theirs
+// nothing about eligibility: your own events still never come for you, theirs
 // still do. game/pact.js is where the arithmetic is, and where the argument
 // for it is written out.
 //
@@ -94,7 +94,7 @@
   };
 
   /**
-   * The field does not ambush the unarmed. A named pilot with no trap of
+   * The field does not ambush the unarmed. A named pilot with no event of
    * their own in the game gets none fired at them: the first evening is for
    * learning the field, and writing your first event is the induction that
    * arms the room (GR11). GUEST keeps the everything-armed walk-up game, on
@@ -121,7 +121,7 @@
     return events.filter((e) => mine || e.by === A.HOUSE || e.by !== me).length;
   };
 
-  // The tally, if it is loaded, decides whether a pilot's own traps are still
+  // The tally, if it is loaded, decides whether a pilot's own events are still
   // making an exception for them. Three bends and they are not. GR11 and GR12.
   const mineToo = () => !!(A.ownEventsArmed && A.ownEventsArmed());
 
@@ -133,7 +133,7 @@
    *
    * The declaration rides on `by:` on purpose. That is the one identity claim
    * the referee already polices (GR11), so signing somebody else into a duel
-   * is exactly as hard as forging their name on a trap, which is to say
+   * is exactly as hard as forging their name on an event, which is to say
    * refused in front of everybody.
    */
   A.pactCalls = function pactCalls() {
@@ -149,7 +149,7 @@
     return calls;
   };
 
-  /** The pilots who have laid traps, and how many each. For the picker. */
+  /** The pilots who have laid events, and how many each. For the picker. */
   A.eventPilots = function eventPilots() {
     const count = new Map();
     for (const e of events) {
@@ -188,7 +188,7 @@
    */
   A.eventLog = () => log;
 
-  /** Whether an event is the flying pilot's own trap, come back around. */
+  /** Whether an event is the flying pilot's own event, come back around. */
   const own = (e) => e.by !== A.HOUSE && e.by === A.activePilot();
 
   // A colour per event, taken off its id, so two ambushes on screen at once
@@ -295,8 +295,8 @@
 
   function pick(pool) {
     // Airtime is dealt per author first, then per event within the arsenal -
-    // a pilot who laid ten traps owns no more of anybody's evening than one
-    // who laid a single good one. `weight` ranks an author's own traps
+    // a pilot who laid ten events owns no more of anybody's evening than one
+    // who laid a single good one. `weight` ranks an author's own events
     // against each other; it buys nothing against the rest of the room.
     const arsenals = new Map();
     for (const e of pool) {
@@ -307,19 +307,19 @@
     let pot = 0;
     for (const [by] of authors) pot += share(by);
     let m = Math.random() * pot;
-    let traps = authors[authors.length - 1][1];
+    let events = authors[authors.length - 1][1];
     for (const [by, arsenal] of authors) {
       m -= share(by);
-      if (m <= 0) { traps = arsenal; break; }
+      if (m <= 0) { events = arsenal; break; }
     }
     let total = 0;
-    for (const e of traps) total += e.weight || 1;
+    for (const e of events) total += e.weight || 1;
     let n = Math.random() * total;
-    for (const e of traps) {
+    for (const e of events) {
       n -= e.weight || 1;
       if (n <= 0) return e;
     }
-    return traps[traps.length - 1];
+    return events[events.length - 1];
   }
 
   // A dedication, first name only, because the banner has one line for it and
@@ -335,7 +335,7 @@
 
   function announce(e) {
     // Three things can go under the name, and the order is the order they
-    // matter in. Your own trap coming back at you outranks everything — the
+    // matter in. Your own event coming back at you outranks everything — the
     // tally is a punishment, and a punishment nobody notices is only a bug.
     // Then whoever it was written for, because that is the whole of what a
     // dedication is. Then the blurb, which is what it always was.
@@ -414,7 +414,7 @@
         stroke="currentColor" stroke-width="1.6">
         <path d="M17 3v7M17 24v7M3 17h7M24 17h7M7 7l5 5M22 22l5 5M27 7l-5 5M12 22l-5 5"/>
         <circle cx="17" cy="17" r="4.5"/></svg>`,
-      desc: "The field has moods. Somebody wrote one of them for you, and it is not the one they get. A pilot with no trap laid is spared the lot &mdash; the room arms when you do. Some of them arrive with a name under the banner: that is a dedication, and it is addressed to somebody rather than aimed at them.",
+      desc: "The field has moods. Somebody wrote one of them for you, and it is not the one they get. A pilot with no event of their own is spared the lot &mdash; the room arms when you do. Some of them arrive with a name under the banner: that is a dedication, and it is addressed to somebody rather than aimed at them.",
     },
   });
 })(ASTEROIDS);

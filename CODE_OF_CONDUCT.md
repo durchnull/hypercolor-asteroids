@@ -1,7 +1,7 @@
 # Code of conduct
 
 This cabinet is shared, and the game on it is hostile on purpose. You write
-traps that ruin other people's evenings. You make the kraken meaner the week
+events that ruin other people's evenings. You make the kraken meaner the week
 somebody said it was hard enough. The rules keep a public tally of who has bent
 what, and your own ambushes start coming for you sooner when you do.
 
@@ -12,8 +12,8 @@ where you would expect it to:
 
 ## Welcome here
 
-- Traps, ambushes, and difficulty nobody asked for. That is the game, and the
-  person who never sees their own trap fire is you.
+- Events, ambushes, and difficulty nobody asked for. That is the game, and the
+  person who never sees their own event fire is you.
 - Saying a change made the game worse, and saying why. GR8 is on your honour
   and it only works if somebody is willing to say it out loud.
 - Arguing with the rules — in the open, in their own commit, with a
@@ -34,7 +34,7 @@ where you would expect it to:
   landed.
 
 One thing that looks like an exception and is not. An event file may carry a
-**dedication** — a trap addressed to a named pilot, which the game prints under
+**dedication** — an event addressed to a named pilot, which the game prints under
 the banner when it fires. That is the single place a person's name belongs on
 an ambush. It is addressed to them, not aimed at them, and it stops being fine
 the moment it is about anything other than flying.

@@ -71,6 +71,7 @@ Everything hangs off a feature registry, and that is the one idea you need.
 <li><code>src/game/blackbox.js</code> and <code>src/ui/debrief.js</code> — every flight is taped, and the game-over screen offers the sealed tape with a copy button. A pilot pastes it to you and says <i>read the black box</i>: <code>/blackbox</code> verifies the seal with <code>tools/blackbox.sh</code> and ranks the flight in <code>docs/RANKINGS.md</code>. A tape that fails the seal ranks nowhere, whoever asks — and a tape you produced yourself is not one at all (GR16, red line, no override): the game writes them, on the glass, for the pilot who flew.</li>
 <li><code>tools/flights.sh</code> — the other side of that: a tape on the board buys three landings, and this reads the meter off the history (GR14). <code>--roll</code> shows the room, <code>--count &lt;name&gt;</code> answers for one pilot. Nothing to install and nothing to edit; the board is the record.</li>
 <li><code>tools/groundcrew.sh</code> — the book's workflow files paperwork on main under the name <b>Ground Crew</b> while people are flying, and this collects it: fetch, merge, rebuild the book once over the top. <code>/land</code> runs it first, before you branch. It merges rather than rebases because a rebase runs each replayed commit's <i>own</i> <code>post-commit</code>, which rebuilds the book mid-replay and stops it. It refuses to take a <i>person's</i> commit — that is somebody's work and you read it before you build on it — and refuses a dirty tree.</li>
+<li><code>tools/waveoff.sh</code> — the other direction: a pull request that cannot land, because the branch and main both moved the same file while nobody was looking. Github says <code>CONFLICTING</code> and stops there; this says which paths, which way each came apart, and which commit on main did it — read locally with <code>merge-tree</code>, which merges in memory and touches no worktree. Bare it rolls every open pull request, <code>&lt;n&gt;</code> details one, and <code>--marker &lt;n&gt;</code> prints the line a comment carries so one approach never gets waved off twice. It writes no prose: <code>/waveoff</code> writes to the contributor, because a paragraph canned in a shell script reads like one. Nobody here clears the conflict — the branch is theirs, usually on their own clone, and the way through is a merge they run and a button they press.</li>
 <li><code>tools/labels.sh</code> — what a change is <i>about</i>, in the same nine marks the book puts on a chapter: <code>game</code>, <code>game within</code>, <code>ui</code>, <code>music</code>, <code>controls</code>, <code>engine</code>, <code>chronicle</code>, <code>rules</code>, <code>notes</code>. It classifies nothing itself — it asks <code>tools/chronicle.sh --marks</code> and prints colours, so the label on a pull request and the badge on the chapter it becomes are the same word, in the same colour, out of <code>styles/tokens.css</code>. <code>--list</code> shows them, <code>--install</code> creates them on the remote once, and running it bare answers for the working tree. A path the book gives no mark to gets no label, which is why the ground crew's own paperwork arrives bare. <code>.github/workflows/strip.yml</code> is what puts them on a pull request, along with the author as assignee and the owner as reviewer — the last of which github refuses whenever the owner is also the author, which is most of the time here and is not worth working around.</li>
 <li><code>tools/branch.sh</code> — the same nine words one step earlier: a branch lives in a directory and the directory is its mark, so a change announces itself before anybody opens it. <code>tools/branch.sh &lt;name&gt;</code> reads the mark off what you have changed, <code>--rename</code> fixes a branch cut before you knew what it would hold, and neither asks you to type the mark — that answer has one home and this is not it.</li>
 <li><i></i>What counts as a version is one question with one answer, and it lives in <code>tools/chronicle.sh</code>.<i></i> <code>--versions</code> lists them, <code>--moved</code> asks about one, <code>--pilots</code> says who is a person rather than a workflow, <code>--run</code> says how long the current one-name spine is (GR15), <code>--game-paths</code> and <code>--is-game</code> answer about paths. The meter, the ledger, the painter, the tagline and the referee all ask; none of them keeps a copy, and writing a fresh one is a thing the referee notices. <code>tools/lockstep.sh</code> is why: it puts the same commits to every reader still standing and fails when the answers differ, on a scripted fixture and on this history, every commit.</li>
@@ -134,7 +135,7 @@ Say it in one sentence, offer the legitimate route, and move on.
 <li><b>Check the fairness of the idea, not just the code</b> — GR8. Cost, cooldown or finite count for every new power; both seats equal; nothing invincible.</li>
 <li><b>Run the referee.</b> <code>tools/golden-check.sh</code>. Fix what it flags. If it flags a budget, take it to the pilot.</li>
 <li><b>Try it.</b> Open <code>index.html</code> (or <code>python3 -m http.server 8000</code>) and actually play. GR1 is a promise to somebody who is not here. Die, copy the tape off the game-over screen, and <code>/blackbox</code> puts it on the board — that is what GR14 counts, and one tape covers three landings. If you drove a browser to do it, close it before you report: a window left open outlives the turn on somebody's desktop, and the next run inherits whatever state it was in.</li>
-<li><b>Land it, on a branch.</b> <code>tools/branch.sh &lt;name&gt;</code> — <code>main</code> takes pull requests and nothing else (GR7), so the branch is where a version lives until the room has seen it. A branch goes in a directory and <i></i>the directory is its mark<i></i>: <code>game/comets-come-in-threes</code>, <code>game-within/the-trap-that-spares-nobody</code>, <code>chronicle/the-plates-paint-themselves</code>. Not <code>feat/</code> and <code>fix/</code> — every change is one of those, so the word is spent before it has said anything, while the mark says which part of the cabinet you were standing in and is the same word the pull request and the chapter will wear. You do not type it: the tool reads it off what you have changed through <code>tools/chronicle.sh --marks</code>, takes the loudest when there are several, and <code>--rename</code> fixes a branch you cut before you knew what it would hold. Subject line written from the next pilot's seat, plus a <code>Chronicle:</code> line for the book:</li></ol>
+<li><b>Land it, on a branch.</b> <code>tools/branch.sh &lt;name&gt;</code> — <code>main</code> takes pull requests and nothing else (GR7), so the branch is where a version lives until the room has seen it. A branch goes in a directory and <i></i>the directory is its mark<i></i>: <code>game/comets-come-in-threes</code>, <code>game-within/the-event-that-spares-nobody</code>, <code>chronicle/the-plates-paint-themselves</code>. Not <code>feat/</code> and <code>fix/</code> — every change is one of those, so the word is spent before it has said anything, while the mark says which part of the cabinet you were standing in and is the same word the pull request and the chapter will wear. You do not type it: the tool reads it off what you have changed through <code>tools/chronicle.sh --marks</code>, takes the loudest when there are several, and <code>--rename</code> fixes a branch you cut before you knew what it would hold. Subject line written from the next pilot's seat, plus a <code>Chronicle:</code> line for the book:</li></ol>
 <pre><code>
 Comets, and they come in threes
 
@@ -231,13 +232,13 @@ not files.
 </p>
 <p>
 <b>YOUR BENEFIT</b> — what is going the pilot's way. Mercy earned back off the
-tally, a meter cleared, a trap now armed against everybody but them, a file
+tally, a meter cleared, an event now armed against everybody but them, a file
 that is theirs forever because their commit created it.
 </p>
 <p>
 <b>YOUR HANDICAP</b> — what the field is charging them, with the way out in the
 same line. A bend costs one and three clean landings ease it; three landings
-spend a tape and one flight buys three more; at three bends their own traps
+spend a tape and one flight buys three more; at three bends their own events
 stop sparing them. Write it flat. This is a difficulty setting, not a
 scolding, and GR12 is not improved by being read out sternly.
 </p>
@@ -332,13 +333,14 @@ Use them; they exist so this stays fun rather than procedural.
 </thead>
 <tbody>
 <tr><td><code>/scout</code></td><td>before you build: what landed, who owns what, where the free space is</td></tr>
-<tr><td><code>/event</code></td><td>lay a trap for the others — an ambush that never fires for you</td></tr>
+<tr><td><code>/event</code></td><td>write an event for the others — an ambush that never fires for you</td></tr>
 <tr><td><code>/land</code></td><td>the commit ritual — referee, playtest, subject line, chronicle line</td></tr>
 <tr><td><code>/referee</code></td><td>explain and fix what the golden check flagged</td></tr>
 <tr><td><code>/chronicle</code></td><td>rebuild the book, or write a chapter worth reading</td></tr>
 <tr><td><code>/fairplay</code></td><td>who has landed what, who has bent which rules, is the game still balanced</td></tr>
 <tr><td><code>/blackbox</code></td><td>a pasted flight tape — verify the seal, rank it in docs/RANKINGS.md</td></tr>
 <tr><td><code>/shoot</code></td><td>stage the cabinet from the console and reshoot <code>media/</code></td></tr>
+<tr><td><code>/waveoff</code></td><td>a pull request that cannot land — say what is in the way, on the pull request</td></tr>
 </tbody>
 </table></div>
 <h2 id="style">Style</h2>

@@ -4,8 +4,8 @@
 // Everything else in this cabinet that leans on a pilot either leans on the
 // whole room at once — an event fires at everybody bar its author (GR11) — or
 // is earned, by bending a rule (GR12) or by topping the board (game/bounty.js).
-// Aiming a trap at a name is the thing the rules do not allow, and the reason
-// is not squeamishness: a trap written at somebody is one they had no say in
+// Aiming an event at a name is the thing the rules do not allow, and the reason
+// is not squeamishness: an event written at somebody is one they had no say in
 // and cannot answer.
 //
 // A pact is the shape that survives that objection, because it needs two
@@ -19,13 +19,13 @@
 // identity claim the referee already polices — GR11 refuses a `by:` that is
 // not yours — so forging somebody into a pact is exactly as hard as forging
 // their signature, which is to say refused, in front of everybody. And nothing
-// here touches eligibility: your own traps still never come for you, theirs
+// here touches eligibility: your own events still never come for you, theirs
 // still do, and the field still does not ambush the unarmed.
 //
 // What a live pact moves, for both pilots at once:
 //
 //   - their arsenal takes the lion's share of the author draw, so most of what
-//     the field throws at you is theirs. Everybody else's traps are still in
+//     the field throws at you is theirs. Everybody else's events are still in
 //     the pool. They are just no longer the ones you keep meeting.
 //   - the wait between ambushes shortens by a share, floored by the events
 //     director along with every other impatience it is multiplied against.
@@ -42,8 +42,8 @@
 //   - the way out is one line in your own event file, which nobody else may
 //     touch. You signed it; you can unsign it.
 //
-// No arsenal, no pact: a pilot who has laid no traps has nothing to declare it
-// on, and would not be ambushed anyway. Writing the trap is still the whole
+// No arsenal, no pact: a pilot who has laid no events has nothing to declare it
+// on, and would not be ambushed anyway. Writing the event is still the whole
 // induction.
 
 (function (A) {
@@ -157,7 +157,7 @@
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
         stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
         <path d="M4 6l11 11-11 11z"/><path d="M30 6L19 17l11 11z"/></svg>`,
-      desc: `Two pilots who have both named the other in their own traps spend
+      desc: `Two pilots who have both named the other in their own events spend
         the evening mostly meeting each other's work, and waiting less for it.
         It takes two signatures and it is the same weather on both sides
         &mdash; declared at somebody and never answered, it does nothing at

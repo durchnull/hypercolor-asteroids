@@ -40,7 +40,7 @@
        announces what they did. You pull, you press ENTER, and you find out by
        playing. The chronicle above is every version there has ever been, a
        page each, written by whoever landed it.`],
-    ["trap", "THE TRAPS",
+    ["event", "THE EVENTS",
       `Any pilot may write one ambush and drop it into a live wave — three
        krakens from three sides, a ring of rock closing in. It fires for
        everybody except the pilot who wrote it, which is the entire reason to

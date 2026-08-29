@@ -3,13 +3,13 @@
 // The punishment side of the meta-game is thorough: bends, skips, breaches,
 // all counted by machines off the history. This is the other ledger, built
 // the same way from records that already exist for other reasons: versions
-// landed (docs/chronicle.js, counted by the book), traps laid (the event
+// landed (docs/chronicle.js, counted by the book), events written (the event
 // registry), flights on the board (docs/RANKINGS.md by way of A.BOARD).
 // Nothing is stored, nothing can be edited, and the only way to move a
 // number is to land, lay or fly something.
 //
 // Milestones buy trim, and trim is paint (GR8): chevrons on the hull for
-// versions landed, a tail bar for the first trap laid, wingtip marks for
+// versions landed, a tail bar for the first event written, wingtip marks for
 // flights on the board. No speed, no armour, no cost, both seats wear it
 // alike, and it follows the name at the keyboard — GUEST flies a bare hull.
 
@@ -22,12 +22,12 @@
   A.serviceRecord = function serviceRecord(name) {
     if (!name || name === A.GUEST) return null;
     const versions = ((A.CHRONICLE && A.CHRONICLE.roster) || {})[name] || 0;
-    const traps = (A.eventPilots ? A.eventPilots() : [])
+    const events = (A.eventPilots ? A.eventPilots() : [])
       .filter((p) => p.name === name)
       .reduce((t, p) => t + p.events, 0);
     const flights = (A.BOARD || []).filter((r) => r.pilot === name).length;
-    if (!versions && !traps && !flights) return null;
-    return { versions, traps, flights };
+    if (!versions && !events && !flights) return null;
+    return { versions, events, flights };
   };
 
   // The same paint, laid on the roof of a hull that now has one. It sits just
@@ -57,7 +57,7 @@
         mark(-3.6, y + 2.4, 0, y);
         mark(0, y, 3.6, y + 2.4);
       }
-      if (r.traps > 0) mark(-3.4, 8.4, 3.4, 8.4);
+      if (r.events > 0) mark(-3.4, 8.4, 3.4, 8.4);
       if (r.flights > 0) {
         mark(-8.2, 9.6, -6.4, 6.4);
         mark(8.2, 9.6, 6.4, 6.4);
@@ -93,8 +93,8 @@
         g.lineTo(0, y);
         g.lineTo(3.6, y + 2.4);
       }
-      // the tail bar: the first trap laid, and the room armed itself
-      if (r.traps > 0) { g.moveTo(-3.4, 8.4); g.lineTo(3.4, 8.4); }
+      // the tail bar: the first event written, and the room armed itself
+      if (r.events > 0) { g.moveTo(-3.4, 8.4); g.lineTo(3.4, 8.4); }
       // wingtip marks: flights that made the board
       if (r.flights > 0) {
         g.moveTo(-8.2, 9.6); g.lineTo(-6.4, 6.4);
