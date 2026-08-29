@@ -6,8 +6,8 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 37,
-    latest: { v: 37, pilot: "felix2072", date: "29 August 2026", line: "A key that did nothing now does something. The colours moved as well.", plate: "3c0fca03.jpg", alt: "A key that did nothing now does something. The colours moved as well." },
+    versions: 38,
+    latest: { v: 38, pilot: "felix2072", date: "29 August 2026", line: "A trap was set by somebody who will never meet it. An ambush came along with it." },
     plates: [
       { v: 37, file: "3c0fca03.jpg", alt: "A key that did nothing now does something. The colours moved as well.", line: "A key that did nothing now does something. The colours moved as well." },
       { v: 36, file: "a716ccc6.jpg", alt: "What counts as fair was quietly re-argued.", line: "What counts as fair was quietly re-argued." },
@@ -17,7 +17,7 @@
     roster: {
       "David Friedrich": 33,
       "Malte Buttjer": 3,
-      "felix2072": 1,
+      "felix2072": 2,
     }
   };
   A.BOARD = [
