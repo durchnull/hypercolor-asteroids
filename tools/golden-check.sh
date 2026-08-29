@@ -257,7 +257,7 @@ path_exists() {
 # no rename involved, the original still sitting there untouched. A pilot
 # writing their first event from somebody else's as a template is exactly that
 # shape, so the referee used to tell them, the second time they opened their
-# own trap, that it belonged to the pilot they had copied. GR11 has no
+# own event, that it belonged to the pilot they had copied. GR11 has no
 # override, so there was no way out of it either.
 owner_of() {
   o=$(git log "$LOGREF" --diff-filter=A --format='%an' -- "$1" 2>/dev/null | tail -1)
@@ -516,7 +516,7 @@ check_gr10() {
 # Ownership per file, because that is the one boundary git can prove. Your
 # events are yours to rewrite forever; another pilot's are not yours to touch
 # at all - not one line, not with an override. The whole mechanic rests on
-# nobody being able to disarm the trap that is waiting for them.
+# nobody being able to disarm the event that is waiting for them.
 # ---------------------------------------------------------------------------
 check_gr11() {
   while IFS= read -r f; do
@@ -532,7 +532,7 @@ check_gr11() {
     [ "$o" = "$ME" ] || fail GR11 "$f is $o's - you cannot delete another pilot's events"
   done < "$TMP/gone"
 
-  # Deleting somebody's trap is refused above, so the way round it was to move
+  # Deleting somebody's event is refused above, so the way round it was to move
   # it: rename another pilot's event file, sign the copy your own name, and it
   # fires at them and never at you - which is the exact thing this rule exists
   # to make impossible. git reports that as an ordinary new file, so the pair
@@ -548,11 +548,11 @@ check_gr11() {
     esac
     o=$(owner_of "$was")
     [ "$o" = "$ME" ] || \
-      fail GR11 "$now is $o's $was under a new name - a trap is not yours to move"
+      fail GR11 "$now is $o's $was under a new name - an event is not yours to move"
   done < "$TMP/moved"
 
   # The one line that makes the whole mechanic true. Rewrite the runner all you
-  # like; if this guard stops being recognisable, every pilot's own traps are
+  # like; if this guard stops being recognisable, every pilot's own events are
   # suddenly armed against them and only the author would know.
   if grep -qx "$RUNNER" "$TMP/files" 2>/dev/null; then
     content "$RUNNER" | grep -Eq "$GUARD" || {

@@ -313,7 +313,7 @@ case_ GR16 "--save writes the flight the seal was taken over, and no more"
           "$WORK/save/docs/tapes/$FLOWN_CRC.json" 2>/dev/null)" \
          "filed=1 sum=$FLOWN_CRC"
 
-case_ GR11 "the reel names the trap, its author, and what it cost"
+case_ GR11 "the reel names the event, its author, and what it cost"
   tape "$(flown_json)" "$FLOWN_CRC" > "$WORK/tape"
   read_tape "$WORK/tape"
   expect "had=$(grep -c '^  three-krakens (Ada Vex), wave 2 - died inside, 1 down$' "$OUT") clear=$(grep -c '^  closing-ring (Cy Null), wave 3 - flown clear$' "$OUT")" \

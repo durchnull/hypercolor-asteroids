@@ -1,7 +1,7 @@
 # Who github asks for a review. This is not the ownership the rules mean.
 #
 # GR11's ownership is per file and per pilot, decided by whose commit created
-# the file, and no list could keep up with it - a pilot writes their first trap
+# the file, and no list could keep up with it - a pilot writes their first event
 # and owns it the moment it lands. The referee reads that off git, which is
 # why it is trustworthy. CODEOWNERS cannot, so it does not try.
 #
@@ -25,7 +25,7 @@
 # which is a minute of their evening and they will probably enjoy it.
 /docs/chronicle-song.js   @durchnull
 
-# GR11 - the traps. The referee already refuses a commit that touches somebody
+# GR11 - the events. The referee already refuses a commit that touches somebody
 # else's, whoever sends it. This is the belt beside that brace.
 /src/events/              @durchnull
 

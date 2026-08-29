@@ -23,7 +23,7 @@
 # Under that comes the ambush reel: newer tapes carry every event that fired -
 # id, author, wave - and how many ships went down while it was live. That is
 # the pilot-vs-pilot half of the flight, and the half the rankings quote when
-# a trap earns its author a public kill. Older tapes have no reel and say so.
+# an event earns its author a public kill. Older tapes have no reel and say so.
 #
 # The seal is honesty, not security: anyone who can read this file can forge
 # a tape. They would be lying to a scoreboard in a git repo, and the history

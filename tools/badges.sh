@@ -3,7 +3,7 @@
 # badges.sh - the numbers on the front page, read rather than typed.
 #
 # The README opens with a strip of badges: how many pilots are in here, how
-# many traps are armed, how many versions have landed, how many flights are
+# many events are armed, how many versions have landed, how many flights are
 # taped. Every one of those is something the history already knows, and a
 # number somebody types is a number that starts lying on the next commit. That
 # is the argument the ledger rests on (GR12); this is the same argument one
@@ -48,11 +48,11 @@ count() { grep -c . 2>/dev/null || true; }
 versions() { sh tools/chronicle.sh --versions 2>/dev/null | count; }
 pilots()   { sh tools/chronicle.sh --pilots   2>/dev/null | count; }
 
-# Ambushes, not files. A pilot's file holds as many traps as they felt like
+# Ambushes, not files. A pilot's file holds as many events as they felt like
 # writing, and the badge answers what a stranger is actually asking - how many
-# things in here are waiting for them. The house counts: its traps fire for
+# things in here are waiting for them. The house counts: its events fire for
 # everybody, author included, which is more than can be said for anyone's.
-traps() {
+events() {
   grep -h '^ *id: "' src/events/*.js 2>/dev/null | count
 }
 
@@ -105,7 +105,7 @@ badge() {
 # name          label           value              colour
 strip() {
   badge pilots   "pilots"       "$(pilots)"        "#ff3ec8"
-  badge traps    "traps armed"  "$(traps)"         "#b6ff3d"
+  badge events    "events armed"  "$(events)"         "#b6ff3d"
   badge versions "versions"     "$(versions)"      "#ffb020"
   badge flights  "flights"      "$(flights) taped" "#a04bff"
   badge rules    "golden rules" "$(rules)"         "#3dffb0"
@@ -117,7 +117,7 @@ case $MODE in
     sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'
     ;;
   --list)
-    for n in pilots traps versions flights rules licence; do printf '%s/%s.svg\n' "$OUT" "$n"; done
+    for n in pilots events versions flights rules licence; do printf '%s/%s.svg\n' "$OUT" "$n"; done
     ;;
   --check|write)
     strip

@@ -71,7 +71,7 @@ Where it comes from, first one wins:
 2. **A `Tagline:` line in the commit message.** The pilot's own words beat the
    machine's, always.
 3. **`tools/tagline.sh`**, from what the commit did: a new file under
-   `src/events/` reads as a trap, one under `src/entities/` as an arrival,
+   `src/events/` reads as an event, one under `src/entities/` as an arrival,
    `src/audio/` as a noise, `styles/` as a colour, and so on. Deterministic, so
    the line the commit template showed you is the line that lands.
 

@@ -134,7 +134,7 @@ Say it in one sentence, offer the legitimate route, and move on.
 <li><b>Check the fairness of the idea, not just the code</b> — GR8. Cost, cooldown or finite count for every new power; both seats equal; nothing invincible.</li>
 <li><b>Run the referee.</b> <code>tools/golden-check.sh</code>. Fix what it flags. If it flags a budget, take it to the pilot.</li>
 <li><b>Try it.</b> Open <code>index.html</code> (or <code>python3 -m http.server 8000</code>) and actually play. GR1 is a promise to somebody who is not here. Die, copy the tape off the game-over screen, and <code>/blackbox</code> puts it on the board — that is what GR14 counts, and one tape covers three landings. If you drove a browser to do it, close it before you report: a window left open outlives the turn on somebody's desktop, and the next run inherits whatever state it was in.</li>
-<li><b>Land it, on a branch.</b> <code>tools/branch.sh &lt;name&gt;</code> — <code>main</code> takes pull requests and nothing else (GR7), so the branch is where a version lives until the room has seen it. A branch goes in a directory and <i></i>the directory is its mark<i></i>: <code>game/comets-come-in-threes</code>, <code>game-within/the-trap-that-spares-nobody</code>, <code>chronicle/the-plates-paint-themselves</code>. Not <code>feat/</code> and <code>fix/</code> — every change is one of those, so the word is spent before it has said anything, while the mark says which part of the cabinet you were standing in and is the same word the pull request and the chapter will wear. You do not type it: the tool reads it off what you have changed through <code>tools/chronicle.sh --marks</code>, takes the loudest when there are several, and <code>--rename</code> fixes a branch you cut before you knew what it would hold. Subject line written from the next pilot's seat, plus a <code>Chronicle:</code> line for the book:</li></ol>
+<li><b>Land it, on a branch.</b> <code>tools/branch.sh &lt;name&gt;</code> — <code>main</code> takes pull requests and nothing else (GR7), so the branch is where a version lives until the room has seen it. A branch goes in a directory and <i></i>the directory is its mark<i></i>: <code>game/comets-come-in-threes</code>, <code>game-within/the-event-that-spares-nobody</code>, <code>chronicle/the-plates-paint-themselves</code>. Not <code>feat/</code> and <code>fix/</code> — every change is one of those, so the word is spent before it has said anything, while the mark says which part of the cabinet you were standing in and is the same word the pull request and the chapter will wear. You do not type it: the tool reads it off what you have changed through <code>tools/chronicle.sh --marks</code>, takes the loudest when there are several, and <code>--rename</code> fixes a branch you cut before you knew what it would hold. Subject line written from the next pilot's seat, plus a <code>Chronicle:</code> line for the book:</li></ol>
 <pre><code>
 Comets, and they come in threes
 
@@ -231,13 +231,13 @@ not files.
 </p>
 <p>
 <b>YOUR BENEFIT</b> — what is going the pilot's way. Mercy earned back off the
-tally, a meter cleared, a trap now armed against everybody but them, a file
+tally, a meter cleared, an event now armed against everybody but them, a file
 that is theirs forever because their commit created it.
 </p>
 <p>
 <b>YOUR HANDICAP</b> — what the field is charging them, with the way out in the
 same line. A bend costs one and three clean landings ease it; three landings
-spend a tape and one flight buys three more; at three bends their own traps
+spend a tape and one flight buys three more; at three bends their own events
 stop sparing them. Write it flat. This is a difficulty setting, not a
 scolding, and GR12 is not improved by being read out sternly.
 </p>
@@ -332,7 +332,7 @@ Use them; they exist so this stays fun rather than procedural.
 </thead>
 <tbody>
 <tr><td><code>/scout</code></td><td>before you build: what landed, who owns what, where the free space is</td></tr>
-<tr><td><code>/event</code></td><td>lay a trap for the others — an ambush that never fires for you</td></tr>
+<tr><td><code>/event</code></td><td>write an event for the others — an ambush that never fires for you</td></tr>
 <tr><td><code>/land</code></td><td>the commit ritual — referee, playtest, subject line, chronicle line</td></tr>
 <tr><td><code>/referee</code></td><td>explain and fix what the golden check flagged</td></tr>
 <tr><td><code>/chronicle</code></td><td>rebuild the book, or write a chapter worth reading</td></tr>

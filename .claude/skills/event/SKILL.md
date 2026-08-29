@@ -1,6 +1,6 @@
 ---
 name: event
-description: Write, tune or review an event - an unexpected challenge dropped into a live wave that fires for every pilot except the one who wrote it. Use when the user wants to lay a trap, add an event, ambush the others, make the game meaner, or asks what events exist and who is armed against whom.
+description: Write, tune or review an event - an unexpected challenge dropped into a live wave that fires for every pilot except the one who wrote it. Use when the user wants to write an event, lay an ambush, ambush the others, make the game meaner, or asks what events exist and who is armed against whom.
 model: opus
 effort: high
 argument-hint: "[optional: what the ambush should do to the field, or which of your own events to retune]"
@@ -12,8 +12,8 @@ allowed-tools: Bash, Read, Write, Edit, Grep, Glob, mcp__playwright__browser_nav
 An event is an ambush: three krakens surfacing at once from three sides, a ring
 of rock closing in, the Falcon arriving with something behind it. Any pilot may
 write them, and the rule that makes it worth doing is that **an event never
-fires for the pilot who wrote it.** You lay traps for the others; they lay
-traps for you.
+fires for the pilot who wrote it.** You lay events for the others; they lay
+events for you.
 
 ## Whose file
 
@@ -90,19 +90,19 @@ temporarily. Do not ship a change to the profile system to make testing easier.
 ## Prove it survivable
 
 GR8 says an event is a challenge, not a firing squad, and the author is the
-one pilot who can prove it before it lands. Fly as GUEST — every trap armed,
-yours included — let your own trap fire, and fly out the other side. The tape
+one pilot who can prove it before it lands. Fly as GUEST — every event armed,
+yours included — let your own event fire, and fly out the other side. The tape
 is the proof: the reader's ambush reel names your event and says `flown
 clear`. Put it beside the landing — paste the tape into the conversation that
 lands the event, and let the `Chronicle:` line say the author flew it and
 survived. A proof tape flown as GUEST carries a seat mismatch and ranks
 nowhere, which is fine; it is a proof, not a score.
 
-Died inside your own trap? Good — you just learned something the next pilot
+Died inside your own event? Good — you just learned something the next pilot
 would have learned the hard way. Retune it and fly it again.
 
 None of this blocks. It is honour, the same honour as GR1's playtest promise
 — but a Chronicle line that cannot say "survived it" is how the book notes a
-trap nobody proved.
+event nobody proved.
 
 Then land it with `/land`, and write the `Chronicle:` line as the boast it is.
