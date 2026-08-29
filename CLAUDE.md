@@ -95,6 +95,17 @@ Everything hangs off a feature registry, and that is the one idea you need.
   each replayed commit's *own* `post-commit`, which rebuilds the book mid-replay
   and stops it. It refuses to take a *person's* commit — that is somebody's
   work and you read it before you build on it — and refuses a dirty tree.
+- `tools/waveoff.sh` — the other direction: a pull request that cannot land,
+  because the branch and main both moved the same file while nobody was
+  looking. Github says `CONFLICTING` and stops there; this says which paths,
+  which way each came apart, and which commit on main did it — read locally
+  with `merge-tree`, which merges in memory and touches no worktree. Bare it
+  rolls every open pull request, `<n>` details one, and `--marker <n>` prints
+  the line a comment carries so one approach never gets waved off twice. It
+  writes no prose: `/waveoff` writes to the contributor, because a paragraph
+  canned in a shell script reads like one. Nobody here clears the conflict —
+  the branch is theirs, usually on their own clone, and the way through is a
+  merge they run and a button they press.
 - `tools/labels.sh` — what a change is *about*, in the same nine marks the book
   puts on a chapter: `game`, `game within`, `ui`, `music`, `controls`,
   `engine`, `chronicle`, `rules`, `notes`. It classifies nothing itself — it
@@ -452,6 +463,7 @@ Use them; they exist so this stays fun rather than procedural.
 | `/fairplay` | who has landed what, who has bent which rules, is the game still balanced |
 | `/blackbox` | a pasted flight tape — verify the seal, rank it in docs/RANKINGS.md |
 | `/shoot` | stage the cabinet from the console and reshoot `media/` |
+| `/waveoff` | a pull request that cannot land — say what is in the way, on the pull request |
 
 ## Style
 
