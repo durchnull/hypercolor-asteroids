@@ -7,9 +7,9 @@
   "use strict";
   A.CHRONICLE = {
     versions: 45,
-    latest: { v: 45, pilot: "David Friedrich", date: "30 August 2026", line: "The cabinet was repainted while it was still switched on." },
+    latest: { v: 45, pilot: "David Friedrich", date: "30 August 2026", line: "The cabinet was repainted while it was still switched on.", plate: "44238ee5.jpg", alt: "The cabinet was repainted while it was still switched on." },
     plates: [
-      { v: 45, alt: "", line: "The cabinet was repainted while it was still switched on." },
+      { v: 45, file: "44238ee5.jpg", alt: "The cabinet was repainted while it was still switched on.", line: "The cabinet was repainted while it was still switched on." },
       { v: 44, file: "4f91d52e.jpg", alt: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago.", line: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago." },
       { v: 43, file: "7a0197e0.jpg", alt: "The instrument panel developed an opinion.", line: "The instrument panel developed an opinion." },
       { v: 42, file: "b75b3350.jpg", alt: "The song went away and came back with ideas.", line: "The song went away and came back with ideas." },
@@ -29,9 +29,10 @@
     { rank: "6", pilot: "David Friedrich", score: "16530", wave: "4", time: "4:42", hits: "17%", line: "Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end." },
     { rank: "7", pilot: "David Friedrich", score: "15170", wave: "4", time: "4:16", hits: "19%", line: "Three house traps walked through, and then PINCER took the last two ships at wave 4." },
     { rank: "8", pilot: "felix2072", score: "14980", wave: "4", time: "3:41", hits: "17%", line: "Four ambushes walked through clear, six kraken dead, and wave 4 finished it with three deaths." },
-    { rank: "9", pilot: "David Friedrich", score: "13810", wave: "4", time: "3:47", hits: "24%", line: "Sharpest aim and longest flurry on the board, four ambushes flown clear, and then wave 4 with the bomb still in the rack." },
-    { rank: "10", pilot: "Malte Buttjer", score: "4680", wave: "2", time: "1:32", hits: "12%", line: "Two kraken in two shots, 26 rocks to the bomb, and DEBRIS FIELD took the last of it." },
-    { rank: "11", pilot: "Malte Buttjer", score: "3380", wave: "2", time: "2:20", hits: "11%", line: "Three kraken down and both bombs gone by wave two, with a wingmate who never left the spot they spawned on." },
-    { rank: "12", pilot: "David Friedrich", score: "0", wave: "1", time: "0:16", hits: "—", line: "Three ships in sixteen seconds without the trigger ever being pressed." },
+    { rank: "9", pilot: "David Friedrich", score: "13810", wave: "4", time: "3:47", hits: "24%", line: "Longest flurry on the board, four ambushes flown clear, and then wave 4 with the bomb still in the rack." },
+    { rank: "10", pilot: "David Friedrich", score: "10100", wave: "4", time: "2:19", hits: "25%", line: "Sharpest aim and fastest scoring on the board, two house traps walked through at wave 3, and LIVE CIRCUIT took the last two ships at wave 4." },
+    { rank: "11", pilot: "Malte Buttjer", score: "4680", wave: "2", time: "1:32", hits: "12%", line: "Two kraken in two shots, 26 rocks to the bomb, and DEBRIS FIELD took the last of it." },
+    { rank: "12", pilot: "Malte Buttjer", score: "3380", wave: "2", time: "2:20", hits: "11%", line: "Three kraken down and both bombs gone by wave two, with a wingmate who never left the spot they spawned on." },
+    { rank: "13", pilot: "David Friedrich", score: "0", wave: "1", time: "0:16", hits: "—", line: "Three ships in sixteen seconds without the trigger ever being pressed." },
   ];
 })(ASTEROIDS);
