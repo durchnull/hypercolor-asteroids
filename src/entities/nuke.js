@@ -179,6 +179,7 @@
     reset, update, draw, draw3d,
     guide: {
       name: "ATOM BOMB",
+      group: "hands",
       meta: "L &middot; 2 to start",
       tint: "var(--amber)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
@@ -186,10 +187,7 @@
         <path d="M16 11 V6 M12 7.5 L20 4.5" stroke-linecap="round"/>
         <circle cx="16" cy="20" r="14" stroke-dasharray="2.5 3.5" opacity="0.65"/>
       </svg>`,
-      desc: `Your panic button. The blast front eats up to half the screen —
-        never all of it — vaporising small and medium rocks, shattering big
-        ones into pebbles, and killing any kraken it catches. One more every
-        second wave.`,
+      desc: "Panic button. The blast eats up to half the screen, never all of it: small rocks gone, big ones shattered, kraken killed. One more every second wave.",
     },
   });
 })(ASTEROIDS);

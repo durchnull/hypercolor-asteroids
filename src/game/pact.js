@@ -152,16 +152,13 @@
     draw,
     guide: {
       name: "THE PACT",
+      group: "instrument",
       meta: "mutual",
       tint: "var(--cyan)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
         stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
         <path d="M4 6l11 11-11 11z"/><path d="M30 6L19 17l11 11z"/></svg>`,
-      desc: `Two pilots who have both named the other in their own events spend
-        the evening mostly meeting each other's work, and waiting less for it.
-        It takes two signatures and it is the same weather on both sides
-        &mdash; declared at somebody and never answered, it does nothing at
-        all.`,
+      desc: "Two pilots who have each named the other spend the evening meeting each other's work, and waiting less for it. Unanswered, it does nothing.",
     },
   });
 })(ASTEROIDS);

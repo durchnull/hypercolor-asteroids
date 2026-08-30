@@ -229,12 +229,13 @@
     reset, update, resolve, draw, draw3d,
     guide: {
       name: "ASTEROID",
+      group: "field",
       meta: "20 / 50 / 100",
       tint: "var(--cyan)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
         <path d="M17 4 L26 8 L30 17 L26 27 L16 30 L7 25 L4 15 L9 7 Z" stroke-linejoin="round"/>
       </svg>`,
-      desc: "Shoot one and it splits into smaller, quicker pieces.",
+      desc: "Shoot one and it breaks into smaller, quicker pieces &mdash; and the smallest are worth the most.",
     },
   });
 })(ASTEROIDS);

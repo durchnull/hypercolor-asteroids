@@ -206,14 +206,14 @@
     reset, update, draw, draw3d,
     guide: {
       name: "PORTALS",
+      group: "field",
       tint: "var(--violet)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
         <circle cx="9" cy="17" r="6.5" stroke-dasharray="3.5 3"/>
         <circle cx="25" cy="17" r="6.5" stroke-dasharray="3.5 3"/>
         <path d="M15.5 17 h3 M20 17 h1" opacity="0.7" stroke-linecap="round"/>
       </svg>`,
-      desc: `A pair blinks open: in one, out the other. So can your shots, and
-        so can the kraken.`,
+      desc: "A pair blinks open: in one, out the other. So can your shots, and so can the kraken.",
     },
   });
 })(ASTEROIDS);

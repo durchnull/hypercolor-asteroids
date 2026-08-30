@@ -206,6 +206,7 @@
     reset, update, draw, draw3d,
     guide: {
       name: "PLANET",
+      group: "field",
       tint: "var(--lime)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
         <circle cx="26" cy="27" r="20"/>
@@ -213,8 +214,7 @@
         <circle cx="26" cy="15" r="2.2" opacity="0.6"/>
         <circle cx="12" cy="31" r="2" opacity="0.6"/>
       </svg>`,
-      desc: `Too big for the screen. Rocks bounce off, shots burn up, and it
-        will happily flatten you.`,
+      desc: "Too big for the screen. Rocks bounce off it, shots burn up on it, and it will happily flatten you.",
     },
   });
 })(ASTEROIDS);

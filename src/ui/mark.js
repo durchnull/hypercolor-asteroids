@@ -170,16 +170,14 @@
     draw,
     guide: {
       name: "THE MARK",
+      group: "instrument",
       meta: "at your feet",
       tint: "var(--cyan)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
         stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
         <path d="M17 5l10.4 6v12L17 29 6.6 23V11z"/>
         <path d="M17 11.6v7.2M16.97 22.6h.06"/></svg>`,
-      desc: `Whatever the field is doing to you signs the foot of the screen for
-        as long as it lasts. The ring is how much is left; one that turns
-        instead ends when it ends. Spent glyphs gather in the bottom left
-        corner. A mark that will not hold still is one of your own.`,
+      desc: "Whatever the field is doing to you signs the foot of the screen. The ring is what is left; spent glyphs gather bottom left.",
     },
   });
 })(ASTEROIDS);

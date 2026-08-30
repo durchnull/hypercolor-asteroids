@@ -445,6 +445,7 @@
     order: { guide: 30 },
     guide: {
       name: "GRAPPLE",
+      group: "hands",
       meta: "&darr; &middot; free",
       tint: "var(--lime)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
@@ -452,10 +453,7 @@
         <path d="M18 14 L24 8 M24 8 L17 7 M24 8 L25 15" stroke-linecap="round" stroke-linejoin="round"/>
         <circle cx="27" cy="6" r="5" stroke-dasharray="2.5 3" opacity="0.6"/>
       </svg>`,
-      desc: `The line locks where it bites and swings you rather than hauling
-        you in. Cut loose to fly off on the tangent, faster than you came;
-        <b>hold</b> to winch tighter, since a smaller circle is a quicker one.
-        The rock swings too, wrecks what it meets, and cannot touch you.`,
+      desc: "Bites where it lands and swings you rather than hauling you in. <b>Hold</b> to winch tighter, let go to fly off the tangent. The rock swings too.",
     },
   });
 })(ASTEROIDS);

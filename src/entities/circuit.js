@@ -114,6 +114,7 @@
     reset, update, resolve, draw, draw3d,
     guide: {
       name: "CIRCUIT",
+      group: "field",
       meta: "connect three &middot; stay off the wire",
       tint: "var(--amber)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
@@ -122,10 +123,7 @@
         <circle cx="27" cy="25.5" r="2.1"/>
         <circle cx="7" cy="25.5" r="2.1"/>
       </svg>`,
-      desc: `Three asteroids wire themselves together, wherever they happen to
-        be and whatever size they are. Cross a wire and you are gone. Shoot
-        down any one corner and the whole loop dies with it; leave it alone
-        and it burns out after twenty seconds on its own.`,
+      desc: "Three rocks wire themselves together. Touch a wire and you are gone. Shoot any one corner to kill the loop, or wait twenty seconds.",
     },
   });
 })(ASTEROIDS);

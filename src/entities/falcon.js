@@ -188,6 +188,7 @@
     reset, update, draw, draw3d,
     guide: {
       name: "THE FALCON",
+      group: "field",
       tint: "var(--ink)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
         <circle cx="14" cy="19" r="8"/>

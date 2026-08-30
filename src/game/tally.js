@@ -108,15 +108,13 @@
     draw,
     guide: {
       name: "THE TALLY",
+      group: "instrument",
       meta: "earned",
       tint: "var(--magenta)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
         stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
         <path d="M9 9v16M14 9v16M19 9v16M24 9v16M6 26L27 8"/></svg>`,
-      desc: `Every rule a pilot bends is counted, by a machine, off the history.
-        The field comes for them quicker &mdash; and at three, their own events
-        stop making an exception. Three clean versions landed since the last
-        bend ease it all by one; the marks stay on the wall.`,
+      desc: "Every bent rule is counted off the history. Ambushes come sooner, and at three your own stop sparing you. Three clean landings ease one.",
     },
   });
 })(ASTEROIDS);

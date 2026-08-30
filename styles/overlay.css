@@ -325,12 +325,43 @@
   vertical-align: -0.14em;
   filter: drop-shadow(0 0 4px currentColor);
 }
+/* Three bands: what is out there, what is in your hands, what you read. The
+   panel used to be one run of sixteen rows in guide order, which meant the
+   bomb sat between two rocks and nothing on the screen said that one of them
+   was yours. src/ui/fieldguide.js decides who is in which; this only has to
+   put a line between them.
+
+   The header is deliberately quieter than the panel's own h2 and louder than a
+   row's name — it is a shelf label, and a shelf label that competes with the
+   sign over the shop has gone wrong. The note beside it is the sentence that
+   makes the three bands one sentence when you read them down the panel. */
+.brief .band + .band { margin-top: 1.05rem; }
+.brief .band h3 {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 0.6rem;
+  font-size: 0.56rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--accent-soft);
+}
+.brief .band h3 span {
+  letter-spacing: 0.08em;
+  text-transform: none;
+  color: var(--dim);
+  font-size: 0.62rem;
+}
+
 /* As many columns as the panel is wide enough to hold, and it decides that
    itself: two hand-set columns were right while the guide was a narrow strip
    down the middle of the screen, and on half a splash it is three without
    anybody editing this line.
    Still multi-column rather than a grid of cells, and the reason is visible
-   the moment you try the other one: the grapple takes nine lines to explain
+   the moment you try the other one: the grapple takes four lines to explain
    and the asteroid takes two, so a row of grid cells is as tall as the worst
    case and the panel fills up with holes. Columns flow, so entries pack. The
    divider between them comes free, which was the other reason. */
@@ -420,6 +451,7 @@
     padding-bottom: 0.45rem;
   }
   .brief li { padding-bottom: 0.45rem; }
+  .brief .band + .band { margin-top: 0.75rem; }
 }
 /* The sound toggle is nailed to the bottom right corner of the screen and has
    been since before there was a dock down there. On a narrow one the
