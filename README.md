@@ -4,7 +4,7 @@
 ![events armed: 8](media/badges/events.svg)
 ![versions: 46](media/badges/versions.svg)
 ![flights: 13 taped](media/badges/flights.svg)
-![golden rules: 16](media/badges/rules.svg)
+![golden rules: 17](media/badges/rules.svg)
 ![licence: MIT](media/badges/licence.svg)
 
 A neon vector rewrite of the 1979 arcade game. No build step, no dependencies,

@@ -593,6 +593,7 @@ case_ GR4 "gutting another pilot's feature"
 case_ GR4 "the same cut, with the budget spent out loud"
   truncate_to src/entities/rock.js 20
   stage; message "The rock loses its long tail" "" \
+                 "Tagline: The rocks are lighter and nobody will say why." "" \
                  "Golden-Rule-Override: GR4 - Ada agreed the padding was dead weight"
   check commit-msg --message-file "$MSG"
   lands
@@ -600,7 +601,8 @@ case_ GR4 "the same cut, with the budget spent out loud"
 case_ GR4 "tuning another pilot's numbers is everybody's business"
   awk '{ sub(/order: 40/, "order: 55"); print }' \
     src/entities/rock.js > f && mv f src/entities/rock.js
-  stage; message "The rock sits a little later in the frame"
+  stage; message "The rock sits a little later in the frame" "" \
+                 "Tagline: The rocks draw after everything else now."
   check commit-msg --message-file "$MSG"
   lands
 
@@ -624,6 +626,7 @@ case_ GR4 "the same move, with the budget spent out loud"
   awk '{ sub(/rock\.js/, "boulder.js"); print }' \
     src/features.js > f && mv f src/features.js
   stage; message "The rock is a boulder now, and shorter" "" \
+                 "Tagline: The rock answers to boulder, and to less of it." "" \
                  "Golden-Rule-Override: GR4 - Ada wanted the name and agreed to the cut"
   check commit-msg --message-file "$MSG"
   lands
@@ -638,7 +641,8 @@ case_ GR4 "your own feature is yours to rename and yours to cut"
   truncate_to src/entities/comets.js 35
   awk '{ sub(/comet\.js/, "comets.js"); print }' \
     src/features.js > f && mv f src/features.js
-  stage; message "The comet was always plural"
+  stage; message "The comet was always plural" "" \
+                 "Tagline: One comet was never going to be enough."
   check commit-msg --message-file "$MSG"
   lands
 
@@ -701,6 +705,7 @@ case_ GR14 "the same landing, with the budget spent out loud"
   fly 8; land "The event comes later still"
   fly 9
   stage; message "The event moves once more" "" \
+                 "Tagline: The krakens come up a wave later than you remember." "" \
                  "Golden-Rule-Override: GR14 - a one-line retune I have flown twice today"
   check commit-msg --message-file "$MSG"
   lands
@@ -708,7 +713,8 @@ case_ GR14 "the same landing, with the budget spent out loud"
 case_ GR14 "the last landing the tape covers gets a word, not a wall"
   fly 7; land "The event comes a wave later"
   fly 8
-  stage; message "The event comes later still"
+  stage; message "The event comes later still" "" \
+                 "Tagline: The krakens are in no hurry this evening."
   check commit-msg --message-file "$MSG"
   nudges GR14
 
@@ -731,7 +737,8 @@ case_ GR14 "flying it, ranking it and landing it is one sitting"
   # and the meter does not read it - tools/evidence-test.sh is where that is
   # examined; here it just has to be a flight.
   printf '<!-- crc 5eaf00d1 -->\n' >> docs/RANKINGS.md
-  stage; message "The event moves once more, and its author survived it"
+  stage; message "The event moves once more, and its author survived it" "" \
+                 "Tagline: The krakens moved again, and the pilot who moved them flew it."
   check commit-msg --message-file "$MSG"
   lands
 
@@ -865,6 +872,58 @@ case_ GR15 "work that leaves the cabinet alone is not a turn at the keyboard"
 # GR16 is nearly all honour, and this is the one edge of it a machine can see:
 # a tape is a thing the game prints on a screen, so a tape sitting in the
 # repository as a file was made rather than flown.
+# --- GR17, the sentence a version shouts -------------------------------------
+# The generator always has an answer, which is the whole reason this rule
+# exists: a fallback nobody can see firing is a fallback that becomes the
+# record. So the interesting cases are the two that must stay quiet - the
+# paperwork and the work that is not a version at all - because a referee
+# demanding a witty line for a ledger row would be read once and skipped
+# forever after.
+
+case_ GR17 "a version landing with nothing to say"
+  printf '// wave 9, retuned\n' >> "src/events/bo-renn.js"
+  stage; message "The krakens come up a wave later"
+  check commit-msg --message-file "$MSG"
+  blocks GR17
+
+case_ GR17 "a version that says what it did"
+  printf '// wave 9, retuned\n' >> "src/events/bo-renn.js"
+  stage; message "The krakens come up a wave later" "" \
+                 "Tagline: The krakens hold off a wave, and arrive in worse company."
+  check commit-msg --message-file "$MSG"
+  lands
+
+case_ GR17 "the same silence, with the budget spent out loud"
+  printf '// wave 9, retuned\n' >> "src/events/bo-renn.js"
+  stage; message "The krakens come up a wave later" "" \
+                 "Golden-Rule-Override: GR17 - a one-line retune, the machine's line will do"
+  check commit-msg --message-file "$MSG"
+  lands
+
+case_ GR17 "work that leaves the cabinet alone shouts nothing"
+  printf '\nA paragraph about the cabinet.\n' >> README.md
+  stage; message "The README says what the cabinet is"
+  check commit-msg --message-file "$MSG"
+  silent GR17
+
+# The paperwork the hooks leave behind after every landing. It lives under src/
+# and it is still not a version - the book carves src/game/ledger.js out of the
+# game by name - so this case is really asking whether GR17 takes the book's
+# answer instead of keeping an opinion of its own. It did keep one, briefly, and
+# a mutation test found it: a second gate walking the paths for generated files,
+# which nothing could ever reach.
+case_ GR17 "the paperwork the hooks leave behind is not asked for a sentence"
+  printf '// wave 9, retuned\n' >> "src/events/bo-renn.js"
+  git add -A >/dev/null 2>&1
+  git commit -qm "The krakens come up a wave later
+
+Tagline: The krakens hold off a wave, and arrive in worse company.
+Golden-Rule-Override: GR4 - the lab needed a bend on the record" >/dev/null 2>&1
+  sh tools/tally.sh >/dev/null 2>&1 || :
+  stage; message "The paperwork from the krakens, filed"
+  check commit-msg --message-file "$MSG"
+  silent GR17
+
 case_ GR16 "a tape written into the cabinet is not a flight"
   printf ';; -- FLIGHT RECORD --\nBB1:0000 eyJ2IjoxLCJwaWxvdCI6IkJvIFJlbm4ifQ==\n' > flight.txt
   printf 'BB1:CRC deadbeef :: END OF TAPE\n' >> flight.txt
@@ -1091,7 +1150,9 @@ case_ GR11 "another pilot's event, caught after the fact"
 case_ GR11 "the same file, by the pilot it belongs to, reads clean"
   git config user.name "$OWNER"
   printf '  // Ada retunes her own ring\n' >> "src/events/ada-vex.js"
-  sneak "The ring closes a little sooner"
+  sneak "The ring closes a little sooner
+
+Tagline: Ada's ring gives you less room than it did."
   git config user.name "$PILOT"          # back to Bo, who is running the check
   check_rev HEAD
   lands
@@ -1110,6 +1171,7 @@ case_ GR4 "a budget spent out loud is still spent out loud in rev mode"
   truncate_to src/entities/rock.js 20
   sneak "The rock loses its long tail
 
+Tagline: The rocks are lighter and nobody will say why.
 Golden-Rule-Override: GR4 - Ada agreed the padding was dead weight"
   check_rev HEAD
   lands
@@ -1122,7 +1184,9 @@ case_ GR4 "the same cut with nothing written down, found later"
 
 case_ GR1 "ordinary work in your own file is as quiet in rev mode as in the tree"
   printf '// one more line\n' >> src/events/bo-renn.js
-  sneak "Bo keeps fiddling"
+  sneak "Bo keeps fiddling
+
+Tagline: Bo went back to the krakens for no reason anybody can see."
   check_rev HEAD
   lands
 

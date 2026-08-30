@@ -50,13 +50,21 @@ TMP=$(mktemp) || exit 0
 #
 #   Chronicle: one line for the book. Third person, and funny is allowed.
 #
-#   Tagline: what happened to the game, in one line. Leave it out and the
-#            referee writes one; either way it is kept for good in
-#            docs/taglines.tsv. Yours would replace this:
+# Required, and the loudest sentence the book owns - the chapter splash, the
+# contents line, the alt text on the plate (GR17):
+#
+#   Tagline: what the next pilot finds out by playing this one.
+#
+# Without it the referee stops the commit. Not because the machine has nothing
+# to say - it would draw this -
 #
 #              $TAG
 #
-# Spending a budget (GR4, GR5, GR6, GR14) needs a reason, kept forever:
+# - but because it counted the lines in your directories and drew that from a
+# pool of six. It has not read the diff and it cannot. Whatever you write is
+# kept for good in docs/taglines.tsv.
+#
+# Spending a budget (GR4, GR5, GR6, GR14, GR17) needs a reason, kept forever:
 #
 #   Golden-Rule-Override: GR4 - <why this is fair>
 #

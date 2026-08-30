@@ -72,7 +72,7 @@ first, branch second, in that order: `tools/groundcrew.sh` only ever looks at
 tools/golden-check.sh
 ```
 
-Fix everything red. If what it flags is a **budget** (GR4, GR5, GR6, GR14), do
+Fix everything red. If what it flags is a **budget** (GR4, GR5, GR6, GR14, GR17), do
 not quietly work around it and do not argue: tell the user plainly what the
 change costs somebody else, offer the override line, and let them decide. If
 they confirm, write the override and land it — that is what budgets are for.
@@ -157,17 +157,24 @@ template says so instead of offering you a tagline. That is correct, not a
 failure. Say which version is still on the cabinet rather than announcing a new
 one.
 
-The template also shows you the **tagline** the version will land under, and
-you can replace it in the message:
+Every version also carries a **tagline**, and on a version it is required —
+GR17 stops the commit without it:
 
 ```
 Tagline: Dave built a door that only opens for other people.
 ```
 
-Leave it out and `tools/tagline.sh` writes one from what the commit did. Either
-way it is kept in `docs/taglines.tsv` and never rewritten, so it is worth ten
-seconds of thought — offer the pilot the generated line and let them redraw it,
-the same as the `Chronicle:` line.
+It is the loudest sentence the book owns: the chapter splash, the contents
+line, the alt text on the plate. `tools/tagline.sh` still draws one and the
+template still shows it, but that draw counts lines per directory and picks one
+of six canned sentences — it has not read the diff and it cannot. Write the
+line yourself, offer it to the pilot the same as the `Chronicle:` line, and let
+them redraw it. It is kept in `docs/taglines.tsv` and never rewritten, so ten
+seconds here is the whole of it.
+
+If the pilot would genuinely rather have the machine's, that is
+`Golden-Rule-Override: GR17 - <why>`, and it goes on their tally like any other
+bend. Say so once and write it; do not argue past a round.
 
 If a hook blocks the commit, read what it said and fix the cause. Do not
 retry the same commit with the check disabled.
@@ -187,11 +194,12 @@ git commit -m "The paperwork from <what landed>, filed"
 ```
 
 **Then look again, because once is usually not enough.** Round one often
-carries `src/game/ledger.js` — the refreshed clean-landing count — and the book
-counts any commit touching `src/` as a version, generated file or not. So that
-filing commit becomes a version itself and earns a chapter, a plate and a
-tagline: more paperwork. Round two touches nothing but `docs/`, which is not a
-version, so the book has nothing to say about it and the tree comes out clean.
+carries `src/game/ledger.js` — the refreshed clean-landing count — alongside the
+rebuilt book. Neither is a version: `is_game()` in `tools/chronicle.sh` carves
+the ledger out of the game by name, for exactly this reason. So the filing
+commit earns no chapter, no plate and no tagline, and the referee does not ask
+it for one either (GR17). Round two, if there is one, touches nothing but
+`docs/` and comes out the same way.
 
 Repeat until `git status --porcelain` is empty. It settles in two rounds at the
 outside; if a third is somehow needed, stop and say so rather than looping,
@@ -207,7 +215,8 @@ does that; a pilot doing it by hand runs `tools/chronicle.sh` and
 A filing commit is not a story. Subject line only — no `Chronicle:` line, no
 `Tagline:`, nothing to explain. The referee will nudge about the missing
 chronicle line and the nudge is wrong here, which is the one place in this
-ritual to ignore it: the book passes over its own filing in silence everywhere
+ritual to ignore it (GR17 does not join in — it takes the book's answer about
+what a version is, and the paperwork is not one): the book passes over its own filing in silence everywhere
 it speaks, and a book that narrated its own bookkeeping would never reach a
 last chapter.
 

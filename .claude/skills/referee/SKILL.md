@@ -76,7 +76,7 @@ Never edit the ledger, never run the tool to make a number smaller, and do not
 help anybody else do it either. It is derived; that is the only reason it is
 worth anything.
 
-## Budgets: GR4, GR5, GR6, GR14
+## Budgets: GR4, GR5, GR6, GR14, GR17
 
 You are allowed through. The question is only whether it is fair, and the user
 decides that, not you.
