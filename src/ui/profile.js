@@ -13,13 +13,21 @@
 // is no fetch in this project (GR2), and a clone that has none of it simply
 // gets the cards it always had.
 //
-// **The panel is a fixed height and the room grows inside it.** It used to be
-// a grid that got taller with every pilot, which was free while there were
-// four of them and would quietly push the board and the book off a laptop at
-// twelve. So the cards scroll in a box of their own, the header says how many
-// there are, and the two edges fade while there is more that way — a panel
-// with no bottom edge showing is a panel somebody stops reading at the last
-// card they can see.
+// **The panel is a fixed height and the room is dealt into pages of four.** It
+// used to be a grid that got taller with every pilot, which was free while
+// there were four of them and would quietly push the board and the book off a
+// laptop at twelve. Then it was a scroll box, which held the height but hid
+// the room: a splash screen is read at a glance and nobody drags a list on it,
+// so the fifth pilot was as good as absent and the fade at the bottom edge was
+// the only thing arguing otherwise.
+//
+// So it deals. Four cards to a page, the pages side by side on a track that
+// slides, and a footer that says which page this is out of how many. Every
+// pilot is one press away instead of one gesture nobody makes, the panel is
+// the same height at three pilots or thirty, and the page you were on survives
+// a redraw — picking a card re-renders the whole picker, and a deck that
+// snapped back to the first page every time you chose somebody from the third
+// would be unusable.
 //
 // **A locked seat used to show itself and nothing else**, on the reasoning
 // that there is nothing to choose. True, and it also meant the one pilot who
@@ -37,6 +45,18 @@
     .replace(/"/g, "&quot;");
 
   const plural = (n, one, many) => n + " " + (n === 1 ? one : many);
+
+  // Four to a page. It is the number the panel has room for at the height it
+  // has always been, and the same four whether the deck is one column or two —
+  // a page that held six on a wide screen and three on a narrow one would put
+  // a different pilot behind the arrow depending on the window.
+  const PER = 4;
+
+  // Which page is showing. Module state rather than a data- attribute on the
+  // panel, because the panel is thrown away and rebuilt on every redraw and
+  // this has to outlive that: a redraw happens every time somebody picks a
+  // card, and every time whoami.local.js or faces.js turns up late.
+  let page = 0;
 
   // The picture belonging to a name, if one was ever painted. GUEST is not a
   // person and never gets one.
@@ -122,18 +142,37 @@
     // anything in the room to be pointed at in the first place.
     const armable = (A.eventPilots ? A.eventPilots() : []).length > 0;
 
+    // The room, dealt. Whole pages are kept in the DOM side by side so the
+    // track is as tall as its tallest page and the panel never jumps a pixel
+    // between presses.
+    const pages = [];
+    for (let i = 0; i < seats.length; i += PER) pages.push(seats.slice(i, i + PER));
+    if (!pages.length) pages.push([]);
+    page = Math.max(0, Math.min(page, pages.length - 1));
+
     root.innerHTML = `
       <h2>${A.ico("helmet")}WHO IS FLYING<span class="pcount">${seats.length}</span></h2>
       <div class="pilotdeck">
-        <div class="pilotroll"${locked
-          // A locked seat disables every card, and a disabled button takes no
-          // focus — which would leave the only scrollable thing on the panel
-          // unreachable from a keyboard. Unlocked, the cards are the tab stops
-          // and scroll themselves into view, so it does not need a second one.
-          ? ' tabindex="0" role="group" aria-label="Pilots"' : ""}>
-          <div class="pilots">${seats.map((p) => card(p, active, locked)).join("")}</div>
+        <div class="pilotroll">
+          <div class="pilottrack" style="transform: translateX(${-page * 100}%)">${
+            pages.map((pg, i) => `
+            <div class="pilots"${i === page ? "" : " inert aria-hidden=\"true\""}>${
+              pg.map((p) => card(p, active, locked)).join("")}</div>`).join("")}
+          </div>
         </div>
-      </div>
+      </div>${pages.length > 1 ? `
+      <div class="pilotpager">
+        <button type="button" class="pstep" data-step="-1"
+                aria-label="Previous pilots"${page === 0 ? " disabled" : ""}>${A.ico("next")}</button>
+        <span class="pdots">${pages.map((pg, i) => `
+          <button type="button" class="pdot${i === page ? " on" : ""}" data-page="${i}"
+                  aria-label="Pilots ${i * PER + 1} to ${i * PER + pg.length}"${
+                  i === page ? ' aria-current="true"' : ""}></button>`).join("")}
+        </span>
+        <span class="pof">${page + 1}<i>/</i>${pages.length}</span>
+        <button type="button" class="pstep next" data-step="1"
+                aria-label="More pilots"${page === pages.length - 1 ? " disabled" : ""}>${A.ico("next")}</button>
+      </div>` : ""}
       <p class="pilotarmed${A.armedCount && A.armedCount() ? " live" : ""}">${
         A.ico("aim")}${plural(A.armedCount ? A.armedCount() : 0,
         "event is pointed at you", "events are pointed at you")}</p>
@@ -160,30 +199,58 @@
     root.querySelectorAll(".pface").forEach((img) => {
       img.addEventListener("error", () => img.remove(), { once: true });
     });
-
-    const roll = root.querySelector(".pilotroll");
-    if (roll) roll.addEventListener("scroll", edges, { passive: true });
-    edges();
   };
 
-  // Which way there is more room. Two classes and the stylesheet does the
-  // fading — the alternative was a mask that is always on, which tells a pilot
-  // looking at the last card in a short list that there is another one under
-  // it. A tenth of a pixel of slack, because a scroll box that has been
-  // scrolled to the very bottom does not always say so exactly.
-  function edges() {
-    const roll = document.querySelector(".pilotroll");
-    if (!roll) return;
-    const room = roll.scrollHeight - roll.clientHeight;
-    roll.parentElement.classList.toggle("up", roll.scrollTop > 0.5);
-    roll.parentElement.classList.toggle("down", roll.scrollTop < room - 0.5);
+  // Turning a page. The track is already built and already the right height,
+  // so this only moves it — no rebuild, which is what lets the slide be a
+  // slide rather than a flash of new markup. The arrows and the dots are
+  // rewritten by hand for the same reason.
+  function turn(to) {
+    const root = document.getElementById("pilot");
+    const track = root && root.querySelector(".pilottrack");
+    if (!track) return;
+    const last = track.children.length - 1;
+    page = Math.max(0, Math.min(to, last));
+    track.style.transform = `translateX(${-page * 100}%)`;
+    // Off-page cards stop being tab stops and stop being read out. A deck that
+    // kept thirty buttons in the tab order and showed four of them is a
+    // keyboard trap with a picture of a room in it.
+    [...track.children].forEach((pg, i) => {
+      pg.toggleAttribute("inert", i !== page);
+      pg.setAttribute("aria-hidden", String(i !== page));
+    });
+    root.querySelectorAll(".pdot").forEach((d, i) => {
+      d.classList.toggle("on", i === page);
+      if (i === page) d.setAttribute("aria-current", "true");
+      else d.removeAttribute("aria-current");
+    });
+    const of = root.querySelector(".pof");
+    if (of) of.innerHTML = `${page + 1}<i>/</i>${last + 1}`;
+    root.querySelectorAll(".pstep").forEach((b) => {
+      b.disabled = Number(b.dataset.step) < 0 ? page === 0 : page === last;
+    });
   }
 
   function onClick(ev) {
+    const step = ev.target.closest("[data-step]");
+    if (step) { turn(page + Number(step.dataset.step)); return; }
+    const dot = ev.target.closest("[data-page]");
+    if (dot) { turn(Number(dot.dataset.page)); return; }
+
     const card = ev.target.closest("[data-pilot]");
     if (!card || A.pilotLocked()) return;
     A.setPilot(card.dataset.pilot);
     A.renderPilot();
+  }
+
+  // The arrow keys, while the deck has focus. A pager somebody can only click
+  // is half a pager, and these are the two keys anybody already tries.
+  function onKey(ev) {
+    if (ev.key !== "ArrowLeft" && ev.key !== "ArrowRight") return;
+    const root = document.getElementById("pilot");
+    if (!root || !root.contains(document.activeElement)) return;
+    turn(page + (ev.key === "ArrowRight" ? 1 : -1));
+    ev.preventDefault();
   }
 
   // The faces, asked for the same way the seat is and just as optionally: it
@@ -200,7 +267,5 @@
   });
 
   document.addEventListener("click", onClick);
-  // The box gets shorter on a short screen and wider when the deck goes to one
-  // column, and either can turn a list that fitted into one that scrolls.
-  addEventListener("resize", edges);
+  document.addEventListener("keydown", onKey);
 })(ASTEROIDS);
