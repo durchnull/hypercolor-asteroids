@@ -55,10 +55,6 @@
   <p class="subj">landed as &ldquo;The book stops filing pages nobody wrote&rdquo; &mdash; 29 August 2026</p>
   <p class="lawchange">The rules themselves were altered: docs/v37.html went onto main as a nought-byte file. The awk that writes the chapters is gawk 5.2.1 on the github runner, and gawk 5.2.1 corrupts its own heap and aborts partway through chapter thirty-seven - an awk program cannot address memory, so it cannot corrupt any, and the defect is the reader's rather than the book's. What cost a chapter is that tools/chronicle.sh did not look: it announced "37 versions, a page each" over a corpse, exited 0, and the ground crew filed what was left of the page. It reads the writer's exit status now and opens every page it promised before it declares a book, because stale is recoverable and wrong is the one nobody notices. .github/workflows/book.yml chooses mawk, which is on the same runner and finishes, so the guard does not turn a lost chapter into a red build on every landing instead. And the roster is put in an order rather than left to `for (p in pilots)`, which handed the names back one way on a mac and another way on the runner and had the two of them rewriting the cover past each other: most versions first, ties by name, the same list for every reader.</p>
 </article>
-<article class="interlude">
-  <p class="between">While v37 was on the cabinet, <b>felix2072</b> did some housekeeping.</p>
-  <p class="subj">landed as &ldquo;The paperwork from 3c0fca0, filed&rdquo; &mdash; 29 August 2026</p>
-</article>
 </section>
 </div>
 <p class="cel play"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6.5v11M9.5 9.5h5M9.5 14.5h5"/></svg> Drop a coin in this one: <code>git checkout 3c0fca03</code></p>
