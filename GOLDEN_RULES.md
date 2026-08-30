@@ -2,7 +2,7 @@
 
 Many hands, one cabinet. Somebody lands a version, and the next person to pull
 and press ENTER finds out what happened by playing. That is the entire game
-behind the game, and these sixteen rules exist to keep it playable for everyone
+behind the game, and these seventeen rules exist to keep it playable for everyone
 — not to slow anybody down.
 
 They are enforced three times: while you work (your editor tells you), when you
@@ -19,7 +19,7 @@ Rules come in four weights, and the weight is the whole fairness argument:
 | weight | what it means | which |
 |---|---|---|
 | **red line** | cannot be overridden by anyone. To change one, change this file — in its own commit, in front of everybody. | GR1, GR2, GR7, GR10, GR11, GR12, GR13, GR16 |
-| **budget** | you may spend past it, but only in writing. One line in the commit message and you are through. That line stays in the book forever. | GR4, GR5, GR6, GR14 |
+| **budget** | you may spend past it, but only in writing. One line in the commit message and you are through. That line stays in the book forever. | GR4, GR5, GR6, GR14, GR17 |
 | **nudge** | the referee mentions it and gets out of your way. | GR3, GR9, GR15 |
 | **on your honour** | no check exists and none could. It is the rule that decides whether the game is any good. | GR8 |
 
@@ -706,6 +706,52 @@ checked and never will be: no machine in here can see whether a person pressed
 a key. There is no override, because an override on this one would be a
 signature under a flight that did not happen. The way through is GR14's line,
 which spends a budget and claims nothing.
+
+---
+
+## GR17 — A version says what it did. `budget: the machine's line`
+
+Every version shouts one sentence. It is the first thing on the chapter, the
+line in the contents, the title on the dock, the alt text on the plate the
+painter makes of it, and it is what somebody reads a year from now to find out
+whether this is the version they remember. `Tagline:` in the commit message is
+where you write it.
+
+Leave it out and `tools/tagline.sh` writes one, and that is the part worth
+being honest about. The generator does not read your diff. It counts lines per
+directory, picks the heaviest, and draws one of six canned sentences out of a
+pool with a checksum. It cannot say what you built, only which part of the
+cabinet you were standing in — so the version where the pause between waves
+became a jump to light speed landed under "The speakers have something to add."
+Sixty-two versions had been recorded when this rule was written and only
+forty-two of the lines were distinct; one of them had been the headline of six
+different chapters.
+
+That is not the generator being bad at its job. It is a fallback doing what a
+fallback does, in the one place nobody was looking, because a plausible
+sentence sitting in the template reads like an answer already given.
+
+So the fallback stays — a clone that never installed the hooks still gets a
+line out of `--backfill`, and the book never has a blank chapter — but it stops
+being what a landing quietly settles for. Write the sentence. It costs ten
+seconds and it is kept for good.
+
+Only a version is asked, and what a version is stays the book's question and
+nobody else's. That already covers the paperwork the hooks leave behind: a
+commit carrying nothing but `docs/` and the ledger is not a version, because
+the book carves `src/game/ledger.js` out of the game by name. Anything the book
+passes over in silence, the referee passes over with it.
+
+*Checked:* a commit that lands a version, carrying anything the machine did not
+write, with no `Tagline:` line in the message, is blocked. `Golden-Rule-Override:
+GR17 - <why>` spends it and the machine's line lands instead, on the tally like
+any other bend (GR12). Read at the keyboard by the hooks and again on the pull
+request by the workflow, so a clone that never installed either is caught by
+the other. Nothing before this rule is asked to grow a trailer it cannot have
+(GR7); the lines those versions landed under were rewritten by hand into
+`docs/taglines.tsv`, which is where a tagline actually lives and the one place
+a bad one can still be fixed.
+
 
 ---
 

@@ -18,8 +18,8 @@ something good, and protect everybody who is not in the room.
 
 ## Read this first
 
-- **[GOLDEN_RULES.md](GOLDEN_RULES.md)** — sixteen rules, eight of them red
-  lines, four of them budgets you may spend in writing. Read it once per
+- **[GOLDEN_RULES.md](GOLDEN_RULES.md)** — seventeen rules, eight of them red
+  lines, five of them budgets you may spend in writing. Read it once per
   session before you change anything. It is short.
 - The referee: `tools/golden-check.sh` — run it whenever you like, it never
   bites. It also runs after every edit you make, before every commit, and
@@ -189,7 +189,7 @@ registry-shaped solution instead.
 
 **Ask the pilot first:**
 
-- Anything that spends a budget (GR4, GR5, GR6, GR14) — explain what it costs, offer
+- Anything that spends a budget (GR4, GR5, GR6, GR14, GR17) — explain what it costs, offer
   the override line, and let them decide. Do not argue past one round: if they
   confirm, write the override and land it. Say once, plainly, that it goes on
   their tally and what the tally does (GR12), then write it. The point is that
@@ -278,10 +278,14 @@ Chronicle: Dave added comets on a Tuesday, then made them faster than the
            blaster, apparently on purpose.
 ```
 
-`Tagline:` is optional and the commit template offers you one — leave it out
-and `tools/tagline.sh` writes the line, kept for good in `docs/taglines.tsv`. A
-commit that leaves the game alone needs a `Rule-Change:` line instead if it
-moved the rules. No version number goes in the message: it is counted off the
+`Tagline:` is required on a version and the referee stops the commit without it
+(GR17) — one sentence on what the next pilot finds out by playing, kept for good
+in `docs/taglines.tsv`. `tools/tagline.sh` still draws one and you can still
+spend the budget to take it, but read it first: it counts lines per directory
+and picks a canned sentence, so the version where the pause between waves became
+a jump to light speed landed under "The speakers have something to add." A
+commit that leaves the game alone is not asked for one, and needs a
+`Rule-Change:` line instead if it moved the rules. No version number goes in the message: it is counted off the
 history, it can move, and `tools/chronicle.sh --next` will tell you what this
 one becomes.
 

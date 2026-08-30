@@ -67,8 +67,10 @@ Where it comes from, first one wins:
 
 1. **`docs/taglines.tsv`**, if the version already has one. Written once and
    never rewritten — which is what makes it worth hand-editing. Open the file,
-   put a better line in, and it stays.
-2. **A `Tagline:` line in the commit message.** The pilot's own words beat the
+   put a better line in, and it stays. The only place a landed tagline can
+   still be fixed, which is how the machine's first fifty-seven were.
+2. **A `Tagline:` line in the commit message**, and on a version this is not
+   optional — GR17 stops the commit without it. The pilot's own words beat the
    machine's, always.
 3. **`tools/tagline.sh`**, from what the commit did: a new file under
    `src/events/` reads as an event, one under `src/entities/` as an arrival,

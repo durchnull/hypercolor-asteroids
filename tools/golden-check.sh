@@ -1287,6 +1287,46 @@ check_gr16() {
 }
 
 # ---------------------------------------------------------------------------
+# GR17  A version says what it did.
+#
+# The tagline is the loudest sentence the book owns - the chapter splash, the
+# contents line, the dock title, the alt text on the plate - and it was the one
+# sentence nobody was writing, because tools/tagline.sh always had an answer
+# ready and a plausible answer sitting in the template reads like a decision
+# already made. It is not one. That generator counts lines per directory and
+# draws a canned sentence with a checksum; it has never read a diff in its life.
+#
+# So the fallback keeps the book from ever having a blank chapter, and this
+# keeps a landing from settling for it.
+#
+# One gate, and it is not this script's question: $BOOK decides what a version
+# is, for the index, the worktree and a commit alike, exactly as GR14 asks it.
+# Everything the book passes over in silence is already on the far side of that
+# answer - the paperwork the hooks leave behind included, because is_game()
+# carves src/game/ledger.js out of the game by name. There was a second gate
+# here that walked the paths asking is_generated() about each one, until a
+# mutation test showed nothing could ever reach it: no generated file is a game
+# path, so no commit is a version and paperwork at once. A gate that cannot
+# fire is a gate somebody later trusts.
+# ---------------------------------------------------------------------------
+check_gr17() {
+  [ -n "$MSGFILE" ] && [ -f "$MSGFILE" ] || return 0
+
+  case "$MODE" in
+    rev) sh "$BOOK" --moved "$REV" 2>/dev/null || return 0 ;;
+    *)   sh "$BOOK" --moved 2>/dev/null || return 0 ;;
+  esac
+
+  grep -Eiq '^[[:space:]]*tagline:.{10,}' "$MSGFILE" && return 0
+  overridden GR17 && return 0
+
+  fail GR17 "no Tagline: line - this one would shout whatever the machine drew"
+  note "one sentence on what the next pilot finds out by playing it: Tagline: <line>"
+  note "tools/tagline.sh shows the draw you would be settling for"
+  note "or spend it: Golden-Rule-Override: GR17 - <reason>"
+}
+
+# ---------------------------------------------------------------------------
 # the commit message is the changelog
 # ---------------------------------------------------------------------------
 check_message() {
@@ -1423,10 +1463,11 @@ case "$STAGE" in
               check_gr13; check_gr16; check_gr39; check_named; check_media
               check_turns; check_replay; check_union; check_lockstep ;;
   commit-msg) check_gr45; check_gr6; check_gr10; check_gr12; check_gr14
-              check_breach; check_message ;;
+              check_gr17; check_breach; check_message ;;
   *)          check_gr1; check_gr2; check_gr7; check_gr10; check_gr11
               check_gr45; check_gr6; check_gr12; check_gr13; check_gr14
-              check_gr16; check_breach; check_gr39; check_named; check_media
+              check_gr16; check_gr17; check_breach; check_gr39; check_named
+              check_media
               check_turns; check_replay; check_union; check_lockstep ;;
 esac
 

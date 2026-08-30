@@ -17,7 +17,7 @@
 <p>
 Many hands, one cabinet. Somebody lands a version, and the next person to pull
 and press ENTER finds out what happened by playing. That is the entire game
-behind the game, and these sixteen rules exist to keep it playable for everyone
+behind the game, and these seventeen rules exist to keep it playable for everyone
 — not to slow anybody down.
 </p>
 <p>
@@ -38,7 +38,7 @@ Rules come in four weights, and the weight is the whole fairness argument:
 </thead>
 <tbody>
 <tr><td><b>red line</b></td><td>cannot be overridden by anyone. To change one, change this file — in its own commit, in front of everybody.</td><td>GR1, GR2, GR7, GR10, GR11, GR12, GR13, GR16</td></tr>
-<tr><td><b>budget</b></td><td>you may spend past it, but only in writing. One line in the commit message and you are through. That line stays in the book forever.</td><td>GR4, GR5, GR6, GR14</td></tr>
+<tr><td><b>budget</b></td><td>you may spend past it, but only in writing. One line in the commit message and you are through. That line stays in the book forever.</td><td>GR4, GR5, GR6, GR14, GR17</td></tr>
 <tr><td><b>nudge</b></td><td>the referee mentions it and gets out of your way.</td><td>GR3, GR9, GR15</td></tr>
 <tr><td><b>on your honour</b></td><td>no check exists and none could. It is the rule that decides whether the game is any good.</td><td>GR8</td></tr>
 </tbody>
@@ -774,6 +774,55 @@ checked and never will be: no machine in here can see whether a person pressed
 a key. There is no override, because an override on this one would be a
 signature under a flight that did not happen. The way through is GR14's line,
 which spends a budget and claims nothing.
+</p>
+<hr>
+<h2 id="gr17-a-version-says-what-it-did-budget-the-machine-s-line">GR17 — A version says what it did. <code>budget: the machine's line</code></h2>
+<p>
+Every version shouts one sentence. It is the first thing on the chapter, the
+line in the contents, the title on the dock, the alt text on the plate the
+painter makes of it, and it is what somebody reads a year from now to find out
+whether this is the version they remember. <code>Tagline:</code> in the commit message is
+where you write it.
+</p>
+<p>
+Leave it out and <code>tools/tagline.sh</code> writes one, and that is the part worth
+being honest about. The generator does not read your diff. It counts lines per
+directory, picks the heaviest, and draws one of six canned sentences out of a
+pool with a checksum. It cannot say what you built, only which part of the
+cabinet you were standing in — so the version where the pause between waves
+became a jump to light speed landed under "The speakers have something to add."
+Sixty-two versions had been recorded when this rule was written and only
+forty-two of the lines were distinct; one of them had been the headline of six
+different chapters.
+</p>
+<p>
+That is not the generator being bad at its job. It is a fallback doing what a
+fallback does, in the one place nobody was looking, because a plausible
+sentence sitting in the template reads like an answer already given.
+</p>
+<p>
+So the fallback stays — a clone that never installed the hooks still gets a
+line out of <code>--backfill</code>, and the book never has a blank chapter — but it stops
+being what a landing quietly settles for. Write the sentence. It costs ten
+seconds and it is kept for good.
+</p>
+<p>
+Only a version is asked, and what a version is stays the book's question and
+nobody else's. That already covers the paperwork the hooks leave behind: a
+commit carrying nothing but <code>docs/</code> and the ledger is not a version, because
+the book carves <code>src/game/ledger.js</code> out of the game by name. Anything the book
+passes over in silence, the referee passes over with it.
+</p>
+<p>
+<i>Checked:</i> a commit that lands a version, carrying anything the machine did not
+write, with no <code>Tagline:</code> line in the message, is blocked. `Golden-Rule-Override:
+GR17 - &lt;why&gt;` spends it and the machine's line lands instead, on the tally like
+any other bend (GR12). Read at the keyboard by the hooks and again on the pull
+request by the workflow, so a clone that never installed either is caught by
+the other. Nothing before this rule is asked to grow a trailer it cannot have
+(GR7); the lines those versions landed under were rewritten by hand into
+<code>docs/taglines.tsv</code>, which is where a tagline actually lives and the one place
+a bad one can still be fixed.
 </p>
 <hr>
 <h2 id="spending-a-budget">Spending a budget</h2>
