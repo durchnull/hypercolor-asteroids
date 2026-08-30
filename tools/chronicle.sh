@@ -2236,8 +2236,8 @@ function traitword(k) {
 # same pill, same palette, so a reader who has learnt one row has learnt this
 # one. The colour is borrowed for its mood rather than for its meaning, which
 # is the only liberty taken here.
-function chip(tint, glyph, word) {
-  return "<span class=\"mk mk-" tint "\">" ico(glyph) "<em>" word "</em></span>"
+function chip(mk, glyph, word) {
+  return "<span class=\"mk mk-" mk "\">" ico(glyph) "<em>" word "</em></span>"
 }
 function traits(p, longest, topmk, dist, ng, ne, nfl, bestwv, ncr,   out) {
   out = ""
