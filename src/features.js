@@ -49,6 +49,7 @@ ASTEROIDS.MODULES = [
   // ---- the features: everything that lives, moves or draws ----------------
   // Order does not matter here. Add yours at the end and keep it alphabetical.
   "./render/effects.js",
+  "./render/lightspeed.js",
   "./render/reticle.js",
   "./entities/asteroids.js",
   "./entities/bullets.js",

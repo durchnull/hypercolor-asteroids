@@ -12,6 +12,22 @@
   const ATTRACT_ROCKS = 5;
   const REST = 0.92;             // rock-on-rock bounce: brakes only a little
 
+  // The arrival. A wave used to blink onto the plane already in place, which
+  // was fine while the cabinet had no depth and nothing had happened before it.
+  // The jump now spends a second and a half insisting the ship travelled
+  // (src/render/lightspeed.js), and rocks that materialise where it stopped
+  // call that a lie — so a fresh wave comes in from the far plane instead, and
+  // you watch it grow into the size it is going to try to kill you at.
+  //
+  // -1400 is the far end of the lens in src/render/gl.js; anything deeper is
+  // clipped and never seen. Depth is negative because the eye sits above the
+  // plane at +z and looks down through it.
+  const ARRIVE_Z = -1400;
+  const ARRIVE = 0.75;           // seconds from out there to the plane
+
+  /** A rock is real when it reaches the plane, and not one frame before. */
+  const solid = (a) => a.arrive <= 0;
+
   A.makeAsteroid = function makeAsteroid(x, y, size) {
     const radius = RADIUS[size];
     const speed = A.rand(0.75, 1.5) * A.tune().rockSpeed + (3 - size) * 25;
@@ -28,6 +44,9 @@
       radius, size, points,
       hueOff: A.rand(0, 360),
       pulse: A.rand(0, A.TAU),
+      // Off the plane only while arriving; a split piece is born on it, which
+      // is why this is not something spawnField has to undo afterwards.
+      z: 0, arrive: 0, arriveFor: 1,
     };
   };
 
@@ -41,7 +60,12 @@
         x = A.rand(0, A.W);
         y = A.rand(0, A.H);
       } while (Math.hypot(x - A.W / 2, y - A.H / 2) < 180);
-      asteroids.push(A.makeAsteroid(x, y, 3));
+      const a = A.makeAsteroid(x, y, 3);
+      // Staggered, so a wave arrives as a shoal with depth in it rather than
+      // as one flat wall sliding forward.
+      a.arriveFor = a.arrive = ARRIVE + A.rand(0, 0.3);
+      a.z = ARRIVE_Z;
+      asteroids.push(a);
     }
   };
 
@@ -88,6 +112,13 @@
     // on the menu they drift, slowly, and nothing bumps into anything
     const dt = tick.running ? tick.dt : tick.raw * 0.3;
     for (const a of asteroids) {
+      if (a.arrive > 0) {
+        a.arrive = Math.max(0, a.arrive - dt);
+        // Constant speed through z, deliberately: something closing at a steady
+        // rate appears to accelerate as it arrives, and that rush is the whole
+        // effect. Easing the depth would flatten the one part worth watching.
+        a.z = ARRIVE_Z * (a.arrive / a.arriveFor);
+      }
       a.x += a.vx * dt;
       a.y += a.vy * dt;
       a.angle += a.spin * dt;
@@ -105,8 +136,10 @@
     let clacks = 0;
     for (let i = 0; i < asteroids.length; i++) {
       const a = asteroids[i];
+      if (!solid(a)) continue;         // still out in the depth, sharing no plane
       for (let j = i + 1; j < asteroids.length; j++) {
         const b = asteroids[j];
+        if (!solid(b)) continue;
         const dx = b.x - a.x, dy = b.y - a.y;
         const min = a.radius + b.radius;
         if (Math.abs(dx) > min || Math.abs(dy) > min) continue;   // cheap reject
@@ -150,6 +183,7 @@
     outer:
     for (let i = asteroids.length - 1; i >= 0; i--) {
       const a = asteroids[i];
+      if (!solid(a)) continue;
       for (let j = A.bullets.length - 1; j >= 0; j--) {
         const b = A.bullets[j];
         if (Math.hypot(a.x - b.x, a.y - b.y) < a.radius) {
@@ -166,7 +200,7 @@
       if (p.invuln > 0) continue;
       const onLine = p.hook && p.hook.state === "attached" ? p.hook.target : null;
       for (const a of asteroids) {
-        if (a === onLine) continue;
+        if (a === onLine || !solid(a)) continue;
         if (Math.hypot(a.x - p.x, a.y - p.y) < a.radius + p.radius * 0.7) {
           A.killShip(p);
           break;
@@ -186,8 +220,11 @@
 
   function draw3d(tick, s) {
     for (const a of asteroids) {
-      at.x = a.x; at.y = a.y; at.z = 0;
-      // the equator stays on the plane, because the equator is the hitbox
+      at.x = a.x; at.y = a.y; at.z = a.z;
+      // Once it has arrived the equator is back on the plane, because the
+      // equator is the hitbox. While it is still out in the depth it is not a
+      // hitbox at all (see `solid`), so nothing is being promised that a rock
+      // in the middle of the field is not keeping.
       at.rz = a.angle;
       at.rx = a.angle * 0.71 + a.hueOff;
       at.ry = a.angle * 0.43;
@@ -199,19 +236,27 @@
     }
   }
 
+  // The flat cabinet runs the same lens by hand. src/render/gl.js puts the eye
+  // at +D looking down, so world (x, y, 0) lands on pixel (x, y) and anything
+  // off the plane scales about the middle of the screen by D / (D - z) — one
+  // multiply, and a rock out in the depth sits small and central exactly where
+  // the solid renderer would have put it. A machine with no WebGL2 gets the
+  // arrival too, which is the only reason this is worth the six lines (GR1).
   function draw(tick, g) {
     if (A.gl.on) return;
+    const D = A.gl.eye;
     for (const a of asteroids) {
+      const k = a.z ? D / (D - a.z) : 1;
       const c = A.neon(A.hue + a.hueOff, 60 + Math.sin(a.pulse) * 8);
       g.save();
-      g.translate(a.x, a.y);
+      g.translate(A.W / 2 + (a.x - A.W / 2) * k, A.H / 2 + (a.y - A.H / 2) * k);
       g.rotate(a.angle);
       A.glow(c);
-      g.lineWidth = 1.6;
+      g.lineWidth = Math.max(0.7, 1.6 * k);
       g.beginPath();
       const n = a.points.length;
       for (let i = 0; i <= n; i++) {
-        const r = a.radius * a.points[i % n];
+        const r = a.radius * a.points[i % n] * k;
         const th = (i / n) * A.TAU;
         const x = Math.cos(th) * r;
         const y = Math.sin(th) * r;
