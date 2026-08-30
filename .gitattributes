@@ -67,3 +67,42 @@ docs/faces/*.webp binary
 # branches off the same commit, touching different files in src/, conflicted on
 # all three pilot pages and on nothing else.
 docs/pilot-*.html merge=union
+
+# The rest of what the machines write, added the day something started walking
+# the list instead of remembering it. The pilot pages above went stale in one
+# commit and nobody noticed until two branches conflicted on three pages
+# neither of them had written; tools/golden-check.sh now asks
+# tools/chronicle.sh --is-filed what the cabinet writes about itself and asks
+# git check-attr about every path it names, so the next family to arrive is
+# noticed the afternoon it arrives rather than the afternoon it costs somebody
+# a merge.
+#
+# The room the book is read in. Generated from a heredoc in tools/chronicle.sh
+# on every rebuild like the pages, so the union of two of them is nonsense with
+# a lifetime of one commit - and GR13 keeps everybody but the owner out of the
+# heredoc, which is a separate argument and not one a merge should be having.
+docs/chronicle-song.js merge=union
+
+# The signet on the tab, read off src/ui/logo.js by the same rebuild.
+docs/favicon.svg  merge=union
+
+# The notes: README, the rules, the architecture and the rest, rendered into
+# docs/ by tools/docs.sh. Two pilots editing the same markdown have a real
+# argument to settle in the markdown; the rendered copy is not where anybody
+# settles it, and stopping a pull to resolve one is asking the same question
+# twice.
+docs/notes.css    merge=union
+docs/readme.html  merge=union
+docs/rankings.html merge=union
+docs/golden-rules.html merge=union
+docs/requirements.html merge=union
+docs/contributing.html merge=union
+docs/code-of-conduct.html merge=union
+docs/architecture.html merge=union
+docs/claude.html  merge=union
+
+# The strip on the front page, repainted after every commit by
+# tools/badges.sh. versions.svg moves on every landing, which makes it the one
+# file in here that two branches are guaranteed to disagree about - and what
+# they disagree about is a number neither of them typed.
+media/badges/*.svg merge=union

@@ -128,7 +128,10 @@ Everything hangs off a feature registry, and that is the one idea you need.
   `tools/chronicle.sh`.** `--versions` lists them, `--moved` asks about one,
   `--pilots` says who is a person rather than a workflow, `--run` says how long
   the current one-name spine is (GR15), `--game-paths` and `--is-game` answer
-  about paths. The meter, the ledger, the painter, the
+  about paths, and `--is-filed` says which paths the cabinet wrote about itself
+  — the referee walks that list against `.gitattributes`, so a generated family
+  arriving with no way to merge it is noticed the afternoon it arrives rather
+  than the afternoon it costs somebody a merge. The meter, the ledger, the painter, the
   tagline and the referee all ask; none of them keeps a copy, and writing a
   fresh one is a thing the referee notices. `tools/lockstep.sh` is why: it puts
   the same commits to every reader still standing and fails when the answers

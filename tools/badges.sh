@@ -28,6 +28,19 @@
 # plane, and so does its front page. The colours are the cabinet's own, out of
 # styles/tokens.css, so a badge is the colour the thing it counts is
 # everywhere else.
+#
+# And the strip has a second half, which for a long time nothing looked at. The
+# README writes each badge as  ![pilots: 3](media/badges/pilots.svg)  and the
+# number in that alt text is typed by a person - the exact thing the paragraph
+# at the top says nobody does. It went stale and nothing noticed, because the
+# picture underneath it was right: the SVGs said 3, 8, 44 and 12 while the alt
+# text still said 1, 6, 32 and 3. A reader with images off, a screen reader and
+# github's own search index all read the alt text instead of the picture, so
+# for every one of them the front page had been lying for months.
+#
+# The tool owns both halves now. It rewrites the value between the colon and
+# the bracket and touches nothing else on the line, which is what lets the
+# strip sit in a README everybody else is free to rewrite around it.
 # ---------------------------------------------------------------------------
 set -u
 
@@ -36,7 +49,11 @@ ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
 cd "$ROOT" || exit 1
 
 OUT=media/badges
+README=README.md
 MODE=${1:-write}
+
+WORK=$(mktemp -d 2>/dev/null) || { printf 'badges: no temp directory\n' >&2; exit 1; }
+trap 'rm -rf "$WORK"' EXIT INT TERM
 
 # --- what the numbers are ---------------------------------------------------
 #
@@ -62,6 +79,20 @@ flights() { grep -c '^<!-- crc ' docs/RANKINGS.md 2>/dev/null || printf '0\n'; }
 
 rules()   { grep -c '^## GR' GOLDEN_RULES.md 2>/dev/null || printf '0\n'; }
 licence() { head -1 LICENSE 2>/dev/null | awk '{print $1}'; }
+
+# The strip itself, once: name, label, value, colour. Written to a file rather
+# than answered twice, because both halves below read it and every one of those
+# values costs a walk of the history - a second reading of this table would be
+# a second walk for the same six numbers.
+table() {
+  printf '%s\t%s\t%s\t%s\n' \
+    pilots   "pilots"       "$(pilots)"        "#ff3ec8" \
+    events   "events armed" "$(events)"        "#b6ff3d" \
+    versions "versions"     "$(versions)"      "#ffb020" \
+    flights  "flights"      "$(flights) taped" "#a04bff" \
+    rules    "golden rules" "$(rules)"         "#3dffb0" \
+    licence  "licence"      "$(licence)"       "#9a86bd"
+}
 
 # --- the badge --------------------------------------------------------------
 #
@@ -102,21 +133,64 @@ badge() {
   esac
 }
 
-# name          label           value              colour
+# --- the other half: the alt text -------------------------------------------
+#
+# One pass over the README, rewriting every  ![<label>: <value>](media/badges/
+# <name>.svg)  reference to the label and the value this run just painted.
+# Anchored on the image path rather than on the alt text, because the alt text
+# is precisely the part that cannot be trusted to say anything in particular -
+# it is the half that went wrong. A reference to a badge this tool does not
+# paint is left exactly as it was, and so is every other character of the line.
+#
+# The report names both sides rather than only saying that something moved,
+# because the whole failure was that nobody could see the two disagreeing.
+alt_text() {
+  [ -f "$README" ] || return 0
+  awk -v OUTF="$WORK/readme" -F'\t' '
+    NR == FNR { lab[$1] = $2; val[$1] = $3; next }
+    {
+      out = ""; rest = $0
+      while (match(rest, /!\[[^]]*\]\(media\/badges\/[a-z]+\.svg\)/)) {
+        ref = substr(rest, RSTART, RLENGTH)
+        out = out substr(rest, 1, RSTART - 1)
+        rest = substr(rest, RSTART + RLENGTH)
+        nm = ref; sub(/^.*\/badges\//, "", nm); sub(/\.svg\)$/, "", nm)
+        if (nm in lab) {
+          want = "![" lab[nm] ": " val[nm] "](media/badges/" nm ".svg)"
+          if (ref != want) print "  " ref "  ->  " want
+          ref = want
+        }
+        out = out ref
+      }
+      print out rest > OUTF
+    }' "$1" "$README" > "$WORK/said"
+
+  cmp -s "$README" "$WORK/readme" && return 0
+  CHANGED=$((CHANGED + 1))
+  case $MODE in
+    --check) printf 'would write %s\n' "$README" ;;
+    *)       cat "$WORK/readme" > "$README"; printf 'wrote %s\n' "$README" ;;
+  esac
+  cat "$WORK/said"
+}
+
 strip() {
-  badge pilots   "pilots"       "$(pilots)"        "#ff3ec8"
-  badge events    "events armed"  "$(events)"         "#b6ff3d"
-  badge versions "versions"     "$(versions)"      "#ffb020"
-  badge flights  "flights"      "$(flights) taped" "#a04bff"
-  badge rules    "golden rules" "$(rules)"         "#3dffb0"
-  badge licence  "licence"      "$(licence)"       "#9a86bd"
+  table > "$WORK/table"
+  while IFS='	' read -r n l v c; do
+    [ -n "$n" ] || continue
+    badge "$n" "$l" "$v" "$c"
+  done < "$WORK/table"
+  alt_text "$WORK/table"
 }
 
 case $MODE in
   -h|--help)
-    sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,43p' "$0" | sed 's/^# \{0,1\}//'
     ;;
   --list)
+    # The six files this tool writes whole. The README is not one of them: it
+    # owns six substrings of somebody else's front page, which is a different
+    # relationship and not one a list of paths can say.
     for n in pilots events versions flights rules licence; do printf '%s/%s.svg\n' "$OUT" "$n"; done
     ;;
   --check|write)

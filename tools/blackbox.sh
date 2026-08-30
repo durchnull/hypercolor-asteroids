@@ -151,8 +151,42 @@ fi
 # ledger and say nothing, which is not a gap to fill in by asking.
 BENDS=$(printf '%s' "$JSON" | sed -n 's/.*"ledger":{"bends":\([0-9]*\).*/\1/p')
 CLEAN=$(printf '%s' "$JSON" | sed -n 's/.*"ledger":{"bends":[0-9]*,"clean":\([0-9]*\).*/\1/p')
+TS=$(printf '%s' "$JSON" | sed -n 's/.*"ts":"\([^"]*\)".*/\1/p')
+
+# ... and then the thing sealing it was for. The row above was printed straight
+# off the tape and stopped there, which made it the one number on a tape that
+# exists to be disputed and could not be. Bends only ever grow, so holding a
+# sealed 5 against today's 5 proves nothing about the evening it was sealed on:
+# the question is what the history said *then*, and tools/tally.sh --at answers
+# it off the same history everything else here is read off.
+#
+# The tape's own timestamp picks the commit - the newest one that had landed
+# when the ship went down, which is the ledger the post-commit hook had just
+# written into the tree the game then read. Forgiving where it cannot know: no
+# repository, no commit before the flight, or a tape from before the ledger was
+# sealed, and it says nothing rather than guessing.
+#
+# It does not change the verdict on the seal, and should not. A pilot who flew
+# on a branch carrying a bend that main had not seen disagrees with the history
+# honestly, and so does one who talked their own field down. This says which
+# two numbers are in front of the room; the room decides.
 if [ -n "$BENDS" ]; then
   printf 'THE FIELD IT FLEW: %s bends, %s clean, as the cabinet read them.\n' "$BENDS" "$CLEAN"
+  ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || ROOT=""
+  if [ -n "$ROOT" ] && [ -n "$TS" ] && [ -n "$PILOT" ]; then
+    WHEN=$(git log -1 --format='%h' --before="$TS" 2>/dev/null)
+    if [ -n "$WHEN" ]; then
+      SAID=$(sh "$ROOT/tools/tally.sh" --at "$WHEN" --row "$PILOT" 2>/dev/null)
+      WB=${SAID%%	*}; WC=${SAID#*	}
+      if [ -z "$SAID" ]; then :
+      elif [ "$WB" = "$BENDS" ] && [ "$WC" = "$CLEAN" ]; then
+        printf 'FIELD CONFIRMED: the history at %s said the same.\n' "$WHEN"
+      else
+        printf 'FIELD DISPUTED: the history at %s said %s bends and %s clean. The\n' "$WHEN" "$WB" "$WC"
+        printf 'ledger is the generated one, and the tape is what the game read.\n'
+      fi
+    fi
+  fi
 fi
 
 # The ambush reel. The JSON is machine-written with its keys in a fixed

@@ -118,6 +118,12 @@ HTML
   printf '# THE GOLDEN RULES\n\nThirteen of them, elsewhere.\n' > GOLDEN_RULES.md
   printf '<!doctype html><html><body>the book</body></html>\n' > docs/index.html
 
+  # The one generated page this cabinet ships, and the line that says how two
+  # clones settle it without stopping to ask a pilot about a file neither of
+  # them wrote. Here so that the referee's coverage check is silent by default
+  # and means something when a case takes it away.
+  printf 'docs/index.html merge=union\n' > .gitattributes
+
   cat > src/boot.js <<'JS'
 (function (A) {
   A.boot = function () { return A.MODULES.length; };
@@ -460,6 +466,29 @@ case_ GR11 "the runner losing the guard the whole mechanic rests on"
 JS
   stage; check pre-commit
   blocks GR11
+
+case_ GR11 "a guard lost before this commit is still gone at commit time"
+  # The half the check did not have. It fired only inside a commit that touched
+  # the runner, so a guard lost to a pull, a merge resolution or a union merge
+  # sat in the working tree arming everybody's own events against them, and
+  # nothing would look at it again until the next pilot happened to edit that
+  # one file. Here the damage lands first, in its own commit, and the case
+  # commits something else entirely afterwards.
+  cat > src/game/events.js <<'JS'
+(function (A) {
+  A.HOUSE = "THE HOUSE";
+  A.armed = function (events) { return events; };
+})(ASTEROIDS);
+JS
+  land "The runner arrives from somewhere else"
+  printf '// one more line\n' >> src/events/bo-renn.js
+  stage; check pre-commit
+  blocks GR11
+
+case_ GR11 "an intact guard nobody touched is nobody's business"
+  printf '// one more line\n' >> src/events/bo-renn.js
+  stage; check pre-commit
+  silent GR11
 
 case_ GR11 "your own event is yours to rewrite from scratch"
   cat > "src/events/bo-renn.js" <<'JS'
@@ -881,6 +910,32 @@ case_ GR16 "a filed flight that does not answer to its own name"
   stage; check pre-commit
   blocks GR16
 
+# The sum says the file has not moved since it was filed. It says nothing about
+# the sentence written over it, and the sentence is the half everything reads:
+# tools/flights.sh credits a flight to the pilot the board line names, so the
+# meter, GR14's mercy and the pilot pages all go by the prose while the evidence
+# sits unread in the file beside it.
+case_ GR16 "a board row and the flight filed under it, saying the same thing"
+  printf '**2026-08-09 · Bo Renn · 4200 · wave 3 · 2:11** — a short evening.\n' > docs/RANKINGS.md
+  printf -- '<!-- crc 7104d880 -->\n' >> docs/RANKINGS.md
+  mkdir -p docs/tapes
+  printf '%s' '{"v":1,"ts":"2026-08-09T21:04:11.006Z","pilot":"Bo Renn","whoami":"Bo Renn","score":4200,"best":4200,"wave":3,"time":131.4,"shaves":9,"seats":[],"events":[]}' \
+    > docs/tapes/7104d880.json
+  stage; check pre-commit
+  silent GR16
+
+case_ GR16 "a row that does not say what the flight under it says"
+  # Refused rather than warned, and the difference is the point: a row with no
+  # flight filed under it is one the record inherited, and a row that disagrees
+  # with the flight filed under it is one somebody typed.
+  printf '**2026-08-09 · Bo Renn · 9900 · wave 9 · 7:41** — a much better evening.\n' > docs/RANKINGS.md
+  printf -- '<!-- crc 7104d880 -->\n' >> docs/RANKINGS.md
+  mkdir -p docs/tapes
+  printf '%s' '{"v":1,"ts":"2026-08-09T21:04:11.006Z","pilot":"Bo Renn","whoami":"Bo Renn","score":4200,"best":4200,"wave":3,"time":131.4,"shaves":9,"seats":[],"events":[]}' \
+    > docs/tapes/7104d880.json
+  stage; check pre-commit
+  blocks GR16
+
 case_ GR11 "an event started from somebody else's template is still yours"
   sed 's/closing-ring/quiet-ring/; s/Ada Vex/Bo Renn/; s/at: 4/at: 7/' \
     "src/events/ada-vex.js" > "src/events/bo-renn-two.js"
@@ -910,13 +965,47 @@ case_ GR6 "a stray screenshot is not ten thousand lines of anything"
   check_tree
   silent GR6
 
+# A note is not a screenshot, so the litter list cannot save it - and this is
+# the shape the false GR10 actually took: an untracked crew.md beside a session
+# editing tools/chronicle.sh, and every save afterwards reporting that the rules
+# and the game were moving together, about a file that had never been staged.
+# GR10 asks what is landing in one commit, and nothing lands with a draft.
+case_ GR10 "a note left in the root is not the game moving"
+  printf '\nA new paragraph of rules.\n' >> CLAUDE.md
+  printf 'notes to myself, for later\n' > crew.md
+  check_tree
+  silent GR10
+
 # The other half of that: staging it is the pilot saying it belongs, and then
 # the referee has every right to an opinion about it again.
+case_ GR10 "a note the pilot actually staged still counts"
+  printf '\nA new paragraph of rules.\n' >> CLAUDE.md
+  printf 'notes to myself, for later\n' > crew.md
+  stage; check pre-commit
+  blocks GR10
+
 case_ GR10 "a screenshot the pilot actually staged still counts"
   printf '\nA new paragraph of rules.\n' >> CLAUDE.md
   printf 'a plate for the book\n' > plate.png
   stage; check pre-commit
   blocks GR10
+
+# Not a golden rule - nobody breaks this one on purpose, which is exactly why
+# it went unnoticed. docs/pilot-*.html landed as the only generated family with
+# no line in .gitattributes, and a pilot page is rewritten by every commit
+# anybody makes, so the first two branches cut afterwards conflicted on three
+# pages neither pilot had written.
+case_ ATTR "a generated family arriving with no way to merge it"
+  printf '<!doctype html><html><body>a chapter</body></html>\n' > docs/v1.html
+  land "The book grows a chapter"
+  printf '// one more line\n' >> src/events/bo-renn.js
+  check_tree
+  nudges ATTR
+
+case_ ATTR "a family the list already covers is nobody's problem"
+  printf '// one more line\n' >> src/events/bo-renn.js
+  check_tree
+  silent ATTR
 
 case_ GR12 "the audit and the referee mean the same thing by 'the rules'"
   # Two readers decide what counts as referee machinery: is_referee in
