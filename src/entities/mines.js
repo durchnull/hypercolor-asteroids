@@ -323,6 +323,7 @@
     reset, update, draw, draw3d,
     guide: {
       name: "MINE",
+      group: "field",
       meta: "timed &middot; no contact fuse",
       tint: "var(--violet)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
@@ -333,11 +334,7 @@
         <path d="M5.4 17h4.4 M8 15.1 L9.9 17 L8 18.9" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M28.6 17h-4.4 M26 15.1 L24.1 17 L26 18.9" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>`,
-      desc: `Opens quietly, grows, and only time sets it off &mdash; there is no
-        contact fuse, so flying through one costs nothing. When the hand comes
-        round it drags everything inside the dotted ring toward the middle,
-        harder the closer you are. It cannot hurt you. What it drags into you
-        can.`,
+      desc: "No contact fuse, so flying through one is free. When its timer comes round it drags the ring inward &mdash; and what it drags into you can kill.",
     },
   });
 })(ASTEROIDS);

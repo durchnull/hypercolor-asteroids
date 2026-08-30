@@ -429,6 +429,7 @@
       reset, update, resolve, draw: drawDeep, draw3d,
       guide: {
         name: "KRAKEN",
+        group: "field",
         meta: "250 &middot; 3&ndash;5 hits",
         tint: "var(--magenta)",
         icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
@@ -439,8 +440,7 @@
           <circle cx="21" cy="12" r="1.6" fill="#ffb020" stroke="none"/>
           <path d="M10 8.5 L15.5 10.5 M24 8.5 L18.5 10.5" stroke="#ffb020" stroke-linecap="round"/>
         </svg>`,
-        desc: `Hunts you, dives into the deep, then surfaces right beneath you.
-          Angrier with every hit &mdash; and later waves send a whole pack.`,
+        desc: "Hunts you, dives into the deep, then surfaces underneath you. Angrier with every hit, and later waves send a whole pack.",
       },
     },
     { id: "kraken:surface", order: { draw: 50 }, draw: drawSurface },

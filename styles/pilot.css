@@ -2,12 +2,66 @@
    so this file only cares how one card is laid out — the panel around them is
    part of the rack, and overlay.css draws that. */
 
+/* The count beside the label. It is the one number on this panel nobody has
+   to earn, and it is here because the box below stopped growing: a fixed
+   height with more cards than fit needs to say how many more. */
+.pilot h2 .pcount {
+  margin-left: auto;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+/* The room, in a box that does not grow. Every other panel on the deck is as
+   tall as what is in it, and this one used to be too — fine at four pilots,
+   and at twelve it would push the board and the book off a laptop without
+   anybody deciding it should. So the cards scroll here instead, and the panel
+   is the same height whether three people fly this cabinet or thirty.
+
+   `overscroll-behavior: contain` because the deck behind it scrolls too: a
+   thumb that reaches the last card should stop, not hand the gesture to the
+   whole splash and take the panel off the screen with it. */
+.pilotdeck { position: relative; }
+.pilotroll {
+  max-height: var(--roll, 15.5rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(33, 243, 255, 0.45) transparent;
+  /* room for the fades to land on rather than sit over a card's own edge */
+  padding: 0.15rem 0.35rem 0.15rem 0;
+}
+/* The two edges, lit only while there is more room that way — src/ui/profile.js
+   puts the classes on. A mask that is always there tells a pilot looking at the
+   last card in a short list that there is another one underneath it, which is
+   the one thing this was added to stop. */
+.pilotdeck::before, .pilotdeck::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2.1rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.pilotdeck::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(9, 4, 19, 0.96), rgba(9, 4, 19, 0));
+}
+.pilotdeck::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(9, 4, 19, 0.96), rgba(9, 4, 19, 0));
+}
+.pilotdeck.up::before, .pilotdeck.down::after { opacity: 1; }
+
 /* auto-fill, not auto-fit: one pilot gets a card the size of a card, rather
    than one card the width of the panel */
 .pilot .pilots {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
   gap: 0.5rem;
+  align-content: start;
 }
 .pilotcard {
   display: flex;
@@ -158,6 +212,17 @@
 }
 @media (max-height: 940px) {
   .pilotcard { padding: 0.4rem 0.55rem; }
+  .pilotroll { --roll: 12rem; }
+}
+@media (max-height: 700px) {
+  .pilotroll { --roll: 9.5rem; }
+}
+/* One column: the panel is the width of the deck rather than a third of it, so
+   there is more height going spare and the roll takes some of it. Kept behind
+   a min-height so a phone on its side still gets the short-screen box. Last,
+   because these all set the same variable and source order is the tie-break. */
+@media (max-width: 64rem) and (min-height: 700px) {
+  .pilotroll { --roll: 16rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .pilotcard .pbends.hot .ic, .pilotarmed.live .ic { animation: none; }

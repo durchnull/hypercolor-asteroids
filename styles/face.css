@@ -10,21 +10,33 @@
    — all three land on a card that looks exactly like a card always did. */
 
 .pilotcard {
-  /* the face on the left, the name and everything under it on the right */
+  /* The face and the name make a head; everything counted about the pilot runs
+     the full width underneath it.
+
+     It was all one right-hand column before, indented past the portrait, which
+     kept the lines tidily under the name and cost the card a third of its own
+     width — so "34 versions landed · 6 flights on the board" wrapped inside a
+     gutter while there was empty space beside the face. The three lines are the
+     reason anybody reads a card that is not their own. They get the card. */
   display: grid;
   grid-template-columns: auto 1fr;
   column-gap: 0.7rem;
+  row-gap: 0.2rem;
   align-items: center;
 }
-/* Every line of text belongs in the right-hand column. Without this the card
-   would fall back to one item per row the moment a face appeared, which is the
-   layout it has now and the one it keeps for a pilot with no face. */
-.pilotcard > :not(.pface) { grid-column: 2; }
+/* The name sits beside the portrait; the record sits under both. Without the
+   first of these the card falls back to one item per row the moment a face
+   appears, which is the layout it keeps for a pilot with no face. */
+.pilotcard .pname { grid-column: 2; }
+.pilotcard .pmeta,
+.pilotcard .pserv,
+.pilotcard .pbends { grid-column: 1 / -1; }
 
 .pface {
-  grid-row: 1 / -1;
-  width: 3.1rem;
-  height: 3.1rem;
+  grid-row: 1;
+  grid-column: 1;
+  width: 2.6rem;
+  height: 2.6rem;
   border-radius: 50%;
   object-fit: cover;
   background: #05010c;
@@ -44,5 +56,5 @@
 /* The splash has to land above the fold on a laptop, and a portrait is the
    cheapest thing on the card to shrink — the name is what has to stay. */
 @media (max-height: 940px) {
-  .pface { width: 2.2rem; height: 2.2rem; }
+  .pface { width: 2.05rem; height: 2.05rem; }
 }

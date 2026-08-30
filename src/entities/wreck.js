@@ -493,6 +493,7 @@
     reset, update, draw, draw3d,
     guide: {
       name: "THE WRECK",
+      group: "field",
       meta: "grapple it",
       tint: "var(--violet)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
@@ -502,11 +503,7 @@
         <path d="M8 27 L14 12"/>
         <circle cx="17" cy="6" r="2.6" opacity="0.7"/>
       </svg>`,
-      desc: `The flight one place above you on the records, adrift on the wave
-        it died on. It cannot touch you. <b>Grapple</b> it and you carry their
-        tape: everything you earn pays extra and you fly heavy for it. Clearing
-        a wave banks what it has paid; dying hands back whatever is not banked.
-        Pass their number and it breaks up in your hands.`,
+      desc: "The flight above you on the records, adrift. <b>Grapple</b> it to fly heavy for extra pay, and clear a wave to bank it. Beat their score and it breaks up.",
     },
   });
 })(ASTEROIDS);

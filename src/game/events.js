@@ -408,13 +408,14 @@
     resolve,
     guide: {
       name: "EVENTS",
+      group: "field",
       meta: "unannounced",
       tint: "var(--amber)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
         stroke="currentColor" stroke-width="1.6">
         <path d="M17 3v7M17 24v7M3 17h7M24 17h7M7 7l5 5M22 22l5 5M27 7l-5 5M12 22l-5 5"/>
         <circle cx="17" cy="17" r="4.5"/></svg>`,
-      desc: "The field has moods. Somebody wrote one of them for you, and it is not the one they get. A pilot with no event of their own is spared the lot &mdash; the room arms when you do. Some of them arrive with a name under the banner: that is a dedication, and it is addressed to somebody rather than aimed at them.",
+      desc: "The field has moods, and somebody wrote yours &mdash; never the one they fly. It stays quiet until you write your first, which arms the room.",
     },
   });
 })(ASTEROIDS);

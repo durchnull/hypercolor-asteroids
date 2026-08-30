@@ -116,16 +116,14 @@
     draw,
     guide: {
       name: "THE BOUNTY",
+      group: "instrument",
       meta: "earned",
       tint: "var(--amber)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
         stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
         <path d="M4 23V9.5l6.5 5.6L17 4l6.5 11.1L30 9.5V23z"/>
         <path d="M4 27.4h26"/></svg>`,
-      desc: `Top of the board and the field stops waiting so long between
-        ambushes. Nobody wrote it at you and nobody can call it off &mdash; it
-        follows the first row of the flight records, so the only way out of it
-        is somebody else having a better evening.`,
+      desc: "Top of the board and the field stops waiting so long between ambushes. Nobody aimed it, and only a better evening than yours calls it off.",
     },
   });
 })(ASTEROIDS);
