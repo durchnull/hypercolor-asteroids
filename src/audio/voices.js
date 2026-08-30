@@ -39,7 +39,19 @@
       const gn = A.audio.createGain();
       o.type = T().lead;
       o.frequency.setValueAtTime(A.midi(note + iv), t);
-      if (A.vibrato) A.vibrato._amt.connect(o.detune);
+      // The desk lets go of the note when the note ends. A permanent node
+      // holding an output into a finished oscillator is a finished oscillator
+      // that never leaves the graph, and src/audio/reaper.js cannot see this
+      // one from its side: it unwires what a voice reached out to, not what
+      // reached into the voice.
+      if (A.vibrato) {
+        const vib = A.vibrato._amt;
+        vib.connect(o.detune);
+        o.addEventListener("ended", function loosen() {
+          o.removeEventListener("ended", loosen);
+          try { vib.disconnect(o.detune); } catch (e) {}
+        });
+      }
       gn.gain.setValueAtTime(0.0001, t);
       gn.gain.exponentialRampToValueAtTime(vol, t + 0.02);
       gn.gain.setValueAtTime(vol, t + dur * 0.7);
