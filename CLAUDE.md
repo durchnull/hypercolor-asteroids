@@ -180,8 +180,9 @@ registry-shaped solution instead.
   — in `.dev/IMPROVEMENTS.md`, newest first, one entry per idea: date, title,
   what you saw, what might be done. That directory is gitignored and per
   machine on purpose; it is where a candidate waits until somebody decides to
-  spend a rule-change commit on it. Note what came of an entry rather than
-  deleting it.
+  spend a rule-change commit on it. Once an entry has been acted on it leaves
+  the list — the history and the book already say what landed, and a notebook
+  that keeps its own closed entries is a second, worse record of them.
 
 **Ask the pilot first:**
 
