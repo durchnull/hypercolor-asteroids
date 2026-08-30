@@ -39,9 +39,19 @@
         c ? `<span class="bcount">${c.versions} version${c.versions === 1 ? "" : "s"}</span>` : ""}</h2>
       <div class="bwrap${plates.length ? "" : " bare"}">${plates.length ? `
         <div class="plates">${plates.map((p, i) => `
-          <a class="plate${i === 0 ? " lead" : ""}" href="docs/v${p.v}.html"
-             title="v${p.v} &middot; ${esc(p.line || p.alt)}">
-            <img src="docs/art/${esc(p.file)}" alt="" loading="lazy" decoding="async">
+          <a class="plate${i === 0 ? " lead" : ""}${p.file ? "" : " unpainted"}"
+             href="docs/v${p.v}.html"
+             title="v${p.v} &middot; ${esc(p.line || p.alt)}">${p.file ? `
+            <img src="docs/art/${esc(p.file)}" alt="" loading="lazy" decoding="async">`
+            // A version nobody has painted yet. Plates come off one machine, on
+            // main, with credentials, so the newest few chapters usually have
+            // none — and the newest chapter is the one thing on this panel that
+            // has to be current. So it gets the frame and its own words instead
+            // of the picture, rather than yielding the lead to a plate from six
+            // versions ago.
+            : `
+            <span class="unart">${A.ico("book")}<span class="uline">${
+              esc(p.line || p.alt || "nobody wrote this one down")}</span></span>`}
             <span class="pv">v${p.v}</span>
           </a>`).join("")}
         </div>` : ""}

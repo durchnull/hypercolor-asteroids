@@ -12,57 +12,102 @@
   opacity: 0.75;
 }
 
-/* The room, in a box that does not grow. Every other panel on the deck is as
-   tall as what is in it, and this one used to be too — fine at four pilots,
-   and at twelve it would push the board and the book off a laptop without
-   anybody deciding it should. So the cards scroll here instead, and the panel
-   is the same height whether three people fly this cabinet or thirty.
+/* The room, dealt into pages that do not grow. Every other panel on the deck
+   is as tall as what is in it, and this one used to be too — fine at four
+   pilots, and at twelve it would push the board and the book off a laptop
+   without anybody deciding it should.
 
-   `overscroll-behavior: contain` because the deck behind it scrolls too: a
-   thumb that reaches the last card should stop, not hand the gesture to the
-   whole splash and take the panel off the screen with it. */
+   It was a scroll box for a while, which held the height and lost the room:
+   nobody drags a list on a splash screen, so the fifth pilot may as well not
+   have been there. Now it is four to a page on a track that slides, and the
+   whole track lives in the DOM — which is what makes the panel the same height
+   on every page, since the tallest page sets it once and nothing moves after.
+
+   The clip is the window. Pages either side of this one are laid out at their
+   full width and simply are not in it. */
 .pilotdeck { position: relative; }
-.pilotroll {
-  max-height: var(--roll, 15.5rem);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(33, 243, 255, 0.45) transparent;
-  /* room for the fades to land on rather than sit over a card's own edge */
-  padding: 0.15rem 0.35rem 0.15rem 0;
+.pilotroll { overflow: hidden; }
+.pilottrack {
+  display: flex;
+  align-items: stretch;
+  transition: transform 0.42s cubic-bezier(0.22, 0.75, 0.24, 1);
 }
-/* The two edges, lit only while there is more room that way — src/ui/profile.js
-   puts the classes on. A mask that is always there tells a pilot looking at the
-   last card in a short list that there is another one underneath it, which is
-   the one thing this was added to stop. */
-.pilotdeck::before, .pilotdeck::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 2.1rem;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.18s ease;
-}
-.pilotdeck::before {
-  top: 0;
-  background: linear-gradient(to bottom, rgba(9, 4, 19, 0.96), rgba(9, 4, 19, 0));
-}
-.pilotdeck::after {
-  bottom: 0;
-  background: linear-gradient(to top, rgba(9, 4, 19, 0.96), rgba(9, 4, 19, 0));
-}
-.pilotdeck.up::before, .pilotdeck.down::after { opacity: 1; }
-
 /* auto-fill, not auto-fit: one pilot gets a card the size of a card, rather
    than one card the width of the panel */
 .pilot .pilots {
+  flex: 0 0 100%;
+  /* a flex item will not go below its own content without this, and a page
+     that will not shrink pushes its cards out through the clip */
+  min-width: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  /* min() rather than a bare 11rem: on a panel narrower than one card, the
+     track becomes the panel instead of overflowing it by the difference */
+  grid-template-columns: repeat(auto-fill, minmax(min(11rem, 100%), 1fr));
   gap: 0.5rem;
   align-content: start;
+  /* the cards keep their own edges off the clip, and a page that is not the
+     one showing is still laid out so the track knows how tall to be */
+  padding: 0.15rem 0.2rem;
 }
+
+/* The pager. Two arrows, a dot per page and the count between them — the
+   count because a row of dots stops being countable at about six, and the
+   dots because an arrow on its own never says how much room is left. */
+.pilotpager {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+}
+.pstep {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  flex: none;
+  padding: 0;
+  background: rgba(12, 5, 24, 0.34);
+  border: 1px solid rgba(160, 75, 255, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.11);
+  color: var(--cyan);
+  cursor: pointer;
+  transition: border-color 0.16s, color 0.16s, background 0.16s, box-shadow 0.16s;
+}
+.pstep .ic { width: 0.9rem; height: 0.9rem; transform: rotate(180deg); }
+.pstep.next .ic { transform: none; }
+.pstep:hover:not(:disabled) {
+  border-color: var(--cyan);
+  background: rgba(33, 243, 255, 0.12);
+  box-shadow: 0 0 14px rgba(33, 243, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+/* Kept in place rather than hidden at the ends, so the two buttons never move
+   under a thumb that is pressing one of them repeatedly. */
+.pstep:disabled { opacity: 0.28; cursor: default; }
+.pdots { display: flex; align-items: center; gap: 0.32rem; margin-right: auto; }
+.pdot {
+  width: 0.42rem;
+  height: 0.42rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(160, 75, 255, 0.45);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.pdot:hover { background: rgba(33, 243, 255, 0.7); }
+.pdot.on {
+  background: var(--cyan);
+  transform: scale(1.5);
+  box-shadow: 0 0 9px rgba(33, 243, 255, 0.65);
+}
+.pof {
+  font-size: 0.5rem;
+  letter-spacing: 0.14em;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+.pof i { font-style: normal; opacity: 0.5; margin: 0 0.12rem; }
 .pilotcard {
   display: flex;
   flex-direction: column;
@@ -138,16 +183,23 @@
 /* The service record: versions landed and flights on the board, counted off
    the record by machines. A boast in the same quiet voice as the rest of the
    card - the loud version is the trim the hull wears in the field. */
+/* Two facts and a dot between them, which is a line and a half on a phone. A
+   grid rather than a row: the words need to wrap for the card to narrow, and
+   in a flex row they wrap by leaving the chevron behind on a line of its own.
+   Two columns puts the chevron beside the block instead of beside the first
+   line of it. */
 .pilotcard .pserv {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
   gap: 0.34rem;
   font-size: 0.56rem;
   letter-spacing: 0.1em;
   color: var(--cyan);
   font-variant-numeric: tabular-nums;
 }
-.pilotcard .pserv .ic { width: 0.72rem; height: 0.72rem; }
+/* nudged down to sit on the first line of the words rather than above them */
+.pilotcard .pserv .ic { width: 0.72rem; height: 0.72rem; margin-top: 0.06rem; }
 .pilotcard:not(.on) .pserv { color: var(--dim); }
 
 /* Only ever there for a pilot who has bent something. GR12. Three is where
@@ -212,18 +264,10 @@
 }
 @media (max-height: 940px) {
   .pilotcard { padding: 0.4rem 0.55rem; }
-  .pilotroll { --roll: 12rem; }
-}
-@media (max-height: 700px) {
-  .pilotroll { --roll: 9.5rem; }
-}
-/* One column: the panel is the width of the deck rather than a third of it, so
-   there is more height going spare and the roll takes some of it. Kept behind
-   a min-height so a phone on its side still gets the short-screen box. Last,
-   because these all set the same variable and source order is the tie-break. */
-@media (max-width: 64rem) and (min-height: 700px) {
-  .pilotroll { --roll: 16rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .pilotcard .pbends.hot .ic, .pilotarmed.live .ic { animation: none; }
+  /* the page still turns, it just arrives rather than travelling */
+  .pilottrack { transition: none; }
+  .pdot { transition: none; }
 }

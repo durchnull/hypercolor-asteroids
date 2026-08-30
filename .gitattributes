@@ -56,3 +56,14 @@ docs/faces/faces.js  merge=union
 docs/faces/*.jpg  binary
 docs/faces/*.png  binary
 docs/faces/*.webp binary
+
+# One page per pilot, and the reason they were left off this list for a commit
+# is the reason they need to be on it more than the chapters do: a chapter page
+# changes when its own version changes, and a pilot page changes when anybody
+# at all commits. The roster, the cross-visits, the dock and the flight meter
+# are all facts about the whole history, so two branches that each landed one
+# thing have each rewritten every pilot page in the book - including the pages
+# of pilots who were not there. Measured before this line was written: two
+# branches off the same commit, touching different files in src/, conflicted on
+# all three pilot pages and on nothing else.
+docs/pilot-*.html merge=union

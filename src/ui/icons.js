@@ -43,6 +43,10 @@
     door: '<path d="M13.6 3.4H5.4v17.2h8.2"/><path d="M10 12h9.4M16.2 8.4L19.6 12l-3.4 3.6"/>',
     // service chevrons, the way a sleeve wears them
     chevron: '<path d="M5 9.5l7-4.3 7 4.3M5 15l7-4.3 7 4.3M5 20.5l7-4.3 7 4.3"/>',
+    // one more of the room, this way. Not the sleeve chevrons above it: those
+    // are a rank and point up, and a pager rotating them by a quarter turn
+    // said "promotion, sideways" rather than "next".
+    next: '<path d="M9 4.8L16.2 12L9 19.2"/>',
     // the machine itself, from the front: marquee, screen, control panel
     cabinet: '<path d="M6.2 3.2h11.6v17.6H6.2z"/><path d="M6.2 7.4h11.6M6.2 16.6h11.6"/>' +
              '<rect x="8.3" y="9.3" width="7.4" height="5.2" rx="0.8"/>' +

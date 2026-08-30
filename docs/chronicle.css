@@ -51,11 +51,18 @@ h1 {
   margin-top: 1.1rem;
   max-width: 34rem;
 }
+/* The two ways in. A row on anything wide enough to hold both, and two rows
+   the moment it is not - each of them one unbreakable phrase, so a narrow
+   screen never gets THE LATEST on one line and CHAPTER on the next. */
 .prompt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem 2rem;
   margin: 1.6rem 0 3.2rem;
   font-size: 0.8rem;
   letter-spacing: 0.3em;
 }
+.prompt a { white-space: nowrap; }
 /* The splash screen blinks this; a link you are meant to click does not. */
 .prompt a {
   color: var(--lime);
@@ -135,7 +142,8 @@ h1 {
 
 /* The contents. Read the taglines straight down and you have the whole story
    of the cabinet; click one and you get the version it belongs to, whole. */
-.prompt a + a { margin-left: 1.5rem; }
+/* the row gap does the spacing now, and a margin as well as a gap puts the
+   second one half an inch in from the first the moment they stack */
 .prompt .read { color: var(--amber); }
 .contents { list-style: none; }
 .contents li { border-top: 1px solid rgba(160, 75, 255, 0.16); }
@@ -179,13 +187,24 @@ h1 {
   border: 1px solid rgba(160, 75, 255, 0.55);
   box-shadow: 0 0 10px rgba(160, 75, 255, 0.4);
 }
+/* A mention, in the margin of whichever version was on the cabinet while it
+   happened. Two columns, the same shape a chapter row uses one line up: the
+   sentence, and the marks hard against the right in a column of their own. The
+   marks used to be floated instead, which reads correctly right up until the
+   sentence is narrower than the float - and then the icons are standing in the
+   middle of the words. A phone is always that narrow. */
 .ci {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.2rem 0.7rem;
   padding: 0.5rem 0.3rem 0.5rem 4.3rem;
   font-size: 0.66rem;
   line-height: 1.6;
   color: var(--dim);
 }
 .ci b { color: var(--violet); font-weight: 500; }
+.ci .what { grid-column: 1; }
 /* Quieter than the deed above it and in the same proportion the chapter uses,
    because it is here to tell two interludes apart rather than to be read. */
 .ci .said {
@@ -268,9 +287,10 @@ h1 {
 }
 /* An interlude keeps to the same right-hand column the chapters use. Half a
    column aligned and half of it trailing whatever length the sentence was
-   reads as a mistake rather than as two kinds of entry. */
-.ci .marks { float: right; margin-left: 0.6rem; }
-.ci .said { clear: right; }
+   reads as a mistake rather than as two kinds of entry. Placed rather than
+   floated, for the reason written where .ci is defined. */
+.ci .marks { grid-column: 2; grid-row: 1; justify-content: flex-end; }
+.ci .said { grid-column: 1 / -1; }
 
 /* --- the shelf -------------------------------------------------------------
    A book is a run of chapters one pilot flew with nobody else landing in
@@ -733,8 +753,13 @@ html { scroll-padding-bottom: 6rem; }
   grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-auto-rows: minmax(3.2rem, 1fr);
   gap: 0.45rem;
-  height: 100%;
 }
+/* The six of them fill the cel, so the numbers stand level with the narration
+   in the cel beside them rather than bunching at the top of a tall panel. Only
+   here: the ledger uses the same tiles with a paragraph and a list of receipts
+   underneath, and a list told to be as tall as its parent takes the whole cel
+   and leaves everything after it standing outside the border. */
+.figures .stats { height: 100%; }
 .stats li {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -1448,6 +1473,32 @@ html { scroll-padding-bottom: 6rem; }
 .roster .pl { display: flex; align-items: center; gap: 0.5rem; color: var(--ink); }
 .tray-head .pl { color: var(--ink); }
 
+/* A pilot page is eleven cels of nine different shapes, where a chapter is
+   five of three — so the row gap a chapter reads well at leaves this one
+   looking like one long panel with lines drawn across it. The label of a cel
+   sits half out of its own top edge, and that half needs somewhere to be: the
+   gap here is the tab's height plus room around it, so no heading is ever
+   reading as the last line of the cel above it. */
+.page main.who {
+  row-gap: clamp(1.9rem, 3.4vh, 2.9rem);
+  column-gap: clamp(0.7rem, 1.3vw, 1.15rem);
+  padding-top: clamp(1.2rem, 3vh, 2rem);
+}
+/* The same reason, one level down: every cel here opens with a heading that is
+   sitting on the border, so the first thing inside it starts below where that
+   heading ends rather than beside it. */
+.ch.who > .cel { padding-top: 1.6rem; }
+.ch.who .gist { margin-top: 0.2rem; }
+
+/* What they move and what it cost them, side by side and deliberately not the
+   same width: nine bars need a bar's worth of room to be read across, three
+   tiles and a list of receipts do not. Either one turns up without the other
+   often enough — a pilot with a blank ledger, a pilot who has only ever
+   mentioned — and then it takes the whole twelve, because half a row with
+   nothing beside it is a gap rather than a column. */
+.halfwide { grid-column: span 7; }
+.halfnarrow { grid-column: span 5; }
+
 /* The face at the size it was painted. Every other page in this book shows it
    at the size of a thumbnail, and a portrait stretched across a splash the way
    a plate is would be a band of colour rather than a person - so this one is
@@ -1467,6 +1518,28 @@ html { scroll-padding-bottom: 6rem; }
 }
 .nameplate { min-width: 0; }
 .ch.who .credits .badge b { color: var(--amber); }
+
+/* The characterisation, and the badges under it. The paragraph is the one
+   place in the book that has an opinion about a person rather than a count of
+   them, so it is set at reading size instead of at caption size — and the
+   badges are the same pills the marks wear everywhere else, because a reader
+   who has learnt one row of them has learnt this one. */
+/* A chapter puts one sentence beside six numbers, so the numbers get the wide
+   half. This is a paragraph, and a paragraph wants the wide half instead - so
+   the two swap over here, and the tiles go two across and three down rather
+   than shrinking to a narrower version of the same shape. */
+.ch.who .told { grid-column: span 7; }
+.ch.who .figures { grid-column: span 5; }
+.ch.who .figures .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ch.who .deed { font-size: clamp(0.8rem, 1.05vw, 0.95rem); line-height: 1.75; }
+.ch.who .deed b { color: var(--cyan); font-weight: 500; }
+/* The drop cap belongs to a chapter, where the deed is one sentence under a
+   plate and the letter is the way in. Six sentences in a five-column cel is a
+   paragraph, and a paragraph with a capital the height of four lines in it is
+   a poster. */
+.ch.who .deed::first-letter { float: none; font-size: inherit; color: inherit;
+  padding: 0; line-height: inherit; text-shadow: none; }
+.traits { margin-top: 1.15rem; }
 
 /* What somebody keeps moving, as nine bars rather than nine numbers. Each bar
    is measured against that pilot's own busiest mark rather than against
@@ -1498,31 +1571,59 @@ html { scroll-padding-bottom: 6rem; }
 
 /* What a player actually meets: the field-guide tiles that came out of a file
    this pilot created. A file count is a fact about a repository; this is the
-   half of somebody that is still being played tonight. */
-.tiles { list-style: none; display: grid; gap: 0.4rem; margin-top: 0.9rem; }
-.tiles li {
+   half of somebody that is still being played tonight.
+
+   Three across, because a tile is a card rather than a row: the name, where
+   the guide files it, the sentence a player reads and the file it came out of,
+   stacked. A single column of these was a list of filenames with headings, and
+   sixteen of them was most of the page. */
+.tiles {
+  list-style: none;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.2rem 0.7rem;
-  padding: 0.5rem 0.6rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+/* A column rather than fixed rows, because a tile that never wrote a briefing
+   is three children and one that did is four - and the path goes to the foot
+   of the card either way. */
+.tiles li {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.34rem;
+  padding: 0.7rem 0.75rem 0.65rem;
+  border: 1px solid rgba(33, 243, 255, 0.22);
   border-left: 2px solid var(--cyan);
   background: rgba(33, 243, 255, 0.05);
 }
+.tiles li:hover { background: rgba(33, 243, 255, 0.1); border-color: rgba(33, 243, 255, 0.45); }
 .tiles b { font-size: 0.74rem; letter-spacing: 0.16em; color: var(--cyan); }
 .tiles span {
   font-size: 0.5rem;
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--dim);
-  align-self: center;
+  justify-self: start;
+}
+/* The briefing, cut short by briefly() rather than by a line clamp: a sentence
+   that stops at a word somebody chose reads better than one a box cut off. */
+.tiles em {
+  font-style: normal;
+  font-size: 0.6rem;
+  line-height: 1.65;
+  color: var(--ink);
+  text-wrap: pretty;
 }
 .tiles i {
-  grid-column: 1 / -1;
+  margin-top: auto;
+  padding-top: 0.15rem;
   font-style: normal;
-  font-size: 0.56rem;
+  font-size: 0.5rem;
   letter-spacing: 0.06em;
   color: var(--dim);
   opacity: 0.75;
+  overflow-wrap: anywhere;
 }
 
 /* The ambush they armed the room with. GR11 has no override on it, so this is
@@ -1645,6 +1746,13 @@ html { scroll-padding-bottom: 6rem; }
 
 @media (max-width: 62rem) {
   .told, .figures, .frame, .margin { grid-column: span 12; }
+  /* said again at the specificity the pilot page swapped them over at, because
+     a media query does not outrank a longer selector */
+  .ch.who .told, .ch.who .figures { grid-column: span 12; }
+  /* the pair stops being a pair before either half gets narrow enough that a
+     nine-letter mark and its bar are fighting over the same inch */
+  .halfwide, .halfnarrow { grid-column: span 12; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .shout { max-width: none; }
   /* the sentence takes the whole width down here, so the corner it was
      keeping clear is gone: the credits fall back under it, still to the right */
@@ -1666,17 +1774,33 @@ html { scroll-padding-bottom: 6rem; }
   /* the face and the numeral say whose book it is; the name spelled out is
      the first thing that can go */
   .spine .nm { display: none; }
+  /* except in the roster, where it is the only thing that says anything. A
+     book has a numeral and a plate; a pilot has a portrait that was painted
+     from a description and a name that is the whole of who they are, so the
+     dock on a pilot page keeps the words and loses the picture instead. */
+  .whodock .spine .nm { display: block; }
+  .whodock .spine .face { display: none; }
+  .whodock .spine { min-width: 0; }
 }
 @media (max-width: 34rem) {
   /* the bars say it on their own, the same way the arrows do */
   .song .lab { display: none; }
   .song { padding: 0.4rem 0.5rem; }
   .roster table { font-size: 0.62rem; }
-  .cv a { grid-template-columns: 2.9rem minmax(0, 1fr) auto; gap: 0.5rem; }
-  .ci { padding-left: 0.3rem; }
+  /* The marks stop being a column and become a row of their own, under the
+     words they are about. A column of icons costs a quarter of the width here,
+     and it takes it off the one thing on the row anybody is reading - which is
+     how a four-word tagline ended up set over three lines beside two pictures. */
+  .cv a { grid-template-columns: 2.9rem minmax(0, 1fr); gap: 0.35rem 0.5rem; }
+  .cv .marks { grid-column: 2; justify-content: flex-start; }
+  .ci { padding-left: 0.3rem; grid-template-columns: minmax(0, 1fr); }
+  .ci .marks { grid-column: 1; grid-row: auto; justify-content: flex-start; }
   .book > summary { gap: 0.4rem 0.6rem; padding: 0.6rem; }
   .by .face { width: 1.7rem; height: 1.7rem; }
   .gist, .book .contents { margin-inline: 0.6rem; padding-inline: 0; }
+  /* padding-inline: 0 above takes the words up against the rule in the margin,
+     and the rule is what says this is an aside rather than a paragraph */
+  .gist { padding-left: 0.6rem; }
   .leaf { grid-template-columns: 2.6rem 2.2rem minmax(0, 1fr) auto; gap: 0.5rem; }
   /* four stacked lines is a lot of corner on a phone; tightened up they are
      still four lines somebody can read at a glance */
@@ -1686,6 +1810,21 @@ html { scroll-padding-bottom: 6rem; }
   .turn .lab { display: none; }
   .spine { padding: 0 0.35rem; gap: 0.3rem; }
   .spine .face { display: none; }
+  /* A phone reads a pilot page as one column of eleven cels, one under the
+     next, and at that width the gap between two of them is the only thing
+     saying they are two. It is the tab's own height again, plus the room a
+     thumb needs to not think they are one panel. */
+  .page main.who { row-gap: 2.3rem; }
+  .ch.who > .cel { padding: 1.7rem 0.9rem 1.15rem; }
+  .tiles { grid-template-columns: minmax(0, 1fr); }
+  .traits { gap: 0.3rem; }
+  /* nine marks against a bar and a number is four columns too many here: the
+     bar goes and the number does the saying */
+  .prints .mk { grid-template-columns: 0.9rem minmax(0, 1fr) 2rem; gap: 0.5rem; }
+  .prints .bar { display: none; }
+  .board { font-size: 0.56rem; }
+  .board th:nth-child(4), .board td:nth-child(4),
+  .board th:nth-child(5), .board td:nth-child(5) { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   h1, .shout, .roster, .art *, .dots, .plate-img, .loud, .loud::before { animation: none; }
