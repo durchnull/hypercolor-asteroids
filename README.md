@@ -2,7 +2,7 @@
 
 ![pilots: 3](media/badges/pilots.svg)
 ![events armed: 8](media/badges/events.svg)
-![versions: 45](media/badges/versions.svg)
+![versions: 46](media/badges/versions.svg)
 ![flights: 13 taped](media/badges/flights.svg)
 ![golden rules: 16](media/badges/rules.svg)
 ![licence: MIT](media/badges/licence.svg)
