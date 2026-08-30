@@ -37,6 +37,31 @@ body.has-touch.menu .touch { display: none; }
   border-color: rgba(182,255,61,0.6);
   color: var(--lime);
 }
+
+/* Six buttons, the gaps between them and the padding either side come to
+   499px at full size. That is wider than every phone there is in portrait — a
+   16 Pro Max is 440 and an SE is 375 — so `space-between` had nowhere to put
+   the last group and painted THRUST half off the right edge and FIRE entirely
+   past it. The game was unplayable in the orientation people land in, which
+   is the one a shared link opens in.
+
+   Shrink to fit rather than wrapping onto a second row: wrapping moves the
+   thumbs off the two bottom corners, and the corners are the whole reason the
+   pad is split into two groups. `clamp` rather than a flat rem because the
+   failure is continuous — every width below 499 was broken, not a bracket of
+   them. The floor is 44px, which is the smallest a thumb reliably hits, and
+   it only binds below about 340px. The 13vw in the middle is what leaves
+   `space-between` enough slack to still read as two thumbs at two corners
+   rather than one row of six. */
+@media (max-width: 520px) {
+  .touch { padding: 0 0.5rem calc(0.6rem + env(safe-area-inset-bottom)); }
+  .touch .pad { gap: 0.5rem; }
+  .touch button {
+    width: clamp(2.75rem, 13vw, 3.4rem);
+    height: clamp(2.75rem, 13vw, 3.4rem);
+    font-size: 1rem;
+  }
+}
 #mute {
   position: fixed;
   right: 1rem;
