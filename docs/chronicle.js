@@ -6,16 +6,16 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 43,
-    latest: { v: 43, pilot: "David Friedrich", date: "30 August 2026", line: "The instrument panel developed an opinion." },
+    versions: 44,
+    latest: { v: 44, pilot: "David Friedrich", date: "30 August 2026", line: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago." },
     plates: [
+      { v: 44, alt: "", line: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago." },
+      { v: 43, file: "7a0197e0.jpg", alt: "The instrument panel developed an opinion.", line: "The instrument panel developed an opinion." },
       { v: 37, file: "3c0fca03.jpg", alt: "A key that did nothing now does something. The colours moved as well.", line: "A key that did nothing now does something. The colours moved as well." },
       { v: 36, file: "a716ccc6.jpg", alt: "What counts as fair was quietly re-argued.", line: "What counts as fair was quietly re-argued." },
-      { v: 35, file: "07129e98.jpg", alt: "Somebody adjusted what was already out there, and it noticed. The colours moved as well.", line: "Somebody adjusted what was already out there, and it noticed. The colours moved as well." },
-      { v: 34, file: "c78b5d4a.jpg", alt: "The phosphor is a different colour of wrong now. It brought company.", line: "The phosphor is a different colour of wrong now. It brought company." },
     ],
     roster: {
-      "David Friedrich": 38,
+      "David Friedrich": 39,
       "Malte Buttjer": 3,
       "felix2072": 2,
     }
