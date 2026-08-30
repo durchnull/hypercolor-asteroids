@@ -420,6 +420,7 @@ is_generated() {
     docs/rail.js) return 0 ;;           # the dock every chapter shares, same machine
     docs/favicon.svg) return 0 ;;       # the signet on the tab, read off the logo
     docs/v[0-9]*.html) return 0 ;;      # one page per version, same machine
+    docs/pilot-*.html) return 0 ;;      # one page per pilot, same machine again
     docs/art/*) return 0 ;;             # the plates, painted once and kept
     docs/faces/*) return 0 ;;           # the pilots, painted once and never again
     docs/tapes/*) return 0 ;;           # the filed flights, byte for byte off the glass

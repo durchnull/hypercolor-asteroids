@@ -1434,6 +1434,215 @@ html { scroll-padding-bottom: 6rem; }
 
 /* Below the width where two cels side by side stop being two cels and start
    being two columns of four words, there is one column. */
+/* --- the pilots -----------------------------------------------------------
+   One page per person, built out of the same furniture as a chapter, because
+   it is built out of the same stream: a splash with the face where the plate
+   goes, cels, stats, a shelf. Only three things here are new — a bar per mark,
+   a board of flights, and a dock that is a shelf of people rather than books. */
+
+/* Every name the book prints is now a way into the rest of what that person
+   did. It inherits its colour on purpose: a roster that turned every name cyan
+   would read as a table of links rather than as a table of pilots. */
+.pl { color: inherit; text-decoration: none; }
+.pl:hover, .pl:focus-visible { color: var(--magenta); text-shadow: 0 0 12px currentColor; }
+.roster .pl { display: flex; align-items: center; gap: 0.5rem; color: var(--ink); }
+.tray-head .pl { color: var(--ink); }
+
+/* The face at the size it was painted. Every other page in this book shows it
+   at the size of a thumbnail, and a portrait stretched across a splash the way
+   a plate is would be a band of colour rather than a person - so this one is
+   framed beside the name instead of laid behind it. */
+.whois { min-height: clamp(13rem, 30vh, 19rem); }
+.whois .say { display: flex; align-items: center; gap: clamp(1rem, 3vw, 2rem); }
+.portrait {
+  flex: none;
+  width: clamp(5rem, 12vw, 8.5rem);
+  height: clamp(5rem, 12vw, 8.5rem);
+  border-radius: 50%;
+  object-fit: cover;
+  background: #05010c;
+  border: 1px solid rgba(255, 62, 200, 0.6);
+  box-shadow: 0 0 30px rgba(255, 62, 200, 0.35), inset 0 0 20px rgba(5, 1, 12, 0.8);
+  filter: saturate(1.18) contrast(1.06);
+}
+.nameplate { min-width: 0; }
+.ch.who .credits .badge b { color: var(--amber); }
+
+/* What somebody keeps moving, as nine bars rather than nine numbers. Each bar
+   is measured against that pilot's own busiest mark rather than against
+   anybody else's, because this says what kind of pilot they are and not how
+   they rank. The colours are the mark colours — .mk carries them, so the pill
+   styling is what gets undone here and the palette is not restated. */
+.prints { list-style: none; display: grid; gap: 0.3rem; margin-top: 0.9rem; }
+.prints .mk {
+  display: grid;
+  grid-template-columns: 0.9rem minmax(5.5rem, 8rem) minmax(0, 1fr) 2rem;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.3rem 0.45rem;
+  border: 0;
+  border-left: 2px solid currentColor;
+  border-radius: 0;
+  background: rgba(5, 1, 12, 0.4);
+}
+.prints .mk em { letter-spacing: 0.16em; }
+.prints .bar { display: block; height: 0.42rem; background: rgba(160, 75, 255, 0.16); }
+.prints .bar i { display: block; height: 100%; background: currentColor; opacity: 0.75; }
+.prints b {
+  font-size: 0.7rem;
+  text-align: right;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* What a player actually meets: the field-guide tiles that came out of a file
+   this pilot created. A file count is a fact about a repository; this is the
+   half of somebody that is still being played tonight. */
+.tiles { list-style: none; display: grid; gap: 0.4rem; margin-top: 0.9rem; }
+.tiles li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.2rem 0.7rem;
+  padding: 0.5rem 0.6rem;
+  border-left: 2px solid var(--cyan);
+  background: rgba(33, 243, 255, 0.05);
+}
+.tiles b { font-size: 0.74rem; letter-spacing: 0.16em; color: var(--cyan); }
+.tiles span {
+  font-size: 0.5rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--dim);
+  align-self: center;
+}
+.tiles i {
+  grid-column: 1 / -1;
+  font-style: normal;
+  font-size: 0.56rem;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  opacity: 0.75;
+}
+
+/* The ambush they armed the room with. GR11 has no override on it, so this is
+   the one section on the page that is about a rule rather than about a record. */
+.traps { list-style: none; display: grid; gap: 0.5rem; margin-top: 0.9rem; }
+.traps li {
+  display: grid;
+  gap: 0.24rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid rgba(255, 62, 200, 0.35);
+  background: rgba(255, 62, 200, 0.06);
+}
+.traps b { font-size: 0.8rem; letter-spacing: 0.2em; color: var(--magenta); }
+.traps span { font-size: 0.6rem; letter-spacing: 0.12em; color: var(--ink); }
+.traps i {
+  font-style: normal;
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* Their flights, straight off the board, and the meter underneath read from
+   tools/flights.sh rather than counted here. */
+.board { width: 100%; border-collapse: collapse; margin-top: 0.9rem; font-size: 0.62rem; }
+.board th {
+  text-align: left;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  color: var(--dim);
+  padding: 0.3rem 0.4rem;
+}
+.board td {
+  padding: 0.42rem 0.4rem;
+  border-top: 1px solid rgba(160, 75, 255, 0.18);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  vertical-align: top;
+}
+.board td:nth-child(2) { color: var(--amber); }
+.board td:last-child { color: var(--dim); letter-spacing: 0.02em; }
+.meter {
+  margin-top: 0.8rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+}
+.meter b { color: var(--amber); }
+
+/* The receipts under the ledger. The count is tools/tally.sh's answer and sits
+   in the tiles above; these are the chapters where the reasons are, because a
+   page that printed the number and hid the reasons would be worse than one
+   that printed neither. */
+.receipts { list-style: none; display: grid; gap: 3px; margin-top: 0.9rem; }
+.receipts a, .receipts .norec {
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.7rem;
+  padding: 0.42rem 0.55rem;
+  background: rgba(255, 176, 32, 0.07);
+  border-left: 2px solid var(--amber);
+  color: var(--ink);
+  text-decoration: none;
+}
+.receipts a:hover { background: rgba(255, 176, 32, 0.16); }
+.receipts b { color: var(--amber); font-size: 0.66rem; letter-spacing: 0.1em; }
+.receipts span { font-size: 0.6rem; color: var(--ink); }
+.receipts i {
+  font-style: normal;
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+/* The cabinet is shared, and this is the only place on the page that says so. */
+.visits { list-style: none; display: grid; gap: 0.35rem; margin-top: 0.9rem; }
+.visits li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.7rem;
+  padding: 0.42rem 0.55rem;
+  border-left: 2px solid var(--violet);
+  background: rgba(160, 75, 255, 0.08);
+}
+.visits .pl { font-size: 0.66rem; letter-spacing: 0.14em; color: var(--ink); }
+/* A name in running prose brings its face with it, and there it has to be the
+   size of the words rather than the size of a portrait. */
+.gist .pl, .visits .pl { display: inline-flex; align-items: center; gap: 0.3rem; }
+.gist .pl .face, .visits .pl .face { width: 1.3rem; height: 1.3rem; }
+.visits span { font-size: 0.56rem; letter-spacing: 0.08em; color: var(--dim); }
+
+/* A run of Chronicle lines is a portrait nobody sat for. */
+.quotes { list-style: none; display: grid; gap: 0.5rem; margin-top: 0.9rem; }
+.quotes li { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: 0.7rem; align-items: baseline; }
+.quotes a { color: var(--cyan); text-decoration: none; font-size: 0.66rem; letter-spacing: 0.1em; }
+.quotes q { font-size: 0.68rem; line-height: 1.6; color: var(--ink); quotes: "\201C" "\201D"; }
+
+/* The dock, and on a pilot page the shelf in it is a shelf of people. Same
+   furniture, same corner of the window, one press to anybody else the cabinet
+   has ever heard of. */
+.whodock .spine { min-width: 8.5rem; }
+.whodock .spine .nm {
+  max-width: none;
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+}
+.whodock .spine .sp i {
+  font-style: normal;
+  font-size: 0.5rem;
+  letter-spacing: 0.16em;
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+}
+.whodock .spine[aria-current="page"] { border-color: var(--magenta); }
+
 @media (max-width: 62rem) {
   .told, .figures, .frame, .margin { grid-column: span 12; }
   .shout { max-width: none; }

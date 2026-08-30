@@ -501,6 +501,145 @@ faces() {
   }' docs/faces/index.tsv
 }
 
+# The field guide, folded into the stream the same way once more: which file
+# briefs the player about what. A feature that registers a guide tile is a
+# thing a pilot meets in the game rather than a file in a tree, and crossing
+# these against owners() above is how the book says what somebody built
+# without counting lines at anybody.
+#
+# Read off the worktree rather than off the history, and deliberately: this is
+# what is in the cabinet now, not what was ever in it. A tile somebody has
+# since deleted is gone from the game, so it is gone from here.
+guides() {
+  find src -name '*.js' -type f 2>/dev/null | sort | while IFS= read -r p; do
+    awk -v p="$p" '
+      function str() { return match($0, /"[^"]*"/) ? substr($0, RSTART + 1, RLENGTH - 2) : "" }
+      # The tile opens, and the two fields worth having are the first lines of
+      # it. Everything after them is an icon and a paragraph, and neither
+      # belongs in an index.
+      /^[[:space:]]*guide:[[:space:]]*\{/ { g = 1; nm = ""; gp = ""; next }
+      # A name that is built rather than written - the song of the night is the
+      # one - keeps the half that is a literal and says there is more to it.
+      g && nm == "" && /^[[:space:]]*name:[[:space:]]*"/ {
+        nm = str()
+        if ($0 !~ /^[[:space:]]*name:[[:space:]]*"[^"]*",?[[:space:]]*$/) {
+          sub(/[[:space:]]*$/, "", nm)
+          nm = nm "\342\200\246"
+        }
+        next
+      }
+      g && /^[[:space:]]*group:[[:space:]]*"/ { gp = str() }
+      # Anything past the name closes the reading, whether or not a group was
+      # ever given - a tile with no group is still a tile.
+      g && nm != "" && /^[[:space:]]*(group|meta|tint|icon|desc):/ {
+        printf "\036GUIDE\037%s\037%s\037%s", p, nm, gp
+        g = 0
+      }
+    ' "$p"
+  done
+}
+
+# The ambushes, one file per pilot, folded in the same way. GR11 makes this the
+# one directory where the author is written into the file rather than worked
+# out from the history, so the book reads what the event says about itself -
+# and the house, which signs with nobody's name, arrives with that field empty
+# and is nobody's on the page for the same reason it is nobody's in the game.
+arms() {
+  for p in src/events/*.js; do
+    [ -f "$p" ] || continue
+    awk -v p="$p" '
+      function str() { return match($0, /"[^"]*"/) ? substr($0, RSTART + 1, RLENGTH - 2) : "" }
+      # One call, and it may carry a list: A.defineEvent([{...}, {...}]) is how
+      # a pilot with more than one ambush writes them, and the house has four.
+      /defineEvent\(/ { e = 1; id = ""; by = ""; nm = ""; next }
+      e && /^[[:space:]]*id:[[:space:]]*"/    { id = str(); next }
+      e && /^[[:space:]]*by:[[:space:]]*"/    { by = str(); next }
+      e && /^[[:space:]]*name:[[:space:]]*"/  { nm = str(); next }
+      e && /^[[:space:]]*blurb:[[:space:]]*"/ {
+        if (id != "") printf "\036ARM\037%s\037%s\037%s\037%s\037%s", p, id, by, nm, str()
+        id = ""; by = ""; nm = ""
+      }
+    ' "$p"
+  done
+}
+
+# The board, folded in the same way: every flight that has ever been ranked, as
+# the ranked table says it. tools/flights.sh is the meter and answers a
+# different question - how many landings a tape has left to cover - so it is
+# asked for that below rather than re-derived here, and this reads the one
+# thing it does not print: which evenings a pilot actually flew.
+flights_ranked() {
+  [ -f docs/RANKINGS.md ] || return 0
+  awk -F'|' '
+    # The ranked table only: a row whose first cell is nothing but a number.
+    # The log under it is the same evenings again in prose, and prose wraps.
+    NF >= 8 && $2 ~ /^[[:space:]]*[0-9]+[[:space:]]*$/ {
+      for (i = 2; i <= 8; i++) gsub(/^[[:space:]]+|[[:space:]]+$/, "", $i)
+      printf "\036FLY\037%s\037%s\037%s\037%s\037%s\037%s\037%s", $3, $2, $4, $5, $6, $7, $8
+    }
+  ' docs/RANKINGS.md
+}
+
+# And the tapes themselves, which are the only record of what an event has ever
+# actually done to anybody. One record per firing: whose ambush it was, which
+# one, who was flying and what it cost them. A pilot with no filed tape is
+# simply not in here - the archive starts where tools/blackbox.sh --save does,
+# and the flights older than it are on the board without one.
+firings() {
+  for t in docs/tapes/*.json; do
+    [ -f "$t" ] || continue
+    tr ',' '\n' < "$t" | awk '
+      /"pilot":/  { if (match($0, /"pilot":"[^"]*"/)) who = substr($0, RSTART + 9, RLENGTH - 10) }
+      /"id":/     { if (match($0, /"id":"[^"]*"/))    id  = substr($0, RSTART + 6, RLENGTH - 7) }
+      /"by":/     { if (match($0, /"by":"[^"]*"/))    by  = substr($0, RSTART + 6, RLENGTH - 7) }
+      /"wave":/   { if (match($0, /"wave":[0-9]+/))   wv  = substr($0, RSTART + 7, RLENGTH - 7) }
+      /"deaths":/ {
+        if (match($0, /"deaths":[0-9]+/)) dt = substr($0, RSTART + 9, RLENGTH - 9)
+        if (id != "" && by != "") printf "\036FIRE\037%s\037%s\037%s\037%s\037%s", by, id, who, wv, dt
+        id = ""; by = ""
+      }
+    '
+  done
+}
+
+# What is still in the cabinet, so that owners() above can be asked about the
+# tree as it stands rather than as it ever was. A file somebody created and
+# somebody else later deleted is not something they own today, and a page that
+# said otherwise would be counting ghosts at people.
+tree() { git ls-files 2>/dev/null | awk '{ printf "\036TREE\037%s", $0 }'; }
+
+# The two standings the book does not get a vote on. The ledger is
+# tools/tally.sh's answer, written into src/game/ledger.js and checked against
+# the history at commit time; the flight meter is tools/flights.sh's. Both are
+# read here rather than worked out, because a book that formed its own opinion
+# about somebody's record would be a second opinion about it - and the whole
+# arrangement in this project is that there is only ever one.
+ledger_of() {
+  [ -f src/game/ledger.js ] || return 0
+  awk '
+    match($0, /"[^"]*":[[:space:]]*\{/) {
+      who = substr($0, RSTART + 1, RLENGTH - 1)
+      sub(/":[[:space:]]*\{$/, "", who)
+      b = c = 0; last = ""
+      if (match($0, /bends:[[:space:]]*[0-9]+/)) b = substr($0, RSTART + 6, RLENGTH - 6) + 0
+      if (match($0, /clean:[[:space:]]*[0-9]+/)) c = substr($0, RSTART + 6, RLENGTH - 6) + 0
+      if (match($0, /last:[[:space:]]*"[^"]*"/)) {
+        last = substr($0, RSTART + 5, RLENGTH - 5)
+        gsub(/[":[:space:]]/, "", last)
+      }
+      printf "\036LED\037%s\037%d\037%d\037%s", who, b, c, last
+    }
+  ' src/game/ledger.js
+}
+meters() {
+  pilots | while IFS= read -r who; do
+    [ -n "$who" ] || continue
+    printf '\036MET\037%s\037%s\037%s' "$who" \
+      "$(sh tools/flights.sh --count "$who" 2>/dev/null || echo 0)" \
+      "$(sh tools/flights.sh --last "$who" 2>/dev/null)"
+  done
+}
+
 # One record per commit: header fields, then the raw diff, then the numstat.
 # --raw is there for one letter: D. A deleted file and a file that only lost
 # lines are the same two numbers, and GR6 counts one of them and not the other.
@@ -573,6 +712,7 @@ function is_book(p) {
           p == "docs/rail.js" || p == "docs/taglines.tsv" ||
           p == "docs/favicon.svg" ||
           p ~ /^docs\/v[0-9]+\.html$/ ||
+          p ~ /^docs\/pilot-[a-z0-9-]+\.html$/ ||
           p ~ /^docs\/art\// || p ~ /^docs\/faces\// ||
           p ~ /^('"$NOTESRE"')$/)
 }
@@ -1001,7 +1141,7 @@ esac
 
 # Every page is written fresh on every rebuild, so a chapter somebody deleted
 # comes back and a chapter for a version that no longer exists does not.
-[ "$QUIET" = 1 ] || rm -f docs/v[0-9]*.html
+[ "$QUIET" = 1 ] || rm -f docs/v[0-9]*.html docs/pilot-*.html
 
 # The tab wears the signet, and the drawing is not copied here: the rock, its
 # box, the three lobes and the flat hues are read off src/ui/logo.js - the one
@@ -1059,7 +1199,8 @@ if [ "$QUIET" = 0 ] && [ -f src/ui/logo.js ]; then
   if [ -s docs/favicon.svg ]; then FAV=1; else rm -f docs/favicon.svg; fi
 fi
 
-{ taglines; owners; renames; plates; faces; history '%d %B %Y|%H:%M'; } \
+{ taglines; owners; renames; plates; faces; guides; arms; flights_ranked; firings
+  tree; ledger_of; meters; history '%d %B %Y|%H:%M'; } \
   | awk -v RS='\036' -v FS='\037' -v total="$TOTAL" -v rules="$RULES" -v fav="$FAV" \
         -v auditonly="$AUDIT" -v silenceonly="$SILENCE" "$LIB"'
 function esc(s) { gsub(/&/,"\\&amp;",s); gsub(/</,"\\&lt;",s); gsub(/>/,"\\&gt;",s); return s }
@@ -1087,6 +1228,32 @@ function plural(n) { return n == 1 ? "" : "s" }
 #
 # alt is deliberately empty: the name is always right beside the picture, and a
 # screen reader announcing it twice is worse than not announcing it at all.
+# One pilot, one page, and this is the name of it. The faces have been slugged
+# this way since the first one was painted, so the pilot whose portrait is
+# docs/faces/david-friedrich.jpg has a page at docs/pilot-david-friedrich.html
+# and the two cannot drift apart without somebody moving them both.
+# One line of the ledger, filed against the chapter it can be read at.
+function receipt(who, at, game, subj, why) {
+  rcn[who]++
+  RCV[who SUBSEP rcn[who]] = at
+  RCK[who SUBSEP rcn[who]] = (game > 0 ? "V" : "I")
+  RCS[who SUBSEP rcn[who]] = subj
+  RCW[who SUBSEP rcn[who]] = why
+}
+function slug(s) {
+  s = tolower(s)
+  gsub(/[^a-z0-9]+/, "-", s)
+  gsub(/^-+|-+$/, "", s)
+  return s
+}
+# Every place the book prints a name it can now be pressed: the roster on the
+# cover, the spine of a book, the corner of the splash a chapter opens with.
+# One function for all three, so a name that is not a link anywhere is a name
+# this was never asked about.
+function plink(p, cls) {
+  return "<a class=\"pl" (cls != "" ? " " cls : "") "\" href=\"pilot-" slug(p) ".html\">" \
+         face(p) esc(p) "</a>"
+}
 function face(p,   f) {
   f = mug[p]
   if (f == "") return ""
@@ -1623,6 +1790,18 @@ $1 == "REN" { moveto[$2 SUBSEP $3] = $4; cameto[$2 SUBSEP $4] = $3; next }
 $1 == "ART" { art[$2] = $3; altof[$2] = $4; next }
 $1 == "ART" { plate[$2] = $3; plated[$2] = $4; next }
 $1 == "FACE" { mug[$2] = $3; next }
+# Everything the pilot pages are made of, arriving the same way the plates and
+# the faces do - folded into the one stream rather than opened in the middle of
+# it. None of it is read before END: a pilot page is about a whole history, so
+# there is nothing useful to say about any of it until the history has gone by.
+$1 == "GUIDE" { gname[$2] = $3; ggroup[$2] = $4; next }
+$1 == "ARM"   { an++; aid[an] = $3; aby[an] = $4; anm[an] = $5; abl[an] = $6; next }
+$1 == "FLY"   { fn++; fwho[fn] = $2; frk[fn] = $3; fsc[fn] = $4
+                fwv[fn] = $5; ftm[fn] = $6; fac[fn] = $7; fsd[fn] = $8; next }
+$1 == "FIRE"  { evfired[$3]++; evkill[$3] += $6; evflew[$3 SUBSEP $4] = 1; next }
+$1 == "TREE"  { intree[$2] = 1; next }
+$1 == "LED"   { lbend[$2] = $3; lclean[$2] = $4; llast[$2] = $5; next }
+$1 == "MET"   { msince[$2] = $3; mflown[$2] = $4; next }
 NF < 4 { next }
 {
   # Reading newest first, this is where the rules stop existing. The commit that
@@ -1652,6 +1831,7 @@ NF < 4 { next }
   rankmoved = 0
   refstrict = 0; nonref = 0; stolen = 0
   split("", deleted); split("", arrived); split("", fseen); split("", fadd); split("", fdel)
+  split("", xown)
   split("", mkseen); split("", mkheld)
   n = split(rest, b, "\n")
   for (k = 1; k <= n; k++) {
@@ -1672,6 +1852,12 @@ NF < 4 { next }
       split(t, ns, "\t")
       p = ns[3]
       mark_into(p, mkseen, mkheld)
+      # Whose work this commit landed in, other than the work of the pilot who
+      # landed it. GR8 is the rule with no check on it, and this is as close as
+      # the history comes to answering it: a version that moved a file somebody
+      # else created is the one thing a shared cabinet cannot read off a single
+      # diff.
+      if (is_game(p) && (p in owner) && owner[p] != who) xown[owner[p]] = 1
       if (is_game(p)) gamefiles++
       else if (p ~ /^tools\// || p ~ /^\.githooks\// || p ~ /^\.claude\// ||
                p ~ /^\.github\// ||
@@ -1850,6 +2036,44 @@ NF < 4 { next }
   }
   if (silenceonly) next
 
+  # Everything the pilot pages count that both kinds of commit can carry. A
+  # mention belongs to a history as much as a version does - the two are told
+  # apart below this line, not above it - so the dates and the marks are
+  # gathered up here, where a commit is still only a commit.
+  #
+  # The log arrives newest first, so the last date written is the oldest one.
+  if (!(who in plast)) { plast[who] = when; plastat[who] = $5 }
+  pfirst[who] = when; pfirstat[who] = $5
+  pmn = split(marksort(mkseen), pmv, " ")
+  for (k = 1; k <= pmn; k++) pmk[who SUBSEP pmv[k]]++
+
+  # Every time this pilot spent something, kept where both kinds of commit
+  # still pass. A version writes its receipt into its own chapter; a mention
+  # writes one into the margin of whichever chapter was on the cabinet while it
+  # happened. Both are read at v<ver>.html, which is what lets one list carry
+  # the two - and ver is still the number this commit takes, or the number it
+  # happened alongside, because the branch below has not run yet.
+  #
+  # Three things and deliberately not four: an override, a referee that was
+  # never asked, and a breach the table called. Altering a rule is none of
+  # those. It is the most public thing anybody does here, it costs nothing on
+  # the tally, and a hundred of them filed under a heading that says ledger
+  # would say the opposite of what the ledger says.
+  #
+  # One row per override line rather than per commit, because that is how
+  # tools/tally.sh charges them: a commit that spent two budgets in one message
+  # is two on the ledger, and a list that showed it once would be four receipts
+  # under a heading that says five.
+  if (overrides != "" || unrec != "" || breach != "") {
+    rcc = 0
+    if (overrides != "") {
+      rcc = split(overrides, rcl, " // ")
+      for (rci = 1; rci <= rcc; rci++) receipt(who, ver, gamefiles, subj, grtag(rcl[rci]) " spent, in writing")
+    }
+    if (unrec != "")  receipt(who, ver, gamefiles, subj, "the referee never saw it")
+    if (breach != "") receipt(who, ver, gamefiles, subj, "the table called a breach")
+  }
+
   # ---- an interlude: a commit that left the game exactly as it found it -----
   # A line on the cover, and a note in the margin of whichever version was on
   # the cabinet while it happened. That is the whole of what a mention is: it
@@ -1891,7 +2115,12 @@ NF < 4 { next }
     # an interlude on the right shelf below, in the book that was being written
     # while it happened. Nothing before v1 has a book to belong to, and 0 is
     # read as the first one.
-    ENT[++en] = "I" SUBSEP said SUBSEP esc(subj) SUBSEP ver SUBSEP marksort(mkseen)
+    # The author rides along as a sixth field. The cover shelves every mention
+    # under whichever book was being written at the time, whoever wrote it,
+    # which is the true story of the cabinet; a pilot page shelves only the
+    # ones that are theirs, because a book of somebody else errands filed under
+    # your name is a worse story than no errands at all. entry() reads neither.
+    ENT[++en] = "I" SUBSEP said SUBSEP esc(subj) SUBSEP ver SUBSEP marksort(mkseen) SUBSEP who
     interludes[who]++
     next
   }
@@ -1902,6 +2131,9 @@ NF < 4 { next }
   v = ver--
   pilots[who]++
   if (v > peak[who]) peak[who] = v
+  # Counted once per version rather than once per file: landing in four files
+  # belonging to one pilot on one evening is a single visit, not four.
+  for (xo in xown) { cross[who SUBSEP xo]++; crossv[who SUBSEP xo] = crossv[who SUBSEP xo] " " v }
 
   VH[v] = $1;    VW[v] = who;  VN[v] = when;   VC[v] = clock; VA[v] = $5
   VS[v] = subj;  VL[v] = line; VT[v] = ($1 in tag) ? tag[$1] : ""
@@ -1932,6 +2164,370 @@ function entry(f, e,   v) {
     if (e[3] != "") printf "<span class=\"said\">&ldquo;%s&rdquo;</span>", e[3] > f
     print "</li>" > f
   }
+}
+
+# ---- one page per pilot ----------------------------------------------------
+# The book tells the story of the versions. This one tells the story of a
+# person, out of exactly the same stream: what they landed, what they own, what
+# they armed the room with, what they flew, and what the field charges them for
+# all of it. Every answer on the page is already somewhere above; the page is
+# only where they finally meet each other.
+#
+# Nothing here is a record anybody keeps up to date - a page that had to be
+# maintained is wrong inside a week - and nothing here is a number this file
+# worked out for itself where another tool already answers the question. The
+# ledger is tools/tally.sh, the meter is tools/flights.sh, and both are read.
+#
+# A section with nothing to say is not written at all. Most of these pages are
+# one book and a mention, and a page of empty headings teaches a reader to skim
+# past the heading that mattered.
+function pilotpage(p,   f, i, j, k, v, b, n, s, t, nb2, run, longest, longbook,
+                   days, gl, ng, nf, ne, ncr, hits, kills, mmv, nmk, tot,
+                   said, cnt, oth, ov, e2) {
+  f = "docs/pilot-" slug(p) ".html"
+
+  # The shelf this pilot holds, and the longest run on it - the one number a
+  # roster row can never say, because a run is a fact about a shelf rather than
+  # about a person.
+  nb2 = 0; longest = 0; longbook = 0
+  for (b = 1; b <= nb; b++) {
+    if (BW[b] != p) continue
+    nb2++
+    run = BE[b] - BS[b] + 1
+    if (run > longest) { longest = run; longbook = b }
+  }
+
+  head(f, esc(p) " &mdash; HYPERCOLOR ASTEROIDS", "page")
+  print "<main class=\"ch who\">" > f
+
+  # ---- the splash. The face at the size it was painted, which is the one
+  # thing every other page in this book has only ever shown at the size of a
+  # thumbnail. A pilot with no face reads as a name, as everywhere else.
+  print "<section class=\"cel splash whois\">" > f
+  print "<span class=\"dots\" aria-hidden=\"true\"></span>" > f
+  print "<div class=\"say\">" > f
+  if (mug[p] != "")
+    printf "<img class=\"portrait\" src=\"faces/%s\" alt=\"%s\" loading=\"lazy\" decoding=\"async\">", \
+           mug[p], att(p) > f
+  printf "<div class=\"nameplate\"><p class=\"kicker\">%s the pilot</p><h1 class=\"shout\">%s</h1></div>", \
+         ico("bolt"), esc(p) > f
+  print "</div>" > f
+  printf "<p class=\"credits\"><span class=\"badge\"><b>%d</b><i>version%s</i></span>", \
+         pilots[p], plural(pilots[p]) > f
+  if (nb2 > 0) printf "<span class=\"ver\">%d book%s</span>", nb2, plural(nb2) > f
+  printf "<span class=\"when\">%s &ndash; %s</span></p>", esc(pfirst[p]), esc(plast[p]) > f
+  print "</section>" > f
+
+  # ---- who this is, in one paragraph, in the same voice the chapters use.
+  print "<section class=\"cel told\">" > f
+  printf "<h2 class=\"tab\">%s who this is</h2>\n", ico("quote") > f
+  if (pilots[p] > 0)
+    said = "<b>" esc(p) "</b> has landed " pilots[p] " version" plural(pilots[p]) \
+           " of this cabinet, across " nb2 " book" plural(nb2) "."
+  else
+    said = "<b>" esc(p) "</b> has never landed a version. Everything below is the " \
+           "rest of what a person can do here, which is most of it."
+  if (interludes[p])
+    said = said " " interludes[p] " other commit" plural(interludes[p]) \
+           (interludes[p] == 1 ? " left" : " left") " the cabinet exactly as it was found."
+  if (longest > 1)
+    said = said " The longest stretch with nobody else landing in between is book " \
+           roman(longbook) ", " longest " chapters of it."
+  printf "<p class=\"deed\">%s</p>\n", said > f
+  printf "<p class=\"subj\">first seen %s &mdash; last seen %s</p>\n", \
+         esc(pfirst[p]), esc(plast[p]) > f
+  print "</section>" > f
+
+  # ---- the numbers. The same tiles a chapter uses, asked about a person.
+  print "<section class=\"cel figures\">" > f
+  printf "<h2 class=\"tab\">%s the numbers</h2>\n", ico("gauge") > f
+  print "<ul class=\"stats\">" > f
+  printf "%s", tile("medal", pilots[p], pilots[p], "version" plural(pilots[p]) " landed") > f
+  printf "%s", tile("book", nb2, nb2, "book" plural(nb2) " held") > f
+  if (longest > 0)
+    printf "%s", tile("target", longest, longest, "chapter run, longest") > f
+  if (interludes[p])
+    printf "%s", tile("hourglass", interludes[p], interludes[p], "mention" plural(interludes[p])) > f
+  days = int((plastat[p] - pfirstat[p]) / 86400)
+  if (days > 0) printf "%s", tile("cal", days, days, "day" plural(days) " in the room") > f
+  else          printf "%s", tile("cal", "", "one day", "first to last") > f
+  # What is still in the cabinet with their name on it. Owned means the commit
+  # that created the file was theirs, which is the one boundary git can prove -
+  # and counted against the tree as it stands, so a file somebody has since
+  # deleted is not still on anybody.
+  nf = 0
+  for (t in owner) if (owner[t] == p && (t in intree)) nf++
+  if (nf) printf "%s", tile("core", nf, nf, "file" plural(nf) " theirs") > f
+  print "</ul>" > f
+  print "</section>" > f
+
+  # ---- what they moved. The nine marks, counted rather than listed: a roster
+  # row says how much somebody landed and this says what kind of person they
+  # are about it - whether the music or the engine or the rules is where they
+  # keep turning up. Ordered the way the badges are ordered everywhere else.
+  nmk = split(MARKS, mmv, " ")
+  tot = 0
+  for (k = 1; k <= nmk; k++) if ((p SUBSEP mmv[k]) in pmk) {
+    if (pmk[p SUBSEP mmv[k]] > tot) tot = pmk[p SUBSEP mmv[k]]
+  }
+  if (tot > 0) {
+    print "<section class=\"cel fingerprint\">" > f
+    printf "<h2 class=\"tab\">%s what they move</h2>\n", ico("wrench") > f
+    printf "<p class=\"gist\">Every commit of theirs, versions and mentions alike, in the " \
+           "nine marks the book puts on a chapter. It is the one thing a count of " \
+           "landings cannot say: which part of the cabinet somebody keeps standing in.</p>\n" > f
+    print "<ul class=\"prints\">" > f
+    for (k = 1; k <= nmk; k++) {
+      if (!((p SUBSEP mmv[k]) in pmk)) continue
+      n = pmk[p SUBSEP mmv[k]]
+      printf "<li class=\"mk mk-%s\">%s<em>%s</em>" \
+             "<span class=\"bar\"><i style=\"width:%d%%\"></i></span><b>%d</b></li>\n", \
+             mmv[k], ico(markglyph(mmv[k])), marklabel(mmv[k]), int(100 * n / tot + 0.5), n > f
+    }
+    print "</ul>" > f
+    print "</section>" > f
+  }
+
+  # ---- their shelf. The same books the cover opens, with only theirs on it,
+  # which is the whole of what a pilot page is for: a run of chapters read
+  # down in the order somebody flew them.
+  if (nb2 > 0) {
+    print "<section class=\"cel shelf-of\">" > f
+    printf "<h2 class=\"tab\">%s their books</h2>\n", ico("book") > f
+    print "<div class=\"shelf\">" > f
+    for (b = nb; b >= 1; b--) {
+      if (BW[b] != p) continue
+      printf "<details class=\"book\"%s>\n", (b == longbook ? " open" : "") > f
+      print "<summary>" > f
+      printf "<span class=\"bk\"><b>%s</b><i>book</i></span>", roman(b) > f
+      printf "<span class=\"bspan\">%s</span>", bspan(b) > f
+      printf "<span class=\"bn\">%d chapter%s</span>", BE[b] - BS[b] + 1, plural(BE[b] - BS[b] + 1) > f
+      printf "%s", markrow(BM[b], "tiny") > f
+      print "</summary>" > f
+      printf "<p class=\"gist\">%s</p>\n", gist(b) > f
+      print "<ol class=\"contents\">" > f
+      for (i = 1; i <= en; i++) {
+        if (EB[i] != b) continue
+        split(ENT[i], e2, SUBSEP)
+        # A chapter in this book is theirs by definition; a mention shelved
+        # beside it is only theirs if they wrote it.
+        if (e2[1] != "V" && e2[6] != p) continue
+        entry(f, e2)
+      }
+      print "</ol>" > f
+      print "</details>" > f
+    }
+    print "</div>" > f
+    print "</section>" > f
+  }
+
+  # ---- what is theirs, in the game rather than in the tree. A file count is
+  # a fact about a repository; a guide tile is a thing a player meets on the
+  # splash screen and then meets again in the field. This is the half of
+  # somebody that is still out there being played tonight.
+  ng = 0
+  for (t in gname) if (owner[t] == p && (t in intree)) gl[++ng] = t
+  for (i = 2; i <= ng; i++) {
+    s = gl[i]; j = i - 1
+    while (j >= 1 && gname[gl[j]] > gname[s]) { gl[j + 1] = gl[j]; j-- }
+    gl[j + 1] = s
+  }
+  if (ng > 0) {
+    print "<section class=\"cel theirs\">" > f
+    printf "<h2 class=\"tab\">%s what a player meets</h2>\n", ico("panel") > f
+    printf "<p class=\"gist\">%d thing%s in the field guide came out of a file %s created, " \
+           "and every one of them is still in the cabinet tonight.</p>\n", \
+           ng, plural(ng), esc(p) > f
+    print "<ul class=\"tiles\">" > f
+    for (i = 1; i <= ng; i++)
+      printf "<li><b>%s</b><span>%s</span><i>%s</i></li>\n", \
+             esc(gname[gl[i]]), esc(ggroup[gl[i]] != "" ? ggroup[gl[i]] : "unfiled"), esc(gl[i]) > f
+    print "</ul>" > f
+    print "</section>" > f
+  }
+
+  # ---- their ambush. GR11 is the one rule with no budget and no override, and
+  # the shape of it is worth saying out loud on the page of the person it
+  # belongs to: this file is theirs, nobody may touch it, and it will never
+  # once fire at them. What it has actually done is off the filed tapes, which
+  # is the only record of an event meeting a pilot.
+  ne = 0
+  for (i = 1; i <= an; i++) if (aby[i] == p) ne++
+  if (ne > 0) {
+    print "<section class=\"cel ambush\">" > f
+    printf "<h2 class=\"tab\">%s what they armed the room with</h2>\n", ico("eye") > f
+    print "<ul class=\"traps\">" > f
+    for (i = 1; i <= an; i++) {
+      if (aby[i] != p) continue
+      hits = (aid[i] in evfired) ? evfired[aid[i]] : 0
+      kills = (aid[i] in evkill) ? evkill[aid[i]] : 0
+      printf "<li><b>%s</b><span>%s</span>", esc(anm[i]), esc(abl[i]) > f
+      if (hits)
+        printf "<i>%d firing%s on the filed tapes, %s</i>", hits, plural(hits), \
+               (kills ? kills " ship" plural(kills) " taken" : "not one ship taken") > f
+      else
+        printf "<i>no filed tape has met it yet</i>" > f
+      print "</li>" > f
+    }
+    print "</ul>" > f
+    # Who it is armed against is the roster minus one, and the one is the
+    # author. Naming them is the point of the rule rather than a flourish.
+    cnt = ""
+    for (i = 1; i <= nr; i++) {
+      if (roll[i] == p) continue
+      cnt = cnt (cnt == "" ? "" : ", ") plink(roll[i])
+    }
+    if (cnt != "")
+      printf "<p class=\"gist\">Armed against %s, and never once against %s. " \
+             "That is GR11, which has no override on it.</p>\n", cnt, esc(p) > f
+    print "</section>" > f
+  }
+
+  # ---- their flights. The board is the record and tools/flights.sh is the
+  # meter; this prints the first and reads the second. A pilot who has never
+  # put a tape up gets neither, and says so.
+  nf = 0
+  for (i = 1; i <= fn; i++) if (fwho[i] == p) nf++
+  if (nf > 0 || (p in msince)) {
+    print "<section class=\"cel flew\">" > f
+    printf "<h2 class=\"tab\">%s what they flew</h2>\n", ico("ship") > f
+    if (nf > 0) {
+      print "<table class=\"board\"><thead><tr><th>#</th><th>score</th><th>wave</th>" > f
+      print "<th>time</th><th>aim</th><th>the flight in one line</th></tr></thead><tbody>" > f
+      for (i = 1; i <= fn; i++) {
+        if (fwho[i] != p) continue
+        printf "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", \
+               esc(frk[i]), esc(fsc[i]), esc(fwv[i]), esc(ftm[i]), esc(fac[i]), esc(fsd[i]) > f
+      }
+      print "</tbody></table>" > f
+    } else
+      printf "<p class=\"gist\">Nothing of theirs is on the board. A tape comes off " \
+             "the game-over screen and nowhere else, so this fills in the evening " \
+             "they fly one.</p>\n" > f
+    if (p in msince) {
+      printf "<p class=\"meter\">The flight meter: <b>%s</b> landing%s used since they last flew", \
+             msince[p], plural(msince[p] + 0) > f
+      if (mflown[p] != "") printf ", and that flight was %s", esc(mflown[p]) > f
+      print ". One sealed tape covers three (GR14).</p>" > f
+    }
+    print "</section>" > f
+  }
+
+  # ---- the ledger. Read, never worked out: src/game/ledger.js is written by
+  # tools/tally.sh off the history and checked against it at commit time, and a
+  # book that formed its own opinion about somebody would be a second one.
+  # The receipts under it are this stream, which is where the reasons live.
+  if ((p in lbend) || bent[p] || cheat[p] || rcn[p]) {
+    print "<section class=\"cel bends\">" > f
+    printf "<h2 class=\"tab\">%s the ledger</h2>\n", ico("scroll") > f
+    if (p in lbend) {
+      print "<ul class=\"stats\">" > f
+      printf "%s", tile("scroll", lbend[p], lbend[p], "bend" plural(lbend[p] + 0) " in the open") > f
+      printf "%s", tile("up", lclean[p], lclean[p], "clean since the last") > f
+      if (llast[p] != "") printf "%s", tile("eye", "", esc(llast[p]), "the last one bent") > f
+      print "</ul>" > f
+      printf "<p class=\"gist\">Three clean landings ease it by one. Nobody edits " \
+             "this number, including the pilot it is about and including when asked (GR12).</p>\n" > f
+    }
+    # Every version of theirs that had to write something down, linked to the
+    # chapter where the reason is. This is the honest half: a page that printed
+    # the count and hid the receipts would be worse than one that printed
+    # neither.
+    # Newest first, which is the order the log handed them over. A receipt on a
+    # version reads as the sentence that version is known by; a receipt on a
+    # mention reads as the subject line it landed under, because a mention has
+    # no sentence of its own and never gets one.
+    if (rcn[p] > 0) {
+      print "<ul class=\"receipts\">" > f
+      for (i = 1; i <= rcn[p]; i++) {
+        v = RCV[p SUBSEP i] + 0
+        t = (RCK[p SUBSEP i] == "V" ? shout(v) : RCS[p SUBSEP i])
+        if (v >= 1)
+          printf "<li><a href=\"v%d.html\"><b>v%d</b><span>%s</span><i>%s</i></a></li>\n", \
+                 v, v, esc(t), esc(RCW[p SUBSEP i]) > f
+        else
+          printf "<li><span class=\"norec\"><b>&mdash;</b><span>%s</span><i>%s</i></span></li>\n", \
+                 esc(t), esc(RCW[p SUBSEP i]) > f
+      }
+      print "</ul>" > f
+    }
+    print "</section>" > f
+  }
+
+  # ---- and the half of GR8 that has nowhere else to appear. Every other
+  # section on this page is about what somebody has of their own; this is a
+  # cabinet several people share, and a version that landed inside somebody
+  # else work is the only thing here that is about the room rather than the
+  # person. Named as people, because that is what they are.
+  ncr = 0
+  for (i = 1; i <= nr; i++) {
+    if (roll[i] == p) continue
+    if ((p SUBSEP roll[i]) in cross || (roll[i] SUBSEP p) in cross) ncr++
+  }
+  if (ncr > 0) {
+    print "<section class=\"cel others\">" > f
+    printf "<h2 class=\"tab\">%s what it does to the others</h2>\n", ico("target") > f
+    print "<ul class=\"visits\">" > f
+    for (i = 1; i <= nr; i++) {
+      oth = roll[i]
+      if (oth == p) continue
+      n = ((p SUBSEP oth) in cross) ? cross[p SUBSEP oth] : 0
+      k = ((oth SUBSEP p) in cross) ? cross[oth SUBSEP p] : 0
+      if (!n && !k) continue
+      printf "<li>%s<span>", plink(oth) > f
+      if (n) printf "landed in their work on %d version%s", n, plural(n) > f
+      if (n && k) printf " &middot; " > f
+      if (k) printf "they landed in this one on %d version%s", k, plural(k) > f
+      print "</span></li>" > f
+    }
+    print "</ul>" > f
+    printf "<p class=\"gist\">Tuning somebody else&rsquo;s numbers is allowed and costs " \
+           "a few lines; gutting their work is GR4 and costs an override. Which of the " \
+           "two happened is in the chapters, not in this count.</p>\n" > f
+    print "</section>" > f
+  }
+
+  # ---- in their own words. A run of Chronicle lines is a portrait nobody sat
+  # for: it is the same person writing down what they did, once a version, for
+  # somebody who will read it a year later.
+  n = 0
+  for (v = total; v >= 1; v--) {
+    if (VW[v] != p || VL[v] == "") continue
+    if (n++ == 0) {
+      print "<section class=\"cel words\">" > f
+      printf "<h2 class=\"tab\">%s in their own words</h2>\n", ico("note") > f
+      print "<ul class=\"quotes\">" > f
+    }
+    if (n > 6) break
+    printf "<li><a href=\"v%d.html\"><b>v%d</b></a><q>%s</q></li>\n", v, v, esc(VL[v]) > f
+  }
+  if (n) {
+    print "</ul>" > f
+    if (n > 6) printf "<p class=\"gist\">The six most recent of %d. The rest are in the books above.</p>\n", n > f
+    print "</section>" > f
+  }
+
+  print "</main>" > f
+
+  # The dock, and on a pilot page it is a shelf of pilots rather than of books.
+  # Same furniture, same place at the foot of the window, one press to anybody
+  # else the cabinet has heard of.
+  print "<nav class=\"dock whodock\" aria-label=\"the roster\">" > f
+  printf "<a class=\"up\" href=\"index.html\" title=\"the contents\">%s<i>all</i></a>\n", ico("grid") > f
+  print "<div class=\"rail\">" > f
+  for (i = 1; i <= nr; i++) {
+    printf "<a class=\"spine%s\" href=\"pilot-%s.html\"%s>", \
+           (roll[i] == p ? " here" : ""), slug(roll[i]), \
+           (roll[i] == p ? " aria-current=\"page\"" : "") > f
+    if (mug[roll[i]] != "")
+      printf "<img class=\"face\" src=\"faces/%s\" alt=\"\" loading=\"lazy\" decoding=\"async\">", mug[roll[i]] > f
+    printf "<span class=\"nm\">%s</span>", esc(roll[i]) > f
+    printf "<span class=\"sp\"><i>%d</i></span></a>\n", pilots[roll[i]] > f
+  }
+  print "</div>" > f
+  print "</nav>" > f
+  print "</body></html>" > f
+  close(f)
 }
 
 # Same tokens, same CRT as the game itself, so the book follows along on its own
@@ -1978,8 +2574,8 @@ END {
     if (bent[p])  cell = bent[p] " override" plural(bent[p])
     if (cheat[p]) cell = cell (cell ? ", " : "") cheat[p] " unrecorded"
     if (cell == "") cell = "&mdash;"
-    roster = roster sprintf("<tr><td><span class=\"pilot\">%s%s</span></td><td>%d</td><td>%s</td><td>%s%s%s</td></tr>\n", \
-             face(p), esc(p), pilots[p], \
+    roster = roster sprintf("<tr><td>%s</td><td>%d</td><td>%s</td><td>%s%s%s</td></tr>\n", \
+             plink(p, "pilot"), pilots[p], \
              (peak[p] ? sprintf("<a href=\"v%d.html\">v%d</a>", peak[p], peak[p]) : "&mdash;"), \
              (cheat[p] ? "<b>" : ""), cell, (cheat[p] ? "</b>" : ""))
   }
@@ -2057,11 +2653,11 @@ END {
   print "  ]" > rj
   # A book wears every mark its chapters wear, once each - which is the one
   # thing a spine can say about a run of six chapters in the width of a thumb.
-  print "  // one line per book: [numeral, the pilot, their face, first, last, its marks]" > rj
+  print "  // one line per book: [numeral, the pilot, their face, first, last, its marks, their page]" > rj
   print "  var B = [" > rj
   for (bi = 1; bi <= nb; bi++)
-    printf "    [\"%s\", \"%s\", \"%s\", %d, %d, \"%s\"],\n", roman(bi), js(BW[bi]), js(mug[BW[bi]]), \
-           BS[bi], BE[bi], js(markrow(BM[bi], "tiny")) > rj
+    printf "    [\"%s\", \"%s\", \"%s\", %d, %d, \"%s\", \"%s\"],\n", roman(bi), js(BW[bi]), js(mug[BW[bi]]), \
+           BS[bi], BE[bi], js(markrow(BM[bi], "tiny")), js("pilot-" slug(BW[bi]) ".html") > rj
   print "  ]" > rj
   print "  var dock = document.querySelector(\"nav.dock[data-here]\")" > rj
   print "  if (!dock || !T.length) return" > rj
@@ -2162,7 +2758,11 @@ END {
   print "    var h = tray.appendChild(document.createElement(\"p\"))" > rj
   print "    h.className = \"tray-head\"" > rj
   print "    h.appendChild(document.createElement(\"b\")).textContent = \"BOOK \" + d[0]" > rj
-  print "    h.appendChild(document.createElement(\"span\")).textContent = d[1]" > rj
+  # Whoever flew this book, and the way into the rest of what they have done.
+  print "    var wh = h.appendChild(document.createElement(\"a\"))" > rj
+  print "    wh.className = \"pl\"" > rj
+  print "    wh.href = d[6]" > rj
+  print "    wh.textContent = d[1]" > rj
   print "    h.appendChild(document.createElement(\"i\")).textContent = span(d)" > rj
   print "    var stack = tray.appendChild(document.createElement(\"div\"))" > rj
   print "    stack.className = \"stack\"" > rj
@@ -2244,7 +2844,7 @@ END {
       printf "<details class=\"book\"%s>\n", (bi == nb ? " open" : "") > cover
       print "<summary>" > cover
       printf "<span class=\"bk\"><b>%s</b><i>book</i></span>", roman(bi) > cover
-      printf "<span class=\"by\">%s%s</span>", face(BW[bi]), esc(BW[bi]) > cover
+      printf "%s", plink(BW[bi], "by") > cover
       printf "<span class=\"bspan\">%s</span>", bspan(bi) > cover
       printf "<span class=\"bn\">%d chapter%s</span>", BE[bi] - BS[bi] + 1, plural(BE[bi] - BS[bi] + 1) > cover
       printf "%s", markrow(BM[bi], "tiny") > cover
@@ -2302,8 +2902,8 @@ END {
            ico("bolt"), esc(shout(v)), markrow(VM[v], "big") > f
     printf "<p class=\"credits\"><span class=\"badge\"><b>%s</b><i>chapter</i></span>", roman(v) > f
     printf "<span class=\"ver\">v%s</span>", v > f
-    printf "<span class=\"who\">%s%s</span><span class=\"when\">%s &middot; %s</span></p>", \
-           face(VW[v]), esc(VW[v]), esc(VN[v]), VC[v] > f
+    printf "%s<span class=\"when\">%s &middot; %s</span></p>", \
+           plink(VW[v], "who"), esc(VN[v]), VC[v] > f
     if (VP[v] != "")
       printf "<a class=\"plate-full\" href=\"art/%s\">%s painted for this chapter</a>", VP[v], ico("frame") > f
     print "</section>" > f
@@ -2532,6 +3132,14 @@ END {
     print "</body></html>" > f
     close(f)
   }
+
+  # ---- one page per pilot --------------------------------------------------
+  # Last, because it is the only page that wants every other page to have been
+  # decided first: which books are whose, which chapter carries which receipt,
+  # and what the shelf looks like. The roster order above is the order these
+  # are written in, so the pages and the table on the cover agree about who
+  # comes first without either of them being asked twice.
+  for (ri = 1; ri <= nr; ri++) pilotpage(roll[ri])
 }'
 BUILT=$?
 
@@ -4010,6 +4618,215 @@ html { scroll-padding-bottom: 6rem; }
 
 /* Below the width where two cels side by side stop being two cels and start
    being two columns of four words, there is one column. */
+/* --- the pilots -----------------------------------------------------------
+   One page per person, built out of the same furniture as a chapter, because
+   it is built out of the same stream: a splash with the face where the plate
+   goes, cels, stats, a shelf. Only three things here are new — a bar per mark,
+   a board of flights, and a dock that is a shelf of people rather than books. */
+
+/* Every name the book prints is now a way into the rest of what that person
+   did. It inherits its colour on purpose: a roster that turned every name cyan
+   would read as a table of links rather than as a table of pilots. */
+.pl { color: inherit; text-decoration: none; }
+.pl:hover, .pl:focus-visible { color: var(--magenta); text-shadow: 0 0 12px currentColor; }
+.roster .pl { display: flex; align-items: center; gap: 0.5rem; color: var(--ink); }
+.tray-head .pl { color: var(--ink); }
+
+/* The face at the size it was painted. Every other page in this book shows it
+   at the size of a thumbnail, and a portrait stretched across a splash the way
+   a plate is would be a band of colour rather than a person - so this one is
+   framed beside the name instead of laid behind it. */
+.whois { min-height: clamp(13rem, 30vh, 19rem); }
+.whois .say { display: flex; align-items: center; gap: clamp(1rem, 3vw, 2rem); }
+.portrait {
+  flex: none;
+  width: clamp(5rem, 12vw, 8.5rem);
+  height: clamp(5rem, 12vw, 8.5rem);
+  border-radius: 50%;
+  object-fit: cover;
+  background: #05010c;
+  border: 1px solid rgba(255, 62, 200, 0.6);
+  box-shadow: 0 0 30px rgba(255, 62, 200, 0.35), inset 0 0 20px rgba(5, 1, 12, 0.8);
+  filter: saturate(1.18) contrast(1.06);
+}
+.nameplate { min-width: 0; }
+.ch.who .credits .badge b { color: var(--amber); }
+
+/* What somebody keeps moving, as nine bars rather than nine numbers. Each bar
+   is measured against that pilot's own busiest mark rather than against
+   anybody else's, because this says what kind of pilot they are and not how
+   they rank. The colours are the mark colours — .mk carries them, so the pill
+   styling is what gets undone here and the palette is not restated. */
+.prints { list-style: none; display: grid; gap: 0.3rem; margin-top: 0.9rem; }
+.prints .mk {
+  display: grid;
+  grid-template-columns: 0.9rem minmax(5.5rem, 8rem) minmax(0, 1fr) 2rem;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.3rem 0.45rem;
+  border: 0;
+  border-left: 2px solid currentColor;
+  border-radius: 0;
+  background: rgba(5, 1, 12, 0.4);
+}
+.prints .mk em { letter-spacing: 0.16em; }
+.prints .bar { display: block; height: 0.42rem; background: rgba(160, 75, 255, 0.16); }
+.prints .bar i { display: block; height: 100%; background: currentColor; opacity: 0.75; }
+.prints b {
+  font-size: 0.7rem;
+  text-align: right;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* What a player actually meets: the field-guide tiles that came out of a file
+   this pilot created. A file count is a fact about a repository; this is the
+   half of somebody that is still being played tonight. */
+.tiles { list-style: none; display: grid; gap: 0.4rem; margin-top: 0.9rem; }
+.tiles li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.2rem 0.7rem;
+  padding: 0.5rem 0.6rem;
+  border-left: 2px solid var(--cyan);
+  background: rgba(33, 243, 255, 0.05);
+}
+.tiles b { font-size: 0.74rem; letter-spacing: 0.16em; color: var(--cyan); }
+.tiles span {
+  font-size: 0.5rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--dim);
+  align-self: center;
+}
+.tiles i {
+  grid-column: 1 / -1;
+  font-style: normal;
+  font-size: 0.56rem;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  opacity: 0.75;
+}
+
+/* The ambush they armed the room with. GR11 has no override on it, so this is
+   the one section on the page that is about a rule rather than about a record. */
+.traps { list-style: none; display: grid; gap: 0.5rem; margin-top: 0.9rem; }
+.traps li {
+  display: grid;
+  gap: 0.24rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid rgba(255, 62, 200, 0.35);
+  background: rgba(255, 62, 200, 0.06);
+}
+.traps b { font-size: 0.8rem; letter-spacing: 0.2em; color: var(--magenta); }
+.traps span { font-size: 0.6rem; letter-spacing: 0.12em; color: var(--ink); }
+.traps i {
+  font-style: normal;
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* Their flights, straight off the board, and the meter underneath read from
+   tools/flights.sh rather than counted here. */
+.board { width: 100%; border-collapse: collapse; margin-top: 0.9rem; font-size: 0.62rem; }
+.board th {
+  text-align: left;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  color: var(--dim);
+  padding: 0.3rem 0.4rem;
+}
+.board td {
+  padding: 0.42rem 0.4rem;
+  border-top: 1px solid rgba(160, 75, 255, 0.18);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  vertical-align: top;
+}
+.board td:nth-child(2) { color: var(--amber); }
+.board td:last-child { color: var(--dim); letter-spacing: 0.02em; }
+.meter {
+  margin-top: 0.8rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+}
+.meter b { color: var(--amber); }
+
+/* The receipts under the ledger. The count is tools/tally.sh's answer and sits
+   in the tiles above; these are the chapters where the reasons are, because a
+   page that printed the number and hid the reasons would be worse than one
+   that printed neither. */
+.receipts { list-style: none; display: grid; gap: 3px; margin-top: 0.9rem; }
+.receipts a, .receipts .norec {
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.7rem;
+  padding: 0.42rem 0.55rem;
+  background: rgba(255, 176, 32, 0.07);
+  border-left: 2px solid var(--amber);
+  color: var(--ink);
+  text-decoration: none;
+}
+.receipts a:hover { background: rgba(255, 176, 32, 0.16); }
+.receipts b { color: var(--amber); font-size: 0.66rem; letter-spacing: 0.1em; }
+.receipts span { font-size: 0.6rem; color: var(--ink); }
+.receipts i {
+  font-style: normal;
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+/* The cabinet is shared, and this is the only place on the page that says so. */
+.visits { list-style: none; display: grid; gap: 0.35rem; margin-top: 0.9rem; }
+.visits li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.7rem;
+  padding: 0.42rem 0.55rem;
+  border-left: 2px solid var(--violet);
+  background: rgba(160, 75, 255, 0.08);
+}
+.visits .pl { font-size: 0.66rem; letter-spacing: 0.14em; color: var(--ink); }
+/* A name in running prose brings its face with it, and there it has to be the
+   size of the words rather than the size of a portrait. */
+.gist .pl, .visits .pl { display: inline-flex; align-items: center; gap: 0.3rem; }
+.gist .pl .face, .visits .pl .face { width: 1.3rem; height: 1.3rem; }
+.visits span { font-size: 0.56rem; letter-spacing: 0.08em; color: var(--dim); }
+
+/* A run of Chronicle lines is a portrait nobody sat for. */
+.quotes { list-style: none; display: grid; gap: 0.5rem; margin-top: 0.9rem; }
+.quotes li { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: 0.7rem; align-items: baseline; }
+.quotes a { color: var(--cyan); text-decoration: none; font-size: 0.66rem; letter-spacing: 0.1em; }
+.quotes q { font-size: 0.68rem; line-height: 1.6; color: var(--ink); quotes: "\201C" "\201D"; }
+
+/* The dock, and on a pilot page the shelf in it is a shelf of people. Same
+   furniture, same corner of the window, one press to anybody else the cabinet
+   has ever heard of. */
+.whodock .spine { min-width: 8.5rem; }
+.whodock .spine .nm {
+  max-width: none;
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+}
+.whodock .spine .sp i {
+  font-style: normal;
+  font-size: 0.5rem;
+  letter-spacing: 0.16em;
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+}
+.whodock .spine[aria-current="page"] { border-color: var(--magenta); }
+
 @media (max-width: 62rem) {
   .told, .figures, .frame, .margin { grid-column: span 12; }
   .shout { max-width: none; }
