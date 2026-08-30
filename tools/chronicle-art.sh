@@ -126,6 +126,8 @@ FACE=${ASTEROIDS_FACE_STYLE:-'A head-and-shoulders portrait of a person in a spa
 STYLE=${ASTEROIDS_ART_STYLE:-'A scene in deep black space drawn as thin glowing vector lines, in the style of a 1980s vector arcade screen: luminous magenta, cyan, violet and amber wireframe outlines, heavy phosphor bloom, drifting jagged asteroid polygons, faint horizontal scanlines. No text anywhere in the image, no letters, no words, no numbers, no captions, no signage, no logo, no watermark, no user interface, no frame, no border.'}
 
 US=$(printf '\037')
+NL='
+'
 
 say()  { printf 'chronicle-art: %s\n' "$1" >&2; }
 quit() { say "$1"; exit 0; }
@@ -239,6 +241,9 @@ scene_of() {
   s=''
   [ -f docs/taglines.tsv ] && s=$(awk -F'\t' -v h="$1" '$1 == h { print $2; exit }' docs/taglines.tsv)
   [ -n "$s" ] || s=$(git log -1 --format='%s' "$1" 2>/dev/null)
+  # Never empty, so that the sentence a plate is painted from and the sentence
+  # the index is repaired with cannot be two different sentences.
+  [ -n "$s" ] || s='An empty field. Nothing in this one moved.'
   printf '%s' "$s"
 }
 
@@ -494,9 +499,61 @@ paint() {
   fi
 
   scene=$(scene_of "$sha")
-  [ -n "$scene" ] || scene='An empty field. Nothing in this one moved.'
   ask "$DIR" "$MANIFEST" "$sha" "$short" \
       "$STYLE The scene: $scene" "$(seed_of "$sha")" "$scene"
+}
+
+# --- the plates the index forgot --------------------------------------------
+# The other half of --prune, and it runs on every build rather than on a flag,
+# because this is the half that goes wrong quietly. A plate is two things
+# written in one run: a picture, and a row in a tracked file that points at it.
+# So `git checkout -- docs/` after a build - which is how a tool change lands
+# on its own and lets the hook rebuild the book - takes the row back and leaves
+# the picture, and the chapter then has a plate it cannot see and the next run
+# asks Cloudflare for a picture already on the disk.
+#
+# Nothing is asked for in here. The file is present, its name is the commit,
+# and the alt text comes off that commit the same way it did the first time, so
+# the row is derived rather than remembered - which is how the rest of this
+# project keeps two halves from drifting. The faces are left out for the reason
+# they have no --prune either: a forgotten line there is a second face.
+#
+# Derived means today's sentence, not the one that was on the screen the
+# afternoon the picture was asked for, and a tagline that has been rewritten
+# since will come back rewritten. Two of the fifty plates in the book are like
+# that. It is the right way round anyway: the alt text and the chapter above it
+# should say the same thing, and the chapter says the current one.
+adopt() {
+  [ -d "$DIR" ] || return 0
+
+  # The whole file column in one read, so the ordinary run - nothing missing -
+  # spends nothing per plate. A newline either side is what keeps one stem from
+  # matching inside a longer one.
+  indexed=$(awk -F'\t' '$1 !~ /^#/ && NF >= 2 { printf "\n%s", $2 } END { printf "\n" }' \
+            "$MANIFEST" 2>/dev/null)
+  taken=0
+
+  for plate in "$DIR"/*; do
+    [ -f "$plate" ] || continue
+    base=${plate##*/}
+    case $base in *.jpg|*.png|*.webp) ;; *) continue ;; esac
+    case $indexed in *"$NL$base$NL"*) continue ;; esac
+
+    # A stem that no longer names a commit is not this script's picture to
+    # explain, and neither is a commit that already has a line. One line per
+    # version is the rule the manifest is written by; this does not get to be
+    # the exception to it.
+    sha=$(git rev-parse --verify -q "${base%.*}^{commit}" 2>/dev/null) || continue
+    manifest_file "$MANIFEST" "$sha" >/dev/null 2>&1 && continue
+
+    manifest_init "$DIR" "$MANIFEST"
+    printf '%s\t%s\t%s\n' "$sha" "$base" "$(clean "$(scene_of "$sha")")" >> "$MANIFEST"
+    taken=$((taken + 1))
+  done
+
+  [ "$taken" -gt 0 ] && \
+    say "$taken plate$([ "$taken" = 1 ] || printf 's') painted before and missing from the index, put back"
+  return 0
 }
 
 # --- one face ---------------------------------------------------------------
@@ -600,6 +657,11 @@ fi
 
 [ -n "${ASTEROIDS_NO_ART:-}" ] && exit 0
 git rev-parse --verify -q HEAD >/dev/null 2>&1 || exit 0
+
+# Before the credentials, deliberately: putting a row back costs no network and
+# no token, so the machine that cannot paint anything can still repair the book
+# it is about to build.
+[ "$DO_PLATES" = 1 ] && adopt
 
 if ! configured; then
   # The quiet exit, and it is the important one: a pilot with no credentials
