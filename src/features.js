@@ -22,6 +22,7 @@ ASTEROIDS.MODULES = [
   "./render/compositor.js",
   "./audio/context.js",
   "./audio/buses.js",
+  "./audio/reaper.js",
   "./audio/themes.js",
   "./audio/voices.js",
   "./audio/song.js",

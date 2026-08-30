@@ -46,6 +46,11 @@
     comp.attack.value = 0.004;
     comp.release.value = 0.16;
     master.connect(comp).connect(audio.destination);
+    // A context that drops out while nobody is asking stays out; see
+    // "staying up" at the foot of this file.
+    audio.addEventListener("statechange", () => {
+      if (audio.state !== "running") rearm();
+    });
     A.master = master;
     A.distCurve = A.makeDistortion(120);
     A.NOISE = audio.createBuffer(1, Math.ceil(audio.sampleRate * 1.2), audio.sampleRate);
@@ -143,8 +148,41 @@
     });
   }
 
+  function rearm() {
+    for (const ev of WAKERS) window.addEventListener(ev, firstTouch, true);
+  }
+
   // Every module that registers with onAudioReady is loaded by then, which is
   // the whole reason this waits for the page rather than running here.
   if (document.readyState === "complete") comeUp();
   else window.addEventListener("load", comeUp);
+
+  // ---- staying up ---------------------------------------------------------
+  //
+  // Coming up once is not the same as staying up. A browser can take the sound
+  // away again at any point and they all do it: another tab, a locked screen,
+  // a call, some other page starting something of its own. Chrome hands it
+  // back on the way in. WebKit has a state of its own for it — "interrupted",
+  // which is nowhere in the specification — and a context that goes into that
+  // one stays there until somebody asks for it back. Nobody was asking, so the
+  // cabinet came back from a tab switch silent, under a sign still saying
+  // SOUND ON, and the pilot had no way of knowing that pressing anything at
+  // all would have fixed it.
+  //
+  // Same manners as coming up, and the same two halves. Ask quietly whenever
+  // the page is looked at again; and if the answer is no, put the listeners
+  // back so the next thing the pilot does is the yes. Never argue.
+
+  function nudge() {
+    if (!A.audio || A.audio.state === "running") return;
+    const p = A.audio.resume();
+    if (p && p.catch) p.catch(rearm);
+    else rearm();
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) nudge();
+  });
+  window.addEventListener("focus", nudge);
+  window.addEventListener("pageshow", nudge);   // and back out of the cache
 })(ASTEROIDS);
