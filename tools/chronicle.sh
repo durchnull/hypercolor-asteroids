@@ -679,6 +679,35 @@ function markof(p) {
   if (is_referee(p))        return "rules"
   return "notes"
 }
+# One line per module in src/features.js is what puts a module on the board, so
+# the manifest is a game path by any reading and markof above says so. Said out
+# loud on a branch, that is the wrong answer nine times in ten. Adding a feature
+# here is one new file plus one manifest line (GR3), so a pure src/ui/ panel
+# comes out marked "game ui" and an src/audio/ track "game music" - and
+# tools/branch.sh takes the loudest, which is always game. The eight other marks
+# could only ever win on a branch that registered nothing at all, which is the
+# opposite of the commonest change there is.
+#
+# So the manifest inherits rather than asserts. It carries game only when no
+# other game path in the same change carries something better: a manifest line
+# beside an src/audio/ file is a music change, a manifest line on its own is
+# still a game change, and a manifest line beside src/entities/ is a game change
+# either way, because that is what the rock said too.
+#
+# Deferred rather than decided per path, because markof is handed one path at a
+# time and cannot see the company it is in. Both collectors fold through here,
+# so the badge on the chapter and the label on the pull request go on being the
+# same word by construction.
+function is_manifest(p) { return (p == "src/features.js") }
+function mark_into(p, seen, held,   mk) {
+  if (is_manifest(p)) { held["manifest"] = 1; return }
+  if (is_game(p)) held["specific"] = 1
+  mk = markof(p)
+  if (mk != "") seen[mk] = 1
+}
+function mark_settle(seen, held) {
+  if (held["manifest"] && !held["specific"]) seen[markof("src/features.js")] = 1
+}
 # What a badge says. Bare, because badges arrive in rows of three and four and
 # nine articles in a row is nine words of nothing - the picture and one noun is
 # the whole of what a badge is for. A pull request wants the same bare word for
@@ -735,8 +764,9 @@ case "${1:-}" in
     fi
     if [ $# -gt 0 ]; then printf '%s\n' "$@"; else cat; fi \
       | awk "$LIB"'
-          $0 != "" { m = markof($0); if (m != "") seen[m] = 1 }
-          END { n = split(markorder(), a, " ")
+          $0 != "" { mark_into($0, seen, held) }
+          END { mark_settle(seen, held)
+                n = split(markorder(), a, " ")
                 for (i = 1; i <= n; i++) if (a[i] in seen) print markname(a[i]) }'
     exit 0 ;;
 
@@ -1598,7 +1628,7 @@ NF < 4 { next }
   rankmoved = 0
   refstrict = 0; nonref = 0; stolen = 0
   split("", deleted); split("", arrived); split("", fseen); split("", fadd); split("", fdel)
-  split("", mkseen)
+  split("", mkseen); split("", mkheld)
   n = split(rest, b, "\n")
   for (k = 1; k <= n; k++) {
     t = b[k]
@@ -1617,7 +1647,7 @@ NF < 4 { next }
     if (is_stat(t)) {
       split(t, ns, "\t")
       p = ns[3]
-      mk = markof(p); if (mk != "") mkseen[mk] = 1
+      mark_into(p, mkseen, mkheld)
       if (is_game(p)) gamefiles++
       else if (p ~ /^tools\// || p ~ /^\.githooks\// || p ~ /^\.claude\// ||
                p ~ /^\.github\// ||
@@ -1692,6 +1722,8 @@ NF < 4 { next }
     }
     mode = ""
   }
+  # Every path in, so the manifest can now be asked what company it kept.
+  mark_settle(mkseen, mkheld)
 
   # ---- what the referee would have said, had anybody let it look ------------
   # Only the rules a commit can still be judged by on its own, years later: the
