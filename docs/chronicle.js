@@ -7,12 +7,12 @@
   "use strict";
   A.CHRONICLE = {
     versions: 44,
-    latest: { v: 44, pilot: "David Friedrich", date: "30 August 2026", line: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago." },
+    latest: { v: 44, pilot: "David Friedrich", date: "30 August 2026", line: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago.", plate: "4f91d52e.jpg", alt: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago." },
     plates: [
-      { v: 44, alt: "", line: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago." },
+      { v: 44, file: "4f91d52e.jpg", alt: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago.", line: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago." },
       { v: 43, file: "7a0197e0.jpg", alt: "The instrument panel developed an opinion.", line: "The instrument panel developed an opinion." },
-      { v: 37, file: "3c0fca03.jpg", alt: "A key that did nothing now does something. The colours moved as well.", line: "A key that did nothing now does something. The colours moved as well." },
-      { v: 36, file: "a716ccc6.jpg", alt: "What counts as fair was quietly re-argued.", line: "What counts as fair was quietly re-argued." },
+      { v: 42, file: "b75b3350.jpg", alt: "The song went away and came back with ideas.", line: "The song went away and came back with ideas." },
+      { v: 41, file: "5c93caab.jpg", alt: "The HUD is more forthcoming than it used to be. It looks different, too.", line: "The HUD is more forthcoming than it used to be. It looks different, too." },
     ],
     roster: {
       "David Friedrich": 39,
