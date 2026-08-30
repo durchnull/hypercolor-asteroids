@@ -552,6 +552,33 @@ function is_book(p) {
           p ~ /^docs\/v[0-9]+\.html$/ ||
           p ~ /^docs\/art\// || p ~ /^docs\/faces\//)
 }
+# The wider question is_filing below actually wants: not "is this a page of the
+# book" but "is this something the cabinet wrote about itself". Those are not
+# the same list, and the difference is the whole of why the book has been
+# narrating its own paperwork.
+#
+# A filing is not the output of one tool. The post-commit hook rebuilds the book
+# and then repaints the strip in tools/badges.sh, so the commit that files the
+# pages carries a badge along with them. A badge is not a page, so is_book said
+# no, so a filing read as a commit that had done something off-book - and got an
+# interlude and a clause on the cover for it. It could not settle either: filing
+# the paperwork dirtied the book again, one commit behind, for ever.
+#
+# The badges stay out of is_book because they are not the book and markof() has
+# to go on saying so. This is the one place that needs them folded in, and it is
+# the only place that folds them.
+function is_filed(p) {
+  return (is_book(p) || p ~ /^media\/badges\/.+\.svg$/)
+}
+# And one path that is evidence of nothing either way. The ledger is written off
+# the history like the pages and the strip, so a filing that re-derived it is
+# still a filing - but a commit that is nothing but the ledger is the tally
+# ticking over, which is something that happened to somebody and has always been
+# carried as the story it is. Counting it as filed would silence those two;
+# counting it as off-book is what keeps ten filings narrated today. So it counts
+# as neither, and is_filing needs no term for it: a commit with nothing in it
+# but the ledger has no filed path, and fails on that.
+function is_mute(p) { return (p == "src/game/ledger.js") }
 function is_stat(l) { return (l ~ /^(-|[0-9]+)\t(-|[0-9]+)\t./) }
 function is_raw(l)  { return (l ~ /^:[0-7]+ [0-7]+ [0-9a-f]+ [0-9a-f]+ [A-Z]/) }
 # is_referee in tools/golden-check.sh is the list this one has to match, for
@@ -752,7 +779,8 @@ case "${1:-}" in
               if (is_stat(b[k])) {
                 split(b[k], ns, "\t")
                 if (is_game(ns[3])) game = 1
-                if (is_book(ns[3])) bookish = 1; else offbook = 1
+                if (is_filed(ns[3])) bookish = 1
+                else if (!is_mute(ns[3])) offbook = 1
                 mode = 0; continue
               }
               if (tolower(b[k]) ~ /^[[:space:]]*(golden-rule-override|rule-change|tally|golden-rule-breach):/)
@@ -1566,6 +1594,7 @@ NF < 4 { next }
   line = ""; overrides = ""; rulechange = ""; tallyline = ""; breach = ""; mode = ""
   gamefiles = 0; files = 0; acmr = 0; ins = 0; del = 0; kc = 0; fpn = 0
   refmoved = 0; docmoved = 0; bookmoved = 0; readmemoved = 0; elsemoved = 0
+  filedmoved = 0
   rankmoved = 0
   refstrict = 0; nonref = 0; stolen = 0
   split("", deleted); split("", arrived); split("", fseen); split("", fadd); split("", fdel)
@@ -1594,6 +1623,13 @@ NF < 4 { next }
                p ~ /^\.github\// ||
                p == "CLAUDE.md" || p == "GOLDEN_RULES.md") refmoved = 1
       else if (is_book(p)) bookmoved = 1
+      # Repainted from the history by the same hook that rebuilt the pages, so a
+      # filing that carried one is still a filing. Held apart from bookmoved
+      # because the deeds below name the book by that, and a badge is not the
+      # book being rewritten.
+      else if (is_filed(p)) filedmoved = 1
+      # Neither column, and deliberately nothing - is_mute above says why.
+      else if (is_mute(p)) { }
       else if (p ~ /^docs\//) {
         docmoved = 1
         # And a narrower name for one of them, read by the deed below and by
@@ -1749,7 +1785,7 @@ NF < 4 { next }
   # whose every path is a book file never has one. It is in because a guard
   # that costs nothing and would matter if that ever stopped being true is
   # worth keeping where the fixture can watch it.
-  if (is_filing(gamefiles, bookmoved,
+  if (is_filing(gamefiles, (bookmoved || filedmoved),
                 (docmoved || refmoved || readmemoved || elsemoved),
                 (overrides != "" || rulechange != "" || tallyline != "" ||
                  breach != "" || unrec != ""))) {
