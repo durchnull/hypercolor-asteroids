@@ -528,6 +528,29 @@ history() {
 # is_referee is the same list tools/golden-check.sh keeps, because the audit
 # below accuses people of breaking GR10 and an accusation has to use the
 # referee's own definition or it is just an opinion.
+# The other generator in the building. tools/docs.sh renders the notes - the
+# README, the rules, this map, the board - into docs/*.html beside the chapters,
+# and is_book below has to know them or every rule change wears a notes mark for
+# pages nobody wrote by hand.
+#
+# Asked rather than copied. docs.sh --list prints the paths it owns and derives
+# them from the README the way it renders them, so it cannot go stale; a list
+# spelled out here would be this project keeping a second opinion about somebody
+# else output, which is the arrangement it has argued against everywhere else.
+# tools/golden-check.sh already asks the same question of the same tool.
+#
+# Interpolated into the library rather than handed in with -v, because six awks
+# read that library and every one of them wants the answer. Where the tool is
+# not there to ask - a scripted fixture, a clone mid-surgery - the pattern falls
+# back to something no path matches, and is_book answers exactly as it did
+# before any of this.
+NOTESRE=$(sh tools/docs.sh --list 2>/dev/null | sed 's/[].[^$*\/]/\\&/g' | paste -sd'|' -)
+# Escaped like the paths above, because this is spliced into an awk regex
+# literal and a bare slash ends one. Unescaped, the library stopped parsing at
+# all and every reader in it answered no to everything - which tools/lockstep.sh
+# noticed on the first run, in the one place that has no tools/docs.sh to ask.
+[ -n "$NOTESRE" ] || NOTESRE='docs\/no-such-note-was-ever-written'
+
 LIB=$MACHINE'
 function is_game(p) {
   # GAME and NOTGAME above, said again in the one language that cannot ask git.
@@ -550,7 +573,8 @@ function is_book(p) {
           p == "docs/rail.js" || p == "docs/taglines.tsv" ||
           p == "docs/favicon.svg" ||
           p ~ /^docs\/v[0-9]+\.html$/ ||
-          p ~ /^docs\/art\// || p ~ /^docs\/faces\//)
+          p ~ /^docs\/art\// || p ~ /^docs\/faces\// ||
+          p ~ /^('"$NOTESRE"')$/)
 }
 function is_stat(l) { return (l ~ /^(-|[0-9]+)\t(-|[0-9]+)\t./) }
 function is_raw(l)  { return (l ~ /^:[0-7]+ [0-7]+ [0-9a-f]+ [0-9a-f]+ [A-Z]/) }
