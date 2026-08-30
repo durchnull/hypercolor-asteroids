@@ -190,6 +190,14 @@
     gl3.on = false;
   }
 
+  // Where the eye sits is the cabinet's geometry rather than this renderer's,
+  // so it is kept up to date whether or not a scene is ever built. A machine
+  // with no WebGL2 still has things that leave the plane — a wave arriving out
+  // of depth (src/entities/asteroids.js) — and the flat path fakes this exact
+  // camera to draw them. One answer, asked by both.
+  function eyeUp() { gl3.eye = Math.max(A.W, A.H) * DEPTH; }
+  A.onResize(eyeUp);
+
   if (gl3.on) {
     unitLine = A.mesh.get("gl:segment", () => A.mesh.wire([[0, 0, 0, 1, 0, 0]]));
     A.onResize(sizeUp);
@@ -199,7 +207,6 @@
     const c = gl3.canvas;
     c.width = Math.max(1, Math.round(A.W * A.DPR));
     c.height = Math.max(1, Math.round(A.H * A.DPR));
-    gl3.eye = Math.max(A.W, A.H) * DEPTH;
   }
 
   /**

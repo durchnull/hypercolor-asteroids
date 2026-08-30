@@ -256,6 +256,167 @@
     sub.stop(t + 1.65);
   };
 
+  // The jump: a drive being asked for everything it has, and then the sky
+  // letting go of it. Two sounds pretending to be one.
+  //
+  // The wind-up is a saw climbing four octaves through a filter that opens with
+  // it, under a turbine flutter that starts as a chop you can count and speeds
+  // up until the ear stops hearing beats and hears a note instead. Most of why
+  // the burst lands is not the burst: it is that the machine is cut dead a
+  // fortieth of a second before it, so the bang arrives in a hole.
+  //
+  // It is all scheduled in one go, at the moment the jump starts, because Web
+  // Audio would much rather be told early than told on time.
+  A.lightspeedSound = function lightspeedSound(span) {
+    if (!A.audio || A.muted) return;
+    const audio = A.audio;
+    const t = audio.currentTime;
+    const hit = t + span;              // the moment of arrival
+    A.duck(span + 1.1);
+
+    // --- the wind-up ---
+    const drive = audio.createGain();
+    drive.gain.setValueAtTime(0.0001, t);
+    drive.gain.exponentialRampToValueAtTime(0.34, hit - 0.03);
+    drive.gain.exponentialRampToValueAtTime(0.0001, hit + 0.03);
+    drive.connect(A.master);
+
+    // the turbine. A gain of its own rather than automation on `drive`, because
+    // a flutter has to multiply what is there — added to it, it would be loudest
+    // in the silence at the start, which is the opposite of spinning up.
+    const trem = audio.createGain();
+    trem.gain.setValueAtTime(0.55, t);
+    trem.gain.linearRampToValueAtTime(1, hit);
+    trem.connect(drive);
+    const flutter = audio.createOscillator();
+    const depth = audio.createGain();
+    flutter.type = "sine";
+    flutter.frequency.setValueAtTime(6.5, t);
+    flutter.frequency.exponentialRampToValueAtTime(54, hit);
+    depth.gain.setValueAtTime(0.45, t);
+    depth.gain.linearRampToValueAtTime(0, hit);
+    flutter.connect(depth).connect(trem.gain);
+    flutter.start(t);
+    flutter.stop(hit + 0.1);
+
+    const lp = audio.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.Q.value = 7;
+    lp.frequency.setValueAtTime(180, t);
+    lp.frequency.exponentialRampToValueAtTime(6200, hit);
+    lp.connect(trem);
+
+    const saw = audio.createOscillator();
+    saw.type = "sawtooth";
+    saw.frequency.setValueAtTime(46, t);
+    saw.frequency.exponentialRampToValueAtTime(760, hit);
+    saw.connect(lp);
+    saw.start(t);
+    saw.stop(hit + 0.06);
+
+    // a fifth above and quieter, so the climb reads as an engine rather than as
+    // a test tone
+    const twin = audio.createOscillator();
+    const tg = audio.createGain();
+    twin.type = "square";
+    twin.frequency.setValueAtTime(69, t);
+    twin.frequency.exponentialRampToValueAtTime(1130, hit);
+    tg.gain.value = 0.32;
+    twin.connect(tg).connect(lp);
+    twin.start(t);
+    twin.stop(hit + 0.06);
+
+    // air going past the hull, climbing with it
+    const air = A.noiseSource();
+    const abp = audio.createBiquadFilter();
+    const ag = audio.createGain();
+    abp.type = "bandpass";
+    abp.Q.value = 3.2;
+    abp.frequency.setValueAtTime(320, t);
+    abp.frequency.exponentialRampToValueAtTime(7600, hit);
+    ag.gain.setValueAtTime(0.0001, t);
+    ag.gain.exponentialRampToValueAtTime(0.26, hit - 0.03);
+    ag.gain.exponentialRampToValueAtTime(0.0001, hit + 0.03);
+    air.connect(abp).connect(ag).connect(A.master);
+    air.start(t);
+    air.stop(hit + 0.08);
+
+    // and the pressure underneath, which is felt rather than heard
+    const push = audio.createOscillator();
+    const pg = audio.createGain();
+    push.type = "sine";
+    push.frequency.setValueAtTime(28, t);
+    push.frequency.exponentialRampToValueAtTime(76, hit);
+    pg.gain.setValueAtTime(0.0001, t);
+    pg.gain.exponentialRampToValueAtTime(0.5, hit - 0.03);
+    pg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.04);
+    push.connect(pg).connect(A.master);
+    push.start(t);
+    push.stop(hit + 0.1);
+
+    // --- and the sky lets go ---
+    const crack = A.noiseSource();
+    const chp = audio.createBiquadFilter();
+    const cg = audio.createGain();
+    chp.type = "highpass";
+    chp.frequency.setValueAtTime(7000, hit);
+    chp.frequency.exponentialRampToValueAtTime(260, hit + 0.45);
+    cg.gain.setValueAtTime(0.9, hit);
+    cg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.6);
+    crack.connect(chp).connect(cg).connect(A.master);
+    crack.start(hit);
+    crack.stop(hit + 0.62);
+
+    const drop = audio.createOscillator();
+    const dg = audio.createGain();
+    drop.type = "sine";
+    drop.frequency.setValueAtTime(260, hit);
+    drop.frequency.exponentialRampToValueAtTime(26, hit + 0.55);
+    dg.gain.setValueAtTime(0.0001, hit);
+    dg.gain.exponentialRampToValueAtTime(0.95, hit + 0.015);
+    dg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.75);
+    drop.connect(dg).connect(A.master);
+    drop.start(hit);
+    drop.stop(hit + 0.78);
+
+    // something enormous going past, left to right: a band of noise falling in
+    // pitch is what passing something sounds like, and the pan is the rest
+    const pass = A.noiseSource();
+    const pbp = audio.createBiquadFilter();
+    const wg = audio.createGain();
+    pbp.type = "bandpass";
+    pbp.Q.value = 1.6;
+    pbp.frequency.setValueAtTime(4200, hit);
+    pbp.frequency.exponentialRampToValueAtTime(180, hit + 0.7);
+    wg.gain.setValueAtTime(0.0001, hit);
+    wg.gain.exponentialRampToValueAtTime(0.4, hit + 0.05);
+    wg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.8);
+    const wide = audio.createStereoPanner ? audio.createStereoPanner() : null;
+    if (wide) {
+      wide.pan.setValueAtTime(-0.85, hit);
+      wide.pan.linearRampToValueAtTime(0.85, hit + 0.5);
+      wide.connect(A.master);
+    }
+    pass.connect(pbp).connect(wg).connect(wide || A.master);
+    pass.start(hit);
+    pass.stop(hit + 0.82);
+
+    // It lands in tonight's key, because the band is still playing underneath
+    // and an arrival in the wrong one is a wrong note with a bang on it.
+    [[0, 0], [4, 0.06]].forEach(([up, at]) => {
+      const o = audio.createOscillator();
+      const g = audio.createGain();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(A.midi(A.uiNote(up, 36)), hit + at);
+      g.gain.setValueAtTime(0.0001, hit + at);
+      g.gain.exponentialRampToValueAtTime(0.13, hit + at + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, hit + at + 0.7);
+      o.connect(g).connect(A.master);
+      o.start(hit + at);
+      o.stop(hit + at + 0.72);
+    });
+  };
+
   // --- the kraken's warble: one drone, held while any of them are on screen ---
   let squidSound = null;
 
