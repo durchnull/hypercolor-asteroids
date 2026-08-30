@@ -294,6 +294,15 @@ a confession.
 *Checked:* referee files and game files in one commit is refused; a rule change
 with no `Rule-Change:` line is refused. Neither is overridable.
 
+Asked of the paths the commit is actually made of, and not of the directory the
+pilot happens to be standing in. A file git has never been told about is
+nobody's change yet — an untracked `crew.md` left beside a session editing
+`tools/chronicle.sh` had the referee reporting, on every save, that the rules
+and the game were moving together, about a draft that had never been staged.
+This rule is a red line with no override, so an accident that reliable is an
+argument somebody eventually makes on purpose. Stage the file and it counts
+again, whatever it is.
+
 ## GR11 — An event belongs to the pilot who wrote it. `red line`
 
 An **event** is an unexpected challenge dropped into a live wave — three
@@ -361,6 +370,17 @@ no longer skips an event for its author is refused. Rewrite it as you like, but
 leave the guard recognisable — `e.by !== A.HOUSE && e.by === <the pilot>` — and
 leave the only condition on it the one GR12 puts there. No overrides on any of
 it.
+
+Checked **on disk**, the way GR12 checks the ledger, and for the same reason.
+The runner is read off the working tree at play time, and the check above fires
+only inside a commit that happens to touch it — so a guard lost to a pull, to a
+merge resolution, or to a `merge=union` line on a file next door sat in the
+working tree arming everybody's own events against them, and nothing would look
+at that file again until the next pilot happened to edit it. The one line the
+whole mechanic rests on is now examined wherever the game reads it, on any
+commit, from any tree. A tape cannot stand in for it either: a flight flown
+under a broken guard seals `"events":[]`, and *the field held its fire* is a
+real evening two rows on the board already have.
 
 ## GR12 — The tally remembers. `red line`
 
@@ -444,6 +464,21 @@ would not be one, so the file is now checked where it is used: any commit, from
 a tree whose ledger disagrees with the history, is refused. A stale ledger after
 a pull trips the same wire, and the fix is the same one command, because there
 is no state this file can be in where regenerating it is the wrong move.
+
+And the copy that decided one particular evening is sealed into the tape from
+it — `src/game/blackbox.js` writes the row the cabinet was charging its pilot
+into every flight, so a field quietly talked down shows up on the board rather
+than only on the machine that did it. For a while nothing on the reading side
+ever asked: the reader printed the row straight off the tape and stopped, which
+made it the one number on a tape that exists to be disputed and could not be.
+Bends only grow, so holding a sealed 5 against today's 5 proves nothing about
+the evening. `tools/tally.sh --at REV` reads the ledger off the history as it
+stood at one commit, and `tools/blackbox.sh` resolves a tape's own timestamp to
+the newest commit that had landed when the ship went down and says
+`FIELD CONFIRMED` or `FIELD DISPUTED`, with both numbers. It does not touch the
+seal and it does not decide anything: a pilot who flew on a branch carrying a
+bend main had not seen disagrees with the history honestly. It puts the two
+numbers in front of the room, which is all a ledger has ever done.
 
 ## GR13 — The owner's ground. `red line`
 
@@ -655,7 +690,17 @@ remembers.
 file is refused — the game writes them to the screen, so a `BB1:` line arriving
 as a file is something somebody made, and there is one reason to make one. A
 filed flight whose bytes do not hash to its own name is refused. A board row
-arriving with no flight filed under it gets a word, not a block, because every
+that does not say what the flight filed under it says is refused as well: the
+headline is `date · pilot · score · wave · m:ss` and every one of those is in
+the JSON the seal was taken over, so the two are exactly comparable and were
+joined by eight hex digits and nothing else. Which matters because the sentence
+is the half everything reads — `tools/flights.sh` credits a flight to the pilot
+the board line names, deliberately, so the meter, GR14's mercy and the pilot
+pages all go by the prose while the evidence sits unread in the file beside it.
+The sum proves the file has not moved since it was filed; it never said a word
+about the line written over it. A row that disagrees with its own evidence is
+not an inherited row, it is a row somebody typed. A board row arriving with no
+flight filed under it *does* get a word rather than a block, because every
 row that landed before any of this was kept is one of those. The rest cannot be
 checked and never will be: no machine in here can see whether a person pressed
 a key. There is no override, because an override on this one would be a

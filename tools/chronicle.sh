@@ -754,8 +754,31 @@ function is_book(p) {
 # to go on saying so. This is the one place that needs them folded in, and it is
 # the only place that folds them.
 function is_filed(p) {
-  return (is_book(p) || p ~ /^media\/badges\/.+\.svg$/)
+  return (is_book(p) || is_strip(p))
 }
+# The strip on its own, because one path outside it has to ask whether it
+# moved. tools/badges.sh paints the six SVGs and the six alt texts in the
+# README that name them, in one run, off the same six numbers - so a README
+# arriving beside a repainted badge is the front page being filed, and a README
+# arriving without one is a person writing. is_readme_filing below is that
+# sentence, and it is the only reason this is a function of its own rather than
+# a term inside is_filed.
+function is_strip(p) { return (p ~ /^media\/badges\/.+\.svg$/) }
+# README.md, which is neither a page of the book nor reliably anybody work.
+# Six of its lines are the alt text of the badge strip and a machine writes
+# them; every other line is the front door, and rewriting that is a story the
+# book has always told - see the deed "rewrote the notes on the cabinet".
+# Neither caller can tell the two apart from a path alone, and both can tell
+# whether the pictures those six lines point at moved in the same commit, which
+# is exactly when a machine wrote them. So the README is off-book unless the
+# strip came with it.
+#
+# What that costs is narrow and worth writing down: a pilot who adds a
+# paragraph to the README in the same commit as a badge that a previous landing
+# left lying in the tree loses the mention for it. The other way round - every
+# filing narrated from here on, because the strip now reaches the front page -
+# is the thing the book spent three commits learning not to do.
+function is_readme_filing(readme, strip) { return (!readme || strip) }
 # And one path that is evidence of nothing either way. The ledger is written off
 # the history like the pages and the strip, so a filing that re-derived it is
 # still a filing - but a commit that is nothing but the ledger is the tally
@@ -927,6 +950,22 @@ case "${1:-}" in
       | awk "$LIB"'$0 != "" && is_game($0) { print }'
     exit 0 ;;
 
+  # The same handle for the other list: which of these paths the cabinet wrote
+  # about itself - the pages, the plates, the faces, the strip. Nothing in here
+  # needs it either; the referee does. A path a build rewrites on every commit
+  # is a path two branches will always disagree on, and .gitattributes is where
+  # that argument is settled in advance - so something has to be able to walk
+  # the list and ask whether each one has an answer. The day docs/pilot-*.html
+  # arrived it did not, and three pages nobody wrote conflicted on the first
+  # branch cut afterwards. Asked here rather than listed there for the reason
+  # every other reader asks rather than copies: a second list is a second
+  # opinion, and it goes stale in exactly the commit that matters.
+  --is-filed)
+    shift
+    if [ $# -gt 0 ]; then printf '%s\n' "$@"; else cat; fi \
+      | awk "$LIB"'$0 != "" && is_filed($0) { print }'
+    exit 0 ;;
+
   # What the book would put on a chapter built out of these paths, as the badge
   # says it: one word a line, each mark once, in the order the book prints them
   # in. tools/labels.sh is the caller - a pull request wants the same answer in
@@ -990,12 +1029,15 @@ case "${1:-}" in
           is_machine($2, $6) { next }
           {
             game = 0; line = ""; mode = 0; bookish = 0; offbook = 0; event = 0
+            readme = 0; strip = 0
             n = split($7, b, "\n")
             for (k = 1; k <= n; k++) {
               if (is_stat(b[k])) {
                 split(b[k], ns, "\t")
                 if (is_game(ns[3])) game = 1
-                if (is_filed(ns[3])) bookish = 1
+                if (is_strip(ns[3])) strip = 1
+                if (ns[3] == "README.md") readme = 1
+                else if (is_filed(ns[3])) bookish = 1
                 else if (!is_mute(ns[3])) offbook = 1
                 mode = 0; continue
               }
@@ -1011,6 +1053,7 @@ case "${1:-}" in
             # more than on the cover. is_filing above is the rule, said once;
             # the builder asks it the same question out of its own variables,
             # and tools/lockstep.sh puts the same commits to both.
+            if (!is_readme_filing(readme, strip)) offbook = 1
             if (is_filing(game, bookish, offbook, event)) {
               if (sil) printf "%s\t%s\n", $1, $2
               next
@@ -1849,7 +1892,7 @@ NF < 4 { next }
   line = ""; overrides = ""; rulechange = ""; tallyline = ""; breach = ""; mode = ""
   gamefiles = 0; files = 0; acmr = 0; ins = 0; del = 0; kc = 0; fpn = 0
   refmoved = 0; docmoved = 0; bookmoved = 0; readmemoved = 0; elsemoved = 0
-  filedmoved = 0
+  filedmoved = 0; stripmoved = 0
   rankmoved = 0
   refstrict = 0; nonref = 0; stolen = 0
   split("", deleted); split("", arrived); split("", fseen); split("", fadd); split("", fdel)
@@ -1889,7 +1932,7 @@ NF < 4 { next }
       # filing that carried one is still a filing. Held apart from bookmoved
       # because the deeds below name the book by that, and a badge is not the
       # book being rewritten.
-      else if (is_filed(p)) filedmoved = 1
+      else if (is_filed(p)) { filedmoved = 1; if (is_strip(p)) stripmoved = 1 }
       # Neither column, and deliberately nothing - is_mute above says why.
       else if (is_mute(p)) { }
       else if (p ~ /^docs\//) {
@@ -2050,7 +2093,8 @@ NF < 4 { next }
   # that costs nothing and would matter if that ever stopped being true is
   # worth keeping where the fixture can watch it.
   if (is_filing(gamefiles, (bookmoved || filedmoved),
-                (docmoved || refmoved || readmemoved || elsemoved),
+                (docmoved || refmoved || elsemoved ||
+                 !is_readme_filing(readmemoved, stripmoved)),
                 (overrides != "" || rulechange != "" || tallyline != "" ||
                  breach != "" || unrec != ""))) {
     if (silenceonly) printf "%s\t%s\n", $1, who

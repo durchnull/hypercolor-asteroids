@@ -196,6 +196,25 @@ charged_json() {
 }
 CHARGED_CRC=012cd673
 
+# The same idea with a date on it. The ledger row a tape seals is the one
+# number on it that exists to be disputed, and until tools/tally.sh grew --at
+# nothing could: bends only grow, so a sealed 1 against today's 1 says nothing
+# about the evening. The timestamp is what picks the history to hold it
+# against, and this one is far enough in the future that whatever the cabinet
+# below has landed by then is the answer - so one tape and one seal can be read
+# against two different histories, which is exactly the pair of cases wanted.
+dated_json() {
+  printf '%s' \
+'{"v":1,"ts":"2099-01-01T00:00:00.000Z","pilot":"Bo Renn","whoami":"Bo Renn",' \
+'"ledger":{"bends":1,"clean":0},' \
+'"score":2600,"best":4200,"wave":2,"time":74.5,"shaves":2,' \
+'"seats":[{"seat":"P1","shots":120,"hits":30,' \
+'"rocks":{"large":4,"medium":9,"small":15},"nuked":0,"deaths":3,"bombs":0,' \
+'"hooks":1,"kraken":{"hits":2,"kills":1},"dist":9.6,"top":298,"thrust":41.3,' \
+'"flurry":5,"score":2600}],"events":[]}'
+}
+DATED_CRC=9cfcdce4
+
 # The tape around a record: the readable header nobody parses, the body base64'd
 # into BB1: lines forty-eight characters wide, and the seal on the last line.
 tape() {
@@ -459,6 +478,48 @@ lab GR14 "a pilot who has never flown is not spared the meter"
   version "The rock, once more"
   sh tools/flights.sh --last "$PILOT" > "$OUT" 2>&1
   expect "last=$? said=[$(cat "$OUT")] bo=$(count "$PILOT")" "last=1 said=[] bo=3"
+
+lab GR12 "the ledger a tape sealed is held against the history it flew on"
+  # One bend on the record and a tape that says one bend. The two agree, and
+  # saying so is the whole point of sealing the row in the first place - the
+  # game reads the ledger off the working tree, so the tape is the only copy of
+  # that evening anybody else ever sees.
+  seat "$PILOT"
+  printf '// the rock, bent\n' >> src/entities/rock.js
+  land -m "The rock, bent" -m "Golden-Rule-Override: GR6 - the lab needed a bend to count"
+  sh tools/tally.sh >/dev/null 2>&1
+  land -m "The ledger, written down"
+  tape "$(dated_json)" "$DATED_CRC" > "$WORK/tape"
+  sh tools/blackbox.sh "$WORK/tape" > "$OUT" 2>&1
+  expect "row=$(sh tools/tally.sh --row "$PILOT") said=$(grep -c '^FIELD CONFIRMED' "$OUT")" \
+         "row=1	0 said=1"
+
+lab GR12 "a field talked down is a field the board can see"
+  # The same tape, the same seal, a history that charges two. A ledger quietly
+  # edited on the machine that flew is the one number in here nothing else
+  # could ever have caught, because the referee reads the file and the file was
+  # what got edited. The tape carries what the game actually read, so the two
+  # can be held up beside each other a year later.
+  seat "$PILOT"
+  printf '// the rock, bent\n' >> src/entities/rock.js
+  land -m "The rock, bent" -m "Golden-Rule-Override: GR6 - one"
+  printf '// the rock, bent again\n' >> src/entities/rock.js
+  land -m "The rock, bent again" -m "Golden-Rule-Override: GR5 - two"
+  tape "$(dated_json)" "$DATED_CRC" > "$WORK/tape"
+  sh tools/blackbox.sh "$WORK/tape" > "$OUT" 2>&1
+  expect "seal=$(grep -c '^SEAL INTACT' "$OUT") said=$(grep -c '^FIELD DISPUTED: the history at .* said 2 bends and 0 clean' "$OUT")" \
+         "seal=1 said=1"
+
+lab GR12 "a tape from before anything landed is not argued with"
+  # Forgiving where it cannot know. The timestamp of this one is older than
+  # every commit in the cabinet, so there is no history to hold it against and
+  # the reader says nothing rather than guessing - the same posture the missing
+  # seat and the missing reel already take.
+  seat "$PILOT"
+  tape "$(charged_json)" "$CHARGED_CRC" > "$WORK/tape"
+  sh tools/blackbox.sh "$WORK/tape" > "$OUT" 2>&1
+  expect "field=$(grep -c '^THE FIELD IT FLEW' "$OUT") argued=$(grep -c '^FIELD ' "$OUT")" \
+         "field=1 argued=0"
 
 lab GR14 "two landings is the last one, three is grounded"
   seat "$PILOT"

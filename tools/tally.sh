@@ -14,7 +14,9 @@
 #   tools/tally.sh --plus FILE     ... counting a commit message not landed yet
 #   tools/tally.sh --check         exit 1 if the file on disk disagrees
 #   tools/tally.sh --count NAME    just the number, for a script
+#   tools/tally.sh --row NAME      bends and clean, tab separated, for a script
 #   tools/tally.sh --roll          the standings, for a human
+#   tools/tally.sh --at REV        ... off the history as it stood at REV
 #
 # A bend costs one. Going round the referee costs two, because the whole point
 # of a budget is that spending it happens where people can see it. A
@@ -23,6 +25,15 @@
 # since a pilot's last bend are counted beside the bends: three of them ease
 # the field by one bend's worth. src/game/tally.js does that sum; this file
 # only ever reports what the history says.
+#
+# --at is what makes a sealed ledger row worth sealing. Every black box carries
+# the row the cabinet was charging its pilot while they flew (GR12), and until
+# there was a way to ask what the history said on that evening, the one number
+# on a tape that exists to be disputed was the one number nobody could dispute:
+# bends only ever grow, so a sealed 5 against today's 5 proves nothing. This
+# reads the history through REV and nothing after it, which is the copy the
+# post-commit hook had just written when the flight began. tools/blackbox.sh
+# resolves a tape's own timestamp to a commit and asks.
 # ---------------------------------------------------------------------------
 set -u
 
@@ -34,6 +45,7 @@ OUT=src/game/ledger.js
 MODE=write
 PLUS=""
 WHO=""
+AT=""                  # the commit the ledger is read as of, with --at
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -41,12 +53,29 @@ while [ $# -gt 0 ]; do
     --check)    MODE=check ;;
     --roll)     MODE=roll ;;
     --count)    MODE=count; WHO="${2:-}"; shift ;;
+    --row)      MODE=row;   WHO="${2:-}"; shift ;;
     --plus)     PLUS="${2:-}"; shift ;;
-    -h|--help)  sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --at)       AT="${2:-}"; shift ;;
+    -h|--help)  sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *)          printf 'tally: unknown option %s\n' "$1" >&2; exit 2 ;;
   esac
   shift
 done
+
+# Through REV and not one commit after it. The ledger is a snapshot of the
+# history behind it, so asking it about an evening means handing it the history
+# that existed on that evening and nothing else.
+#
+# Empty means HEAD, and empty is also what a repository with nothing landed in
+# it gets - the readers below then answer about the message on the table alone,
+# which is what the referee asks on the very first commit.
+HIST=HEAD
+if [ -n "$AT" ]; then
+  HIST=$(git rev-parse --verify -q "$AT^{commit}") || {
+    printf 'tally: no such commit\n' >&2; exit 2; }
+elif ! git rev-parse --verify -q HEAD >/dev/null 2>&1; then
+  HIST=""
+fi
 
 ME=$(git config user.name 2>/dev/null || true)
 
@@ -76,13 +105,19 @@ rows() {
   # Forgiving, in the way the audit is forgiving: a name nobody recognises
   # charges nobody, and an empty list charges everybody it used to. This may
   # miss a breach. It may not invent one.
+  #
+  # The audit is asked about the whole history rather than about HIST, and it
+  # does not need to be: a skip it reports for a commit after HIST is a sha the
+  # log below never mentions, so nothing is ever charged for it. Left whole
+  # because --skips has no rev to take, and giving it one is a change to the
+  # book rather than to this.
   { sh tools/chronicle.sh --skips 2>/dev/null \
       | awk -F'\t' '{ printf "\036SKIP\037%s\037%s", $1, $2 }'
-    sh tools/chronicle.sh --versions 2>/dev/null \
+    sh tools/chronicle.sh --versions "${HIST:-HEAD}" 2>/dev/null \
       | awk '{ printf "\036VERSION\037%s", $1 }'
-    git log --format='%an' 2>/dev/null | sort -u \
+    git log $HIST --format='%an' 2>/dev/null | sort -u \
       | awk '$0 != "" { printf "\036FLEW\037%s", $0 }'
-    git log --no-merges --format='%x1e%H%x1f%an%x1f%B%x1f' 2>/dev/null; } \
+    git log $HIST --no-merges --format='%x1e%H%x1f%an%x1f%B%x1f' 2>/dev/null; } \
   | awk -v me="$ME" -v plus="$PLUS" '
       BEGIN { RS = "\036"; FS = "\037"; pending = 0 }
 
@@ -209,6 +244,13 @@ count_of() {
   rows | awk -F'\t' -v who="$1" '$1 == who { n = $2 } END { print n + 0 }'
 }
 
+# Both halves of a pilot's row, because both halves are what the tape seals and
+# what src/game/tally.js reads. Zero and zero for a name the ledger does not
+# carry, which is the same answer the game gets: no row, no charge.
+row_of() {
+  rows | awk -F'\t' -v who="$1" '$1 == who { b = $2; c = $3 } END { printf "%d\t%d\n", b + 0, c + 0 }'
+}
+
 case "$MODE" in
   print)
     render
@@ -216,6 +258,10 @@ case "$MODE" in
 
   count)
     count_of "$WHO"
+    ;;
+
+  row)
+    row_of "$WHO"
     ;;
 
   check)

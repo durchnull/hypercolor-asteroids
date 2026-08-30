@@ -430,6 +430,27 @@ is_generated() {
   return 1
 }
 
+# A file git has never been told about. The worktree reading folds untracked
+# files into the change set on purpose - a feature written half an hour ago is
+# the thing a pilot most wants an opinion on, and GR1 has to be able to parse it
+# and GR3 to ask where it lives. GR10 is the one rule that question is wrong
+# for: it is about what lands *together*, and nothing has landed with a scratch
+# file somebody left in the root.
+#
+# Left in, the rule was refusable by accident. An untracked crew.md appeared
+# beside a session editing tools/chronicle.sh and every save afterwards reported
+# "the rules and the game are moving together - the game: crew.md", about a file
+# that had never been staged, let alone committed. An accident that reliable is
+# an argument somebody eventually makes on purpose, and a referee that cries
+# wolf gets skimmed past with the true ones inside it.
+#
+# Only ever answers in the worktree reading; staged and rev have nothing
+# untracked in them by construction.
+is_untracked() {
+  [ -f "$TMP/new" ] || return 1
+  grep -qxF "$1" "$TMP/new" 2>/dev/null
+}
+
 added_of()   { awk -F'\t' -v f="$1" '$3==f && $1!="-" {a+=$1} END{print a+0}' "$TMP/stat"; }
 removed_of() { awk -F'\t' -v f="$1" '$3==f && $2!="-" {d+=$2} END{print d+0}' "$TMP/stat"; }
 
@@ -547,8 +568,14 @@ check_gr10() {
   # The book and the taglines are written by a machine from the history, and
   # they land with whatever commit comes next - including a rule change. They
   # are nobody's work, so they are neither side of this argument.
+  #
+  # Nor is a file git has never heard of - see is_untracked, which is here and
+  # nowhere else. This rule asks what is landing in one commit, and the answer
+  # comes off the index rather than off the directory the pilot happens to be
+  # standing in.
   while IFS= read -r f; do
     is_generated "$f" && continue
+    is_untracked "$f" && continue
     if is_referee "$f"; then ref=1; reffiles="$reffiles $f"
     else game=1; gamefiles="$gamefiles $f"; fi
   done < "$TMP/files"
@@ -622,6 +649,28 @@ check_gr11() {
   if grep -qx "$RUNNER" "$TMP/files" 2>/dev/null; then
     content "$RUNNER" | grep -Eq "$GUARD" || {
       fail GR11 "$RUNNER no longer skips an event for the pilot who wrote it"
+      note "keep the guard readable: e.by !== A.HOUSE && e.by === <the pilot>"
+    }
+  # ... and the copy the game actually reads, which is the one on disk. GR12
+  # grew this same second half for the same reason and this one had never had
+  # it: the check above fires only inside a commit that happens to touch the
+  # runner, so a guard lost to a pull, a merge resolution or the merge=union
+  # line on a generated neighbour sits in the working tree arming everybody's
+  # own events against them, and nothing looks at it again until somebody next
+  # edits that file. GR11 is the one red line with no override in it precisely
+  # because nobody may disarm the thing waiting for them - and for a while the
+  # cheapest way to do exactly that was to not commit it.
+  #
+  # A tape cannot stand in for this either: a flight flown under a broken guard
+  # seals "events":[], and "the field held its fire" is a real evening two rows
+  # on the board already have.
+  #
+  # A --rev reading is describing somebody else's commit and has no working
+  # tree to speak for, so it stays out of this, exactly as GR12 does.
+  elif [ "$MODE" != rev ] && [ -f "$RUNNER" ]; then
+    grep -Eq "$GUARD" "$RUNNER" || {
+      fail GR11 "$RUNNER on disk no longer skips an event for its own author"
+      note "the game reads this copy, so this is the one that arms the room"
       note "keep the guard readable: e.by !== A.HOUSE && e.by === <the pilot>"
     }
   fi
@@ -1169,6 +1218,57 @@ check_gr16() {
     note "a filed flight is the tape's evidence, not a copy of it - tools/blackbox.sh --save writes one"
   done < "$TMP/files"
 
+  # And the thing the sum above still never asked: whether the sentence over a
+  # row says what the flight under it says. The hash proves the file has not
+  # moved since it was filed. It proves nothing about the line on the board,
+  # and the line on the board is the half everything reads - tools/flights.sh
+  # credits a flight to "the pilot the board line names", deliberately, so the
+  # meter, GR14's mercy and the pilot pages all read the sentence while the
+  # evidence sits unread in the file beside it. The two were joined by eight
+  # hex digits and nothing else.
+  #
+  # They are exactly comparable: the headline is date, pilot, score, wave and
+  # m:ss, and every one of those is in the JSON the seal was taken over. So it
+  # is rebuilt and compared, and it fails the way the hash mismatch does rather
+  # than warning - a row that disagrees with its own evidence is not an
+  # inherited row, it is a row somebody typed. A row with no flight filed under
+  # it is still the paragraph below, still a word rather than a block.
+  #
+  # The whole board rather than the rows this commit adds, because the question
+  # is not who wrote a row but whether the page is true, and it costs one pass.
+  # A commit from before any of this was kept has no filed flights to compare
+  # against and passes in silence, which is the same mercy by arithmetic.
+  content "$BOARD" > "$TMP/board" 2>/dev/null
+  if [ -s "$TMP/board" ]; then
+    awk '/^\*\*/ { line = $0; next }
+         /^<!-- crc [0-9a-f]+ -->/ && line != "" { print $3 "\t" line; line = "" }' \
+      "$TMP/board" > "$TMP/rows"
+    while IFS="$(printf '\t')" read -r c said; do
+      [ -n "${c:-}" ] || continue
+      path_exists "docs/tapes/$c.json" || continue
+      content "docs/tapes/$c.json" > "$TMP/tape.json" 2>/dev/null
+      want=$(awk '{
+        if (match($0, /"ts":"[^"]*"/))     ts = substr($0, RSTART + 6, RLENGTH - 7)
+        if (match($0, /"pilot":"[^"]*"/))  who = substr($0, RSTART + 9, RLENGTH - 10)
+        if (match($0, /"score":[0-9]+/))   sc = substr($0, RSTART + 8, RLENGTH - 8)
+        if (match($0, /"wave":[0-9]+/))    wv = substr($0, RSTART + 7, RLENGTH - 7)
+        if (match($0, /"time":[0-9.]+/))   tm = substr($0, RSTART + 7, RLENGTH - 7)
+        if (ts == "" || who == "") exit
+        t = int(tm)
+        printf "**%s \302\267 %s \302\267 %s \302\267 wave %s \302\267 %d:%02d**", \
+               substr(ts, 1, 10), who, sc, wv, int(t / 60), t % 60
+      }' "$TMP/tape.json")
+      [ -n "$want" ] || continue
+      case "$said" in
+        "$want"*) continue ;;
+      esac
+      fail GR16 "the board row for crc $c does not say what the flight filed under it says"
+      note "the board: $said"
+      note "the tape:  $want"
+      note "the sum proves the file has not moved; this is the sentence over it"
+    done < "$TMP/rows"
+  fi
+
   # A row arriving on the board with no flight behind it. Warned rather than
   # refused: the rows already up there were filed before anything was kept, and
   # a rule that starts by calling the record it inherited a forgery is not one
@@ -1236,6 +1336,60 @@ check_replay() {
 }
 
 # ---------------------------------------------------------------------------
+# The other thing nobody breaks on purpose: a generated path git has not been
+# told how to merge.
+#
+# Everything under docs/ is rewritten by a machine from the history, on every
+# commit, by everybody. Two branches cut off the same commit have therefore each
+# rewritten the same pages, differently, and neither pilot wrote a line of it -
+# so git stops the pull and asks one of them to resolve a file that the next
+# rebuild throws away. .gitattributes settles that in advance with merge=union,
+# and the list in it was kept by hand.
+#
+# It went stale in exactly one commit. docs/pilot-*.html landed and was the only
+# generated family in the project without a line, and a pilot page changes when
+# *anybody* commits - the roster, the cross-visits, the dock and the meter are
+# facts about the whole history. Two branches touching different files in src/
+# conflicted on all three pilot pages and on nothing else. Nothing could have
+# noticed, because nothing was walking the list.
+#
+# This walks it. tools/chronicle.sh --is-filed says what the cabinet writes
+# about itself - the one home for that question, the same one the book asks -
+# and git check-attr says whether each of those paths has an answer. Any answer:
+# union for the pages, unset for the plates, which are binary and painted once.
+# Only "unspecified" is a gap.
+#
+# A word rather than a block, and deliberately. A gap here is not the fault of
+# whoever is committing, and GR10 keeps .gitattributes out of a game commit
+# anyway - so a block would stop a pilot with no legal way through in the
+# commit they are making. The pilot who added the family is the one reading.
+#
+# Asked of the same copy every other check here is asked of: the index when the
+# index is what is landing, the working tree when a pilot is standing in it. And
+# one trap worth writing down for whoever tests this, because it is silent:
+# check-attr falls back to the index copy of .gitattributes when the working
+# file is missing, so the obvious fixture - delete the file, expect a warning -
+# passes against a file that is not there. Take it out of the index too.
+# ---------------------------------------------------------------------------
+check_union() {
+  case "$MODE" in rev) return 0 ;; esac
+  [ -f "$BOOK" ] || return 0
+  case "$MODE" in staged) set -- --cached ;; *) set -- ;; esac
+  git ls-files 2>/dev/null | sh "$BOOK" --is-filed 2>/dev/null > "$TMP/filed" || return 0
+  [ -s "$TMP/filed" ] || return 0
+  git check-attr "$@" --stdin merge < "$TMP/filed" 2>/dev/null \
+    | awk -F': ' '$NF == "unspecified" { print $1 }' > "$TMP/bare"
+  [ -s "$TMP/bare" ] || return 0
+
+  n=$(wc -l < "$TMP/bare" | tr -d ' ')
+  warn ATTR "$n generated path$([ "$n" = 1 ] || printf s) with no merge answer in .gitattributes"
+  head -4 "$TMP/bare" | while IFS= read -r p; do note "$p"; done
+  [ "$n" -gt 4 ] && note "... and $((n - 4)) more"
+  note "a machine rewrites these on every commit, so two branches always disagree"
+  note "give each family a merge=union line - in its own commit, GR10 says so"
+}
+
+# ---------------------------------------------------------------------------
 # The referee's own arithmetic.
 #
 # Not a golden rule - a rule needs somebody to have broken it, and nobody breaks
@@ -1267,13 +1421,13 @@ check_lockstep() {
 case "$STAGE" in
   pre-commit) check_gr1; check_gr2; check_gr7; check_gr10; check_gr11; check_gr12
               check_gr13; check_gr16; check_gr39; check_named; check_media
-              check_turns; check_replay; check_lockstep ;;
+              check_turns; check_replay; check_union; check_lockstep ;;
   commit-msg) check_gr45; check_gr6; check_gr10; check_gr12; check_gr14
               check_breach; check_message ;;
   *)          check_gr1; check_gr2; check_gr7; check_gr10; check_gr11
               check_gr45; check_gr6; check_gr12; check_gr13; check_gr14
               check_gr16; check_breach; check_gr39; check_named; check_media
-              check_turns; check_replay; check_lockstep ;;
+              check_turns; check_replay; check_union; check_lockstep ;;
 esac
 
 if [ ! -s "$TMP/out" ]; then
