@@ -28,16 +28,28 @@ same evening being read out twice. Neither one buys a landing.
 | 6 | David Friedrich | 16530 | 4 | 4:42 | 17% | Eleven kraken dead, seventeen close shaves, and the bomb still in the rack at the end. |
 | 7 | David Friedrich | 15170 | 4 | 4:16 | 19% | Three house traps walked through, and then PINCER took the last two ships at wave 4. |
 | 8 | felix2072 | 14980 | 4 | 3:41 | 17% | Four ambushes walked through clear, six kraken dead, and wave 4 finished it with three deaths. |
-| 9 | David Friedrich | 13810 | 4 | 3:47 | 24% | Sharpest aim and longest flurry on the board, four ambushes flown clear, and then wave 4 with the bomb still in the rack. |
-| 10 | Malte Buttjer | 4680 | 2 | 1:32 | 12% | Two kraken in two shots, 26 rocks to the bomb, and DEBRIS FIELD took the last of it. |
-| 11 | Malte Buttjer | 3380 | 2 | 2:20 | 11% | Three kraken down and both bombs gone by wave two, with a wingmate who never left the spot they spawned on. |
-| 12 | David Friedrich | 0 | 1 | 0:16 | — | Three ships in sixteen seconds without the trigger ever being pressed. |
+| 9 | David Friedrich | 13810 | 4 | 3:47 | 24% | Longest flurry on the board, four ambushes flown clear, and then wave 4 with the bomb still in the rack. |
+| 10 | David Friedrich | 10100 | 4 | 2:19 | 25% | Sharpest aim and fastest scoring on the board, two house traps walked through at wave 3, and LIVE CIRCUIT took the last two ships at wave 4. |
+| 11 | Malte Buttjer | 4680 | 2 | 1:32 | 12% | Two kraken in two shots, 26 rocks to the bomb, and DEBRIS FIELD took the last of it. |
+| 12 | Malte Buttjer | 3380 | 2 | 2:20 | 11% | Three kraken down and both bombs gone by wave two, with a wingmate who never left the spot they spawned on. |
+| 13 | David Friedrich | 0 | 1 | 0:16 | — | Three ships in sixteen seconds without the trigger ever being pressed. |
 
 ## THE FLIGHT LOG
 
 Newest first. One line per tape, so the same evening is readable as an evening.
 
 <!-- log -->
+**2026-08-30 · David Friedrich · 10100 · wave 4 · 2:19** — 371 shots for 93
+rocks (18 large, 28 medium, 47 small), 25 percent accuracy and 4350 points a
+minute: the sharpest aim and the fastest scoring on this page, and both of them
+off a flight that lasted two minutes. A flurry of 18. The bomb came out three
+times and took 31 rocks with it, emptying the rack. Kraken: 13 hits, 5 killed.
+One grapple throw, 12.6 klicks flown, topping out at 251, with 63 seconds of
+that on the throttle. Five close shaves, three deaths. Three ambushes fired and
+the two at wave 3 were walked through — DEBRIS FIELD and METEOR SHOWER, both
+the house's. The one that landed was felix2072's: LIVE CIRCUIT at wave 4, which
+took two of the three ships and finished it. 17650 short of their own best.
+<!-- crc 6a1210b7 -->
 **2026-08-30 · David Friedrich · 21970 · wave 6 · 5:28** — 848 shots for 185
 rocks (30 large, 54 medium, 101 small), 22 percent accuracy — third sharpest on
 the board — and a flurry of 16. 4009 points a minute. The bomb came out four
