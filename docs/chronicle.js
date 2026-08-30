@@ -6,16 +6,16 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 45,
-    latest: { v: 45, pilot: "David Friedrich", date: "30 August 2026", line: "The cabinet was repainted while it was still switched on." },
+    versions: 46,
+    latest: { v: 46, pilot: "David Friedrich", date: "30 August 2026", line: "The speakers have something to add. It looks different, too." },
     plates: [
-      { v: 45, alt: "", line: "The cabinet was repainted while it was still switched on." },
+      { v: 46, alt: "", line: "The speakers have something to add. It looks different, too." },
+      { v: 45, file: "44238ee5.jpg", alt: "The cabinet was repainted while it was still switched on.", line: "The cabinet was repainted while it was still switched on." },
       { v: 44, file: "4f91d52e.jpg", alt: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago.", line: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago." },
       { v: 43, file: "7a0197e0.jpg", alt: "The instrument panel developed an opinion.", line: "The instrument panel developed an opinion." },
-      { v: 42, file: "b75b3350.jpg", alt: "The song went away and came back with ideas.", line: "The song went away and came back with ideas." },
     ],
     roster: {
-      "David Friedrich": 40,
+      "David Friedrich": 41,
       "Malte Buttjer": 3,
       "felix2072": 2,
     }
