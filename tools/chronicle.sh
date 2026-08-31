@@ -2403,18 +2403,37 @@ function briefly(s, lim,   i, cut) {
 # Lifted out of pilotpage() so it can be printed beside the bars rather than
 # after the flights: the two are the same question - which part of the cabinet
 # somebody stands in, and what the field charges them for standing there.
-function ledgercel(f, p, cls,   i, v, t) {
+#
+# Every pilot gets this panel, including the ones with nothing on it. The
+# ledger only carries a row for somebody who has bent something, so a page that
+# printed the panel only when a row existed made THE LEDGER a mark against the
+# pilot it appeared on - and gave the two clean pilots a page laid out
+# differently from the one pilot who is not. A clean sheet is a standing, not
+# an absence, and it is worth the same two tiles.
+function ledgercel(f, p, cls,   i, v, t, b, c) {
+  b = (p in lbend) ? lbend[p] + 0 : 0
+  c = (p in lbend) ? lclean[p] + 0 : 0
   printf "<section class=\"cel bends%s\">\n", cls > f
   printf "<h2 class=\"tab\">%s the ledger</h2>\n", ico("scroll") > f
-  if (p in lbend) {
-    print "<ul class=\"stats\">" > f
-    printf "%s", tile("scroll", lbend[p], lbend[p], "bend" plural(lbend[p] + 0) " in the open") > f
-    printf "%s", tile("up", lclean[p], lclean[p], "clean since the last") > f
+  print "<ul class=\"stats\">" > f
+  printf "%s", tile("scroll", b, b, "bend" plural(b) " in the open") > f
+  if (b > 0) {
+    printf "%s", tile("up", c, c, "clean since the last") > f
     if (llast[p] != "") printf "%s", tile("eye", "", esc(llast[p]), "the last one bent") > f
-    print "</ul>" > f
+  } else {
+    # No "clean since the last" for a clean sheet: the number would be counting
+    # up from a bend that never happened, and 0 is the one answer it must not
+    # print.
+    printf "%s", tile("eye", "", "never", "the last one bent") > f
+  }
+  print "</ul>" > f
+  if (b > 0)
     printf "<p class=\"gist\">Three clean landings ease it by one. Nobody edits " \
            "this number, including the pilot it is about and including when asked (GR12).</p>\n" > f
-  }
+  else
+    printf "<p class=\"gist\">Nothing has been charged to them. The way past a budget is " \
+           "an override line written into the commit, which lands here the same " \
+           "evening; nobody edits this number, including the pilot it is about (GR12).</p>\n" > f
   # Every version of theirs that had to write something down, linked to the
   # chapter where the reason is. This is the honest half: a page that printed
   # the count and hid the receipts would be worse than one that printed
@@ -2458,7 +2477,7 @@ function ledgercel(f, p, cls,   i, v, t) {
 function pilotpage(p,   f, i, j, k, v, b, n, s, t, nb2, run, longest, longbook,
                    days, gl, ng, nf, ne, ncr, hits, kills, mmv, nmk, tot,
                    cnt, oth, e2, topmk, secmk, dist, nfl, bestrk,
-                   bestwv, pcls, bcls, chips, ledger) {
+                   bestwv, pcls, bcls, chips) {
   f = "docs/pilot-" slug(p) ".html"
 
   # The shelf this pilot holds, and the longest run on it - the one number a
@@ -2583,9 +2602,13 @@ function pilotpage(p,   f, i, j, k, v, b, n, s, t, nb2, run, longest, longbook,
   # for standing there. They are the widths they are because the bars need a
   # bar worth of room and three tiles do not - and either one alone takes the
   # whole width, because half a row with nothing beside it is a gap.
-  ledger = (p in lbend) || bent[p] || cheat[p] || rcn[p]
-  pcls = (tot > 0 && ledger) ? " halfwide" : ""
-  bcls = (tot > 0 && ledger) ? " halfnarrow" : ""
+  #
+  # The ledger is always the other half of this row. It reads zero for most
+  # people, which is the point: it is the same row on every pilot page rather
+  # than a panel that turns up on the pages of the pilots who have spent
+  # something. ledgercel() prints the clean-sheet reading.
+  pcls = (tot > 0) ? " halfwide" : ""
+  bcls = (tot > 0) ? " halfnarrow" : ""
   if (tot > 0) {
     printf "<section class=\"cel fingerprint%s\">\n", pcls > f
     printf "<h2 class=\"tab\">%s what they move</h2>\n", ico("wrench") > f
@@ -2603,7 +2626,7 @@ function pilotpage(p,   f, i, j, k, v, b, n, s, t, nb2, run, longest, longbook,
     print "</ul>" > f
     print "</section>" > f
   }
-  if (ledger) ledgercel(f, p, bcls)
+  ledgercel(f, p, bcls)
 
   # ---- their shelf. The same books the cover opens, with only theirs on it,
   # which is the whole of what a pilot page is for: a run of chapters read
