@@ -37,7 +37,8 @@
   };
 
   function updateHud() {
-    const key = A.players.map((p) => p && [p.score, p.lives, p.bombs, p.out].join()).join("|")
+    const key = A.players.map((p) => p && [p.score, p.lives, p.bombs, p.out,
+      A.powerupKey ? A.powerupKey(p) : ""].join()).join("|")
       + "/" + A.game.level + "/" + A.game.phase;
     if (key === hudKey) return;
     hudKey = key;
@@ -65,7 +66,9 @@
           : '<div class="glyphs">' + SHIP_GLYPH.repeat(Math.max(p.lives, 0)) + "</div>" +
             '<div class="glyphs bombs">' +
               (p.bombs > 0 ? BOMB_GLYPH.repeat(p.bombs) : '<span class="empty">NO BOMBS</span>') +
-            "</div>");
+            "</div>" +
+            // the rack of powerups, described by the module that fills it
+            (A.powerupHud ? A.powerupHud(p) : ""));
     });
   }
 
