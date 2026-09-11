@@ -63,13 +63,15 @@
   }
 
   // Where a key goes: to its own seat, unless that seat is empty and another
-  // seat has asked to borrow it (bindings.js, `spare`). Seat two's join key is
-  // never borrowed, so the way into the second seat stays exactly where the
-  // card says it is.
+  // seat has asked to borrow it (bindings.js, `spare`); a spare key nobody
+  // owns goes to the seat that asked, always. Seat two's join key is never
+  // borrowed, so the way into the second seat stays exactly where the card
+  // says it is.
   function route(code) {
     const bind = A.KEYMAP[code];
     const spare = A.SPAREMAP[code];
-    return spare && bind && empty(bind.seat) ? spare : bind;
+    if (!bind) return spare;
+    return spare && empty(bind.seat) ? spare : bind;
   }
 
   // A key is released to the seat it was pressed for, not to whoever would
@@ -105,7 +107,7 @@
     });
 
     window.addEventListener("keyup", (e) => {
-      const bind = pressed[e.code] || A.KEYMAP[e.code];
+      const bind = pressed[e.code] || A.KEYMAP[e.code] || A.SPAREMAP[e.code];
       delete pressed[e.code];
       if (bind) release(bind.seat, bind.action);
     });
