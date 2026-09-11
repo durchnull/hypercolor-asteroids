@@ -25,12 +25,20 @@
         left: "ArrowLeft", right: "ArrowRight", thrust: "ArrowUp",
         fire: "Period", hook: "ArrowDown", bomb: "KeyL",
       },
+      // Borrowed from the seat beside it while that seat is empty, the way
+      // the mouse is (input/mouse.js): a pilot flying alone gets WASD on top
+      // of the arrows, and the moment seat two sits down these are theirs
+      // again. Same actions the arrows do, so nothing is learned twice.
+      spare: {
+        left: "KeyA", right: "KeyD", thrust: "KeyW", hook: "KeyS",
+      },
       binds: [
         ["&larr; &rarr;", "turn"],
         ["&uarr;", "thrust"],
         [".", "fire"],
         ["&darr;", "grapple &middot; hold to winch"],
         ["L", "bomb"],
+        ["W A S D", "the same, flying solo"],
       ],
       lobby: "READY",              // this seat is always in the game
       joinHint: "",                // …so it never advertises itself on the HUD
@@ -75,10 +83,15 @@
 
   /** code → { seat, action }, derived so a rebind above is the whole change. */
   A.KEYMAP = {};
+  /** code → { seat, action } for the borrowed keys: where a press goes when
+   *  the seat that owns the key in KEYMAP is empty. input.js decides that. */
+  A.SPAREMAP = {};
   A.SEATS.forEach((seat, i) => {
     for (const action of A.ACTIONS) {
       const code = seat.keys[action];
       if (code) A.KEYMAP[code] = { seat: i, action };
+      const spare = seat.spare && seat.spare[action];
+      if (spare) A.SPAREMAP[spare] = { seat: i, action };
     }
   });
 })(ASTEROIDS);
