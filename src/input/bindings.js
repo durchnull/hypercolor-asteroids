@@ -25,12 +25,24 @@
         left: "ArrowLeft", right: "ArrowRight", thrust: "ArrowUp",
         fire: "Period", hook: "ArrowDown", bomb: "KeyL",
       },
+      // A second set under the left hand. W A S D are borrowed from the seat
+      // beside it while that seat is empty, the way the mouse is
+      // (input/mouse.js): the moment seat two sits down they are theirs
+      // again. F and X belong to nobody, so they are seat one's whenever.
+      // Same actions the arrows do, so nothing is learned twice.
+      spare: {
+        left: "KeyA", right: "KeyD", thrust: "KeyW", hook: "KeyS",
+        fire: "KeyF", bomb: "KeyX",
+      },
       binds: [
         ["&larr; &rarr;", "turn"],
         ["&uarr;", "thrust"],
         [".", "fire"],
         ["&darr;", "grapple &middot; hold to winch"],
         ["L", "bomb"],
+        ["W A S D", "the same, flying solo"],
+        ["F", "fire"],
+        ["X", "bomb"],
       ],
       lobby: "READY",              // this seat is always in the game
       joinHint: "",                // …so it never advertises itself on the HUD
@@ -75,10 +87,16 @@
 
   /** code → { seat, action }, derived so a rebind above is the whole change. */
   A.KEYMAP = {};
+  /** code → { seat, action } for the second set: where a press goes when the
+   *  seat that owns the key in KEYMAP is empty, or always, when no seat does.
+   *  input.js decides that. */
+  A.SPAREMAP = {};
   A.SEATS.forEach((seat, i) => {
     for (const action of A.ACTIONS) {
       const code = seat.keys[action];
       if (code) A.KEYMAP[code] = { seat: i, action };
+      const spare = seat.spare && seat.spare[action];
+      if (spare) A.SPAREMAP[spare] = { seat: i, action };
     }
   });
 })(ASTEROIDS);

@@ -54,10 +54,36 @@
     A.startGame(A.seatedPilots());
   }
 
+  // Whether nobody is in a seat: on the splash, nobody has taken it; in a
+  // flight, nobody joined or they ran out. Same question A.solo() answers for
+  // the mouse, asked one seat at a time.
+  function empty(seat) {
+    if (A.game.phase === "start") return !A.seatedPilots().includes(seat);
+    return !A.players[seat] || A.players[seat].out;
+  }
+
+  // Where a key goes: to its own seat, unless that seat is empty and another
+  // seat has asked to borrow it (bindings.js, `spare`); a spare key nobody
+  // owns goes to the seat that asked, always. Seat two's join key is never
+  // borrowed, so the way into the second seat stays exactly where the card
+  // says it is.
+  function route(code) {
+    const bind = A.KEYMAP[code];
+    const spare = A.SPAREMAP[code];
+    if (!bind) return spare;
+    return spare && empty(bind.seat) ? spare : bind;
+  }
+
+  // A key is released to the seat it was pressed for, not to whoever would
+  // get it now — seat two dropping in mid-press must not leave seat one's
+  // thruster stuck on.
+  const pressed = {};
+
   A.installInput = function installInput() {
     window.addEventListener("keydown", (e) => {
-      const bind = A.KEYMAP[e.code];
+      const bind = route(e.code);
       if (bind) {
+        pressed[e.code] = bind;
         press(bind.seat, bind.action, e.repeat);
         e.preventDefault();
       }
@@ -81,7 +107,8 @@
     });
 
     window.addEventListener("keyup", (e) => {
-      const bind = A.KEYMAP[e.code];
+      const bind = pressed[e.code] || A.KEYMAP[e.code] || A.SPAREMAP[e.code];
+      delete pressed[e.code];
       if (bind) release(bind.seat, bind.action);
     });
 
