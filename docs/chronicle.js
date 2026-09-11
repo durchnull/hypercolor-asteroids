@@ -6,17 +6,18 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 46,
-    latest: { v: 46, pilot: "David Friedrich", date: "30 August 2026", line: "Clear a wave and the ship spends the pause travelling, and the next one arrives out of the depth.", plate: "3b94e5e5.jpg", alt: "Clear a wave and the ship spends the pause travelling, and the next one arrives out of the depth." },
+    versions: 48,
+    latest: { v: 48, pilot: "Kai Koenig", date: "11 September 2026", line: "The bomb moved next to your thumb, and so did the trigger." },
     plates: [
+      { v: 48, alt: "", line: "The bomb moved next to your thumb, and so did the trigger." },
       { v: 46, file: "3b94e5e5.jpg", alt: "Clear a wave and the ship spends the pause travelling, and the next one arrives out of the depth.", line: "Clear a wave and the ship spends the pause travelling, and the next one arrives out of the depth." },
       { v: 45, file: "44238ee5.jpg", alt: "The cabinet was repainted while it was still switched on.", line: "Six buttons on a phone, and for the first time one of them shoots." },
       { v: 44, file: "4f91d52e.jpg", alt: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago.", line: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago." },
-      { v: 43, file: "7a0197e0.jpg", alt: "The instrument panel developed an opinion.", line: "The splash stopped stuttering under a thumb, and stopped fading out the panel you were reading." },
     ],
     roster: {
       "David Friedrich": 41,
       "Malte Buttjer": 3,
+      "Kai Koenig": 2,
       "felix2072": 2,
     }
   };
