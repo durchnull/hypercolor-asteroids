@@ -136,9 +136,12 @@
       // ---- guns ----
       p.fireCooldown -= dt;
       const mine = A.bullets.filter((b) => b.owner === p).length;
-      if (key.fire && p.fireCooldown <= 0 && mine < MAX_SHOTS) {
+      // the machine gun (entities/powerups.js): the same gun, faster, with
+      // room in the air for what a faster gun puts there
+      const rapid = p.rapid > 0 ? 4 : 1;
+      if (key.fire && p.fireCooldown <= 0 && mine < MAX_SHOTS * rapid) {
         A.fireBullet(p);
-        p.fireCooldown = FIRE_GAP;
+        p.fireCooldown = FIRE_GAP / rapid;
         A.blaster();
         A.shakeBy(1.8);
       }

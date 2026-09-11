@@ -68,6 +68,8 @@
   // borrowed, so the way into the second seat stays exactly where the card
   // says it is.
   function route(code) {
+    // a bound key may carry a modifier ("Shift+Digit1"); the plain code is
+    // still the fallback, so shift held over the thruster changes nothing
     const bind = A.KEYMAP[code];
     const spare = A.SPAREMAP[code];
     if (!bind) return spare;
@@ -81,9 +83,9 @@
 
   A.installInput = function installInput() {
     window.addEventListener("keydown", (e) => {
-      const bind = route(e.code);
+      const bind = (e.shiftKey && route("Shift+" + e.code)) || route(e.code);
       if (bind) {
-        pressed[e.code] = bind;
+        pressed[bind === A.KEYMAP["Shift+" + e.code] ? "Shift+" + e.code : e.code] = bind;
         press(bind.seat, bind.action, e.repeat);
         e.preventDefault();
       }
@@ -107,8 +109,10 @@
     });
 
     window.addEventListener("keyup", (e) => {
-      const bind = pressed[e.code] || A.KEYMAP[e.code] || A.SPAREMAP[e.code];
+      const bind = pressed[e.code] || pressed["Shift+" + e.code]
+        || A.KEYMAP[e.code] || A.SPAREMAP[e.code];
       delete pressed[e.code];
+      delete pressed["Shift+" + e.code];
       if (bind) release(bind.seat, bind.action);
     });
 

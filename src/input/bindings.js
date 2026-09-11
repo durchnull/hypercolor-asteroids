@@ -11,8 +11,15 @@
   /** Everything a pilot can do. A new verb starts life as an entry here. */
   A.ACTIONS = ["left", "right", "thrust", "fire", "hook", "bomb"];
 
+  // The rack: nine numbered slots a powerup can be filed under, spent by
+  // pressing the number (src/entities/powerups.js). Seat one has the digits,
+  // seat two has them with shift held — the same numbers for both seats,
+  // and no numpad asked for.
+  const SLOTS = [];
+  for (let n = 1; n <= 9; n++) { SLOTS.push("slot" + n); A.ACTIONS.push("slot" + n); }
+
   /** One action per physical press — auto-repeat must not re-trigger these. */
-  A.EDGE = new Set(["bomb", "hook"]);
+  A.EDGE = new Set(["bomb", "hook", ...SLOTS]);
 
   A.SEATS = [
     {
@@ -43,6 +50,7 @@
         ["W A S D", "the same, flying solo"],
         ["F", "fire"],
         ["X", "bomb"],
+        ["1 &ndash; 9", "spend a powerup"],
       ],
       lobby: "READY",              // this seat is always in the game
       joinHint: "",                // …so it never advertises itself on the HUD
@@ -64,6 +72,7 @@
         ["Q", "fire"],
         ["S", "grapple &middot; hold to winch"],
         ["E", "bomb"],
+        ["&#8679; 1 &ndash; 9", "spend a powerup"],
       ],
       lobby: "PRESS Q TO DROP IN",
       joinHint: "PRESS Q TO JOIN",
@@ -92,6 +101,9 @@
    *  input.js decides that. */
   A.SPAREMAP = {};
   A.SEATS.forEach((seat, i) => {
+    SLOTS.forEach((slot, n) => {
+      seat.keys[slot] = (i === 0 ? "" : "Shift+") + "Digit" + (n + 1);
+    });
     for (const action of A.ACTIONS) {
       const code = seat.keys[action];
       if (code) A.KEYMAP[code] = { seat: i, action };

@@ -46,7 +46,9 @@
   }
 
   function seat(p) {
-    if (!p) return null;
+    // a shot's owner is usually a seat; a turret's is the turret, and the
+    // tape counts nothing it did not fire itself
+    if (!p || p.idx === undefined) return null;
     let s = flight.seats[p.idx];
     if (!s) {
       s = flight.seats[p.idx] = {
@@ -76,8 +78,9 @@
 
     const splitAsteroid = A.splitAsteroid;
     A.splitAsteroid = function (a, idx, owner) {
-      if (taping && owner) {
-        const s = seat(owner);
+      const hitBy = taping && seat(owner);
+      if (hitBy) {
+        const s = hitBy;
         s.hits++;
         s.rocks[a.size === 3 ? "large" : a.size === 2 ? "medium" : "small"]++;
         // breaks close together chain up; the longest chain is the flurry
@@ -90,7 +93,7 @@
 
     const vaporiseAsteroid = A.vaporiseAsteroid;
     A.vaporiseAsteroid = function (idx, owner) {
-      if (taping && owner) seat(owner).nuked++;
+      if (taping && seat(owner)) seat(owner).nuked++;
       return vaporiseAsteroid(idx, owner);
     };
 
@@ -129,8 +132,8 @@
     A.damageSquid = function (sq, n, owner) {
       const before = A.squids.length;
       const r = damageSquid(sq, n, owner);
-      if (taping && owner) {
-        const s = seat(owner);
+      const s = taping && seat(owner);
+      if (s) {
         s.kraken.hits++;
         if (A.squids.length < before) s.kraken.kills++;
       }
