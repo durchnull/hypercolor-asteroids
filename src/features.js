@@ -52,6 +52,7 @@ ASTEROIDS.MODULES = [
   "./render/lightspeed.js",
   "./render/reticle.js",
   "./entities/asteroids.js",
+  "./entities/blackhole.js",
   "./entities/bullets.js",
   "./entities/circuit.js",
   "./entities/falcon.js",
@@ -87,5 +88,6 @@ ASTEROIDS.MODULES = [
   "./events/house.js",
   "./events/david-friedrich.js",
   "./events/felix2072.js",
+  "./events/kai-koenig.js",
   "./events/malte-buttjer.js",
 ];
