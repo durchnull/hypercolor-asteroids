@@ -6,17 +6,17 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 49,
-    latest: { v: 49, pilot: "Kai Koenig", date: "11 September 2026", line: "Kai put a hole in the field and drew the line you should not cross around it." },
+    versions: 50,
+    latest: { v: 50, pilot: "Kai Koenig", date: "11 September 2026", line: "Something in a cage is drifting past, and the picture on it is a key." },
     plates: [
-      { v: 49, alt: "", line: "Kai put a hole in the field and drew the line you should not cross around it." },
+      { v: 50, alt: "", line: "Something in a cage is drifting past, and the picture on it is a key." },
       { v: 46, file: "3b94e5e5.jpg", alt: "Clear a wave and the ship spends the pause travelling, and the next one arrives out of the depth.", line: "Clear a wave and the ship spends the pause travelling, and the next one arrives out of the depth." },
       { v: 45, file: "44238ee5.jpg", alt: "The cabinet was repainted while it was still switched on.", line: "Six buttons on a phone, and for the first time one of them shoots." },
       { v: 44, file: "4f91d52e.jpg", alt: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago.", line: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago." },
     ],
     roster: {
       "David Friedrich": 41,
-      "Kai Koenig": 3,
+      "Kai Koenig": 4,
       "Malte Buttjer": 3,
       "felix2072": 2,
     }
