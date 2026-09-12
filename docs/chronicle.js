@@ -7,12 +7,12 @@
   "use strict";
   A.CHRONICLE = {
     versions: 50,
-    latest: { v: 50, pilot: "Kai Koenig", date: "11 September 2026", line: "Something in a cage is drifting past, and the picture on it is a key." },
+    latest: { v: 50, pilot: "Kai Koenig", date: "11 September 2026", line: "Something in a cage is drifting past, and the picture on it is a key.", plate: "9296579d.jpg", alt: "Something in a cage is drifting past, and the picture on it is a key." },
     plates: [
-      { v: 50, alt: "", line: "Something in a cage is drifting past, and the picture on it is a key." },
-      { v: 46, file: "3b94e5e5.jpg", alt: "Clear a wave and the ship spends the pause travelling, and the next one arrives out of the depth.", line: "Clear a wave and the ship spends the pause travelling, and the next one arrives out of the depth." },
-      { v: 45, file: "44238ee5.jpg", alt: "The cabinet was repainted while it was still switched on.", line: "Six buttons on a phone, and for the first time one of them shoots." },
-      { v: 44, file: "4f91d52e.jpg", alt: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago.", line: "The room on the splash was bigger than it was letting on, and the book had been leading with a picture from six versions ago." },
+      { v: 50, file: "9296579d.jpg", alt: "Something in a cage is drifting past, and the picture on it is a key.", line: "Something in a cage is drifting past, and the picture on it is a key." },
+      { v: 49, file: "34d229c1.jpg", alt: "Kai put a hole in the field and drew the line you should not cross around it.", line: "Kai put a hole in the field and drew the line you should not cross around it." },
+      { v: 48, file: "0e17dd8d.jpg", alt: "The bomb moved next to your thumb, and so did the trigger.", line: "The bomb moved next to your thumb, and so did the trigger." },
+      { v: 47, file: "41153daa.jpg", alt: "The left hand finally has something to do when nobody is sitting beside you.", line: "The left hand finally has something to do when nobody is sitting beside you." },
     ],
     roster: {
       "David Friedrich": 41,

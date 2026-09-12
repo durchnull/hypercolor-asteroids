@@ -6,6 +6,7 @@
   "use strict";
   A.FACES = A.FACES || {};
   A.FACES["David Friedrich"] = "david-friedrich.jpg";
+  A.FACES["Kai Koenig"] = "kai-koenig.jpg";
   A.FACES["Malte Buttjer"] = "malte-buttjer.jpg";
   A.FACES["felix2072"] = "felix2072.jpg";
 })(ASTEROIDS);
