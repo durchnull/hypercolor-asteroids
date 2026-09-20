@@ -3,16 +3,21 @@
 // filed in the rack under its own number; press that number and it is spent.
 //
 // Every number is one thing and only ever that thing, so a pilot learns them
-// once: 1 is the machine gun, 2 is the turret. Seven numbers are still empty,
-// and a new powerup is an entry in CATALOGUE — the crate, the rack, the HUD
-// and the keys all read off it and nothing else has to be told.
+// once: 1 is the machine gun, 2 is the turret, 3 is the shield. Six numbers
+// are still empty, and a new powerup is an entry in CATALOGUE — the crate,
+// the rack, the HUD and the keys all read off it and nothing else has to be
+// told.
 //
 // The GR8 argument, in the shape the atom bomb set: every one of these is
 // finite. A crate is one use. One drifts in per wave, no more, and the wave
 // ends whether or not anybody bothered to catch it. The machine gun runs out;
-// the turret runs out; neither one makes a ship harder to kill. And the rack
-// is per seat, so seat two catches and spends exactly the way seat one does —
-// their numbers are the same numbers, with shift held (src/input/bindings.js).
+// the turret runs out; the shield only ever blocks the one hit that would
+// have killed you, and it is gone twenty seconds after you press the number
+// whether that hit ever came or not — armed, not armour, off the same
+// one-crate-a-wave supply and never more than the three a rack can hold. And
+// the rack is per seat, so seat two catches and spends exactly the way seat
+// one does — their numbers are the same numbers, with shift held
+// (src/input/bindings.js).
 
 (function (A) {
   "use strict";
@@ -29,6 +34,9 @@
 
   const GUN_TIME = 12;       // seconds of machine gun per crate
   const GUN_RATE = 4;        // times the ordinary fire rate (entities/ship.js)
+
+  const SHIELD_TIME = 20;    // seconds a shield stays armed, the same stand time as the turret
+  const SHIELD_GRACE = 1.5;  // seconds of the ordinary respawn invuln, spent when the shield breaks
 
   const TOWER_LIFE = 20;     // seconds a turret stands
   const TOWER_GAP = 0.32;    // seconds between its shots
@@ -83,6 +91,25 @@
         A.blip(140, 0.3, "sawtooth", 0.14);
         A.shockwave(p.x, p.y, A.hue + 40, 120, 260);
         A.popup(p.x, p.y - 24, "TURRET", A.hue + 40);
+      },
+    },
+    3: {
+      key: 3, name: "SHIELD", hue: 300,
+      glyph: [
+        // a plate that comes to a point, seamed down the middle
+        [[-7, -9], [0, -11], [7, -9], [7, -1], [0, 9], [-7, -1], [-7, -9]],
+        [[0, -11], [0, 9]],
+      ],
+      svg: '<svg width="14" height="18" viewBox="-9 -13 18 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">' +
+        '<path d="M-7-9L0-11L7-9L7-1L0 9L-7-1Z"/><path d="M0-11V9"/></svg>',
+      use(p) {
+        // armed, not active: it sits there doing nothing until the one hit
+        // that would have killed you, and it is gone either way once the
+        // clock in update() runs it out
+        p.shield = SHIELD_TIME;
+        A.blip(520, 0.2, "sine", 0.16);
+        A.shockwave(p.x, p.y, A.hue + 300, 110, 280);
+        A.popup(p.x, p.y - 24, "SHIELD", A.hue + 300);
       },
     },
   };
@@ -176,6 +203,28 @@
     A.blip(300 + Math.random() * 60, 0.05, "square", 0.05);
   }
 
+  // ---- the shield ------------------------------------------------------------
+
+  // Wrapping A.killShip rather than adding a hook: the same trick
+  // game/blackbox.js already plays on this exact function, because a crate
+  // one file can spend needs a way to reach into a kill call it does not own
+  // without asking every hazard file to check one more field.
+  const dieOf = A.killShip;
+  A.killShip = function killShip(p) {
+    if (p.shield > 0) {
+      p.shield = 0;
+      // the one hit is spent; the grace afterwards is the same beat a
+      // respawn gets, so the rock that just broke the shield does not also
+      // get the ship a frame later
+      p.invuln = Math.max(p.invuln, SHIELD_GRACE);
+      A.blip(180, 0.22, "sawtooth", 0.16);
+      A.shockwave(p.x, p.y, A.hue + 300, 160, 320);
+      A.popup(p.x, p.y - 24, "SHIELD BROKE", A.hue + 300);
+      return;
+    }
+    dieOf(p);
+  };
+
   // ---- the frame -----------------------------------------------------------
 
   function reset(mode) {
@@ -209,6 +258,7 @@
 
     for (const p of A.livePlayers()) {
       if (p.rapid > 0) p.rapid -= dt;
+      if (p.shield > 0) p.shield -= dt;
       const key = A.keys[p.idx];
       for (const n of numbers) {
         if (key["slot" + n]) { key["slot" + n] = false; spend(p, n); }
@@ -254,7 +304,8 @@
   A.powerupKey = (p) => {
     if (!p) return "";
     const r = p.rack || {};
-    return numbers.map((n) => r[n] || 0).join(",") + ":" + Math.ceil(p.rapid > 0 ? p.rapid : 0);
+    return numbers.map((n) => r[n] || 0).join(",") + ":" + Math.ceil(p.rapid > 0 ? p.rapid : 0) +
+      ":" + Math.ceil(p.shield > 0 ? p.shield : 0);
   };
 
   A.powerupHud = (p) => {
@@ -267,6 +318,7 @@
       s += '<span class="slot"><b>' + n + "</b>" + k.svg + (r[n] > 1 ? "&times;" + r[n] : "") + "</span>";
     }
     if (p.rapid > 0) s += '<span class="slot live">' + CATALOGUE[1].svg + Math.ceil(p.rapid) + "s</span>";
+    if (p.shield > 0) s += '<span class="slot live">' + CATALOGUE[3].svg + Math.ceil(p.shield) + "s</span>";
     return s ? '<div class="glyphs rack">' + s + "</div>" : "";
   };
 
@@ -326,6 +378,19 @@
       g.stroke();
       g.restore();
     }
+    for (const p of A.livePlayers()) {
+      if (p.dead || !(p.shield > 0)) continue;
+      g.save();
+      A.glow(A.neon(A.hue + 300, 70));
+      g.globalAlpha = 0.5;
+      g.lineWidth = 1.4;
+      g.setLineDash([4, 5]);
+      g.lineDashOffset = -p.shield * 24;
+      g.beginPath();
+      g.arc(p.x, p.y, 25, 0, A.TAU);
+      g.stroke();
+      g.restore();
+    }
   }
 
   // A cage rather than a box: the picture sits inside it on the plane, and a
@@ -379,6 +444,13 @@
       at.alpha = 0.5; at.width = 1; at.dim = 0; at.rz = 0;
       s.ring(t.x, t.y, 0, (TOWER_R + 5) * Math.max(0.05, f), at);
     }
+    for (const p of A.livePlayers()) {
+      if (p.dead || !(p.shield > 0)) continue;
+      at.x = p.x; at.y = p.y; at.z = 0; at.rx = at.ry = at.rz = 0;
+      at.hue = 300; at.light = 70;
+      at.alpha = 0.5; at.width = 1.4; at.dim = 0; at.glow = true;
+      s.ring(p.x, p.y, 0, 25, at);
+    }
   }
 
   // The key it answers to, as a small tag off the crate's corner — text, so
@@ -404,14 +476,14 @@
     guide: {
       name: "POWERUPS",
       group: "hands",
-      meta: "1 &middot; 2 &middot; one crate a wave",
+      meta: "1 &middot; 2 &middot; 3 &middot; one crate a wave",
       tint: "var(--mint)",
       icon: `<svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
         <rect x="8" y="8" width="18" height="18" transform="rotate(12 17 17)"/>
         <path d="M14.5 21.5 V12.5 L12.5 14.5" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M18 14 q0-2 2-2 t2 2 q0 1.5-4 5.5 h4.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>`,
-      desc: "A numbered crate drifts in each wave and blinks out after a minute. Fly through it, then press its number: 1 is a machine gun, 2 plants a turret.",
+      desc: "A numbered crate drifts in each wave and blinks out after a minute. Fly through it, then press its number: 1 is a machine gun, 2 plants a turret, 3 arms a shield that stops the next hit, if it comes within twenty seconds.",
     },
   });
 })(ASTEROIDS);

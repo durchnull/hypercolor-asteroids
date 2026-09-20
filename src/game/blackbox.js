@@ -99,18 +99,24 @@
 
     const killShip = A.killShip;
     A.killShip = function (p) {
-      if (taping) {
+      const already = p.dead;
+      const r = killShip(p);
+      // off the outcome rather than the call: something wrapped further in
+      // may have turned this into a graze rather than a death (powerups.js's
+      // shield does), and a tape crediting a kill nobody actually took is
+      // worse than one crediting nothing
+      if (taping && !already && p.dead) {
         const s = seat(p);
         if (s) s.deaths++;
         // an event that fires and kills in the same frame is courted here,
         // before update() has had a look at it
         court();
         for (const l of (A.liveEvents ? A.liveEvents() : [])) {
-          const r = courted.get(l);
-          if (r) r.deaths++;
+          const cr = courted.get(l);
+          if (cr) cr.deaths++;
         }
       }
-      return killShip(p);
+      return r;
     };
 
     const detonate = A.detonate;

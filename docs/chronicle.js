@@ -6,19 +6,19 @@
 (function (A) {
   "use strict";
   A.CHRONICLE = {
-    versions: 50,
-    latest: { v: 50, pilot: "Kai Koenig", date: "11 September 2026", line: "Something in a cage is drifting past, and the picture on it is a key.", plate: "9296579d.jpg", alt: "Something in a cage is drifting past, and the picture on it is a key." },
+    versions: 51,
+    latest: { v: 51, pilot: "felix2072", date: "19 September 2026", line: "Catch the third crate and the field owes you exactly one save." },
     plates: [
+      { v: 51, alt: "", line: "Catch the third crate and the field owes you exactly one save." },
       { v: 50, file: "9296579d.jpg", alt: "Something in a cage is drifting past, and the picture on it is a key.", line: "Something in a cage is drifting past, and the picture on it is a key." },
       { v: 49, file: "34d229c1.jpg", alt: "Kai put a hole in the field and drew the line you should not cross around it.", line: "Kai put a hole in the field and drew the line you should not cross around it." },
       { v: 48, file: "0e17dd8d.jpg", alt: "The bomb moved next to your thumb, and so did the trigger.", line: "The bomb moved next to your thumb, and so did the trigger." },
-      { v: 47, file: "41153daa.jpg", alt: "The left hand finally has something to do when nobody is sitting beside you.", line: "The left hand finally has something to do when nobody is sitting beside you." },
     ],
     roster: {
       "David Friedrich": 41,
       "Kai Koenig": 4,
       "Malte Buttjer": 3,
-      "felix2072": 2,
+      "felix2072": 3,
     }
   };
   A.BOARD = [
